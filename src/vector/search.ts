@@ -2,7 +2,7 @@
  * Vector Search Module
  *
  * Provides semantic search capabilities using BGE-Large-EN-v1.5 embeddings
- * and pgvector cosine similarity search.
+ * and pgvector cosine similarity search with graceful degradation to keyword search.
  *
  * @module vector/search
  */
@@ -11,6 +11,7 @@ import * as log from "@std/log";
 import type { PGliteClient } from "../db/client.ts";
 import type { EmbeddingModel } from "./embeddings.ts";
 import type { MCPTool } from "../mcp/types.ts";
+import { VectorSearchError } from "../errors/error-types.ts";
 
 /**
  * Search result from semantic vector search
@@ -130,8 +131,69 @@ export class VectorSearch {
 
       return searchResults;
     } catch (error) {
-      log.error(`Vector search failed for query "${query}": ${error}`);
-      throw new Error(`Vector search failed: ${error}`);
+      // Graceful degradation: fallback to keyword search
+      log.warn(`⚠️  Vector search failed, falling back to keyword search: ${error}`);
+
+      try {
+        return await this.keywordSearchFallback(query, topK, minScore);
+      } catch (fallbackError) {
+        // Both methods failed - throw VectorSearchError
+        throw new VectorSearchError(
+          `Both vector and keyword search failed: ${error}`,
+          query
+        );
+      }
     }
+  }
+
+  /**
+   * Keyword search fallback when vector search fails
+   *
+   * Performs simple keyword matching against tool names and descriptions
+   * using PostgreSQL's ILIKE (case-insensitive LIKE) operator.
+   *
+   * @param query - Search query
+   * @param topK - Number of results to return
+   * @param minScore - Minimum score threshold (always returns 0.5 for keyword matches)
+   * @returns Search results with fixed score of 0.5
+   */
+  private async keywordSearchFallback(
+    query: string,
+    topK: number,
+    _minScore: number, // Not used in keyword search (always returns 0.5)
+  ): Promise<SearchResult[]> {
+    log.info(`Performing keyword search fallback for: "${query}"`);
+
+    const pattern = `%${query}%`;
+
+    const results = await this.db.query(
+      `SELECT
+        te.tool_id,
+        te.server_id,
+        te.tool_name,
+        json_build_object(
+          'name', ts.name,
+          'description', ts.description,
+          'inputSchema', ts.input_schema
+        ) AS schema_json
+      FROM tool_embedding te
+      JOIN tool_schema ts ON te.tool_id = ts.tool_id
+      WHERE te.tool_name ILIKE $1
+         OR ts.description ILIKE $1
+      LIMIT $2`,
+      [pattern, topK],
+    );
+
+    log.info(`Keyword search found ${results.length} results`);
+
+    return results.map((row) => ({
+      toolId: row.tool_id as string,
+      serverId: row.server_id as string,
+      toolName: row.tool_name as string,
+      score: 0.5, // Fixed score for keyword matches
+      schema: (typeof row.schema_json === 'string'
+        ? JSON.parse(row.schema_json)
+        : row.schema_json) as MCPTool,
+    }));
   }
 }

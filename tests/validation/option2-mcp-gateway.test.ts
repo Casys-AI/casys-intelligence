@@ -15,7 +15,7 @@
 
 import { MCPServerDiscovery } from "../../src/mcp/discovery.ts";
 import { MCPClient } from "../../src/mcp/client.ts";
-import type { MCPServer, ServerDiscoveryResult } from "../../src/mcp/types.ts";
+import type { MCPServer } from "../../src/mcp/types.ts";
 
 /**
  * Test metrics for a single server discovery

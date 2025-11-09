@@ -29,6 +29,7 @@ import { GatewayHandler } from "./gateway-handler.ts";
 import { MCPClient } from "./client.ts";
 import type { MCPTool } from "./types.ts";
 import type { DAGStructure } from "../graphrag/types.ts";
+import { HealthChecker } from "../health/health-checker.ts";
 
 /**
  * MCP JSON-RPC error codes
@@ -60,6 +61,7 @@ export interface GatewayServerConfig {
 export class AgentCardsGatewayServer {
   private server: Server;
   private gatewayHandler: GatewayHandler;
+  private healthChecker: HealthChecker;
   private config: Required<GatewayServerConfig>;
 
   constructor(
@@ -101,6 +103,9 @@ export class AgentCardsGatewayServer {
         enableSpeculative: this.config.enableSpeculative,
       },
     );
+
+    // Initialize Health Checker
+    this.healthChecker = new HealthChecker(this.mcpClients);
 
     this.setupHandlers();
   }
@@ -445,6 +450,12 @@ export class AgentCardsGatewayServer {
    * Runs indefinitely until process is killed.
    */
   async start(): Promise<void> {
+    // Run initial health check
+    await this.healthChecker.initialHealthCheck();
+
+    // Start periodic health checks
+    this.healthChecker.startPeriodicChecks();
+
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
@@ -459,6 +470,9 @@ export class AgentCardsGatewayServer {
    */
   async stop(): Promise<void> {
     log.info("Shutting down AgentCards gateway...");
+
+    // Stop health checks
+    this.healthChecker.stopPeriodicChecks();
 
     // Close all MCP client connections
     for (const [serverId, client] of this.mcpClients.entries()) {

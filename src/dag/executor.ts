@@ -16,6 +16,8 @@ import type {
   ToolExecutor,
 } from "./types.ts";
 import { getLogger } from "../telemetry/logger.ts";
+import { DAGExecutionError, TimeoutError } from "../errors/error-types.ts";
+import { RateLimiter } from "../utils/rate-limiter.ts";
 
 const log = getLogger("default");
 
@@ -28,9 +30,11 @@ const log = getLogger("default");
  * - Partial success handling (continues on task failures)
  * - $OUTPUT[task_id] reference resolution
  * - Performance measurement and speedup calculation
+ * - Rate limiting to prevent MCP server overload
  */
 export class ParallelExecutor {
   private config: Required<ExecutorConfig>;
+  private rateLimiter: RateLimiter;
 
   /**
    * Create a new parallel executor
@@ -47,6 +51,8 @@ export class ParallelExecutor {
       taskTimeout: config.taskTimeout ?? 30000,
       verbose: config.verbose ?? false,
     };
+    // Initialize rate limiter: 10 requests per second per server
+    this.rateLimiter = new RateLimiter(10, 1000);
   }
 
   /**
@@ -187,8 +193,10 @@ export class ParallelExecutor {
       // Circular dependency check
       if (ready.length === 0 && remaining.size > 0) {
         const remainingIds = Array.from(remaining.keys());
-        throw new Error(
+        throw new DAGExecutionError(
           `Circular dependency detected in DAG. Remaining tasks: ${remainingIds.join(", ")}`,
+          undefined,
+          false // Not recoverable
         );
       }
 
@@ -227,16 +235,28 @@ export class ParallelExecutor {
       for (const depId of task.depends_on) {
         const depResult = previousResults.get(depId);
         if (depResult?.status === "error") {
-          throw new Error(
+          throw new DAGExecutionError(
             `Dependency task ${depId} failed: ${depResult.error}`,
+            task.id,
+            true // Recoverable - partial success allowed
           );
         }
         if (!depResult) {
-          throw new Error(`Dependency task ${depId} not found in results`);
+          throw new DAGExecutionError(
+            `Dependency task ${depId} not found in results`,
+            task.id,
+            false
+          );
         }
       }
 
-      // 3. Execute tool with timeout
+      // 3. Apply rate limiting if tool uses MCP server
+      const [serverId] = task.tool.split(":");
+      if (serverId) {
+        await this.rateLimiter.waitForSlot(serverId);
+      }
+
+      // 4. Execute tool with timeout
       const output = await this.executeWithTimeout(
         task.tool,
         resolvedArgs,
@@ -251,10 +271,18 @@ export class ParallelExecutor {
       };
     } catch (error) {
       const executionTime = performance.now() - startTime;
-      throw new Error(
+
+      // Re-throw custom errors as-is
+      if (error instanceof DAGExecutionError || error instanceof TimeoutError) {
+        throw error;
+      }
+
+      throw new DAGExecutionError(
         `Task ${task.id} (${task.tool}) failed after ${executionTime.toFixed(1)}ms: ${
           error instanceof Error ? error.message : String(error)
         }`,
+        task.id,
+        true // Default to recoverable for task failures
       );
     }
   }
@@ -270,7 +298,7 @@ export class ParallelExecutor {
     let timeoutId: number | undefined;
 
     const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error(`Task timeout after ${timeoutMs}ms`)), timeoutMs);
+      timeoutId = setTimeout(() => reject(new TimeoutError(tool, timeoutMs)), timeoutMs);
     });
 
     const executionPromise = this.toolExecutor(tool, args);

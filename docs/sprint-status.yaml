@@ -58,7 +58,18 @@ development_status:
   2-2-parallel-execution-engine: done
   2-3-sse-streaming-pour-progressive-results: done
   2-4-mcp-gateway-integration-avec-claude-code: done
-  2-5-health-checks-mcp-server-monitoring: drafted
-  2-6-error-handling-resilience: drafted
-  2-7-end-to-end-tests-production-hardening: drafted
+  2-5-health-checks-mcp-server-monitoring: done
+  2-6-error-handling-resilience: done
+  2-7-end-to-end-tests-production-hardening: done
   epic-2-retrospective: optional
+
+  # Epic 3: Agent Code Execution & Local Processing
+  epic-3: backlog
+  3-1-deno-sandbox-executor-foundation: drafted
+  3-2-mcp-tools-injection-into-code-context: drafted
+  3-3-local-data-processing-pipeline: drafted
+  3-4-agentcards-execute-code-mcp-tool: drafted
+  3-5-pii-detection-tokenization: drafted
+  3-6-code-execution-caching-optimization: drafted
+  3-7-end-to-end-code-execution-tests-documentation: drafted
+  epic-3-retrospective: optional

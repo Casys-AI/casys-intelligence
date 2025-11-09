@@ -380,4 +380,202 @@ So that [benefit/value].
 
 ---
 
+## Epic 3: Agent Code Execution & Local Processing
+
+**Expanded Goal (2-3 sentences):**
+
+Implémenter un environnement d'exécution sécurisé permettant aux agents d'écrire et d'exécuter du code TypeScript localement, traitant les données volumineuses avant injection dans le contexte LLM. Ce troisième epic ajoute une couche de processing local complémentaire au vector search (Epic 1) et au DAG execution (Epic 2), permettant de réduire davantage la consommation de contexte (de <5% à <1%) pour les cas d'usage avec large datasets, tout en protégeant les données sensibles via tokenisation automatique des PII.
+
+**Value Delivery:**
+
+À la fin de cet epic, un développeur peut exécuter des workflows qui traitent localement des datasets volumineux (ex: 1000 commits GitHub), filtrent et agrègent les données dans un sandbox sécurisé, et retournent seulement le résumé pertinent (<1KB) au lieu des données brutes (>1MB), récupérant 99%+ de contexte additionnel et protégeant automatiquement les données sensibles.
+
+**Design Philosophy:**
+
+Inspiré par l'approche Anthropic de code execution, Epic 3 combine le meilleur des deux mondes : vector search (Epic 1) pour découvrir les tools pertinents, puis code execution pour traiter les résultats localement. L'agent écrit du code au lieu d'appeler directement les tools, permettant filtrage, agrégation, et transformation avant que les données n'atteignent le contexte LLM.
+
+---
+
+### Story Breakdown - Epic 3
+
+**Story 3.1: Deno Sandbox Executor Foundation**
+
+As a developer,
+I want a secure Deno sandbox environment for executing agent-generated code,
+So that agents can run TypeScript code without compromising system security.
+
+**Acceptance Criteria:**
+1. Sandbox module créé (`src/sandbox/executor.ts`)
+2. Deno subprocess spawned avec permissions explicites (`--allow-env`, `--allow-read=~/.agentcards`)
+3. Code execution isolée (no access to filesystem outside allowed paths)
+4. Timeout enforcement (default 30s, configurable)
+5. Memory limits enforcement (default 512MB heap)
+6. Error capturing et structured error messages
+7. Return value serialization (JSON-compatible outputs only)
+8. Unit tests validating isolation (attempt to access /etc/passwd should fail)
+9. Performance: Sandbox startup <100ms, code execution overhead <50ms
+
+**Prerequisites:** Epic 2 completed (gateway operational)
+
+---
+
+**Story 3.2: MCP Tools Injection into Code Context**
+
+As an agent,
+I want access to MCP tools within my code execution environment,
+So that I can call tools directly from my TypeScript code instead of via JSON-RPC.
+
+**Acceptance Criteria:**
+1. Tool injection system créé (`src/sandbox/context-builder.ts`)
+2. MCP clients wrapped as TypeScript functions accessible in sandbox
+3. Code context includes: `const github = { listCommits: async (...) => ... }`
+4. Vector search used to identify relevant tools (only inject top-k, not all)
+5. Type definitions generated for injected tools (TypeScript autocomplete support)
+6. Tool calls from sandbox routed through existing MCP gateway
+7. Error propagation: MCP errors surfaced as JavaScript exceptions
+8. Integration test: Agent code calls `github.listCommits()` successfully
+9. Security: No eval() or dynamic code generation in injection
+
+**Prerequisites:** Story 3.1 (sandbox foundation)
+
+---
+
+**Story 3.3: Local Data Processing Pipeline**
+
+As a user executing workflows with large datasets,
+I want data to be processed locally before reaching the LLM context,
+So that I save context tokens and get faster responses.
+
+**Acceptance Criteria:**
+1. Data processing pipeline implemented in sandbox
+2. Agent code can: filter, map, reduce, aggregate large datasets
+3. Example use case working: Fetch 1000 GitHub commits → filter last week → return summary
+4. Context measurement: Raw data (1MB+) processed locally, summary (<1KB) returned
+5. Performance benchmark: 1000-item dataset processed in <2 seconds
+6. Streaming support: Large datasets streamed through processing pipeline
+7. Memory efficiency: Process datasets larger than heap limit via streaming
+8. Integration with DAG executor: Code execution as DAG task type
+9. Metrics logged: input_size_bytes, output_size_bytes, processing_time_ms
+
+**Prerequisites:** Story 3.2 (tools injection)
+
+---
+
+**Story 3.4: `agentcards:execute_code` MCP Tool**
+
+As a Claude Code user,
+I want a new MCP tool that executes my TypeScript code in AgentCards sandbox,
+So that I can process data locally instead of loading everything into context.
+
+**Acceptance Criteria:**
+1. New MCP tool registered: `agentcards:execute_code`
+2. Input schema: `{ code: string, intent?: string, context?: object }`
+3. Intent-based mode: vector search → inject relevant tools → execute code
+4. Explicit mode: Execute provided code with specified context
+5. Output schema: `{ result: any, logs: string[], metrics: object }`
+6. Error handling: Syntax errors, runtime errors, timeout errors
+7. Integration with gateway: Tool appears in `list_tools` response
+8. Example workflow: Claude writes code → executes via tool → receives result
+9. Documentation: README updated with code execution examples
+
+**Prerequisites:** Story 3.3 (data processing pipeline)
+
+---
+
+**Story 3.5: PII Detection & Tokenization**
+
+As a security-conscious user,
+I want personally identifiable information (PII) automatically detected and tokenized,
+So that sensitive data never reaches the LLM context.
+
+**Acceptance Criteria:**
+1. PII detection module créé (`src/sandbox/pii-detector.ts`)
+2. Patterns detected: emails, phone numbers, credit cards, SSNs, API keys
+3. Tokenization strategy: Replace PII with `[EMAIL_1]`, `[PHONE_1]`, etc.
+4. Reverse mapping stored securely (in-memory only, never persisted)
+5. Agent receives tokenized data, can reference tokens in code
+6. De-tokenization happens only for final output (if needed)
+7. Opt-out flag: `--no-pii-protection` for trusted environments
+8. Unit tests: Validate detection accuracy (>95% for common PII types)
+9. Integration test: Email in dataset → tokenized → agent never sees raw email
+
+**Prerequisites:** Story 3.4 (execute_code tool)
+
+---
+
+**Story 3.6: Code Execution Caching & Optimization**
+
+As a developer running repetitive workflows,
+I want code execution results cached intelligently,
+So that I don't re-execute identical code with identical inputs.
+
+**Acceptance Criteria:**
+1. Code execution cache implemented (in-memory LRU, max 100 entries)
+2. Cache key: hash(code + context + tool_versions)
+3. Cache hit: Return cached result without execution (<10ms)
+4. Cache invalidation: Auto-invalidate on tool schema changes
+5. Cache stats logged: hit_rate, avg_latency_saved_ms
+6. Configurable: `--no-cache` flag to disable caching
+7. TTL support: Cache entries expire after 5 minutes
+8. Persistence optional: Save cache to PGlite for cross-session reuse
+9. Performance: Cache hit rate >60% for typical workflows
+
+**Prerequisites:** Story 3.5 (PII tokenization)
+
+---
+
+**Story 3.7: End-to-End Code Execution Tests & Documentation**
+
+As a developer adopting code execution,
+I want comprehensive tests and documentation,
+So that I understand how to use the feature effectively.
+
+**Acceptance Criteria:**
+1. E2E test suite créé (`tests/e2e/code-execution/`)
+2. Test scenarios:
+   - GitHub commits analysis (large dataset filtering)
+   - Multi-server data aggregation (GitHub + Jira + Slack)
+   - PII-sensitive workflow (email processing)
+   - Error handling (timeout, syntax error, runtime error)
+3. Performance regression tests added to benchmark suite
+4. Documentation: README section "Code Execution Mode"
+5. Examples provided: 5+ real-world use cases with code samples
+6. Comparison benchmarks: Tool calls vs Code execution (context & latency)
+7. Migration guide: When to use code execution vs DAG workflows
+8. Security documentation: Sandbox limitations, PII protection details
+9. Video tutorial: 3-minute quickstart (optional, can be deferred)
+
+**Prerequisites:** Story 3.6 (caching)
+
+---
+
+## Story Guidelines Reference
+
+**Story Format:**
+
+```
+**Story [EPIC.N]: [Story Title]**
+
+As a [user type],
+I want [goal/desire],
+So that [benefit/value].
+
+**Acceptance Criteria:**
+1. [Specific testable criterion]
+2. [Another specific criterion]
+3. [etc.]
+
+**Prerequisites:** [Dependencies on previous stories, if any]
+```
+
+**Story Requirements:**
+
+- **Vertical slices** - Complete, testable functionality delivery
+- **Sequential ordering** - Logical progression within epic
+- **No forward dependencies** - Only depend on previous work
+- **AI-agent sized** - Completable in 2-4 hour focused session
+- **Value-focused** - Integrate technical enablers into value-delivering stories
+
+---
+
 **For implementation:** Use the `create-story` workflow to generate individual story implementation plans from this epic breakdown.

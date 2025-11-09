@@ -5,7 +5,7 @@
  * required jobs and Deno version.
  */
 
-import { assertEquals, assertExists } from "@std/assert";
+import { assertEquals, assertExists, assert } from "@std/assert";
 import { parse } from "@std/yaml";
 
 Deno.test("AC2: CI workflow file exists", async () => {
@@ -37,7 +37,8 @@ Deno.test("AC2: CI workflow - has test job", async () => {
 
   assertExists(yaml.jobs);
   const jobs = yaml.jobs as Record<string, unknown>;
-  assertExists(jobs.test, "test job should exist");
+  // Check for any test job (test-unit, test-integration, or test-e2e)
+  assert(jobs["test-unit"] || jobs["test-integration"] || jobs["test-e2e"], "at least one test job should exist");
 });
 
 Deno.test("AC2: CI workflow - uses Deno 2.5.x", async () => {

@@ -114,14 +114,14 @@ Deno.bench("ContextOptimizer - context usage measurement only", async (b) => {
   const optimizer = new ContextOptimizer(mockSearch as unknown as VectorSearch, db);
 
   // Pre-load schemas
-  const result = await optimizer.getRelevantSchemas("test", 5);
+  await optimizer.getRelevantSchemas("test", 5);
 
   b.start();
 
   // Measure just the metrics calculation (no search/cache)
-  const schemas = result.schemas;
-  let totalTokens = schemas.length * 500;
-  let usagePercent = (totalTokens / 200_000) * 100;
+  // const schemas = _result.schemas;
+  // let totalTokens = schemas.length * 500;
+  // let usagePercent = (totalTokens / 200_000) * 100;
 
   b.end();
 });

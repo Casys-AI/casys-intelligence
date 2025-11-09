@@ -147,7 +147,11 @@ export class PGliteClient {
    */
   async close(): Promise<void> {
     if (this.db) {
-      // PGlite doesn't require explicit close in most cases
+      try {
+        await this.db.close();
+      } catch (error) {
+        log.error(`Error closing database: ${error}`);
+      }
       this.db = null;
       log.info("Database connection closed");
     }

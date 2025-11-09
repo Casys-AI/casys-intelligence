@@ -223,7 +223,26 @@ Pas d'interface graphique MVP, mais output console optimisé:
 
 ---
 
-**Séquence:** Epic 1 doit être complété avant Epic 2 (foundation required). Chaque epic livre un système déployable et testable.
+### Epic 3: Agent Code Execution & Local Processing
+
+**Objectif:** Implémenter un sandbox d'exécution sécurisé pour permettre aux agents d'écrire et exécuter du code TypeScript localement, traitant les large datasets avant injection dans le contexte LLM
+
+**Livrables clés:**
+- Deno sandbox executor avec isolation et sécurité
+- MCP tools injection dans code context (vector search-guided)
+- Local data processing pipeline (filtrage/agrégation pré-contexte)
+- Nouveau tool MCP `agentcards:execute_code`
+- PII detection et tokenization automatique
+- Code execution caching et optimizations
+- Documentation et tests E2E complets
+
+**Estimation:** 7 stories
+
+**Value Proposition:** Réduction additionnelle de contexte (<5% → <1% pour large datasets), protection automatique des données sensibles, et traitement local des données volumineuses (1MB+ → <1KB dans contexte)
+
+---
+
+**Séquence:** Epic 1 → Epic 2 → Epic 3 (chaque epic build sur le précédent). Epic 3 est complémentaire aux Epics 1-2, ajoutant code execution comme alternative aux tool calls directs pour les cas d'usage avec large datasets.
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)
 

@@ -15,7 +15,7 @@
 import { assertEquals, assertExists, assert } from "@std/assert";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { createInitialMigration } from "../../../src/db/migrations.ts";
+import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
 
 /**
  * Create test database with schema
@@ -24,15 +24,9 @@ async function createTestDb(): Promise<PGliteClient> {
   const db = new PGliteClient("memory://");
   await db.connect();
 
-  // Run initial migration
-  const migration = createInitialMigration();
-  await migration.up(db);
-
-  // Run GraphRAG migration
-  const graphragMigration = await Deno.readTextFile(
-    "src/db/migrations/003_graphrag_tables.sql",
-  );
-  await db.exec(graphragMigration);
+  // Run all migrations properly
+  const migrationRunner = new MigrationRunner(db);
+  await migrationRunner.runUp(getAllMigrations());
 
   return db;
 }

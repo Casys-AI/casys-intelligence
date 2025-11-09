@@ -380,14 +380,14 @@ Deno.test({
 
     const dag: DAGStructure = {
       tasks: [
-        { id: "t1", tool: "mock:delay", arguments: { ms: 200 }, depends_on: [] },
+        { id: "t1", tool: "mock:delay", arguments: { ms: 1000 }, depends_on: [] },
       ],
     };
 
     const result = await executor.execute(dag);
 
     assertEquals(result.failedTasks, 1);
-    assertEquals(result.errors[0].error.includes("timeout"), true);
+    assertEquals(result.errors[0].error.includes("timed out"), true);
   },
 });
 

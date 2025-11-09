@@ -8,6 +8,8 @@
 
 import * as log from "@std/log";
 import { MCPServer, MCPTool, ServerDiscoveryResult } from "./types.ts";
+import { MCPServerError, TimeoutError } from "../errors/error-types.ts";
+import { withTimeout } from "../utils/timeout.ts";
 
 interface JSONRPCResponse {
   jsonrpc: string;
@@ -39,6 +41,20 @@ export class MCPClient {
   }
 
   /**
+   * Get server ID
+   */
+  get serverId(): string {
+    return this.server.id;
+  }
+
+  /**
+   * Get server name
+   */
+  get serverName(): string {
+    return this.server.name;
+  }
+
+  /**
    * Connect to MCP server via stdio
    */
   async connect(): Promise<void> {
@@ -56,19 +72,33 @@ export class MCPClient {
 
       // Initialize persistent streams
       if (!this.process.stdin || !this.process.stdout) {
-        throw new Error("Failed to initialize stdio streams");
+        throw new MCPServerError(
+          this.server.id,
+          "Failed to initialize stdio streams"
+        );
       }
       this.writer = this.process.stdin.getWriter();
       this.reader = this.process.stdout.getReader();
 
-      // Send initialize request
-      await this.sendInitializeRequest();
+      // Send initialize request with timeout
+      await withTimeout(
+        this.sendInitializeRequest(),
+        this.timeout,
+        `MCP initialize for ${this.server.id}`
+      );
 
       log.debug(`Connected to ${this.server.id}`);
     } catch (error) {
       log.error(`Failed to connect to ${this.server.id}: ${error}`);
-      throw new Error(
-        `Connection failed for ${this.server.id}: ${error}`,
+
+      if (error instanceof MCPServerError || error instanceof TimeoutError) {
+        throw error; // Re-throw our custom errors
+      }
+
+      throw new MCPServerError(
+        this.server.id,
+        `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined
       );
     }
   }
@@ -119,8 +149,9 @@ export class MCPClient {
       const response = await this.sendRequest(listRequest);
 
       if (response.error) {
-        throw new Error(
-          `list_tools failed: ${response.error.message}`,
+        throw new MCPServerError(
+          this.server.id,
+          `list_tools failed: ${response.error.message}`
         );
       }
 
@@ -136,7 +167,16 @@ export class MCPClient {
       log.error(
         `Failed to list tools from ${this.server.id}: ${error}`,
       );
-      throw error;
+
+      if (error instanceof MCPServerError || error instanceof TimeoutError) {
+        throw error;
+      }
+
+      throw new MCPServerError(
+        this.server.id,
+        `Failed to list tools: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined
+      );
     }
   }
 
@@ -244,8 +284,9 @@ export class MCPClient {
       const response = await this.sendRequest(callRequest);
 
       if (response.error) {
-        throw new Error(
-          `tools/call failed for ${toolName}: ${response.error.message}`,
+        throw new MCPServerError(
+          this.server.id,
+          `tools/call failed for ${toolName}: ${response.error.message}`
         );
       }
 
@@ -254,7 +295,16 @@ export class MCPClient {
       log.error(
         `Failed to call tool ${toolName} on ${this.server.id}: ${error}`,
       );
-      throw error;
+
+      if (error instanceof MCPServerError || error instanceof TimeoutError) {
+        throw error;
+      }
+
+      throw new MCPServerError(
+        this.server.id,
+        `Failed to call tool ${toolName}: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error : undefined
+      );
     }
   }
 

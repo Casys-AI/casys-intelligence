@@ -134,7 +134,7 @@ export function createServeCommand() {
     .option(
       "--no-speculative",
       "Disable speculative execution mode",
-      { default: false },
+      { default: true },
     )
     .action(async (options) => {
       try {
@@ -193,7 +193,7 @@ export function createServeCommand() {
           {
             name: "agentcards",
             version: "1.0.0",
-            enableSpeculative: !options.noSpeculative,
+            enableSpeculative: options.speculative,
             defaultToolLimit: 10,
           },
         );

@@ -190,20 +190,208 @@ await callTool("agentcards:execute_workflow", {
 
 ### Troubleshooting
 
-**Gateway won't start:**
-- Check that MCP servers are properly configured in `~/.agentcards/config.yaml`
-- Verify all MCP server commands are in your PATH
-- Check logs for connection errors
+#### MCP Server Not Connecting
 
-**Claude Code can't connect:**
-- Ensure the path in `claude_desktop_config.json` is **absolute**
-- Restart Claude Desktop after configuration changes
-- Check that `agentcards` binary has execute permissions: `chmod +x agentcards`
+**Symptoms:**
+- Gateway fails to start
+- "Connection refused" errors in logs
+- Specific MCP server tools not appearing
 
-**Tools not appearing:**
-- Run `agentcards init` again to refresh the tool catalog
-- Check that underlying MCP servers are running correctly
-- Verify embeddings were generated: `ls ~/.agentcards/db`
+**Solutions:**
+1. **Check server configuration:**
+   ```bash
+   cat ~/.agentcards/config.yaml
+   ```
+   Verify all MCP server commands are correct and in your PATH.
+
+2. **Test individual MCP servers:**
+   ```bash
+   # Test a server directly
+   /path/to/mcp-server-command --help
+   ```
+
+3. **Check server health:**
+   ```bash
+   # Use the status command to check all servers
+   ./agentcards status
+   ```
+
+4. **Review logs:**
+   ```bash
+   tail -f ~/.agentcards/logs/agentcards.log
+   ```
+
+5. **Restart with verbose logging:**
+   ```bash
+   LOG_LEVEL=debug ./agentcards serve
+   ```
+
+#### Vector Search Performance Issues
+
+**Symptoms:**
+- Slow tool discovery
+- High latency when searching for tools
+- Timeouts during semantic search
+
+**Solutions:**
+1. **Check database index:**
+   ```bash
+   # Verify HNSW index exists
+   ./agentcards debug --check-index
+   ```
+
+2. **Regenerate embeddings:**
+   ```bash
+   # Force re-generation of embeddings
+   ./agentcards init --force-embeddings
+   ```
+
+3. **Reduce tool count:**
+   - Limit `context.topK` in config to reduce search scope
+   - Disable unused MCP servers
+
+4. **Clear cache:**
+   ```bash
+   rm -rf ~/.agentcards/cache
+   ./agentcards init
+   ```
+
+#### Memory Issues
+
+**Symptoms:**
+- High memory usage
+- Gradual memory growth
+- Out of memory errors
+
+**Solutions:**
+1. **Clear cache:**
+   ```bash
+   ./agentcards cache clear
+   ```
+
+2. **Reduce concurrent tool limit:**
+   Edit `~/.agentcards/config.yaml`:
+   ```yaml
+   execution:
+     maxConcurrency: 5  # Reduce from default 10
+   ```
+
+3. **Restart the gateway periodically:**
+   ```bash
+   # Add to cron or systemd for automatic restart
+   ./agentcards serve
+   ```
+
+4. **Monitor memory usage:**
+   ```bash
+   # Check current memory usage
+   ./agentcards debug --memory
+   ```
+
+#### Claude Code Can't Connect
+
+**Symptoms:**
+- AgentCards not appearing in Claude Code
+- "Server not responding" errors
+
+**Solutions:**
+1. **Verify absolute path:**
+   ```bash
+   # Find the absolute path
+   which agentcards
+   # or
+   readlink -f ./agentcards
+   ```
+
+2. **Check execute permissions:**
+   ```bash
+   chmod +x /absolute/path/to/agentcards
+   ```
+
+3. **Test gateway manually:**
+   ```bash
+   # Run gateway in test mode
+   ./agentcards serve --test
+   ```
+
+4. **Restart Claude Desktop:**
+   - Close Claude Desktop completely
+   - Wait 5 seconds
+   - Restart Claude Desktop
+
+5. **Verify configuration syntax:**
+   ```bash
+   # Validate JSON syntax
+   cat ~/.config/Claude/claude_desktop_config.json | jq .
+   ```
+
+#### Tools Not Appearing
+
+**Symptoms:**
+- Some or all tools missing from Claude Code
+- Expected tools not in tool list
+
+**Solutions:**
+1. **Refresh tool catalog:**
+   ```bash
+   ./agentcards init
+   ```
+
+2. **Verify underlying servers:**
+   ```bash
+   # Check each MCP server individually
+   ./agentcards status
+   ```
+
+3. **Check embeddings:**
+   ```bash
+   # Verify embeddings were generated
+   ls -lh ~/.agentcards/db
+   # Should show database files
+   ```
+
+4. **Force full re-initialization:**
+   ```bash
+   # Backup and reset
+   mv ~/.agentcards ~/.agentcards.backup
+   ./agentcards init
+   ```
+
+#### Performance Degradation
+
+**Symptoms:**
+- Slow response times
+- Increased latency over time
+
+**Solutions:**
+1. **Run performance diagnostics:**
+   ```bash
+   ./agentcards debug --performance
+   ```
+
+2. **Check database size:**
+   ```bash
+   du -h ~/.agentcards/db
+   ```
+
+3. **Compact database:**
+   ```bash
+   ./agentcards vacuum
+   ```
+
+4. **Review benchmark results:**
+   ```bash
+   deno bench --allow-all tests/benchmarks/
+   ```
+
+#### Getting Help
+
+If you're still experiencing issues:
+
+1. **Check existing issues:** [GitHub Issues](https://github.com/YOUR_USERNAME/agentcards/issues)
+2. **Enable debug logging:** `LOG_LEVEL=debug ./agentcards serve`
+3. **Collect diagnostics:** `./agentcards debug --full`
+4. **Report issue:** Include logs, config, and Deno version
 
 ---
 

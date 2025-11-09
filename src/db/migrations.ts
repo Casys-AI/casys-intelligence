@@ -9,6 +9,9 @@
 
 import { PGliteClient } from "./client.ts";
 import * as log from "@std/log";
+import { DatabaseError } from "../errors/error-types.ts";
+import { createErrorLoggingMigration } from "./migrations/003_error_logging.ts";
+import { createMcpToolTablesMigration } from "./migrations/004_mcp_tool_tables.ts";
 
 /**
  * Migration definition
@@ -111,7 +114,11 @@ export class MigrationRunner {
         log.error(
           `✗ Migration ${migration.version} failed: ${error}`,
         );
-        throw error;
+
+        throw new DatabaseError(
+          `Migration ${migration.version} (${migration.name}) failed: ${error instanceof Error ? error.message : String(error)}`,
+          "migration"
+        );
       }
     }
 
@@ -143,7 +150,10 @@ export class MigrationRunner {
     for (const migration of toRollback) {
       const mig = migrationMap.get(migration.version);
       if (!mig) {
-        throw new Error(`Migration ${migration.version} not found in migration list`);
+        throw new DatabaseError(
+          `Migration ${migration.version} not found in migration list`,
+          "rollback"
+        );
       }
 
       try {
@@ -162,7 +172,11 @@ export class MigrationRunner {
         log.info(`✓ Migration ${mig.version} rolled back`);
       } catch (error) {
         log.error(`✗ Migration ${mig.version} rollback failed: ${error}`);
-        throw error;
+
+        throw new DatabaseError(
+          `Rollback of migration ${mig.version} (${mig.name}) failed: ${error instanceof Error ? error.message : String(error)}`,
+          "rollback"
+        );
       }
     }
 
@@ -182,16 +196,6 @@ export class MigrationRunner {
       return 0;
     }
   }
-}
-
-/**
- * Get all migrations in order
- */
-export function getAllMigrations(): Migration[] {
-  return [
-    createInitialMigration(),
-    createTelemetryMigration(),
-  ];
 }
 
 /**
@@ -245,9 +249,8 @@ CREATE TABLE IF NOT EXISTS tool_dependency (
   from_tool_id TEXT NOT NULL,
   to_tool_id TEXT NOT NULL,
   observed_count INTEGER DEFAULT 1,
-  confidence_score REAL DEFAULT 0.0,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  confidence_score REAL DEFAULT 0.5,
+  last_observed TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY (from_tool_id, to_tool_id)
 );
 
@@ -351,4 +354,16 @@ ON metrics (metric_name, timestamp DESC);
       await db.exec("DROP INDEX IF EXISTS idx_metrics_name_timestamp;");
     },
   };
+}
+
+/**
+ * Get all migrations in order
+ */
+export function getAllMigrations(): Migration[] {
+  return [
+    createInitialMigration(),
+    createTelemetryMigration(),
+    createErrorLoggingMigration(),
+    createMcpToolTablesMigration(),
+  ];
 }

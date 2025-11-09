@@ -192,18 +192,19 @@ Deno.test("getRecentMetrics - retrieves metrics from database", async () => {
     )
   `);
 
-  // Insert test metrics
+  // Insert test metrics with explicit timestamps to ensure ordering
+  const now = new Date();
   await db.query(
-    "INSERT INTO metrics (metric_name, value, metadata) VALUES ($1, $2, $3)",
-    ["query_latency_ms", 100, JSON.stringify({ test: "data1" })]
+    "INSERT INTO metrics (metric_name, value, metadata, timestamp) VALUES ($1, $2, $3, $4)",
+    ["query_latency_ms", 100, JSON.stringify({ test: "data1" }), new Date(now.getTime() - 2000)]
   );
   await db.query(
-    "INSERT INTO metrics (metric_name, value, metadata) VALUES ($1, $2, $3)",
-    ["query_latency_ms", 150, JSON.stringify({ test: "data2" })]
+    "INSERT INTO metrics (metric_name, value, metadata, timestamp) VALUES ($1, $2, $3, $4)",
+    ["query_latency_ms", 150, JSON.stringify({ test: "data2" }), new Date(now.getTime() - 1000)]
   );
   await db.query(
-    "INSERT INTO metrics (metric_name, value, metadata) VALUES ($1, $2, $3)",
-    ["context_usage_pct", 2.5, JSON.stringify({ test: "data3" })]
+    "INSERT INTO metrics (metric_name, value, metadata, timestamp) VALUES ($1, $2, $3, $4)",
+    ["context_usage_pct", 2.5, JSON.stringify({ test: "data3" }), now]
   );
 
   const metrics = await getRecentMetrics(db, "query_latency_ms", 10);
