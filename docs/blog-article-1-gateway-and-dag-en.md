@@ -477,4 +477,4 @@ These concepts push the boundaries of what's possible with MCP architecture even
 
 **About AgentCards**: AgentCards is an open-source exploration of advanced architectural patterns for MCP agents. Full code and benchmarks are available on GitHub.
 
-**Questions or feedback?** We'd love to hear your thoughts on these concepts. Should these patterns be part of the MCP protocol itself? Reach out on our GitHub repository.
+**Questions or feedback?** We'd love to hear your thoughts on these concepts. Should these patterns be part of the MCP protocol itself? 
