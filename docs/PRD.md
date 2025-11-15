@@ -1,9 +1,11 @@
 # AgentCards Product Requirements Document (PRD)
 
 **Author:** BMad
-**Date:** 2025-11-03
+**Date:** 2025-11-03 (Updated: 2025-11-14 - Epic 2.5 scope revised, Epic 3.5 & 4 added)
 **Project Level:** 2
-**Target Scale:** 1-2 epics, 5-15 stories total
+**Target Scale:** Évolutif - Epic 1-2 (baseline) + Epic 2.5-4 (adaptive features)
+
+> **Note:** Le business model a été raffiné dans le [Market Research Report](research/research-market-2025-11-11.md) (2025-11-11). Modèle confirmé: **Open Core Freemium** avec Free tier (3 servers) → Pro ($15/mo) → Team ($25/mo) → Enterprise (custom). Voir Section 9 ci-dessous pour détails complets.
 
 ---
 
@@ -230,6 +232,81 @@ Pas d'interface graphique MVP, mais output console optimisé:
 
 ---
 
+### Epic 2.5: Adaptive DAG Feedback Loops (Foundation)
+
+**Objectif:** Établir la fondation pour workflows adaptatifs avec feedback loops Agent-in-the-Loop (AIL) et Human-in-the-Loop (HIL), préparant l'intégration avec Epic 3 (Sandbox)
+
+**Architecture 3-Loop Learning (Phase 1 - Foundation):**
+
+**Loop 1 (Execution - Real-time):**
+- Event stream observable pour monitoring en temps réel
+- Command queue pour contrôle dynamique (agent + humain)
+- State management avec checkpoints et resume
+- **Fréquence:** Milliseconds (pendant l'exécution)
+
+**Loop 2 (Adaptation - Runtime):**
+- Agent-in-the-Loop (AIL): Décisions autonomes pendant l'exécution
+- Human-in-the-Loop (HIL): Validation humaine pour opérations critiques (CRUCIAL pour Epic 3)
+- DAG re-planning dynamique via GraphRAG queries
+- **Fréquence:** Seconds à minutes (entre layers)
+
+**Loop 3 (Meta-Learning - Basic):**
+- GraphRAG updates from execution patterns (co-occurrence, preferences)
+- Learning baseline pour futures optimisations
+- **Fréquence:** Per-workflow
+
+**Livrables clés (ADR-007 - Phase 1):**
+- ControlledExecutor extends ParallelExecutor avec event stream + commands
+- Checkpoint/resume infrastructure (PGlite persistence)
+- AIL/HIL integration avec multi-turn conversations
+- DAG replanning via DAGSuggester.replanDAG()
+- GraphRAG feedback loop (updateFromExecution)
+- Un seul agent en conversation continue (pas de filtering contexte)
+
+**Déféré à Epics suivants:**
+- **Epic 3.5 (Speculation):** Speculative execution avec sandbox isolation (safe!)
+  - DAGSuggester.predictNextNodes()
+  - Confidence-based speculation
+  - THE feature avec sécurité garantie
+
+- **Epic 4 (ADR-008):** Episodic Memory + Adaptive Thresholds
+  - Episodic memory storage (hybrid JSONB + typed columns)
+  - Adaptive threshold learning (EMA algorithm, 0.92 → 0.70-0.95)
+  - State pruning strategy
+  - Loop 3 avancé avec données réelles de production
+
+**Estimation:**
+- Stories 2.5-1 to 2.5-3: 7-10h / 3 stories
+
+**Rationale de deferral:**
+- Epic 2.5 = Foundation focused (Loop 1-2 + Loop 3 basique)
+- Speculation SANS sandbox = risqué (side-effects non isolés)
+- Speculation AVEC sandbox (Epic 3.5) = THE feature safe
+- ADR-008 bénéficiera de données réelles après Epic 2.5 + Epic 3
+- Epics digestibles (7-10h chacun vs 18.5h monolithique)
+
+**Value Proposition (Epic 2.5):**
+- **Foundation critique pour Epic 3** (HIL pour approval code sandbox)
+- **Human oversight** pour opérations critiques (safety)
+- **Progressive discovery** workflows adaptables runtime
+- **AIL decisions** agent peut replanifier basé sur découvertes
+- **Checkpoint/resume** workflows interruptibles et résilients
+
+**Architectural Insight:**
+- **Loop 1** fournit l'observabilité et le contrôle (event stream, checkpoints)
+- **Loop 2** permet l'adaptation intelligente (AIL/HIL, replanning) - unique à AgentCards vs CoALA
+- **Loop 3 basique** commence l'apprentissage (GraphRAG updates)
+- Epic 3.5 ajoutera speculation WITH sandbox (0ms latency safe)
+- Epic 4 ajoutera episodic memory + adaptive learning (self-improving)
+
+**Prerequisites:** Epic 1 (GraphRAG foundation), Epic 2 (DAG execution baseline)
+
+**Related Decisions:**
+- ADR-007 (✅ Approved v2.0 - 2025-11-14)
+- ADR-008 (⏳ Proposed - Deferred to Epic 4)
+
+---
+
 ### Epic 3: Agent Code Execution & Local Processing
 
 **Objectif:** Implémenter un sandbox d'exécution sécurisé pour permettre aux agents d'écrire et exécuter du code TypeScript localement, traitant les large datasets avant injection dans le contexte LLM
@@ -247,19 +324,84 @@ Pas d'interface graphique MVP, mais output console optimisé:
 
 **Value Proposition:** Réduction additionnelle de contexte (<5% → <1% pour large datasets), protection automatique des données sensibles, et traitement local des données volumineuses (1MB+ → <1KB dans contexte)
 
-**Architectural Benefit (Safe-to-Fail Branches + Speculative Execution):** L'isolation du sandbox permet de créer des **branches DAG safe-to-fail** : des tâches qui peuvent échouer sans compromettre le workflow global. Contrairement aux appels MCP (effets de bord possibles comme création de fichiers ou issues GitHub), le code sandbox est **idempotent et isolé**.
+**Architectural Benefit (Foundation pour Epic 3.5):** L'isolation du sandbox permet de créer des **branches DAG safe-to-fail** : des tâches qui peuvent échouer sans compromettre le workflow global. Contrairement aux appels MCP (effets de bord possibles comme création de fichiers ou issues GitHub), le code sandbox est **idempotent et isolé**.
 
-Cette propriété débloque la **vraie puissance du speculative execution** (Epic 2) : avec les MCP tools directs, l'exécution spéculative est risquée (prédiction incorrecte = side effect indésirable), mais avec le sandbox, tu peux :
+Cette propriété débloque la **vraie puissance du speculative execution** (Epic 3.5) : avec les MCP tools directs, l'exécution spéculative serait risquée (prédiction incorrecte = side effect indésirable), mais avec le sandbox isolation, Epic 3.5 pourra :
 - **Prédire et exécuter** plusieurs approches simultanément sans risque
 - **Échouer gracieusement** si les prédictions sont incorrectes (pas de corruption)
 - **Retry en toute sécurité** sans duplication d'effets
-- **A/B test en production** avec plusieurs algorithmes en parallèle
+- **Rollback natif** grâce à l'isolation complète
 
-Le combo **Speculative Execution (Epic 2) + Safe-to-Fail Branches (Epic 3)** transforme le DAG executor en système de **speculative resilience** : exécuter plusieurs hypothèses simultanément, conserver les succès, ignorer les échecs.
+**Prerequisites:** Epic 1 (GraphRAG foundation), Epic 2 (DAG execution), Epic 2.5 (AIL/HIL foundation)
 
 ---
 
-**Séquence:** Epic 1 → Epic 2 → Epic 3 (chaque epic build sur le précédent). Epic 3 est complémentaire aux Epics 1-2, ajoutant code execution comme alternative aux tool calls directs pour les cas d'usage avec large datasets.
+### Epic 3.5: Speculative Execution with Sandbox Isolation
+
+**Objectif:** Implémenter speculation WITH sandbox pour THE feature - 0ms perceived latency avec sécurité garantie
+
+**Livrables clés:**
+- DAGSuggester.predictNextNodes() avec GraphRAG community detection
+- Confidence-based speculation (threshold 0.7+)
+- Sandbox isolation pour toutes les speculations
+- Rollback automatique des prédictions incorrectes
+- Metrics tracking (hit rate, net benefit, waste)
+
+**Estimation:** 1-2 stories, 3-4h
+
+**Value Proposition:**
+- **0ms perceived latency** via speculation (23-30% speedup)
+- **Safe speculation** grâce à sandbox isolation (zero side-effects)
+- **THE feature** différenciateur d'AgentCards
+- **Graceful fallback** si prédiction incorrecte
+
+**Pourquoi après Epic 3 ?**
+- Speculation SANS sandbox = risqué (side-effects non contrôlés)
+- Speculation AVEC sandbox = safe (isolation + rollback natif)
+- Epic 2.5 (HIL) permet human override si needed
+- Foundation complète : Loop 1-2 + Sandbox + GraphRAG
+
+**Prerequisites:** Epic 2.5 (Foundation), Epic 3 (Sandbox)
+
+---
+
+### Epic 4: Episodic Memory & Adaptive Learning (ADR-008)
+
+**Objectif:** Étendre Loop 3 (Meta-Learning) avec mémoire épisodique et seuils adaptatifs pour système auto-améliorant
+
+**Livrables clés (ADR-008):**
+- Episodic memory storage (hybrid JSONB + typed columns)
+- Context-aware episode retrieval for prediction boost
+- Adaptive threshold learning (EMA algorithm, 0.92 → 0.70-0.95)
+- Per-workflow-type threshold convergence
+- State pruning strategy pour checkpoints
+
+**Estimation:** 2 stories, 4.5-5.5h
+
+**Value Proposition:**
+- **Self-improving system** via adaptive thresholds (85% success rate target)
+- **Historical context** améliore prédictions (episodic memory)
+- **Optimal thresholds** appris par type de workflow
+- **Loop 3 complet** avec apprentissage continu
+
+**Pourquoi après Epic 3.5 ?**
+- Nécessite données réelles de production (Epic 2.5 + 3 + 3.5)
+- Adaptive thresholds apprennent des vrais succès/échecs
+- Episodic memory bénéficie de volume d'exécutions
+- Optimisation basée sur mesures empiriques
+
+**Prerequisites:** Epic 2.5 (Foundation), Epic 3 (Sandbox), Epic 3.5 (Speculation)
+
+**Related Decisions:** ADR-008 (Proposed - Deferred)
+
+---
+
+**Séquence complète:**
+- Epic 1 → Epic 2 (Production ready baseline)
+- Epic 2.5 → Foundation adaptive (Loop 1-2 + Loop 3 basic)
+- Epic 3 → Sandbox isolation
+- Epic 3.5 → Speculation WITH sandbox (THE feature safe)
+- Epic 4 → Episodic memory + Adaptive learning (self-improving)
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)
 
@@ -269,9 +411,11 @@ Le combo **Speculative Execution (Epic 2) + Safe-to-Fail Branches (Epic 3)** tra
 
 ### Fonctionnalités Déférées Post-MVP
 
-**1. Speculative Execution & Tool Prediction**
-- Rationale: Besoin validation empirique que ça fonctionne réellement (>70% hit rate)
-- Timeline: v1.1+ si tests concluants post-MVP
+**1. Speculation déplacée IN-SCOPE (Epic 3.5)**
+- ~~Rationale: Besoin validation empirique que ça fonctionne réellement (>70% hit rate)~~
+- **UPDATE 2025-11-14:** Speculation est maintenant IN-SCOPE dans Epic 3.5 (après sandbox)
+- **Rationale:** Speculation WITH sandbox = THE feature safe (isolation + rollback)
+- Timeline: Epic 3.5 (après Epic 3 Sandbox)
 
 **2. Plugin System pour API Translation**
 - Rationale: Pas de cas d'usage bloquants sans plugins day-1
@@ -303,9 +447,14 @@ Le combo **Speculative Execution (Epic 2) + Safe-to-Fail Branches (Epic 3)** tra
 - SSO, audit logs, SLA guarantees
 - Timeline: Conditional on enterprise demand
 
-**9. Monetization/Managed Service**
-- 100% gratuit open-source MVP
-- Pas de paywall ou features premium
+**9. Business Model & Monetization**
+- **Open Core Freemium** (aligné avec research report)
+- **Free Tier MVP:** Core features open-source, 3 MCP servers limit (conversion funnel)
+- **Pro Tier:** $15/mo - Unlimited servers, DAG execution, priority support (Phase 1: Mois 3-6)
+- **Team Tier:** $25/user/mo - Shared configs, team dashboard, analytics (Phase 2: Mois 7-18)
+- **Enterprise Tier:** $50-75/user/mo + $10K platform fee - SSO, RBAC, SOC2, SLAs (Phase 3: Mois 19-36)
+- **Rationale:** Sustainable freemium comble gap entre "100% free" (Smithery/Unla) et "enterprise-only" (Kong/IBM)
+- **Target:** $5M ARR dans 3 ans (realistic scenario, voir research report pour détails)
 
 **10. Support Protocols Non-MCP**
 - Uniquement MCP stdio/SSE supportés

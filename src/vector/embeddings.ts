@@ -2,12 +2,12 @@
  * Embedding Generation Module
  *
  * Generates 1024-dimensional embeddings for tool schemas using BGE-Large-EN-v1.5
- * via @xenova/transformers. Includes caching and progress tracking.
+ * via @huggingface/transformers. Includes caching and progress tracking.
  *
  * @module vector/embeddings
  */
 
-import { pipeline } from "@xenova/transformers";
+import { pipeline } from "@huggingface/transformers";
 import * as log from "@std/log";
 import type { PGliteClient } from "../db/client.ts";
 import type { MCPTool } from "../mcp/types.ts";

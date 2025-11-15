@@ -133,6 +133,24 @@ export async function setupLogger(config?: LoggerConfig): Promise<void> {
         level: "DEBUG",
         handlers: ["file"],
       },
+
+      // DAG event stream (Story 2.5-1)
+      "event-stream": {
+        level: "DEBUG",
+        handlers: ["file"],
+      },
+
+      // DAG command queue (Story 2.5-1)
+      "command-queue": {
+        level: "DEBUG",
+        handlers: ["file"],
+      },
+
+      // Controlled executor (Story 2.5-1)
+      "controlled-executor": {
+        level: "INFO",
+        handlers: ["console", "file"],
+      },
     },
   });
 
@@ -145,10 +163,12 @@ export async function setupLogger(config?: LoggerConfig): Promise<void> {
 /**
  * Get logger instance by name
  *
- * @param name Logger name (default, mcp, vector)
+ * @param name Logger name (default, mcp, vector, event-stream, command-queue, controlled-executor)
  * @returns Logger instance
  */
-export function getLogger(name: "default" | "mcp" | "vector" = "default") {
+export function getLogger(
+  name: "default" | "mcp" | "vector" | "event-stream" | "command-queue" | "controlled-executor" = "default",
+) {
   return log.getLogger(name);
 }
 

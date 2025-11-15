@@ -10,7 +10,12 @@
 import * as log from "@std/log";
 import type { VectorSearch } from "../vector/search.ts";
 import type { GraphRAGEngine } from "./graph-engine.ts";
-import type { WorkflowIntent, SuggestedDAG, DependencyPath } from "./types.ts";
+import type {
+  WorkflowIntent,
+  SuggestedDAG,
+  DependencyPath,
+  DAGStructure,
+} from "./types.ts";
 
 /**
  * DAG Suggester
@@ -23,6 +28,18 @@ export class DAGSuggester {
     private graphEngine: GraphRAGEngine,
     private vectorSearch: VectorSearch,
   ) {}
+
+  /**
+   * Get GraphRAGEngine instance for feedback loop (Story 2.5-3 Task 4)
+   *
+   * Exposes GraphRAGEngine to allow ControlledExecutor to call
+   * updateFromExecution() after workflow completion.
+   *
+   * @returns GraphRAGEngine instance
+   */
+  getGraphEngine(): GraphRAGEngine {
+    return this.graphEngine;
+  }
 
   /**
    * Suggest DAG structure for a given workflow intent
@@ -222,5 +239,166 @@ export class DAGSuggester {
     }
 
     return parts.join(" and ") + ".";
+  }
+
+  /**
+   * Replan DAG by incorporating new tools from GraphRAG (Story 2.5-3 Task 3)
+   *
+   * Called during runtime when agent discovers new requirements.
+   * Queries GraphRAG for relevant tools and merges them into existing DAG.
+   *
+   * Flow:
+   * 1. Query GraphRAG vector search for new requirement
+   * 2. Rank tools by PageRank importance
+   * 3. Build new DAG nodes from top-k tools
+   * 4. Merge with existing DAG (preserve completed layers)
+   * 5. Validate no cycles introduced
+   *
+   * Performance target: <200ms P95
+   *
+   * @param currentDAG - Current DAG structure
+   * @param context - Replanning context (completed tasks, new requirement, etc.)
+   * @returns Augmented DAG structure with new nodes
+   */
+  async replanDAG(
+    currentDAG: DAGStructure,
+    context: {
+      completedTasks: Array<{ taskId: string; status: string }>;
+      newRequirement: string;
+      availableContext: Record<string, unknown>;
+    },
+  ): Promise<DAGStructure> {
+    const startTime = performance.now();
+
+    try {
+      log.info(
+        `Replanning DAG with new requirement: "${context.newRequirement}"`,
+      );
+
+      // 1. Query GraphRAG vector search for relevant tools
+      const candidates = await this.vectorSearch.searchTools(
+        context.newRequirement,
+        5, // Top-5 candidates
+        0.5, // Lower threshold for replanning (more permissive)
+      );
+
+      if (candidates.length === 0) {
+        log.warn("No relevant tools found for replanning requirement");
+        // Return current DAG unchanged
+        return currentDAG;
+      }
+
+      // 2. Rank by PageRank importance
+      const rankedCandidates = candidates
+        .map((c) => ({
+          ...c,
+          pageRank: this.graphEngine.getPageRank(c.toolId),
+        }))
+        .sort((a, b) => b.pageRank - a.pageRank)
+        .slice(0, 3); // Top-3 for replanning
+
+      log.debug(
+        `Ranked replan candidates: ${
+          rankedCandidates.map((c) => `${c.toolId} (PR: ${c.pageRank.toFixed(3)})`).join(", ")
+        }`,
+      );
+
+      // 3. Build new tasks from candidates
+      const existingTaskIds = currentDAG.tasks.map((t) => t.id);
+      const newTasks = rankedCandidates.map((candidate, idx) => {
+        const newTaskId = `replan_task_${existingTaskIds.length + idx}`;
+
+        // Infer dependencies from context (completed tasks provide outputs)
+        const dependsOn: string[] = [];
+
+        // Simple heuristic: new tasks depend on last successful task
+        const lastSuccessfulTask = context.completedTasks
+          .filter((t) => t.status === "success")
+          .slice(-1)[0];
+
+        if (lastSuccessfulTask) {
+          dependsOn.push(lastSuccessfulTask.taskId);
+        }
+
+        return {
+          id: newTaskId,
+          tool: candidate.toolId,
+          arguments: context.availableContext || {},
+          depends_on: dependsOn,
+        };
+      });
+
+      // 4. Merge new tasks with existing DAG
+      const augmentedDAG: DAGStructure = {
+        tasks: [...currentDAG.tasks, ...newTasks],
+      };
+
+      // 5. Validate no cycles introduced
+      // Simple cycle detection: topological sort should succeed
+      try {
+        this.validateDAGNoCycles(augmentedDAG);
+      } catch (error) {
+        log.error(`Cycle detected in replanned DAG: ${error}`);
+        // Reject replan, return original DAG
+        return currentDAG;
+      }
+
+      const replanTime = performance.now() - startTime;
+      log.info(
+        `✓ DAG replanned: added ${newTasks.length} new tasks (${replanTime.toFixed(1)}ms)`,
+      );
+
+      return augmentedDAG;
+    } catch (error) {
+      log.error(`DAG replanning failed: ${error}`);
+      // Graceful degradation: return current DAG unchanged
+      return currentDAG;
+    }
+  }
+
+  /**
+   * Validate DAG has no cycles using topological sort
+   *
+   * Throws error if cycle detected.
+   *
+   * @param dag - DAG structure to validate
+   */
+  private validateDAGNoCycles(dag: DAGStructure): void {
+    const inDegree = new Map<string, number>();
+    const adjList = new Map<string, string[]>();
+
+    // Build adjacency list and in-degree map
+    for (const task of dag.tasks) {
+      inDegree.set(task.id, task.depends_on.length);
+      for (const dep of task.depends_on) {
+        if (!adjList.has(dep)) adjList.set(dep, []);
+        adjList.get(dep)!.push(task.id);
+      }
+    }
+
+    // Kahn's algorithm (topological sort)
+    const queue: string[] = [];
+    for (const [taskId, degree] of inDegree.entries()) {
+      if (degree === 0) queue.push(taskId);
+    }
+
+    const sorted: string[] = [];
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      sorted.push(current);
+
+      const neighbors = adjList.get(current) || [];
+      for (const neighbor of neighbors) {
+        const newDegree = inDegree.get(neighbor)! - 1;
+        inDegree.set(neighbor, newDegree);
+        if (newDegree === 0) queue.push(neighbor);
+      }
+    }
+
+    if (sorted.length !== dag.tasks.length) {
+      throw new Error(
+        `Cycle detected: topological sort produced ${sorted.length} tasks, expected ${dag.tasks.length}`,
+      );
+    }
   }
 }

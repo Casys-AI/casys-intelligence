@@ -33,7 +33,7 @@ const log = getLogger("default");
  * - Rate limiting to prevent MCP server overload
  */
 export class ParallelExecutor {
-  private config: Required<ExecutorConfig>;
+  protected config: Required<ExecutorConfig>;
   private rateLimiter: RateLimiter;
 
   /**
@@ -50,6 +50,8 @@ export class ParallelExecutor {
       maxConcurrency: config.maxConcurrency ?? Infinity,
       taskTimeout: config.taskTimeout ?? 30000,
       verbose: config.verbose ?? false,
+      ail: config.ail ?? { enabled: false, decision_points: "manual" },
+      hil: config.hil ?? { enabled: false, approval_required: "never" },
     };
     // Initialize rate limiter: 10 requests per second per server
     this.rateLimiter = new RateLimiter(10, 1000);

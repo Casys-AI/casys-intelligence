@@ -12,10 +12,28 @@ Dans le [premier article](./blog-article-1-gateway-and-dag.md) de cette série, 
 
 Dans cet article, nous explorons deux concepts qui sortent de ce paradigme :
 
-1. **Agent Code Sandboxing** — Exécuter du code généré par l'agent dans un environnement isolé, déplaçant la computation hors du protocole
-2. **Speculative Execution** — Prédire et pré-exécuter les workflows avant même que l'agent ne les demande
+1. **Agent Code Sandboxing (Concept 3)** — Exécuter du code généré par l'agent dans un environnement isolé, déplaçant la computation hors du protocole
+2. **Speculative Execution (Concept 4)** — Prédire et pré-exécuter les workflows avant même que l'agent ne les demande
 
-Ces deux concepts transforment la gateway d'un simple routeur en un **système d'orchestration intelligent** capable d'anticiper les besoins et d'isoler les calculs lourds.
+### Architecture Note : Une séquence délibérée
+
+Ces deux concepts sont intimement liés, mais **l'ordre d'implémentation est critique** :
+
+> **Pourquoi le sandboxing AVANT la speculation ?**
+>
+> Imaginez exécuter spéculativement un workflow qui crée une issue GitHub, puis découvrir que la prédiction était incorrecte — vous avez maintenant une issue inutile à nettoyer. Ou pire : supprimer un fichier, écrire dans une base de données, envoyer un message Slack.
+>
+> **Sans sandbox :** La speculation est risquée. Une prédiction incorrecte peut créer des effets de bord indésirables.
+>
+> **Avec sandbox :** La speculation devient sûre. Le code s'exécute dans un environnement isolé où les échecs sont sans conséquence. Mauvaise prédiction ? On jette simplement les résultats. Pas de rollback complexe, pas de cleanup.
+
+Cette séquence débloque la vraie puissance de la speculation :
+- Le sandbox crée des **branches safe-to-fail** — du code qui peut échouer sans compromettre le workflow
+- La spéculation exploite ces branches pour **pré-exécuter agressivement** plusieurs approches en parallèle
+- Si toutes les prédictions réussissent → latence quasi-nulle pour l'agent
+- Si certaines échouent → on garde ce qui a marché, on ignore le reste
+
+Ensemble, ces concepts transforment la gateway d'un simple routeur en un **système d'orchestration intelligent** capable d'anticiper les besoins et d'isoler les calculs lourds.
 
 ---
 
@@ -319,40 +337,61 @@ async function injectRelevantTools(agentCode: string): string {
 
 ### La couche de détection PII
 
-Avant de retourner les résultats du sandbox au contexte LLM, scanner pour des données sensibles :
+Avant de retourner les résultats du sandbox au contexte LLM, scanner pour des données sensibles en utilisant **validator.js**, le standard de l'industrie pour la validation de données :
 
 ```typescript
+import validator from 'validator';
+
 class PIIDetector {
-  private patterns = [
-    { name: "email", regex: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi },
-    { name: "ssn", regex: /\b\d{3}-\d{2}-\d{4}\b/g },
-    { name: "credit_card", regex: /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/g },
-    { name: "api_key", fn: this.detectAPIKey.bind(this) },
-  ];
-
   scan(text: string): PIIFinding[] {
-    // Détecte tous les patterns PII
-  }
-
-  redact(text: string, findings: PIIFinding[]): string {
-    // Remplace par [REDACTED_EMAIL], [REDACTED_API_KEY], etc.
-  }
-
-  private detectAPIKey(text: string): PIIFinding[] {
-    // Détection de chaînes à haute entropie (probablement des clés API)
+    const findings: PIIFinding[] = [];
     const words = text.split(/\s+/);
-    return words
-      .filter(word => word.length > 20 && this.calculateEntropy(word) > 4.5)
-      .map(word => ({ type: "api_key", value: word }));
+
+    for (const word of words) {
+      // Email detection (validator.js)
+      if (validator.isEmail(word)) {
+        findings.push({ type: 'email', value: word });
+      }
+
+      // Credit card detection
+      if (validator.isCreditCard(word.replace(/[-\s]/g, ''))) {
+        findings.push({ type: 'credit_card', value: word });
+      }
+
+      // API key detection (high entropy strings)
+      if (word.length > 20 && this.calculateEntropy(word) > 4.5) {
+        findings.push({ type: 'api_key', value: word });
+      }
+    }
+
+    return findings;
+  }
+
+  tokenize(text: string, findings: PIIFinding[]): string {
+    let tokenized = text;
+    findings.forEach((finding, idx) => {
+      const token = `[${finding.type.toUpperCase()}_${idx + 1}]`;
+      tokenized = tokenized.replace(finding.value, token);
+    });
+    return tokenized;
   }
 }
 ```
+
+**Pourquoi validator.js ?**
+- ✅ **Standard de l'industrie** : 93M téléchargements/semaine sur npm
+- ✅ **Bataille-testé** : Utilisé en production par des milliers d'entreprises
+- ✅ **Précision élevée** : Patterns optimisés pour minimiser les faux positifs
+- ✅ **Maintenance** : Activement maintenu, mis à jour régulièrement
+- ✅ **Performance** : Optimisé pour le runtime, pas de regex maison
 
 Cette couche agit comme un **firewall de données** entre le sandbox et le contexte LLM, empêchant les fuites accidentelles de données sensibles.
 
 ---
 
 ## Concept 4 : Exécution spéculative
+
+> **Note:** Cet article couvre l'exécution spéculative avec un **seuil de confiance fixe** (0.7). Dans un prochain article (Article 3 : "Adaptive Learning"), nous explorerons comment le système peut **apprendre le seuil optimal** pour chaque type de workflow via la mémoire épisodique et des seuils adaptatifs (0.92 initial → convergence vers 0.70-0.95).
 
 ### L'idée centrale : Travailler pendant que l'agent "pense"
 
@@ -715,19 +754,38 @@ Le Model Context Protocol permet la composabilité. Des centaines de serveurs MC
 
 Mais la composabilité sans optimisation mène à la saturation du contexte, des goulots d'étranglement séquentiels, et du ballonnement des données intermédiaires. À 15+ serveurs MCP, le modèle de connexion directe s'effondre.
 
-Dans cette série de deux articles, nous avons exploré quatre concepts architecturaux pour adresser ces limitations :
+Dans cette série d'articles, nous explorons des concepts architecturaux pour adresser ces limitations. **Jusqu'ici, nous avons couvert :**
 
+**Article 1 : Gateway & DAG**
 1. **Semantic Gateway Pattern** — Réduction de contexte de 15x
 2. **DAG-Based Parallel Execution** — Réduction de latence de 4-6x
-3. **Speculative Execution** — Expérience utilisateur 5-10x plus rapide
-4. **Agent Code Sandboxing** — Réduction de contexte de 100x+ pour les workloads lourds
 
-Ces concepts transforment la gateway d'un simple routeur en un **système d'orchestration intelligent** qui :
+**Article 2 (cet article) : Sandbox & Speculation**
+3. **Agent Code Sandboxing** — Réduction de contexte de 100x+ pour les workloads lourds
+4. **Speculative Execution** — Expérience utilisateur 5-10x plus rapide
+
+**À venir dans les prochains articles :**
+
+**Article 3 : Adaptive Feedback Loops - When Agents Learn to Adapt**
+- Comment les agents peuvent prendre des décisions autonomes pendant l'exécution
+- Quand demander l'approbation humaine pour les opérations critiques
+- Re-planification dynamique : adapter le workflow basé sur les découvertes
+- Workflows de découverte progressive : explorer avant de décider
+- Boucles d'apprentissage multi-niveaux (temps réel, runtime, meta-learning)
+
+**Article 4 : The Self-Improving Agent - Learning from History**
+- Mémoire épisodique : se souvenir des workflows passés
+- Seuils adaptatifs : apprendre le niveau de confiance optimal par contexte
+- Du système rigide au système auto-optimisant
+- Comment les données de production rendent l'agent plus intelligent au fil du temps
+
+Ces concepts transforment la gateway d'un simple routeur en un **système d'orchestration intelligent et auto-adaptatif** qui :
 - Travaille en avance sur l'agent (spéculatif)
 - Essaye multiples approches (résilient)
 - Opère dans des environnements isolés (sûr)
 - Retourne seulement les résultats essentiels (contexte-efficace)
 - Dégrade gracieusement en cas d'échec (robuste)
+- **Apprend et s'améliore au fil du temps** (adaptatif)
 
 ### La vision
 

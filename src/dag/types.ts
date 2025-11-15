@@ -55,6 +55,40 @@ export interface ExecutorConfig {
    * Enable verbose logging
    */
   verbose?: boolean;
+
+  /**
+   * Agent-in-the-Loop (AIL) configuration (Story 2.5-3)
+   *
+   * Enables adaptive decision points where the AI agent can:
+   * - Continue execution normally
+   * - Trigger DAG replanning based on discoveries
+   * - Abort workflow execution
+   *
+   * Decision point triggers:
+   * - per_layer: After each DAG layer execution
+   * - on_error: Only when a task fails
+   * - manual: Only when explicitly triggered via command
+   */
+  ail?: {
+    enabled: boolean;
+    decision_points: "per_layer" | "on_error" | "manual";
+  };
+
+  /**
+   * Human-in-the-Loop (HIL) configuration (Story 2.5-3)
+   *
+   * Enables approval checkpoints where a human operator must
+   * approve workflow continuation before proceeding.
+   *
+   * Approval triggers:
+   * - always: Require approval after every layer
+   * - critical_only: Only for tasks with side_effects flag
+   * - never: Disabled (fully automated)
+   */
+  hil?: {
+    enabled: boolean;
+    approval_required: "always" | "critical_only" | "never";
+  };
 }
 
 /**
@@ -64,3 +98,182 @@ export type ToolExecutor = (
   tool: string,
   args: Record<string, unknown>,
 ) => Promise<unknown>;
+
+// ============================================================================
+// Story 2.5-1: Event Stream & Command Queue Types
+// ============================================================================
+
+/**
+ * Execution event types for real-time observability
+ *
+ * 9 event types covering workflow lifecycle:
+ * - workflow_start/complete: Workflow boundaries
+ * - layer_start: Layer execution start
+ * - task_start/complete/error: Individual task lifecycle
+ * - state_updated: State changes via reducers
+ * - checkpoint: Checkpoint created (Story 2.5-2)
+ * - decision_required: AIL/HIL decision needed (Story 2.5-3)
+ */
+export type ExecutionEvent =
+  | {
+      type: "workflow_start";
+      timestamp: number;
+      workflow_id: string;
+      total_layers: number;
+    }
+  | {
+      type: "layer_start";
+      timestamp: number;
+      workflow_id: string;
+      layer_index: number;
+      tasks_count: number;
+    }
+  | {
+      type: "task_start";
+      timestamp: number;
+      workflow_id: string;
+      task_id: string;
+      tool: string;
+    }
+  | {
+      type: "task_complete";
+      timestamp: number;
+      workflow_id: string;
+      task_id: string;
+      execution_time_ms: number;
+    }
+  | {
+      type: "task_error";
+      timestamp: number;
+      workflow_id: string;
+      task_id: string;
+      error: string;
+    }
+  | {
+      type: "state_updated";
+      timestamp: number;
+      workflow_id: string;
+      updates: {
+        messages_added?: number;
+        tasks_added?: number;
+        decisions_added?: number;
+        context_keys?: string[];
+      };
+    }
+  | {
+      type: "checkpoint";
+      timestamp: number;
+      workflow_id: string;
+      checkpoint_id: string;
+      layer_index: number;
+    }
+  | {
+      type: "decision_required";
+      timestamp: number;
+      workflow_id: string;
+      decision_type: "AIL" | "HIL";
+      description: string;
+    }
+  | {
+      type: "workflow_complete";
+      timestamp: number;
+      workflow_id: string;
+      total_time_ms: number;
+      successful_tasks: number;
+      failed_tasks: number;
+    };
+
+// ============================================================================
+// Story 2.5-2: Checkpoint & Resume Types
+// ============================================================================
+
+/**
+ * Checkpoint interface for WorkflowState persistence
+ *
+ * Stores a snapshot of workflow execution state to enable recovery from failures.
+ * Checkpoints are saved to PGlite after each layer execution.
+ *
+ * Retention policy: Keep 5 most recent checkpoints per workflow.
+ * Performance target: Save <50ms P95 (async, non-blocking).
+ */
+export interface Checkpoint {
+  /** UUID v4 identifier (generated via crypto.randomUUID()) */
+  id: string;
+
+  /** Workflow instance this checkpoint belongs to */
+  workflow_id: string;
+
+  /** Timestamp when checkpoint was created */
+  timestamp: Date;
+
+  /** DAG layer index to resume from (0-indexed) */
+  layer: number;
+
+  /** WorkflowState snapshot (serialized to JSONB in PGlite) */
+  state: import("./state.ts").WorkflowState;
+}
+
+// ============================================================================
+// Command Queue Types
+// ============================================================================
+
+/**
+ * Command types for dynamic workflow control
+ *
+ * 8 command types for runtime control:
+ * - continue: Continue execution (AIL decision - Story 2.5-3)
+ * - abort: Stop workflow execution
+ * - inject_tasks: Add tasks dynamically
+ * - replan_dag: Rebuild DAG structure
+ * - skip_layer: Skip entire layer
+ * - modify_args: Change task arguments
+ * - checkpoint_response: Resume from checkpoint (Story 2.5-2)
+ * - approval_response: Human approval for HIL checkpoint (Story 2.5-3)
+ */
+export type Command =
+  | {
+      type: "continue";
+      /** Optional: Reason why agent chose to continue (for logging/audit) */
+      reason?: string;
+    }
+  | {
+      type: "abort";
+      reason: string;
+    }
+  | {
+      type: "inject_tasks";
+      tasks: Array<{
+        id: string;
+        tool: string;
+        arguments: Record<string, unknown>;
+        depends_on: string[];
+      }>;
+      target_layer: number;
+    }
+  | {
+      type: "replan_dag";
+      new_requirement: string; // Natural language description of new requirement
+      available_context: Record<string, unknown>; // Current execution context
+    }
+  | {
+      type: "skip_layer";
+      layer_index: number;
+      reason: string;
+    }
+  | {
+      type: "modify_args";
+      task_id: string;
+      updates: Record<string, unknown>;
+    }
+  | {
+      type: "checkpoint_response";
+      checkpoint_id: string;
+      decision: "continue" | "rollback" | "modify";
+      modifications?: Record<string, unknown>;
+    }
+  | {
+      type: "approval_response";
+      checkpoint_id: string; // References the checkpoint being approved/rejected
+      approved: boolean; // true = continue, false = abort
+      feedback?: string; // Optional human feedback
+    };

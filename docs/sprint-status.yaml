@@ -63,13 +63,46 @@ development_status:
   2-7-end-to-end-tests-production-hardening: done
   epic-2-retrospective: completed
 
-  # Epic 3: Agent Code Execution & Local Processing
+  # Epic 2.5: Adaptive DAG Feedback Loops (Foundation)
+  # ADR-007 v2.0 (Approved 2025-11-14) - 3 stories, 7-10h
+  # Focus: Loop 1-2 + Loop 3 basic (Foundation before Epic 3 Sandbox)
+  # Original 6 stories moved to docs/stories/drafts/epic-2.5-old/
+  # Speculation deferred to Epic 3.5, ADR-008 deferred to Epic 4
+  # COMPLETED: 2025-11-14 (13/13 E2E tests passing)
+  epic-2.5: done
+  2.5-1-event-stream-command-queue-state-management: done
+  2.5-2-checkpoint-resume: done
+  2.5-3-ail-hil-integration-dag-replanning: done
+  epic-2.5-retrospective: optional
+
+  # Epic 3: Agent Code Execution & Local Processing (Sandbox Isolation)
+  # 8 stories, ~12-15h
+  # Prerequisite for Epic 3.5 (safe speculation)
   epic-3: backlog
-  3-1-deno-sandbox-executor-foundation: drafted
-  3-2-mcp-tools-injection-into-code-context: drafted
+  3-1-deno-sandbox-executor-foundation: done
+  3-2-mcp-tools-injection-into-code-context: review
   3-3-local-data-processing-pipeline: drafted
   3-4-agentcards-execute-code-mcp-tool: drafted
   3-5-pii-detection-tokenization: drafted
   3-6-code-execution-caching-optimization: drafted
   3-7-end-to-end-code-execution-tests-documentation: drafted
+  3-8-sandbox-security-hardening: backlog
   epic-3-retrospective: optional
+
+  # Epic 3.5: Speculative Execution with Sandbox Isolation
+  # 1-2 stories, 3-4h
+  # THE feature: Speculation WITH sandbox (safe!)
+  # Requires Epic 3 completion for isolation + rollback
+  epic-3.5: backlog
+  3.5-1-dag-suggester-speculative-execution: backlog
+  3.5-2-confidence-based-speculation-rollback: backlog
+  epic-3.5-retrospective: optional
+
+  # Epic 4: Episodic Memory & Adaptive Learning (ADR-008)
+  # 2 stories, 4.5-5.5h
+  # Self-improving system with production data
+  # Requires Epic 3.5 completion for real-world performance data
+  epic-4: backlog
+  4-1-episodic-memory-storage-retrieval: backlog
+  4-2-adaptive-threshold-learning-ema: backlog
+  epic-4-retrospective: optional
