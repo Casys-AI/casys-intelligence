@@ -84,7 +84,7 @@ development_status:
   3-3-local-data-processing-pipeline: deprecated  # Architectural issue: breaks AIL, redundant with 3.4 DAG + code_execution
   3-4-agentcards-execute-code-mcp-tool: done
   3-5-safe-to-fail-branches-resilient-workflows: done
-  3-6-pii-detection-tokenization: drafted
+  3-6-pii-detection-tokenization: ready-for-dev
   3-7-code-execution-caching-optimization: drafted
   3-8-end-to-end-code-execution-tests-documentation: drafted
   3-9-sandbox-security-hardening: backlog

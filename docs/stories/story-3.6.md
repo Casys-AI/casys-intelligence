@@ -2,7 +2,7 @@
 
 **Epic:** 3 - Agent Code Execution & Local Processing
 **Story ID:** 3.6
-**Status:** drafted
+**Status:** ready-for-dev
 **Estimated Effort:** 5-7 heures
 
 ---
@@ -330,7 +330,7 @@ AGENTCARDS_NO_PII_PROTECTION=1 ./agentcards serve
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story 3.6 Context](./story-3.6.context.xml) - Generated 2025-11-20
 
 ### Agent Model Used
 
