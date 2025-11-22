@@ -8,7 +8,6 @@
  */
 
 import * as log from "@std/log";
-import { ConsoleHandler } from "@std/log/console-handler";
 import { FileHandler } from "@std/log/file-handler";
 import type { LogRecord, LevelName } from "@std/log";
 import { ensureDir } from "@std/fs";
@@ -72,6 +71,47 @@ class RotatingFileHandler extends FileHandler {
 }
 
 /**
+ * ANSI color codes for log levels
+ */
+const LEVEL_COLORS: Record<string, string> = {
+  DEBUG: "\x1b[36m",   // Cyan
+  INFO: "\x1b[32m",    // Green
+  WARN: "\x1b[33m",    // Yellow
+  ERROR: "\x1b[31m",   // Red
+  CRITICAL: "\x1b[35m", // Magenta
+};
+const RESET = "\x1b[0m";
+
+/**
+ * Custom console handler that writes to stderr instead of stdout
+ * Required for MCP servers: stdout must be reserved for JSON-RPC messages only
+ */
+class StderrHandler extends log.BaseHandler {
+  private encoder = new TextEncoder();
+  private useColors: boolean;
+
+  constructor(levelName: LevelName, options: { formatter?: (record: LogRecord) => string; useColors?: boolean }) {
+    super(levelName, options);
+    this.useColors = options.useColors ?? Deno.stderr.isTerminal();
+  }
+
+  override log(msg: string): void {
+    Deno.stderr.writeSync(this.encoder.encode(msg + "\n"));
+  }
+
+  override format(record: LogRecord): string {
+    const level = record.levelName.padEnd(7);
+    const timestamp = record.datetime.toISOString();
+
+    if (this.useColors) {
+      const color = LEVEL_COLORS[record.levelName] || "";
+      return `${color}[${level}]${RESET} ${timestamp} - ${record.msg}`;
+    }
+    return `[${level}] ${timestamp} - ${record.msg}`;
+  }
+}
+
+/**
  * Initialize the logging system with console and file handlers
  *
  * Sets up multiple loggers:
@@ -95,13 +135,9 @@ export async function setupLogger(config?: LoggerConfig): Promise<void> {
 
   await log.setup({
     handlers: {
-      console: new ConsoleHandler("DEBUG", {
-        formatter: (record: LogRecord) => {
-          const level = record.levelName.padEnd(7);
-          const timestamp = record.datetime.toISOString();
-          return `[${level}] ${timestamp} - ${record.msg}`;
-        },
-      }),
+      // Use StderrHandler instead of ConsoleHandler to avoid polluting stdout
+      // MCP protocol requires stdout to be reserved for JSON-RPC messages only
+      console: new StderrHandler("DEBUG", {}),
 
       file: new RotatingFileHandler("INFO", {
         filename: logFilePath,

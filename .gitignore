@@ -56,3 +56,9 @@ temp/
 memory/
 memory:
 :memory:*
+
+# MCP server config (contains API keys)
+.mcp-servers.json
+
+# Monitoring data (Docker volumes)
+monitoring/data/

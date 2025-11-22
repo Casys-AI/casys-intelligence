@@ -2,7 +2,7 @@
  * Vector Embeddings Module
  *
  * Provides embedding generation and semantic search capabilities
- * using BGE-Large-EN-v1.5 model and PGlite with pgvector.
+ * using BGE-M3 model and PGlite with pgvector.
  *
  * @module vector
  */

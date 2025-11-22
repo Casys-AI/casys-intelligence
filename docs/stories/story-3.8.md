@@ -2,7 +2,7 @@
 
 **Epic:** 3 - Agent Code Execution & Local Processing
 **Story ID:** 3.8
-**Status:** drafted
+**Status:** ready-for-dev
 **Estimated Effort:** 6-8 heures
 
 ---
@@ -361,7 +361,7 @@ deno coverage coverage
 
 ### Context Reference
 
-<!-- Path(s) to story context XML will be added here by context workflow -->
+- [Story 3.8 Context XML](./story-3.8.context.xml) - Generated 2025-11-20
 
 ### Agent Model Used
 

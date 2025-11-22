@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "agentcards": {
+      "command": "deno",
+      "args": [
+        "run",
+        "--allow-all",
+        "/home/ubuntu/CascadeProjects/AgentCards/src/main.ts",
+        "serve",
+        "--config",
+        "/home/ubuntu/CascadeProjects/AgentCards/.mcp-servers.json"
+      ]
+    }
+  }
+}

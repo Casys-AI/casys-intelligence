@@ -27,6 +27,7 @@ import type {
   StructuredError,
 } from "./types.ts";
 import { getLogger } from "../telemetry/logger.ts";
+import { CodeExecutionCache, generateCacheKey } from "./cache.ts";
 
 const logger = getLogger("default");
 
@@ -59,6 +60,8 @@ const RESULT_MARKER = "__SANDBOX_RESULT__:";
  */
 export class DenoSandboxExecutor {
   private config: Required<SandboxConfig>;
+  private cache: CodeExecutionCache | null = null;
+  private toolVersions: Record<string, string> = {};
 
   /**
    * Create a new sandbox executor
@@ -70,12 +73,34 @@ export class DenoSandboxExecutor {
       timeout: config?.timeout ?? DEFAULTS.TIMEOUT_MS,
       memoryLimit: config?.memoryLimit ?? DEFAULTS.MEMORY_LIMIT_MB,
       allowedReadPaths: config?.allowedReadPaths ?? DEFAULTS.ALLOWED_READ_PATHS,
+      piiProtection: config?.piiProtection ?? {
+        enabled: true,
+        types: ["email", "phone", "credit_card", "ssn", "api_key"],
+        detokenizeOutput: false,
+      },
+      cacheConfig: config?.cacheConfig ?? {
+        enabled: true,
+        maxEntries: 100,
+        ttlSeconds: 300,
+        persistence: false,
+      },
     };
+
+    // Initialize cache if enabled
+    if (this.config.cacheConfig.enabled) {
+      this.cache = new CodeExecutionCache({
+        enabled: true,
+        maxEntries: this.config.cacheConfig.maxEntries ?? 100,
+        ttlSeconds: this.config.cacheConfig.ttlSeconds ?? 300,
+        persistence: this.config.cacheConfig.persistence ?? false,
+      });
+    }
 
     logger.debug("Sandbox executor initialized", {
       timeout: this.config.timeout,
       memoryLimit: this.config.memoryLimit,
       allowedPathsCount: this.config.allowedReadPaths.length,
+      cacheEnabled: this.config.cacheConfig.enabled,
     });
   }
 
@@ -96,6 +121,28 @@ export class DenoSandboxExecutor {
     let tempFile: string | null = null;
 
     try {
+      // Check cache before execution
+      if (this.cache) {
+        const cacheKey = generateCacheKey(
+          code,
+          context ?? {},
+          this.toolVersions
+        );
+
+        const cached = this.cache.get(cacheKey);
+        if (cached) {
+          const cacheLatency = performance.now() - startTime;
+          logger.info("Cache hit - returning cached result", {
+            cacheKey: cacheKey.substring(0, 16) + "...",
+            cacheLatencyMs: cacheLatency.toFixed(2),
+            originalExecutionMs: cached.result.executionTimeMs.toFixed(2),
+            speedup: (cached.result.executionTimeMs / cacheLatency).toFixed(1) + "x",
+          });
+
+          return cached.result;
+        }
+      }
+
       logger.debug("Starting sandbox execution", {
         codeLength: code.length,
         contextKeys: context ? Object.keys(context) : [],
@@ -125,6 +172,33 @@ export class DenoSandboxExecutor {
         executionTimeMs: result.executionTimeMs.toFixed(2),
         memoryUsedMb: result.memoryUsedMb,
       });
+
+      // 5. Store result in cache
+      if (this.cache) {
+        const cacheKey = generateCacheKey(
+          code,
+          context ?? {},
+          this.toolVersions
+        );
+
+        const now = Date.now();
+        const ttlMs = this.config.cacheConfig.ttlSeconds! * 1000;
+
+        this.cache.set(cacheKey, {
+          code,
+          context: context ?? {},
+          result,
+          toolVersions: this.toolVersions,
+          timestamp: now,
+          expiresAt: now + ttlMs,
+          hitCount: 0,
+        });
+
+        logger.debug("Result cached", {
+          cacheKey: cacheKey.substring(0, 16) + "...",
+          ttlSeconds: this.config.cacheConfig.ttlSeconds,
+        });
+      }
 
       return result;
     } catch (error) {
@@ -197,12 +271,22 @@ export class DenoSandboxExecutor {
           .join('\n    ')
       : '';
 
+    // ADR-016: REPL-style auto-return with heuristic detection
+    // Check if code contains statement keywords (const, let, var, function, return, etc.)
+    const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return)\s/.test(code.trim());
+
+    // If code has statements, execute as-is (requires explicit return)
+    // If code is pure expression, wrap in return for auto-return
+    const wrappedUserCode = hasStatements
+      ? code
+      : `return (${code});`;
+
     return `
 (async () => {
   try {
-    // Execute user code in async context with injected context
+    // Execute user code in async context with injected context (ADR-016: REPL-style auto-return)
     const __result = await (async () => {
-      ${contextInjection ? contextInjection + '\n' : ''}${code}
+      ${contextInjection ? contextInjection + '\n      ' : ''}${wrappedUserCode}
     })();
 
     // Serialize result (must be JSON-compatible)
@@ -543,5 +627,65 @@ export class DenoSandboxExecutor {
    */
   private sanitizePath(path: string): string {
     return path.replace(/\/home\/[^\/]+/g, "~").replace(/[A-Z]:\\Users\\[^\\]+/g, "~");
+  }
+
+  /**
+   * Update tool versions for cache invalidation
+   *
+   * Should be called when MCP server versions change to ensure cache keys
+   * reflect the current tool schema.
+   *
+   * @param toolVersions - Map of tool name to version string
+   */
+  setToolVersions(toolVersions: Record<string, string>): void {
+    this.toolVersions = toolVersions;
+    logger.debug("Tool versions updated", {
+      toolCount: Object.keys(toolVersions).length,
+    });
+  }
+
+  /**
+   * Invalidate cache entries for a specific tool
+   *
+   * Used when a tool's schema changes (e.g., MCP server update).
+   *
+   * @param toolName - Name of tool to invalidate
+   * @returns Number of entries invalidated
+   */
+  invalidateToolCache(toolName: string): number {
+    if (!this.cache) {
+      return 0;
+    }
+
+    const invalidated = this.cache.invalidate(toolName);
+    logger.info("Tool cache invalidated", {
+      toolName,
+      entriesInvalidated: invalidated,
+    });
+
+    return invalidated;
+  }
+
+  /**
+   * Get cache performance statistics
+   *
+   * @returns Cache stats or null if caching is disabled
+   */
+  getCacheStats() {
+    if (!this.cache) {
+      return null;
+    }
+
+    return this.cache.getStats();
+  }
+
+  /**
+   * Clear all cache entries
+   */
+  clearCache(): void {
+    if (this.cache) {
+      this.cache.clear();
+      logger.info("Cache cleared");
+    }
   }
 }

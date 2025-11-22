@@ -84,9 +84,9 @@ development_status:
   3-3-local-data-processing-pipeline: deprecated  # Architectural issue: breaks AIL, redundant with 3.4 DAG + code_execution
   3-4-agentcards-execute-code-mcp-tool: done
   3-5-safe-to-fail-branches-resilient-workflows: done
-  3-6-pii-detection-tokenization: ready-for-dev
-  3-7-code-execution-caching-optimization: drafted
-  3-8-end-to-end-code-execution-tests-documentation: drafted
+  3-6-pii-detection-tokenization: done
+  3-7-code-execution-caching-optimization: done
+  3-8-end-to-end-code-execution-tests-documentation: done
   3-9-sandbox-security-hardening: backlog
   epic-3-retrospective: optional
 
@@ -107,3 +107,23 @@ development_status:
   4-1-episodic-memory-storage-retrieval: backlog
   4-2-adaptive-threshold-learning-ema: backlog
   epic-4-retrospective: optional
+
+  # Epic 5: Intelligent Tool Discovery & Graph-Based Recommendations
+  # 2 stories, ~4-6h
+  # Hybrid search: semantic + graph-based relatedness (Adamic-Adar)
+  # See spike: docs/spikes/spike-search-tools-graph-traversal.md
+  epic-5: contexted
+  5-1-search-tools-semantic-graph-hybrid: review
+  5-2-workflow-templates-graph-bootstrap: drafted
+  epic-5-retrospective: optional
+
+  # Epic 6: Real-time Graph Monitoring & Observability
+  # 4 stories, ~8-12h
+  # Dashboard interactif avec SSE pour visualiser et explorer le graphe
+  # Live metrics, PageRank viz, Adamic-Adar tooltips, graph export
+  epic-6: backlog
+  6-1-real-time-events-stream-sse: drafted
+  6-2-interactive-graph-visualization-dashboard: drafted
+  6-3-live-metrics-analytics-panel: drafted
+  6-4-graph-explorer-search-interface: drafted
+  epic-6-retrospective: optional

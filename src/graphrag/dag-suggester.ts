@@ -86,7 +86,11 @@ export class DAGSuggester {
       const dependencyPaths = this.extractDependencyPaths(rankedCandidates.map((c) => c.toolId));
 
       // 5. Calculate confidence
-      const confidence = this.calculateConfidence(rankedCandidates, dependencyPaths);
+      const { confidence, semanticScore, pageRankScore, pathStrength } = this.calculateConfidence(rankedCandidates, dependencyPaths);
+
+      log.info(
+        `Confidence: ${confidence.toFixed(2)} (semantic: ${semanticScore.toFixed(2)}, pageRank: ${pageRankScore.toFixed(2)}, pathStrength: ${pathStrength.toFixed(2)}) for intent: "${intent.text}"`,
+      );
 
       if (confidence < 0.50) {
         log.info(`Confidence too low (${confidence.toFixed(2)}) for intent: "${intent.text}"`);
@@ -190,8 +194,8 @@ export class DAGSuggester {
   private calculateConfidence(
     candidates: Array<{ score: number; pageRank: number }>,
     dependencyPaths: DependencyPath[],
-  ): number {
-    if (candidates.length === 0) return 0;
+  ): { confidence: number; semanticScore: number; pageRankScore: number; pathStrength: number } {
+    if (candidates.length === 0) return { confidence: 0, semanticScore: 0, pageRankScore: 0, pathStrength: 0 };
 
     // Semantic score (top candidate)
     const semanticScore = candidates[0].score;
@@ -207,7 +211,8 @@ export class DAGSuggester {
 
     // Weighted combination
     // Semantic: 50%, PageRank: 30%, Path strength: 20%
-    return semanticScore * 0.5 + pageRankScore * 0.3 + pathStrength * 0.2;
+    const confidence = semanticScore * 0.5 + pageRankScore * 0.3 + pathStrength * 0.2;
+    return { confidence, semanticScore, pageRankScore, pathStrength };
   }
 
   /**

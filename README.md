@@ -45,6 +45,35 @@ deno task build
 
 That's it! AgentCards will discover your MCP servers, extract schemas, and generate embeddings.
 
+### Optional: Error Tracking with Sentry
+
+AgentCards supports [Sentry](https://sentry.io) for production error tracking and performance monitoring (see [ADR-011](docs/adrs/ADR-011-sentry-integration.md)).
+
+To enable Sentry, create a `.env` file in your project root:
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit with your Sentry credentials
+nano .env
+```
+
+Configure the following environment variables:
+
+```bash
+SENTRY_DSN=https://your-dsn@your-org.ingest.sentry.io/your-project-id
+SENTRY_ENVIRONMENT=production  # or development, staging
+SENTRY_TRACES_SAMPLE_RATE=0.1  # 10% sampling in production, 1.0 for dev
+```
+
+If `SENTRY_DSN` is not set, Sentry is disabled and AgentCards will run normally.
+
+**What gets tracked:**
+- Error tracking: MCPServerError, DAGExecutionError, SandboxExecutionError
+- Performance: `mcp.tools.list`, `mcp.tools.call`, workflow execution latency
+- Breadcrumbs: MCP operations, cache hits/misses, tool discovery
+
 ---
 
 ## 🔌 Usage with Claude Code
@@ -205,6 +234,15 @@ AgentCards integrates code execution into DAG workflows, enabling hybrid orchest
 - No processing needed
 - Stateful operations requiring immediate commit
 
+#### REPL-Style Execution
+
+Code execution supports REPL-style auto-return for simple expressions:
+
+- **Simple expressions** auto-return: `2 + 2` → `4`
+- **Multi-statement code** requires explicit `return`: `const x = 5; return x * 3` → `15`
+
+See [ADR-016](docs/adrs/ADR-016-repl-style-auto-return.md) for details on supported patterns and edge cases.
+
 #### Example: Hybrid DAG Workflow
 
 ```typescript
@@ -290,10 +328,36 @@ Code execution tasks are **idempotent** and **isolated**:
 
 #### Performance Characteristics
 
-- Sandbox startup: <100ms
-- Intent-based tool discovery: <200ms
-- Total execution timeout: 30s (configurable)
-- Memory limit: 512MB (configurable)
+| Metric | Target | Description |
+|--------|--------|-------------|
+| Sandbox startup | <100ms | Deno subprocess spawn |
+| Tool discovery | <200ms | Vector search for intent |
+| Execution timeout | 30s | Configurable via `sandbox_config.timeout` |
+| Memory limit | 512MB | Configurable via `sandbox_config.memoryLimit` |
+| Cache hit | <10ms | In-memory LRU lookup |
+
+#### Caching
+
+Code execution results are automatically cached to avoid re-executing identical code:
+
+```typescript
+// First execution: ~500ms (subprocess + execution)
+await mcp.callTool("agentcards:execute_code", {
+  code: `return data.filter(x => x > 5).length;`,
+  context: { data: [1, 2, 6, 8, 10] }
+});
+
+// Second execution: <10ms (cache hit)
+await mcp.callTool("agentcards:execute_code", {
+  code: `return data.filter(x => x > 5).length;`,
+  context: { data: [1, 2, 6, 8, 10] }  // Same code + context = cache hit
+});
+```
+
+**Cache key:** `hash(code + context + tool_versions)`
+- Different code → cache miss
+- Different context → cache miss
+- Tool schema changes → automatic invalidation
 
 #### Security
 
@@ -301,11 +365,51 @@ Code execution tasks are **idempotent** and **isolated**:
 - Code runs in isolated Deno subprocess
 - Limited permissions (only `~/.agentcards` read access)
 - No network access from sandbox
+- No subprocess spawning allowed
 
 **Input Validation:**
 - Code string validated (no empty, max 100KB)
 - Context object validated (JSON-serializable only)
 - Intent string sanitized (no code injection)
+
+#### PII Protection
+
+AgentCards automatically detects and tokenizes sensitive data before code execution:
+
+```typescript
+// Input with PII
+const context = {
+  users: [
+    { name: "Alice", email: "alice@secret.com" },
+    { name: "Bob", phone: "555-123-4567" }
+  ]
+};
+
+// Code sees tokenized values
+await mcp.callTool("agentcards:execute_code", {
+  code: `
+    // emails appear as [EMAIL_1], [EMAIL_2]
+    // phones appear as [PHONE_1], etc.
+    return context.users.map(u => u.email);
+  `,
+  context
+});
+```
+
+**Detected PII types:**
+- Email addresses
+- Phone numbers (US/CA format)
+- Credit card numbers
+- Social Security Numbers
+- API keys (common patterns)
+
+**Disable PII protection:**
+```typescript
+await mcp.callTool("agentcards:execute_code", {
+  code: "...",
+  sandbox_config: { piiProtection: false }
+});
+```
 
 ### Troubleshooting
 

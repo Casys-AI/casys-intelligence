@@ -27,6 +27,34 @@ export interface SandboxConfig {
    * @default []
    */
   allowedReadPaths?: string[];
+
+  /**
+   * PII protection configuration
+   * @default { enabled: true, types: all, detokenizeOutput: false }
+   */
+  piiProtection?: {
+    /** Whether PII protection is enabled */
+    enabled: boolean;
+    /** Which PII types to detect */
+    types?: Array<"email" | "phone" | "credit_card" | "ssn" | "api_key">;
+    /** Whether to detokenize output (default: false - safer) */
+    detokenizeOutput?: boolean;
+  };
+
+  /**
+   * Code execution cache configuration
+   * @default { enabled: true, maxEntries: 100, ttlSeconds: 300, persistence: false }
+   */
+  cacheConfig?: {
+    /** Whether caching is enabled */
+    enabled: boolean;
+    /** Maximum number of cache entries (LRU eviction) */
+    maxEntries?: number;
+    /** Time-to-live for cache entries in seconds */
+    ttlSeconds?: number;
+    /** Whether to persist cache to PGlite */
+    persistence?: boolean;
+  };
 }
 
 /**

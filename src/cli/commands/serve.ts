@@ -88,13 +88,22 @@ async function connectToMCPServers(
 }
 
 /**
+ * Callback type for tool execution tracking (Story 3.7 cache invalidation)
+ */
+type OnToolCallCallback = (toolKey: string) => void;
+
+/**
  * Create tool executor function for ParallelExecutor
  *
  * This function is called by the executor to execute individual tools.
  * It routes tool calls to the appropriate MCP client.
+ *
+ * @param clients - Map of MCP clients by server ID
+ * @param onToolCall - Optional callback for tracking tool usage (Story 3.7)
  */
 function createToolExecutor(
   clients: Map<string, MCPClient>,
+  onToolCall?: OnToolCallCallback,
 ): ToolExecutor {
   return async (toolName: string, args: Record<string, unknown>) => {
     // Parse tool name: "serverId:toolName"
@@ -104,6 +113,11 @@ function createToolExecutor(
     const client = clients.get(serverId);
     if (!client) {
       throw new Error(`Unknown MCP server: ${serverId}`);
+    }
+
+    // Track tool call for cache invalidation (Story 3.7)
+    if (onToolCall) {
+      onToolCall(toolName);
     }
 
     // Execute tool via MCP client
@@ -134,6 +148,16 @@ export function createServeCommand() {
     .option(
       "--no-speculative",
       "Disable speculative execution mode",
+      { default: true },
+    )
+    .option(
+      "--no-pii-protection",
+      "Disable PII detection and tokenization (use in trusted environments only)",
+      { default: true },
+    )
+    .option(
+      "--no-cache",
+      "Disable code execution caching (forces re-execution every time)",
       { default: true },
     )
     .action(async (options) => {
@@ -174,12 +198,39 @@ export function createServeCommand() {
 
         const dagSuggester = new DAGSuggester(graphEngine, vectorSearch);
 
-        // Create tool executor
-        const toolExecutor = createToolExecutor(mcpClients);
+        // Create tool executor with tracking callback (Story 3.7)
+        // Gateway reference will be set after gateway is created
+        let gatewayRef: { trackToolUsage: (toolKey: string) => Promise<void> } | null = null;
+        const toolExecutor = createToolExecutor(mcpClients, (toolKey) => {
+          // Fire-and-forget tracking - don't block tool execution
+          gatewayRef?.trackToolUsage(toolKey).catch(() => {});
+        });
         const executor = new ParallelExecutor(toolExecutor, {
           verbose: false,
           taskTimeout: 30000,
         });
+
+        // Check PII protection settings
+        // --no-pii-protection sets options.piiProtection to false
+        const piiProtectionEnabled = options.piiProtection !== false &&
+          Deno.env.get("AGENTCARDS_NO_PII_PROTECTION") !== "1";
+
+        if (!piiProtectionEnabled) {
+          log.warn(
+            "⚠️  PII protection is DISABLED. Sensitive data may be exposed to LLM context.",
+          );
+        }
+
+        // Check cache settings
+        // --no-cache sets options.cache to false
+        const cacheEnabled = options.cache !== false &&
+          Deno.env.get("AGENTCARDS_NO_CACHE") !== "1";
+
+        if (!cacheEnabled) {
+          log.warn(
+            "⚠️  Code execution cache is DISABLED. Performance may be degraded for repetitive queries.",
+          );
+        }
 
         // 5. Create gateway server
         log.info("Step 5/6: Starting MCP gateway...");
@@ -195,12 +246,28 @@ export function createServeCommand() {
             version: "1.0.0",
             enableSpeculative: options.speculative,
             defaultToolLimit: 10,
+            piiProtection: {
+              enabled: piiProtectionEnabled,
+            },
+            cacheConfig: {
+              enabled: cacheEnabled,
+              maxEntries: 100,
+              ttlSeconds: 300,
+              persistence: false,
+            },
           },
         );
 
-        // 6. Start gateway (stdio mode)
+        // Connect gateway to tool tracking callback (Story 3.7)
+        gatewayRef = gateway;
+
+        // 6. Start gateway (stdio or HTTP mode based on --port option)
         log.info("Step 6/6: Listening for MCP requests...\n");
-        await gateway.start();
+        if (options.port) {
+          await gateway.startHttp(options.port);
+        } else {
+          await gateway.start();
+        }
 
         // Setup graceful shutdown
         const shutdown = async () => {

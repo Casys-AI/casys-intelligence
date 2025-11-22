@@ -6,6 +6,7 @@
  * @module main
  */
 
+import { load } from "@std/dotenv";
 import { Command } from "@cliffy/command";
 import { createInitCommand } from "./cli/commands/init.ts";
 import { createServeCommand } from "./cli/commands/serve.ts";
@@ -15,6 +16,7 @@ import { setupLogger } from "./telemetry/index.ts";
 import { createDefaultClient } from "./db/client.ts";
 import { TelemetryService } from "./telemetry/telemetry.ts";
 import { MigrationRunner, getAllMigrations } from "./db/migrations.ts";
+import { initSentry } from "./telemetry/sentry.ts";
 
 /**
  * Handle --telemetry and --no-telemetry CLI flags
@@ -55,8 +57,14 @@ async function handleTelemetryFlags(): Promise<void> {
  * Main CLI application
  */
 export async function main(): Promise<void> {
+  // Load environment variables from .env file (if exists)
+  await load({ export: true, envPath: ".env" });
+
   // Initialize logging first
   await setupLogger();
+
+  // Initialize Sentry error tracking (ADR-011)
+  await initSentry();
 
   // Handle telemetry flags before command parsing
   await handleTelemetryFlags();

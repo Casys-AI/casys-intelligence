@@ -224,9 +224,9 @@ export class SchemaExtractor {
       const toolId = `${serverId}:${tool.name}`;
 
       try {
-        await this.db.exec(
+        await this.db.query(
           `INSERT INTO tool_schema (tool_id, server_id, name, description, input_schema, output_schema, cached_at)
-           VALUES (?, ?, ?, ?, ?, ?, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, NOW())
            ON CONFLICT(tool_id) DO UPDATE SET
              description = excluded.description,
              input_schema = excluded.input_schema,

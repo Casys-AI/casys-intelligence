@@ -34,6 +34,8 @@ export class MCPClient {
   private timeout: number;
   private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
+  private stderrReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  private stderrRunning: boolean = false;
 
   constructor(server: MCPServer, timeoutMs: number = 10000) {
     this.server = server;
@@ -79,6 +81,12 @@ export class MCPClient {
       }
       this.writer = this.process.stdin.getWriter();
       this.reader = this.process.stdout.getReader();
+
+      // Start reading stderr in background (ADR-012)
+      if (this.process.stderr) {
+        this.stderrReader = this.process.stderr.getReader();
+        this.readStderr();
+      }
 
       // Send initialize request with timeout
       await withTimeout(
@@ -132,6 +140,51 @@ export class MCPClient {
     }
 
     log.debug(`Initialize response received for ${this.server.id}`);
+  }
+
+  /**
+   * Read stderr from MCP server process in background (ADR-012)
+   *
+   * Logs stderr output from child MCP servers to our logger,
+   * making them visible in Grafana/Loki.
+   */
+  private async readStderr(): Promise<void> {
+    if (!this.stderrReader || this.stderrRunning) return;
+
+    this.stderrRunning = true;
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (this.stderrRunning) {
+        const { done, value } = await this.stderrReader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.trim()) {
+            log.info(`[${this.server.id}:stderr] ${line}`);
+          }
+        }
+      }
+
+      // Flush remaining buffer
+      if (buffer.trim()) {
+        log.info(`[${this.server.id}:stderr] ${buffer}`);
+      }
+    } catch (error) {
+      // Ignore errors when process is closing
+      if (this.stderrRunning) {
+        log.debug(`stderr reader error for ${this.server.id}: ${error}`);
+      }
+    } finally {
+      this.stderrRunning = false;
+    }
   }
 
   /**
@@ -202,6 +255,7 @@ export class MCPClient {
         // Send request
         const encoder = new TextEncoder();
         const message = JSON.stringify(request) + "\n";
+        log.debug(`[${this.server.id}:stdout] → ${JSON.stringify(request)}`);
         await this.writer!.write(encoder.encode(message));
 
         // Read response
@@ -224,6 +278,7 @@ export class MCPClient {
             if (line.trim()) {
               try {
                 const response = JSON.parse(line) as JSONRPCResponse;
+                log.debug(`[${this.server.id}:stdout] ← ${line.substring(0, 500)}${line.length > 500 ? '...' : ''}`);
                 clearTimeout(timeoutId);
                 resolve(response);
                 return;
@@ -336,6 +391,17 @@ export class MCPClient {
         // Stream already released
       }
       this.writer = null;
+    }
+
+    // Stop stderr reader (ADR-012)
+    this.stderrRunning = false;
+    if (this.stderrReader) {
+      try {
+        this.stderrReader.releaseLock();
+      } catch {
+        // Stream already released
+      }
+      this.stderrReader = null;
     }
 
     // Kill process

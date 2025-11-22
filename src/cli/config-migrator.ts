@@ -10,6 +10,7 @@
 import * as log from "@std/log";
 import { ensureDir } from "@std/fs";
 import { PGliteClient } from "../db/client.ts";
+import { MigrationRunner, getAllMigrations } from "../db/migrations.ts";
 import { MCPServerDiscovery } from "../mcp/discovery.ts";
 import { SchemaExtractor } from "../mcp/schema-extractor.ts";
 import { EmbeddingModel, generateEmbeddings } from "../vector/embeddings.ts";
@@ -137,6 +138,10 @@ export class ConfigMigrator {
       const dbPath = getAgentCardsDatabasePath();
       const db = new PGliteClient(dbPath);
       await db.connect();
+
+      // Run database migrations to create tables
+      const runner = new MigrationRunner(db);
+      await runner.runUp(getAllMigrations());
 
       const extractor = new SchemaExtractor(agentCardsConfigPath, db);
       const discoveryStats = await extractor.extractAndStore();

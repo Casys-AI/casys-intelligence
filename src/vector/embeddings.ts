@@ -1,7 +1,7 @@
 /**
  * Embedding Generation Module
  *
- * Generates 1024-dimensional embeddings for tool schemas using BGE-Large-EN-v1.5
+ * Generates 1024-dimensional embeddings for tool schemas using BGE-M3
  * via @huggingface/transformers. Includes caching and progress tracking.
  *
  * @module vector/embeddings
@@ -56,7 +56,7 @@ export interface EmbeddingStats {
 }
 
 /**
- * BGE-Large-EN-v1.5 Embedding Model
+ * BGE-M3 Embedding Model
  *
  * Lazy-loads the model on first use and provides encoding functionality
  * for generating 1024-dimensional embeddings.
@@ -67,7 +67,7 @@ export class EmbeddingModel {
   private loading: Promise<void> | null = null;
 
   /**
-   * Load the BGE-Large-EN-v1.5 model
+   * Load the BGE-M3 model
    * Downloads model weights (~400MB) on first run from HuggingFace Hub
    */
   async load(): Promise<void> {
@@ -154,7 +154,7 @@ export class EmbeddingModel {
  * Concatenates: name + description + parameter names + parameter descriptions
  * This provides semantic context for the embedding model.
  *
- * **Important:** BGE-Large-EN-v1.5 truncates at 512 tokens (~2000 chars).
+ * **Important:** BGE-M3 truncates at 512 tokens (~2000 chars).
  * Excessively long inputs will be silently truncated, potentially affecting embedding quality.
  *
  * @param schema Tool schema (from database or MCP)

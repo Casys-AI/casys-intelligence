@@ -634,6 +634,213 @@ So that I understand how to use the feature effectively.
 
 ---
 
+## Epic 5: Intelligent Tool Discovery & Graph-Based Recommendations
+
+### Vision
+
+Améliorer la découverte d'outils en combinant recherche sémantique et recommandations basées sur les patterns d'usage réels. Le problème initial: `execute_workflow` utilisait PageRank pour la recherche d'un seul outil, ce qui n'a pas de sens (PageRank mesure l'importance globale, pas la pertinence à une requête).
+
+### Technical Approach
+
+**Hybrid Search Pipeline (style Netflix):**
+1. **Candidate Generation** - Recherche sémantique (vector embeddings)
+2. **Re-ranking** - Graph-based boost (Adamic-Adar, neighbors)
+3. **Final Filtering** - Top-K results
+
+**Algorithmes Graphology:**
+- `Adamic-Adar` - Similarité basée sur voisins communs rares
+- `getNeighbors(in/out/both)` - Outils souvent utilisés avant/après
+- `computeGraphRelatedness()` - Score hybride avec contexte
+
+**Alpha Adaptatif:**
+- `α = 1.0` si 0 edges (pure semantic)
+- `α = 0.8` si < 10 edges
+- `α = 0.6` si > 50 edges (balanced)
+
+### Story Breakdown - Epic 5
+
+---
+
+**Story 5.1: search_tools - Semantic + Graph Hybrid Search**
+
+As an AI agent,
+I want a dedicated tool search endpoint that combines semantic and graph-based recommendations,
+So that I can find relevant tools without threshold failures.
+
+**Acceptance Criteria:**
+1. Nouvel outil MCP `agentcards:search_tools` exposé dans tools/list
+2. Recherche sémantique pure (pas de seuil bloquant comme execute_workflow)
+3. Alpha adaptatif: plus de poids sémantique quand graphe sparse
+4. Support `context_tools` pour booster les outils liés au contexte actuel
+5. Option `include_related` pour obtenir les voisins du graphe
+6. GraphRAGEngine: `getNeighbors()`, `computeAdamicAdar()`, `adamicAdarBetween()`
+7. GraphRAGEngine: `computeGraphRelatedness()` avec normalisation
+8. Logs détaillés: query, alpha, edge_count, scores
+9. Tests HTTP: queries "screenshot", "list files", "search web"
+
+**Prerequisites:** Epic 3 (sandbox, execute_code)
+
+---
+
+**Story 5.2: Workflow Templates & Graph Bootstrap**
+
+As a system administrator,
+I want predefined workflow templates to initialize the graph,
+So that recommendations work even before real usage data is collected.
+
+**Acceptance Criteria:**
+1. Fichier `config/workflow-templates.yaml` avec templates courants
+2. Templates: web_research, browser_automation, file_operations, knowledge_management
+3. GraphRAGEngine: `bootstrapFromTemplates()` method
+4. Chargement automatique au démarrage si graph vide (0 edges)
+5. Edges marquées `source: 'template'` pour distinguer du real usage
+6. PageRank et métriques recalculées après bootstrap
+7. Tests: vérifier que bootstrap crée les edges attendues
+8. Documentation: comment ajouter de nouveaux templates
+
+**Prerequisites:** Story 5.1
+
+---
+
+## Epic 6: Real-time Graph Monitoring & Observability
+
+### Vision
+
+Fournir une visibilité complète sur l'état du graphe de dépendances en temps réel via un dashboard interactif. Les développeurs et power users pourront observer comment le graphe apprend et évolue, diagnostiquer les problèmes de recommandations, et comprendre quels outils sont réellement utilisés ensemble dans leurs workflows.
+
+**Problème:** Actuellement, le graphe est une "boîte noire" - les edges, PageRank, et communities sont invisibles. Impossible de débugger pourquoi une recommandation est faite, ou de visualiser l'évolution du graphe au fil du temps.
+
+### Value Delivery
+
+À la fin de cet epic, un développeur peut ouvrir le dashboard AgentCards et voir en direct :
+- Le graphe complet avec nodes (tools) et edges (dépendances)
+- Les événements en temps réel (edge créé, workflow exécuté)
+- Les métriques live (edge count, density, alpha adaptatif)
+- Les outils les plus utilisés (PageRank top 10)
+- Les communities détectées par Louvain
+- Les chemins de dépendances entre outils
+
+**Estimation:** 4 stories, ~8-12h
+
+### Technical Approach
+
+**Architecture:**
+- **Backend**: SSE endpoint `/events/stream` pour événements temps réel
+- **Frontend**: Page HTML statique avec D3.js/Cytoscape.js pour graph viz
+- **Data Flow**: GraphRAGEngine → EventEmitter → SSE → Browser
+- **Performance**: Graph rendering <500ms pour 200 nodes
+
+**Event Types:**
+- `graph_synced` - Graph rechargé depuis DB
+- `edge_created` - Nouvelle dépendance détectée
+- `edge_updated` - Confidence score augmenté
+- `workflow_executed` - DAG exécuté avec succès
+- `metrics_updated` - PageRank/communities recalculés
+
+---
+
+### Story Breakdown - Epic 6
+
+---
+
+**Story 6.1: Real-time Events Stream (SSE)**
+
+As a developer monitoring AgentCards,
+I want to receive graph events in real-time via Server-Sent Events,
+So that I can observe how the system learns without polling.
+
+**Acceptance Criteria:**
+1. SSE endpoint créé: `GET /events/stream`
+2. EventEmitter intégré dans GraphRAGEngine
+3. Event types: `graph_synced`, `edge_created`, `edge_updated`, `workflow_executed`, `metrics_updated`
+4. Event payload: timestamp, event_type, data (tool_ids, scores, etc.)
+5. Reconnection automatique si connexion perdue (client-side retry logic)
+6. Heartbeat events toutes les 30s pour maintenir la connexion
+7. Max 100 clients simultanés (éviter DoS)
+8. CORS headers configurés pour permettre frontend local
+9. Tests: curl stream endpoint, vérifier format events
+10. Documentation: Event schema et exemples
+
+**Prerequisites:** Epic 5 completed (search_tools functional)
+
+---
+
+**Story 6.2: Interactive Graph Visualization Dashboard**
+
+As a power user,
+I want a web interface to visualize the tool dependency graph,
+So that I can understand which tools are used together.
+
+**Acceptance Criteria:**
+1. Page HTML statique: `public/dashboard.html`
+2. Force-directed graph layout avec D3.js ou Cytoscape.js
+3. Nodes = tools (couleur par server, taille par PageRank)
+4. Edges = dépendances (épaisseur par confidence_score)
+5. Interactions: zoom, pan, drag nodes
+6. Click sur node → affiche details (name, server, PageRank, neighbors)
+7. Real-time updates via SSE (nouveaux edges animés)
+8. Légende interactive (filtres par server)
+9. Performance: render <500ms pour 200 nodes
+10. Endpoint static: `GET /dashboard` sert le HTML
+11. Mobile responsive (optionnel mais nice-to-have)
+
+**Prerequisites:** Story 6.1 (SSE events)
+
+---
+
+**Story 6.3: Live Metrics & Analytics Panel**
+
+As a developer,
+I want to see live metrics about graph health and recommendations,
+So that I can monitor system performance and debug issues.
+
+**Acceptance Criteria:**
+1. Metrics panel dans dashboard (sidebar ou overlay)
+2. Live metrics affichés:
+   - Edge count, node count, density
+   - Alpha adaptatif actuel
+   - PageRank top 10 tools
+   - Communities count (Louvain)
+   - Workflow success rate (dernières 24h)
+3. Graphiques time-series (Chart.js/Recharts):
+   - Edge count over time
+   - Average confidence score over time
+   - Workflow execution rate (workflows/hour)
+4. API endpoint: `GET /api/metrics` retourne JSON
+5. Auto-refresh toutes les 5s (ou via SSE)
+6. Export metrics: bouton "Download CSV"
+7. Date range selector: last 1h, 24h, 7d
+8. Tests: vérifier que metrics endpoint retourne données correctes
+
+**Prerequisites:** Story 6.2 (dashboard)
+
+---
+
+**Story 6.4: Graph Explorer & Search Interface**
+
+As a user,
+I want to search and explore the graph interactively,
+So that I can find specific tools and understand their relationships.
+
+**Acceptance Criteria:**
+1. Search bar dans dashboard: recherche par tool name/description
+2. Autocomplete suggestions pendant typing
+3. Click sur résultat → highlight node dans graph
+4. "Find path" feature: sélectionner 2 nodes → affiche shortest path
+5. Filtres interactifs:
+   - Par server (checkboxes)
+   - Par confidence score (slider: 0-1)
+   - Par date (edges created after X)
+6. Adamic-Adar visualization: hover sur node → affiche related tools avec scores
+7. Export graph data: bouton "Export JSON/GraphML"
+8. Breadcrumb navigation: retour à vue complète après zoom
+9. Keyboard shortcuts: `/` pour focus search, `Esc` pour clear selection
+10. API endpoint: `GET /api/tools/search?q=screenshot` pour autocomplete
+
+**Prerequisites:** Story 6.3 (metrics panel)
+
+---
+
 ## Story Guidelines Reference
 
 **Story Format:**

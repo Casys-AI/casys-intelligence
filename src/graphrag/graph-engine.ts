@@ -291,6 +291,159 @@ export class GraphRAGEngine {
     }
   }
 
+  // ============================================
+  // New methods for search_tools (Spike: search-tools-graph-traversal)
+  // ============================================
+
+  /**
+   * Get edge count for adaptive alpha calculation
+   */
+  getEdgeCount(): number {
+    return this.graph.size;
+  }
+
+  /**
+   * Get neighbors of a tool
+   *
+   * @param toolId - Tool identifier
+   * @param direction - 'in' (tools before), 'out' (tools after), 'both'
+   * @returns Array of neighbor tool IDs
+   */
+  getNeighbors(toolId: string, direction: "in" | "out" | "both" = "both"): string[] {
+    if (!this.graph.hasNode(toolId)) return [];
+
+    switch (direction) {
+      case "in":
+        return this.graph.inNeighbors(toolId);
+      case "out":
+        return this.graph.outNeighbors(toolId);
+      case "both":
+        return this.graph.neighbors(toolId);
+    }
+  }
+
+  /**
+   * Compute Adamic-Adar similarity for a tool
+   *
+   * Finds tools that share common neighbors, weighted by neighbor rarity.
+   * A common neighbor with fewer connections contributes more to the score.
+   *
+   * Formula: AA(u,v) = Σ 1/log(|N(w)|) for all w in N(u) ∩ N(v)
+   *
+   * @param toolId - Tool identifier
+   * @param limit - Max number of results
+   * @returns Array of related tools with Adamic-Adar scores
+   */
+  computeAdamicAdar(toolId: string, limit = 10): Array<{ toolId: string; score: number }> {
+    if (!this.graph.hasNode(toolId)) return [];
+
+    const neighbors = new Set(this.graph.neighbors(toolId));
+    const scores = new Map<string, number>();
+
+    for (const neighbor of neighbors) {
+      const degree = this.graph.degree(neighbor);
+      if (degree <= 1) continue;
+
+      for (const twoHop of this.graph.neighbors(neighbor)) {
+        if (twoHop === toolId) continue;
+        scores.set(twoHop, (scores.get(twoHop) || 0) + 1 / Math.log(degree));
+      }
+    }
+
+    return [...scores.entries()]
+      .map(([id, score]) => ({ toolId: id, score }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  }
+
+  /**
+   * Compute Adamic-Adar score between two specific tools
+   *
+   * @param toolId1 - First tool
+   * @param toolId2 - Second tool
+   * @returns Adamic-Adar score (0 if no common neighbors)
+   */
+  adamicAdarBetween(toolId1: string, toolId2: string): number {
+    if (!this.graph.hasNode(toolId1) || !this.graph.hasNode(toolId2)) return 0;
+
+    const neighbors1 = new Set(this.graph.neighbors(toolId1));
+    const neighbors2 = new Set(this.graph.neighbors(toolId2));
+
+    let score = 0;
+    for (const neighbor of neighbors1) {
+      if (neighbors2.has(neighbor)) {
+        const degree = this.graph.degree(neighbor);
+        if (degree > 1) {
+          score += 1 / Math.log(degree);
+        }
+      }
+    }
+
+    return score;
+  }
+
+  /**
+   * Compute graph relatedness of a tool to context tools
+   *
+   * Returns highest relatedness score (direct edge = 1.0, else Adamic-Adar)
+   *
+   * @param toolId - Tool to evaluate
+   * @param contextTools - Tools already in context
+   * @returns Normalized relatedness score (0-1)
+   */
+  computeGraphRelatedness(toolId: string, contextTools: string[]): number {
+    if (contextTools.length === 0 || !this.graph.hasNode(toolId)) return 0;
+
+    let maxScore = 0;
+    for (const contextTool of contextTools) {
+      if (!this.graph.hasNode(contextTool)) continue;
+
+      // Direct neighbor = max score
+      if (this.graph.hasEdge(contextTool, toolId) || this.graph.hasEdge(toolId, contextTool)) {
+        return 1.0;
+      }
+
+      // Adamic-Adar score
+      const aaScore = this.adamicAdarBetween(toolId, contextTool);
+      maxScore = Math.max(maxScore, aaScore);
+    }
+
+    // Normalize (typical AA scores are 0-5, cap at 1.0)
+    return Math.min(maxScore / 2, 1.0);
+  }
+
+  /**
+   * Bootstrap graph with workflow templates
+   *
+   * Creates initial edges based on predefined workflow patterns.
+   * Used to solve cold-start problem when no usage data exists.
+   *
+   * @param templates - Workflow templates with edges
+   */
+  async bootstrapFromTemplates(templates: Record<string, { edges: [string, string][] }>): Promise<void> {
+    let edgesAdded = 0;
+
+    for (const [_templateName, template] of Object.entries(templates)) {
+      for (const [from, to] of template.edges) {
+        if (this.graph.hasNode(from) && this.graph.hasNode(to)) {
+          if (!this.graph.hasEdge(from, to)) {
+            this.graph.addEdge(from, to, {
+              count: 1,
+              weight: 0.5,
+              source: "template",
+            });
+            edgesAdded++;
+          }
+        }
+      }
+    }
+
+    if (edgesAdded > 0) {
+      log.info(`✓ Bootstrapped graph with ${edgesAdded} template edges`);
+      await this.precomputeMetrics();
+    }
+  }
+
   /**
    * Get graph statistics
    *

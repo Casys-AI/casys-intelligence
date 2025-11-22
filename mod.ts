@@ -17,6 +17,29 @@ export type {
   ErrorType,
 } from "./src/sandbox/types.ts";
 
+// PII Detection & Tokenization (Story 3.6)
+export {
+  PIIDetector,
+  TokenizationManager,
+  detectAndTokenize,
+} from "./src/sandbox/pii-detector.ts";
+export type {
+  PIIType,
+  PIIMatch,
+  PIIConfig,
+} from "./src/sandbox/pii-detector.ts";
+
+// Code Execution Cache (Story 3.7)
+export {
+  CodeExecutionCache,
+  generateCacheKey,
+} from "./src/sandbox/cache.ts";
+export type {
+  CacheConfig,
+  CacheEntry,
+  CacheStats,
+} from "./src/sandbox/cache.ts";
+
 // Tool context builder for MCP tool injection
 export {
   ContextBuilder,

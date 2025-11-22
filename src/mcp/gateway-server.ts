@@ -32,6 +32,7 @@ import type { DAGStructure } from "../graphrag/types.ts";
 import { HealthChecker } from "../health/health-checker.ts";
 import { DenoSandboxExecutor } from "../sandbox/executor.ts";
 import { ContextBuilder } from "../sandbox/context-builder.ts";
+import { captureError, startTransaction, addBreadcrumb } from "../telemetry/sentry.ts";
 
 /**
  * MCP JSON-RPC error codes
@@ -52,6 +53,17 @@ export interface GatewayServerConfig {
   version?: string;
   enableSpeculative?: boolean;
   defaultToolLimit?: number;
+  piiProtection?: {
+    enabled: boolean;
+    types?: Array<"email" | "phone" | "credit_card" | "ssn" | "api_key">;
+    detokenizeOutput?: boolean;
+  };
+  cacheConfig?: {
+    enabled: boolean;
+    maxEntries?: number;
+    ttlSeconds?: number;
+    persistence?: boolean;
+  };
 }
 
 /**
@@ -66,8 +78,11 @@ export class AgentCardsGatewayServer {
   private healthChecker: HealthChecker;
   private config: Required<GatewayServerConfig>;
   private contextBuilder: ContextBuilder;
+  private toolSchemaCache: Map<string, string> = new Map(); // serverId:toolName → schema hash
+  private httpServer: Deno.HttpServer | null = null; // HTTP server for SSE transport (ADR-014)
 
   constructor(
+    // @ts-ignore: db kept for future use (direct queries)
     private db: PGliteClient,
     private vectorSearch: VectorSearch,
     private graphEngine: GraphRAGEngine,
@@ -82,6 +97,17 @@ export class AgentCardsGatewayServer {
       version: config?.version ?? "1.0.0",
       enableSpeculative: config?.enableSpeculative ?? true,
       defaultToolLimit: config?.defaultToolLimit ?? 10,
+      piiProtection: config?.piiProtection ?? {
+        enabled: true,
+        types: ["email", "phone", "credit_card", "ssn", "api_key"],
+        detokenizeOutput: false,
+      },
+      cacheConfig: config?.cacheConfig ?? {
+        enabled: true,
+        maxEntries: 100,
+        ttlSeconds: 300,
+        persistence: false,
+      },
     };
 
     // Initialize MCP Server
@@ -152,49 +178,75 @@ export class AgentCardsGatewayServer {
    * @returns List of available tools
    */
   private async handleListTools(request: unknown): Promise<{ tools: Array<{ name: string; description: string; inputSchema: unknown }> } | { error: { code: number; message: string; data?: unknown } }> {
+    const transaction = startTransaction("mcp.tools.list", "mcp");
     try {
       const params = (request as { params?: { query?: string } }).params;
       const query = params?.query;
 
-      let tools: MCPTool[];
-
+      transaction.setData("has_query", !!query);
       if (query) {
-        // Semantic search for relevant tools
-        log.info(`list_tools with query: "${query}"`);
-        const results = await this.vectorSearch.searchTools(
-          query,
-          this.config.defaultToolLimit,
-          0.6, // Lower threshold for broader results
-        );
+        transaction.setData("query_length", query.length);
+      }
 
-        tools = results.map((r) => r.schema);
-      } else {
-        // Return all tools (warning: context saturation risk)
-        log.warn("⚠️  list_tools without query - returning all tools (context saturation risk)");
-        tools = await this.loadAllTools();
+      addBreadcrumb("mcp", "Processing tools/list request", { query });
+
+      // ADR-013: Only expose meta-tools to minimize context usage
+      // Tool discovery happens via execute_workflow with intent parameter
+      // Underlying tools are accessed internally via DAGSuggester + vector search
+      log.info(`list_tools: returning meta-tools only (ADR-013)`);
+      if (query) {
+        log.debug(`Query "${query}" ignored - use execute_workflow with intent instead`);
       }
 
       // Add special workflow execution tool
       const workflowTool: MCPTool = {
         name: "agentcards:execute_workflow",
         description:
-          "Execute a multi-tool workflow using AgentCards DAG engine. Supports intent-based suggestions or explicit workflow definitions.",
+          "Execute a multi-tool workflow using AgentCards DAG engine. Supports intent-based suggestions or explicit workflow definitions. Provide EITHER 'intent' (for AI suggestion) OR 'workflow' (for explicit DAG), not both.",
         inputSchema: {
           type: "object",
           properties: {
             intent: {
               type: "string",
-              description: "Natural language description of what you want to accomplish",
+              description: "Natural language description of what you want to accomplish (use this for AI-suggested workflows)",
             },
             workflow: {
               type: "object",
-              description: "Explicit DAG workflow structure with tasks and dependencies",
+              description: "Explicit DAG workflow structure with tasks and dependencies (use this for explicit workflows)",
             },
           },
-          oneOf: [
-            { required: ["intent"] },
-            { required: ["workflow"] },
-          ],
+          // Note: Both fields optional, but at least one should be provided
+          // Claude API doesn't support oneOf at root level, so we document the constraint in description
+        },
+      };
+
+      // Add search_tools (Spike: search-tools-graph-traversal)
+      const searchToolsTool: MCPTool = {
+        name: "agentcards:search_tools",
+        description:
+          "Search for relevant tools using semantic search and graph-based recommendations. Returns tools matching your query with optional related tools from usage patterns.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Natural language description of what you want to do",
+            },
+            limit: {
+              type: "number",
+              description: "Maximum number of tools to return (default: 5)",
+            },
+            include_related: {
+              type: "boolean",
+              description: "Include graph-related tools based on usage patterns (default: false)",
+            },
+            context_tools: {
+              type: "array",
+              items: { type: "string" },
+              description: "Tools already in use - boosts related tools in results",
+            },
+          },
+          required: ["query"],
         },
       };
 
@@ -202,7 +254,7 @@ export class AgentCardsGatewayServer {
       const executeCodeTool: MCPTool = {
         name: "agentcards:execute_code",
         description:
-          "Execute TypeScript code in secure sandbox with access to MCP tools. Process large datasets locally before returning results to save context tokens.",
+          "[INTERNAL] Execute TypeScript/JavaScript in Deno sandbox. Simple expressions auto-return, multi-statement code requires explicit return. See ADR-016 for details.",
         inputSchema: {
           type: "object",
           properties: {
@@ -242,15 +294,25 @@ export class AgentCardsGatewayServer {
         },
       };
 
-      return {
-        tools: [workflowTool, executeCodeTool, ...tools].map((schema) => ({
+      // ADR-013: Only return meta-tools (no underlying tools)
+      const result = {
+        tools: [workflowTool, searchToolsTool, executeCodeTool].map((schema) => ({
           name: schema.name,
           description: schema.description,
           inputSchema: schema.inputSchema,
         })),
       };
+      transaction.setData("tools_returned", 3);
+
+      transaction.finish();
+      return result;
     } catch (error) {
       log.error(`list_tools error: ${error}`);
+      captureError(error as Error, {
+        operation: "tools/list",
+        handler: "handleListTools",
+      });
+      transaction.finish();
       return this.formatMCPError(
         MCPErrorCodes.INTERNAL_ERROR,
         `Failed to list tools: ${(error as Error).message}`,
@@ -269,10 +331,12 @@ export class AgentCardsGatewayServer {
    * @returns Tool execution result
    */
   private async handleCallTool(request: unknown): Promise<{ content: Array<{ type: string; text: string }> } | { error: { code: number; message: string; data?: unknown } }> {
+    const transaction = startTransaction("mcp.tools.call", "mcp");
     try {
       const params = (request as { params?: { name?: string; arguments?: unknown } }).params;
 
       if (!params?.name) {
+        transaction.finish();
         return this.formatMCPError(
           MCPErrorCodes.INVALID_PARAMS,
           "Missing required parameter: 'name'",
@@ -281,25 +345,43 @@ export class AgentCardsGatewayServer {
 
       const { name, arguments: args } = params;
 
+      transaction.setTag("tool", name);
+      transaction.setData("has_arguments", !!args);
+      addBreadcrumb("mcp", "Processing tools/call request", { tool: name });
+
       log.info(`call_tool: ${name}`);
 
       // Check if this is a workflow request
       if (name === "agentcards:execute_workflow") {
-        return await this.handleWorkflowExecution(args);
+        const result = await this.handleWorkflowExecution(args);
+        transaction.finish();
+        return result;
       }
 
       // Check if this is a code execution request (Story 3.4)
       if (name === "agentcards:execute_code") {
-        return await this.handleExecuteCode(args);
+        const result = await this.handleExecuteCode(args);
+        transaction.finish();
+        return result;
+      }
+
+      // Check if this is a search_tools request (Spike: search-tools-graph-traversal)
+      if (name === "agentcards:search_tools") {
+        const result = await this.handleSearchTools(args);
+        transaction.finish();
+        return result;
       }
 
       // Single tool execution (proxy to underlying MCP server)
       const [serverId, ...toolNameParts] = name.split(":");
       const toolName = toolNameParts.join(":"); // Handle tools with ':' in name
 
+      transaction.setTag("server", serverId);
+
       const client = this.mcpClients.get(serverId);
 
       if (!client) {
+        transaction.finish();
         return this.formatMCPError(
           MCPErrorCodes.INVALID_PARAMS,
           `Unknown MCP server: ${serverId}`,
@@ -310,6 +392,7 @@ export class AgentCardsGatewayServer {
       // Proxy tool call to underlying server
       const result = await client.callTool(toolName, args as Record<string, unknown>);
 
+      transaction.finish();
       return {
         content: [
           {
@@ -320,6 +403,11 @@ export class AgentCardsGatewayServer {
       };
     } catch (error) {
       log.error(`call_tool error: ${error}`);
+      captureError(error as Error, {
+        operation: "tools/call",
+        handler: "handleCallTool",
+      });
+      transaction.finish();
       return this.formatMCPError(
         MCPErrorCodes.INTERNAL_ERROR,
         `Tool execution failed: ${(error as Error).message}`,
@@ -344,6 +432,16 @@ export class AgentCardsGatewayServer {
     if (workflowArgs.workflow) {
       log.info("Executing explicit workflow");
       const result = await this.executor.execute(workflowArgs.workflow);
+
+      // Update graph with execution data (learning loop)
+      await this.graphEngine.updateFromExecution({
+        execution_id: crypto.randomUUID(),
+        executed_at: new Date(),
+        intent_text: workflowArgs.intent ?? "",
+        dag_structure: workflowArgs.workflow,
+        success: result.errors.length === 0,
+        execution_time_ms: result.executionTimeMs,
+      });
 
       return {
         content: [
@@ -442,6 +540,128 @@ export class AgentCardsGatewayServer {
   }
 
   /**
+   * Handle search_tools request (Spike: search-tools-graph-traversal)
+   *
+   * Combines semantic search with graph-based recommendations:
+   * 1. Semantic search for query-matching tools
+   * 2. Adaptive alpha: more semantic weight when graph is sparse
+   * 3. Optional related tools via Adamic-Adar / neighbors
+   *
+   * @param args - Search arguments (query, limit, include_related, context_tools)
+   * @returns Search results with scores
+   */
+  private async handleSearchTools(args: unknown): Promise<{ content: Array<{ type: string; text: string }> }> {
+    const params = args as {
+      query?: string;
+      limit?: number;
+      include_related?: boolean;
+      context_tools?: string[];
+    };
+
+    // Validate query
+    if (!params.query || typeof params.query !== "string") {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: "Missing required parameter: 'query'",
+          }),
+        }],
+      };
+    }
+
+    const query = params.query;
+    const limit = params.limit || 5;
+    const includeRelated = params.include_related || false;
+    const contextTools = params.context_tools || [];
+
+    log.info(`search_tools: query="${query}", limit=${limit}, include_related=${includeRelated}`);
+
+    // 1. Semantic search (main candidates)
+    const semanticResults = await this.vectorSearch.searchTools(query, limit * 2, 0.5);
+
+    if (semanticResults.length === 0) {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            tools: [],
+            message: "No tools found matching your query",
+          }),
+        }],
+      };
+    }
+
+    // 2. Calculate adaptive alpha based on graph density (ADR-015)
+    const edgeCount = this.graphEngine.getEdgeCount();
+    const nodeCount = this.graphEngine.getStats().nodeCount;
+    const maxPossibleEdges = nodeCount * (nodeCount - 1); // directed graph
+    const density = maxPossibleEdges > 0 ? edgeCount / maxPossibleEdges : 0;
+    const alpha = Math.max(0.5, 1.0 - density * 2);
+
+    // 3. Compute final scores with graph boost
+    const results = semanticResults.map((result) => {
+      const graphScore = this.graphEngine.computeGraphRelatedness(result.toolId, contextTools);
+      const finalScore = alpha * result.score + (1 - alpha) * graphScore;
+
+      return {
+        tool_id: result.toolId,
+        server_id: result.serverId,
+        description: result.schema?.description || "",
+        semantic_score: Math.round(result.score * 100) / 100,
+        graph_score: Math.round(graphScore * 100) / 100,
+        final_score: Math.round(finalScore * 100) / 100,
+        related_tools: [] as Array<{ tool_id: string; relation: string; score: number }>,
+      };
+    });
+
+    // Sort by final score and limit
+    results.sort((a, b) => b.final_score - a.final_score);
+    const topResults = results.slice(0, limit);
+
+    // 4. Add related tools if requested
+    if (includeRelated) {
+      for (const result of topResults) {
+        // Get in-neighbors (tools often used BEFORE this one)
+        const inNeighbors = this.graphEngine.getNeighbors(result.tool_id, "in");
+        for (const neighbor of inNeighbors.slice(0, 2)) {
+          result.related_tools.push({
+            tool_id: neighbor,
+            relation: "often_before",
+            score: 0.8,
+          });
+        }
+
+        // Get out-neighbors (tools often used AFTER this one)
+        const outNeighbors = this.graphEngine.getNeighbors(result.tool_id, "out");
+        for (const neighbor of outNeighbors.slice(0, 2)) {
+          result.related_tools.push({
+            tool_id: neighbor,
+            relation: "often_after",
+            score: 0.8,
+          });
+        }
+      }
+    }
+
+    log.info(`search_tools: found ${topResults.length} results (alpha=${alpha}, edges=${edgeCount})`);
+
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          tools: topResults,
+          meta: {
+            query,
+            alpha,
+            edge_count: edgeCount,
+          },
+        }, null, 2),
+      }],
+    };
+  }
+
+  /**
    * Handle code execution (Story 3.4)
    *
    * Supports two modes:
@@ -509,7 +729,13 @@ export class AgentCardsGatewayServer {
         timeout: sandboxConfig.timeout ?? 30000,
         memoryLimit: sandboxConfig.memoryLimit ?? 512,
         allowedReadPaths: sandboxConfig.allowedReadPaths ?? [],
+        piiProtection: this.config.piiProtection,
+        cacheConfig: this.config.cacheConfig,
       });
+
+      // Set tool versions for cache key generation (Story 3.7)
+      const toolVersions = this.buildToolVersionsMap();
+      executor.setToolVersions(toolVersions);
 
       // Execute code in sandbox with injected context
       const startTime = performance.now();
@@ -587,22 +813,77 @@ export class AgentCardsGatewayServer {
   }
 
   /**
-   * Load all tools from database
+   * Generate hash of tool schema for change detection
    *
-   * @returns All available tools
+   * @param schema - Tool input schema object
+   * @returns Hash string
    */
-  private async loadAllTools(): Promise<MCPTool[]> {
-    const rows = await this.db.query(
-      `SELECT server_id, name, input_schema, description FROM tool_schema ORDER BY server_id, name`,
-    );
+  private hashToolSchema(schema: unknown): string {
+    const str = JSON.stringify(schema);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(16);
+  }
 
-    return rows.map((row: any) => {
-      return {
-        name: `${row.server_id}:${row.name}`,
-        description: row.description || "",
-        inputSchema: row.input_schema || {},
-      };
-    });
+  /**
+   * Track tool usage for cache invalidation (Story 3.7)
+   *
+   * Called by executor when a tool is invoked. Retrieves schema from DB
+   * and tracks changes for cache invalidation.
+   *
+   * @param toolKey - Tool identifier (serverId:toolName)
+   */
+  public async trackToolUsage(toolKey: string): Promise<void> {
+    try {
+      const [serverId, ...toolNameParts] = toolKey.split(":");
+      const toolName = toolNameParts.join(":");
+
+      const rows = await this.db.query(
+        `SELECT input_schema FROM tool_schema WHERE server_id = $1 AND name = $2`,
+        [serverId, toolName],
+      );
+
+      if (rows.length > 0) {
+        const schema = rows[0].input_schema;
+        this.trackToolSchemaInternal(toolKey, schema);
+      }
+    } catch (error) {
+      log.debug(`Failed to track tool schema for ${toolKey}: ${error}`);
+    }
+  }
+
+  /**
+   * Internal: Track tool schema for cache invalidation
+   *
+   * @param toolKey - Tool identifier (serverId:toolName)
+   * @param schema - Tool input schema
+   */
+  private trackToolSchemaInternal(toolKey: string, schema: unknown): void {
+    const schemaHash = this.hashToolSchema(schema);
+    const previousHash = this.toolSchemaCache.get(toolKey);
+
+    if (previousHash && previousHash !== schemaHash) {
+      log.info(`Tool schema changed: ${toolKey}, cache will be invalidated`);
+    }
+
+    this.toolSchemaCache.set(toolKey, schemaHash);
+  }
+
+  /**
+   * Build tool versions map for cache key generation (Story 3.7)
+   *
+   * @returns Map of tool names to version hashes
+   */
+  private buildToolVersionsMap(): Record<string, string> {
+    const versions: Record<string, string> = {};
+    for (const [toolKey, schemaHash] of this.toolSchemaCache.entries()) {
+      versions[toolKey] = schemaHash;
+    }
+    return versions;
   }
 
   /**
@@ -651,6 +932,97 @@ export class AgentCardsGatewayServer {
   }
 
   /**
+   * Start gateway server with HTTP transport (ADR-014)
+   *
+   * Creates an HTTP server that accepts JSON-RPC requests via POST /message
+   * and provides health checks via GET /health.
+   *
+   * @param port - Port number to listen on
+   */
+  async startHttp(port: number): Promise<void> {
+    // Run initial health check
+    await this.healthChecker.initialHealthCheck();
+
+    // Start periodic health checks
+    this.healthChecker.startPeriodicChecks();
+
+    // Create HTTP server
+    this.httpServer = Deno.serve({ port }, async (req) => {
+      const url = new URL(req.url);
+
+      // Health check endpoint
+      if (url.pathname === "/health" && req.method === "GET") {
+        return new Response(JSON.stringify({ status: "ok" }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // JSON-RPC message endpoint
+      if (url.pathname === "/message" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const response = await this.handleJsonRpcRequest(body);
+          return new Response(JSON.stringify(response), {
+            headers: { "Content-Type": "application/json" },
+          });
+        } catch (error) {
+          return new Response(JSON.stringify({
+            jsonrpc: "2.0",
+            error: { code: -32700, message: `Parse error: ${error}` },
+            id: null,
+          }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      return new Response("Not Found", { status: 404 });
+    });
+
+    log.info(`✓ AgentCards MCP gateway started (HTTP mode on port ${port})`);
+    log.info(`  Server: ${this.config.name} v${this.config.version}`);
+    log.info(`  Connected MCP servers: ${this.mcpClients.size}`);
+    log.info(`  Endpoints: GET /health, POST /message`);
+  }
+
+  /**
+   * Handle a JSON-RPC request directly (for HTTP transport)
+   */
+  private async handleJsonRpcRequest(request: {
+    jsonrpc: string;
+    id: number | string;
+    method: string;
+    params?: Record<string, unknown>;
+  }): Promise<Record<string, unknown>> {
+    const { id, method, params } = request;
+
+    try {
+      if (method === "tools/list") {
+        const result = await this.handleListTools(params as { query?: string; limit?: number } | undefined);
+        return { jsonrpc: "2.0", id, result };
+      }
+
+      if (method === "tools/call") {
+        const result = await this.handleCallTool({ params });
+        return { jsonrpc: "2.0", id, result };
+      }
+
+      return {
+        jsonrpc: "2.0",
+        id,
+        error: { code: MCPErrorCodes.METHOD_NOT_FOUND, message: `Method not found: ${method}` },
+      };
+    } catch (error) {
+      return {
+        jsonrpc: "2.0",
+        id,
+        error: { code: MCPErrorCodes.INTERNAL_ERROR, message: `${error}` },
+      };
+    }
+  }
+
+  /**
    * Graceful shutdown
    */
   async stop(): Promise<void> {
@@ -658,6 +1030,12 @@ export class AgentCardsGatewayServer {
 
     // Stop health checks
     this.healthChecker.stopPeriodicChecks();
+
+    // Close HTTP server if running (ADR-014)
+    if (this.httpServer) {
+      await this.httpServer.shutdown();
+      this.httpServer = null;
+    }
 
     // Close all MCP client connections
     for (const [serverId, client] of this.mcpClients.entries()) {

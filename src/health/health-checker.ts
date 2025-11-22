@@ -45,7 +45,7 @@ export class HealthChecker {
    * Perform initial health check at startup
    */
   async initialHealthCheck(): Promise<void> {
-    console.log("🏥 Performing initial health check...\n");
+    console.error("🏥 Performing initial health check...\n");
 
     // Check all servers in parallel for faster startup
     const checks = Array.from(this.mcpClients.entries()).map(
@@ -61,12 +61,12 @@ export class HealthChecker {
     // Log results
     for (const health of results) {
       const icon = this.getStatusIcon(health.status);
-      console.log(
+      console.error(
         `${icon} ${health.serverName} (${health.serverId}): ${health.status}`
       );
 
       if (health.errorMessage) {
-        console.log(`   └─ ${health.errorMessage}`);
+        console.error(`   └─ ${health.errorMessage}`);
       }
 
       // Structured logging
@@ -81,7 +81,7 @@ export class HealthChecker {
     }
 
     const summary = this.getHealthSummary();
-    console.log(`\n📊 Health summary: ${summary.healthy}/${summary.total} servers healthy\n`);
+    console.error(`\n📊 Health summary: ${summary.healthy}/${summary.total} servers healthy\n`);
 
     if (summary.down > 0) {
       console.warn(
@@ -94,7 +94,7 @@ export class HealthChecker {
    * Start periodic health checks
    */
   startPeriodicChecks(): void {
-    console.log("🔄 Starting periodic health checks (every 5 minutes)");
+    console.error("🔄 Starting periodic health checks (every 5 minutes)");
 
     this.checkInterval = setInterval(async () => {
       await this.performHealthCheck();

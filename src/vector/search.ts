@@ -1,7 +1,7 @@
 /**
  * Vector Search Module
  *
- * Provides semantic search capabilities using BGE-Large-EN-v1.5 embeddings
+ * Provides semantic search capabilities using BGE-M3 embeddings
  * and pgvector cosine similarity search with graceful degradation to keyword search.
  *
  * @module vector/search
@@ -28,7 +28,7 @@ export interface SearchResult {
  * Vector Search Engine
  *
  * Performs semantic search over tool embeddings using natural language queries.
- * Uses BGE-Large-EN-v1.5 for query encoding and pgvector HNSW index for fast
+ * Uses BGE-M3 for query encoding and pgvector HNSW index for fast
  * cosine similarity search.
  */
 export class VectorSearch {
