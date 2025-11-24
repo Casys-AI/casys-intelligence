@@ -28,6 +28,15 @@ import type {
 } from "./types.ts";
 import { getLogger } from "../telemetry/logger.ts";
 import { CodeExecutionCache, generateCacheKey } from "./cache.ts";
+import {
+  SecurityValidator,
+  SecurityValidationError,
+} from "./security-validator.ts";
+import {
+  ResourceLimiter,
+  ResourceLimitError,
+  type ExecutionToken,
+} from "./resource-limiter.ts";
 
 const logger = getLogger("default");
 
@@ -62,6 +71,8 @@ export class DenoSandboxExecutor {
   private config: Required<SandboxConfig>;
   private cache: CodeExecutionCache | null = null;
   private toolVersions: Record<string, string> = {};
+  private securityValidator: SecurityValidator;
+  private resourceLimiter: ResourceLimiter;
 
   /**
    * Create a new sandbox executor
@@ -96,11 +107,30 @@ export class DenoSandboxExecutor {
       });
     }
 
+    // Initialize security validator (Story 3.9 AC #2)
+    this.securityValidator = new SecurityValidator({
+      enableCodeValidation: true,
+      enableContextSanitization: true,
+      maxCodeLength: 100000, // 100KB limit
+    });
+
+    // Initialize resource limiter (Story 3.9 AC #4)
+    // Note: Memory pressure detection disabled by default for stability
+    // Enable in production config for additional safety
+    this.resourceLimiter = ResourceLimiter.getInstance({
+      maxConcurrentExecutions: 10, // Allow up to 10 concurrent sandboxes
+      maxTotalMemoryMb: 3072, // 3GB total (supports 5 concurrent 512MB executions)
+      enableMemoryPressureDetection: false, // Disable by default (opt-in)
+      memoryPressureThresholdPercent: 80,
+    });
+
     logger.debug("Sandbox executor initialized", {
       timeout: this.config.timeout,
       memoryLimit: this.config.memoryLimit,
       allowedPathsCount: this.config.allowedReadPaths.length,
       cacheEnabled: this.config.cacheConfig.enabled,
+      securityValidation: true,
+      resourceLimiting: true,
     });
   }
 
@@ -119,8 +149,58 @@ export class DenoSandboxExecutor {
   async execute(code: string, context?: Record<string, unknown>): Promise<ExecutionResult> {
     const startTime = performance.now();
     let tempFile: string | null = null;
+    let resourceToken: ExecutionToken | null = null;
 
     try {
+      // SECURITY: Validate code and context BEFORE any execution (Story 3.9 AC #2)
+      try {
+        this.securityValidator.validate(code, context);
+      } catch (securityError) {
+        // Security validation failed - return structured error
+        if (securityError instanceof SecurityValidationError) {
+          logger.warn("Security validation failed", {
+            violationType: securityError.violationType,
+            pattern: securityError.pattern,
+          });
+
+          return {
+            success: false,
+            error: {
+              type: "SecurityError",
+              message: securityError.message,
+            },
+            executionTimeMs: performance.now() - startTime,
+          };
+        }
+        // Re-throw unexpected errors
+        throw securityError;
+      }
+
+      // RESOURCE LIMITS: Acquire execution slot (Story 3.9 AC #4)
+      try {
+        resourceToken = await this.resourceLimiter.acquire(this.config.memoryLimit);
+      } catch (resourceError) {
+        // Resource limit exceeded - return structured error
+        if (resourceError instanceof ResourceLimitError) {
+          logger.warn("Resource limit exceeded", {
+            limitType: resourceError.limitType,
+            currentValue: resourceError.currentValue,
+            maxValue: resourceError.maxValue,
+          });
+
+          return {
+            success: false,
+            error: {
+              type: "ResourceLimitError",
+              message: resourceError.message,
+            },
+            executionTimeMs: performance.now() - startTime,
+          };
+        }
+        // Re-throw unexpected errors
+        throw resourceError;
+      }
+
       // Check cache before execution
       if (this.cache) {
         const cacheKey = generateCacheKey(
@@ -226,6 +306,11 @@ export class DenoSandboxExecutor {
         executionTimeMs,
       };
     } finally {
+      // Release resource token (Story 3.9 AC #4)
+      if (resourceToken) {
+        this.resourceLimiter.release(resourceToken);
+      }
+
       // Cleanup temp file (critical for preventing disk exhaustion)
       if (tempFile) {
         try {
@@ -272,8 +357,8 @@ export class DenoSandboxExecutor {
       : '';
 
     // ADR-016: REPL-style auto-return with heuristic detection
-    // Check if code contains statement keywords (const, let, var, function, return, etc.)
-    const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return)\s/.test(code.trim());
+    // Check if code contains statement keywords (const, let, var, function, return, throw, etc.)
+    const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return|throw|break|continue)\s/.test(code.trim());
 
     // If code has statements, execute as-is (requires explicit return)
     // If code is pure expression, wrap in return for auto-return
@@ -687,5 +772,14 @@ export class DenoSandboxExecutor {
       this.cache.clear();
       logger.info("Cache cleared");
     }
+  }
+
+  /**
+   * Get resource limiter statistics
+   *
+   * @returns Resource usage stats
+   */
+  getResourceStats() {
+    return this.resourceLimiter.getStats();
   }
 }

@@ -53,7 +53,7 @@ development_status:
   epic-1-retrospective: completed
 
   # Epic 2: DAG Execution & Production Readiness
-  epic-2: backlog
+  epic-2: done
   2-1-dependency-graph-construction-dag-builder: done
   2-2-parallel-execution-engine: done
   2-3-sse-streaming-pour-progressive-results: done
@@ -63,7 +63,7 @@ development_status:
   2-7-end-to-end-tests-production-hardening: done
   epic-2-retrospective: completed
 
-  # Epic 2.5: Adaptive DAG Feedback Loops (Foundation)
+  # Epic 2.5: Adaptive DAG Feedback Loops (Foundatio
   # ADR-007 v2.0 (Approved 2025-11-14) - 3 stories, 7-10h
   # Focus: Loop 1-2 + Loop 3 basic (Foundation before Epic 3 Sandbox)
   # Original 6 stories moved to docs/stories/drafts/epic-2.5-old/
@@ -87,7 +87,7 @@ development_status:
   3-6-pii-detection-tokenization: done
   3-7-code-execution-caching-optimization: done
   3-8-end-to-end-code-execution-tests-documentation: done
-  3-9-sandbox-security-hardening: backlog
+  3-9-sandbox-security-hardening: in-progress
   epic-3-retrospective: optional
 
   # Epic 3.5: Speculative Execution with Sandbox Isolation

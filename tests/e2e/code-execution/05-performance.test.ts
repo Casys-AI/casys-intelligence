@@ -15,6 +15,7 @@ import { assertEquals, assert } from "@std/assert";
 import { DenoSandboxExecutor } from "../../../src/sandbox/executor.ts";
 import { CodeExecutionCache, generateCacheKey } from "../../../src/sandbox/cache.ts";
 import type { ExecutionResult } from "../../../src/sandbox/types.ts";
+import { ResourceLimiter } from "../../../src/sandbox/resource-limiter.ts";
 
 /**
  * Create a cache entry
@@ -201,6 +202,8 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
   async fn() {
+    // Reset singleton to ensure fresh config with new defaults
+    ResourceLimiter.resetInstance();
     const executor = new DenoSandboxExecutor();
 
     // Run 5 concurrent executions
@@ -214,6 +217,9 @@ Deno.test({
 
     // All should succeed
     for (let i = 0; i < results.length; i++) {
+      if (!results[i].success) {
+        console.error(`Result ${i} failed:`, results[i].error);
+      }
       assertEquals(results[i].success, true);
       assertEquals(results[i].result, i * 2);
     }

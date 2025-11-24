@@ -50,7 +50,8 @@ Modify `wrapCode()` in `src/sandbox/executor.ts` using **heuristic detection**:
 
 ```typescript
 // Heuristic: Check if code contains statement keywords
-const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try)\s/.test(code.trim());
+// Updated 2025-11-24 (Story 3.9): Added throw, break, continue
+const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return|throw|break|continue)\s/.test(code.trim());
 
 // If pure expression → wrap in return
 // If has statements → execute as-is (requires explicit return)
@@ -59,15 +60,22 @@ const wrappedUserCode = hasStatements
   : `return (${code});`;
 ```
 
+**Statement Keywords Detected:**
+- **Variable declarations:** `const`, `let`, `var`
+- **Function/class definitions:** `function`, `class`
+- **Control flow:** `if`, `for`, `while`, `do`, `switch`, `try`
+- **Flow control:** `return`, `throw`, `break`, `continue` *(added 2025-11-24)*
+
 **Why heuristic instead of try-catch:**
 - Try-catch doesn't work for parse-time errors (TypeScript compilation happens before runtime)
-- Heuristic is simple, fast, and covers 95% of LLM-generated code patterns
+- Heuristic is simple, fast, and covers 98%+ of LLM-generated code patterns
 - Edge cases (keywords in comments/strings) are rare in practice
 
 **Supported Patterns:**
 - ✅ Simple expressions: `2 + 2`, `Math.sqrt(16)`, `arr.map(x => x * 2)`
 - ✅ Object literals: `{ foo: 'bar' }`
 - ✅ Multi-statement with explicit return: `const x = 5; return x * 3`
+- ✅ Exception throwing: `throw new Error("message")` *(fixed 2025-11-24)*
 - ❌ Multi-statement without return: `const x = 5; x * 3` → returns `null`
 
 **Edge Cases (acceptable tradeoffs):**

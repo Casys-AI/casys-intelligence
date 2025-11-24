@@ -1,9 +1,9 @@
 # AgentCards Product Requirements Document (PRD)
 
 **Author:** BMad
-**Date:** 2025-11-03 (Updated: 2025-11-14 - Epic 2.5 scope revised, Epic 3.5 & 4 added)
-**Project Level:** 2
-**Target Scale:** Évolutif - Epic 1-2 (baseline) + Epic 2.5-4 (adaptive features)
+**Date:** 2025-11-03 (Updated: 2025-11-24 - Project migrated to Level 3)
+**Project Level:** 3
+**Target Scale:** Complex System - 8 epics, 37 stories (baseline + adaptive features)
 
 > **Note:** Le business model a été raffiné dans le [Market Research Report](research/research-market-2025-11-11.md) (2025-11-11). Modèle confirmé: **Open Core Freemium** avec Free tier (3 servers) → Pro ($15/mo) → Team ($25/mo) → Enterprise (custom). Voir Section 9 ci-dessous pour détails complets.
 

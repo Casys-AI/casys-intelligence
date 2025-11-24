@@ -5,9 +5,9 @@
 # generated: 2025-11-03
 # project: AgentCards
 # project_type: software
-# project_level: 2
+# project_level: 3
 # field_type: greenfield
-# workflow_path: greenfield-level-2.yaml
+# workflow_path: greenfield-level-3.yaml
 
 # STATUS DEFINITIONS:
 # ==================
@@ -24,9 +24,9 @@
 generated: "2025-11-03"
 project: "AgentCards"
 project_type: "software"
-project_level: "2"
+project_level: "3"
 field_type: "greenfield"
-workflow_path: "greenfield-level-2.yaml"
+workflow_path: "greenfield-level-3.yaml"
 
 workflow_status:
   # Phase 1: Analysis
@@ -38,7 +38,6 @@ workflow_status:
   prd: docs/PRD.md
   validate-prd: optional
   create-design: conditional
-  tech-spec: optional
 
   # Phase 3: Solutioning
   create-architecture: docs/architecture.md

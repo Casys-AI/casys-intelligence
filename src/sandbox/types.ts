@@ -65,7 +65,9 @@ export type ErrorType =
   | "RuntimeError"
   | "TimeoutError"
   | "MemoryError"
-  | "PermissionError";
+  | "PermissionError"
+  | "SecurityError"
+  | "ResourceLimitError";
 
 /**
  * Structured error information
