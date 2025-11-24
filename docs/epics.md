@@ -1,9 +1,9 @@
 # AgentCards - Epic Breakdown
 
 **Author:** BMad
-**Date:** 2025-11-03
-**Project Level:** 2
-**Target Scale:** 2 epics, 13-15 stories total
+**Date:** 2025-11-03 (Updated: 2025-11-24)
+**Project Level:** 3
+**Target Scale:** 8 epics, 37+ stories total (baseline + adaptive features)
 
 ---
 
@@ -386,6 +386,178 @@ So that AgentCards is reliable et users don't experience bugs.
 
 ---
 
+## Epic 2.5: Adaptive DAG Feedback Loops (Foundation)
+
+**Expanded Goal (2-3 sentences):**
+
+Établir la fondation pour workflows adaptatifs avec feedback loops Agent-in-the-Loop (AIL) et Human-in-the-Loop (HIL), préparant l'intégration avec Epic 3 (Sandbox). Implémenter l'architecture 3-Loop Learning (Phase 1 - Foundation) avec event stream observable, checkpoint/resume, et DAG replanning dynamique. Ce pivot architectural débloque le contrôle runtime essentiel pour les opérations critiques (HIL approval code sandbox Epic 3) et workflows adaptatifs découvrant progressivement leurs besoins.
+
+**Architecture 3-Loop Learning (Phase 1 - Foundation):**
+
+**Loop 1 (Execution - Real-time):**
+- Event stream observable pour monitoring en temps réel
+- Command queue pour contrôle dynamique (agent + humain)
+- State management avec checkpoints et resume
+- **Fréquence:** Milliseconds (pendant l'exécution)
+
+**Loop 2 (Adaptation - Runtime):**
+- Agent-in-the-Loop (AIL): Décisions autonomes pendant l'exécution
+- Human-in-the-Loop (HIL): Validation humaine pour opérations critiques
+- DAG re-planning dynamique via GraphRAG queries
+- **Fréquence:** Seconds à minutes (entre layers)
+
+**Loop 3 (Meta-Learning - Basic):**
+- GraphRAG updates from execution patterns (co-occurrence, preferences)
+- Learning baseline pour futures optimisations
+- **Fréquence:** Per-workflow
+
+**Value Delivery:**
+
+À la fin de cet epic, AgentCards peut adapter ses workflows en temps réel basé sur les découvertes runtime, demander validation humaine pour opérations critiques, et apprendre des patterns d'exécution pour améliorer futures suggestions. Foundation critique pour Epic 3 (HIL code sandbox approval) et Epic 3.5 (speculation with rollback).
+
+---
+
+### Story Breakdown - Epic 2.5
+
+**Story 2.5-1: Event Stream, Command Queue & State Management**
+
+As a developer building adaptive workflows,
+I want real-time event streaming and dynamic control capabilities,
+So that I can observe execution progress and inject commands during runtime.
+
+**Acceptance Criteria:**
+1. `ControlledExecutor` extends `ParallelExecutor` (Epic 2) avec event stream
+2. Event types définis: `workflow_started`, `task_started`, `task_completed`, `workflow_completed`, `error`, `awaiting_input`
+3. EventEmitter implementation (Node.js-style events)
+4. Command queue: `pause`, `resume`, `cancel`, `replan`, `inject_task`
+5. State management: workflow state = `{ status, current_tasks, completed_tasks, pending_tasks, checkpoints }`
+6. State serialization/deserialization (JSON-compatible)
+7. Thread-safe command injection (async queue)
+8. Unit tests: event emission, command processing, state transitions
+9. Integration test: Execute workflow → inject pause command → verify workflow pauses
+
+**Prerequisites:** Epic 2 completed (ParallelExecutor functional)
+
+---
+
+**Story 2.5-2: Checkpoint & Resume Infrastructure**
+
+As a user with long-running workflows,
+I want workflows to be resumable after interruptions,
+So that I don't lose progress if something fails or I need to stop.
+
+**Acceptance Criteria:**
+1. Checkpoint système implémenté (`src/dag/checkpoint.ts`)
+2. Checkpoints stockés dans PGlite table: `workflow_checkpoints` (workflow_id, state_json, timestamp)
+3. Checkpoint automatique: après chaque task completed, before each critical operation
+4. Resume API: `resumeWorkflow(workflow_id)` → reconstruit state et continue
+5. Partial result preservation: completed tasks results cached
+6. Task idempotency verification: detect if task already completed before retry
+7. Checkpoint cleanup: auto-delete checkpoints >7 days old
+8. CLI command: `agentcards resume <workflow_id>`
+9. Error handling: corrupt checkpoint → fallback to nearest valid checkpoint
+10. Integration test: Workflow fails mid-execution → resume → completes successfully
+
+**Prerequisites:** Story 2.5-1 (state management)
+
+---
+
+**Story 2.5-3: AIL/HIL Integration & DAG Replanning**
+
+As an AI agent executing complex workflows,
+I want to make autonomous decisions (AIL) and request human validation (HIL) when needed,
+So that workflows can adapt based on discoveries and critical operations get human oversight.
+
+**Acceptance Criteria:**
+1. AIL (Agent-in-the-Loop) implementation:
+   - Decision points définis dans DAG: `{ type: 'ail_decision', prompt: string, options: [...] }`
+   - Agent query mechanism via single conversation thread (no context filtering)
+   - Multi-turn conversation support for complex decisions
+   - Decision logging dans PGlite: `ail_decisions` (workflow_id, decision_point, chosen_option, rationale)
+
+2. HIL (Human-in-the-Loop) implementation:
+   - Approval gates pour critical operations: `{ type: 'hil_approval', operation: string, risk_level: 'low'|'medium'|'high' }`
+   - User prompt via CLI or API: "Approve code execution? [y/n]"
+   - Timeout handling: auto-reject after 5 minutes (configurable)
+   - Approval history logging
+
+3. DAG Replanning:
+   - `DAGSuggester.replanDAG(current_state, new_intent)` method
+   - GraphRAG query pour find alternative paths
+   - Merge new DAG avec existing execution state
+   - Preserve completed tasks, replace pending tasks
+   - Validation: no cycles introduced, dependencies preserved
+
+4. Integration with ControlledExecutor:
+   - Pause workflow at decision/approval points
+   - Emit `awaiting_input` event
+   - Resume after decision/approval received
+
+5. Tests:
+   - AIL test: Workflow encounters decision point → agent chooses option → workflow continues
+   - HIL test: Critical operation → human approves → execution proceeds
+   - Replanning test: Workflow discovers new requirement → replan → new tasks added
+   - Multi-turn test: Agent asks follow-up questions before decision
+
+**Prerequisites:** Story 2.5-2 (checkpoint/resume)
+
+---
+
+**Story 2.5-4: Command Handlers Completion**
+
+As a developer building adaptive workflows,
+I want complete command handler implementations for dynamic workflow control,
+So that I can inject tasks, skip layers, modify arguments, and respond to checkpoints programmatically during execution.
+
+**Acceptance Criteria:**
+1. `inject_tasks` command handler:
+   - Dynamically inject new tasks into DAG without full replanning
+   - Position options: current_layer, next_layer, end
+   - Cycle detection validation
+   - Tests: Inject 3 tasks → verify DAG extended
+
+2. `skip_layer` command handler:
+   - Skip execution of current or next layer(s)
+   - Target options: current, next
+   - Skip count support (skip N layers)
+   - Tests: Skip next layer → verify bypassed
+
+3. `modify_args` command handler:
+   - Modify task arguments before execution
+   - Merge strategies: replace, merge
+   - Validation: Cannot modify already-executed tasks
+   - Tests: Modify args with merge → verify preserved
+
+4. `checkpoint_response` command handler:
+   - Custom checkpoint continuation logic
+   - Actions: continue, rollback, retry, modify_and_continue
+   - Rollback to specific checkpoint_id
+   - Tests: Rollback → verify state restored
+
+5. Command handler registry & dispatcher:
+   - Centralized Map-based routing (O(1) lookup)
+   - All 8 handlers registered (continue, abort, replan_dag, inject_tasks, skip_layer, modify_args, approval_response, checkpoint_response)
+   - Error handling: Try/catch wrappers with event emission
+   - Tests: Unknown command → verify warning logged
+
+6. Integration tests (5 scenarios):
+   - Full workflow with inject_tasks command
+   - Skip layer with in-flight tasks
+   - Modify args with replace strategy
+   - Checkpoint rollback recovery
+   - Command error handling
+
+7. Documentation updates:
+   - Architecture.md - Command handler extensibility section
+   - README.md - Dynamic workflow control examples
+   - JSDoc comments for all handlers
+
+**Prerequisites:** Story 2.5-3 (AIL/HIL integration)
+
+**Related:** Engineering Backlog (BUG-001: Race condition in processCommands() should be fixed as part of this story)
+
+---
+
 ## Story Guidelines Reference
 
 **Story Format:**
@@ -631,6 +803,192 @@ So that I understand how to use the feature effectively.
 10. Video tutorial: 3-minute quickstart (optional, can be deferred)
 
 **Prerequisites:** Story 3.7 (caching)
+
+---
+
+## Epic 3.5: Speculative Execution with Sandbox Isolation
+
+**Expanded Goal (2-3 sentences):**
+
+Implémenter speculation WITH sandbox pour THE feature différenciateur - 0ms perceived latency avec sécurité garantie. Utiliser GraphRAG community detection et confidence scoring pour prédire les prochaines actions et exécuter spéculativement dans sandbox isolé, permettant rollback automatique si prédiction incorrecte. Transformer AgentCards d'un système réactif en système prédictif qui anticipe les besoins de l'agent avant même qu'il les exprime.
+
+**Value Delivery:**
+
+À la fin de cet epic, AgentCards peut prédire avec 70%+ de précision les prochaines actions d'un workflow, les exécuter spéculativement dans sandbox isolé pendant que l'agent réfléchit, et fournir résultats instantanés (0ms perceived latency) quand l'agent demande finalement l'opération. Les prédictions incorrectes sont silencieusement discardées sans side effects grâce à sandbox isolation.
+
+**Estimation:** 1-2 stories, 3-4h
+
+---
+
+### Story Breakdown - Epic 3.5
+
+**Story 3.5-1: DAG Suggester & Speculative Execution**
+
+As an AI agent,
+I want AgentCards to predict and execute likely next actions speculatively,
+So that I get instant responses without waiting for execution.
+
+**Acceptance Criteria:**
+1. `DAGSuggester.predictNextNodes(current_state, context)` method implemented
+2. GraphRAG community detection utilisé pour pattern matching
+3. Confidence scoring basé sur:
+   - Historical co-occurrence frequency (85% des fois, tool A suivi de tool B)
+   - Context similarity (embeddings)
+   - Workflow type patterns
+4. Confidence threshold: >0.70 pour speculation (configurable)
+5. Speculative execution:
+   - Fork workflow execution dans sandbox branch
+   - Execute predicted tasks in parallel avec main workflow
+   - Cache results avec confidence score
+   - Discard si prédiction incorrecte (no side effects)
+6. Integration avec AdaptiveThresholdManager (Story 4.2 - already implemented)
+7. Metrics tracking:
+   - Speculation hit rate (% de prédictions correctes)
+   - Net benefit (time saved - time wasted)
+   - False positive rate (prédictions incorrectes)
+8. Graceful fallback: Si prédiction incorrecte, execute normalement
+9. Tests:
+   - Common pattern test: "read file" → predict "parse json" → verify executed speculatively
+   - High confidence test: 0.85 confidence → speculation triggered
+   - Low confidence test: 0.60 confidence → no speculation
+   - Rollback test: Incorrect prediction → discarded, no side effects
+10. Performance: Speculation overhead <50ms
+
+**Prerequisites:** Epic 3 completed (sandbox isolation), Epic 5 completed (search_tools for template discovery)
+
+---
+
+**Story 3.5-2: Confidence-Based Speculation & Rollback (Optional - peut être merged avec 3.5-1)**
+
+As a system administrator,
+I want confidence-based speculation controls and rollback capabilities,
+So that I can tune the speculation aggressiveness vs safety tradeoff.
+
+**Acceptance Criteria:**
+1. Configuration: `speculation_config.yaml`
+   - `enabled: true/false`
+   - `confidence_threshold: 0.70` (min confidence pour speculation)
+   - `max_concurrent_speculations: 3` (resource limit)
+   - `speculation_timeout: 10s` (max speculation time)
+2. Rollback mechanisms:
+   - Sandbox isolation ensures no side effects
+   - Speculation branch discarded if incorrect
+   - Main workflow unaffected by failed speculation
+3. Adaptive threshold learning (integration avec Story 4.2):
+   - Track speculation success/failure rates
+   - Adjust threshold dynamically (too many failures → increase threshold)
+4. CLI commands:
+   - `agentcards config speculation --threshold 0.75`
+   - `agentcards stats speculation` → hit rate, net benefit metrics
+5. Tests:
+   - Threshold tuning: Adjust threshold → verify speculation frequency changes
+   - Resource limit: Exceed max concurrent → additional speculations queued
+   - Timeout handling: Speculation exceeds 10s → terminated, no impact on main workflow
+
+**Prerequisites:** Story 3.5-1
+
+---
+
+## Epic 4: Episodic Memory & Adaptive Learning (ADR-008)
+
+**Expanded Goal (2-3 sentences):**
+
+Étendre Loop 3 (Meta-Learning) avec mémoire épisodique pour persistence des contextes d'exécution et apprentissage adaptatif des seuils de confiance via algorithme Sliding Window + FP/FN detection. Implémenter storage hybride (JSONB + typed columns) permettant retrieval contextuel d'épisodes historiques pour améliorer prédictions, et système d'apprentissage adaptatif ajustant dynamiquement les thresholds basé sur les succès/échecs observés. Transformer AgentCards en système auto-améliorant qui apprend continuellement de ses exécutions.
+
+**Value Delivery:**
+
+À la fin de cet epic, AgentCards persiste son apprentissage entre sessions (thresholds ne sont plus perdus au redémarrage), utilise les épisodes historiques pour améliorer prédictions (context-aware), et ajuste automatiquement les thresholds de confiance pour maintenir 85%+ de success rate. Le système devient progressivement plus intelligent avec l'usage.
+
+**Estimation:** 2 stories, 4.5-5.5h
+
+**Note:** Story 4.2 déjà implémentée durant Epic 1 (2025-11-05), Story 4.1 reste à implémenter pour persistence.
+
+---
+
+### Story Breakdown - Epic 4
+
+**Story 4.1: Episodic Memory Storage & Retrieval**
+
+As a system learning from past executions,
+I want to persist workflow execution contexts and retrieve relevant episodes,
+So that I can improve predictions based on historical patterns.
+
+**Acceptance Criteria:**
+1. PGlite table: `episodic_memory`
+   - Hybrid schema: JSONB `state_snapshot` + typed columns pour fast queries
+   - Columns: `episode_id`, `workflow_type`, `context_embedding`, `state_snapshot`, `outcome`, `confidence`, `timestamp`
+   - Indexes: B-tree sur workflow_type, Vector index (HNSW) sur context_embedding
+
+2. Episode capture:
+   - Store workflow state snapshots at key decision points
+   - Capture: initial context, intermediate states, final outcome
+   - Embeddings générés pour context (semantic search sur historical episodes)
+   - Max episode size: 100KB (compression si nécessaire)
+
+3. Episode retrieval:
+   - `retrieveSimilarEpisodes(current_context, workflow_type, top_k=5)` method
+   - Hybrid search: semantic similarity + workflow_type filter
+   - Return: similar past executions avec leurs outcomes
+   - Use case: DAGSuggester peut query similar past workflows pour better predictions
+
+4. State pruning strategy:
+   - Auto-prune episodes >90 days old (configurable)
+   - Keep only successful episodes with high confidence (>0.80)
+   - Compression: Remove redundant state information
+   - Max storage: 1GB episodic memory (oldest episodes deleted first)
+
+5. Integration avec DAGSuggester:
+   - Query similar episodes avant suggesting DAG
+   - Boost confidence si similar episode succeeded
+   - Learn from failed episodes: avoid patterns that failed historically
+
+6. Persistence pour adaptive thresholds (Story 4.2):
+   - Store current thresholds dans PGlite: `adaptive_thresholds` table
+   - Columns: `context_id`, `suggestion_threshold`, `explicit_threshold`, `last_updated`, `execution_count`
+   - Load thresholds at startup (survive server restarts)
+   - Update thresholds après each adjustment
+
+7. Tests:
+   - Storage test: Execute workflow → verify episode stored
+   - Retrieval test: Query similar context → verify relevant episodes returned
+   - Pruning test: Create old episodes → trigger cleanup → verify pruned
+   - Threshold persistence test: Adjust threshold → restart server → verify threshold preserved
+
+**Prerequisites:** Epic 2.5 (checkpointing foundation), Epic 3.5 (speculation generates execution data)
+
+---
+
+**Story 4.2: Adaptive Threshold Learning (Sliding Window + FP/FN Detection)**
+
+**Status:** ✅ COMPLETED (Implemented 2025-11-05 during Epic 1, documented 2025-11-24)
+
+**Implementation:** See `/home/ubuntu/CascadeProjects/AgentCards/docs/stories/story-4.2.md`
+
+As an AI agent,
+I want the system to learn optimal confidence thresholds from execution feedback,
+So that I can reduce unnecessary manual confirmations while avoiding failed speculative executions.
+
+**Acceptance Criteria:** (All criteria met - see story file for details)
+1. ✅ Sliding window algorithm tracks last 50 executions
+2. ✅ Analyzes 20 most recent executions every 10 executions
+3. ✅ Increases threshold when False Positive Rate > 20% (failed speculation)
+4. ✅ Decreases threshold when False Negative Rate > 30% (unnecessary confirmations)
+5. ✅ Respects min (0.40) and max (0.90) threshold bounds
+6. ✅ Provides metrics for monitoring (success rate, wasted compute, saved latency)
+7. ✅ Integration with GatewayHandler for real-time threshold adaptation
+8. ✅ 8 passing unit tests covering all adaptive behaviors
+
+**Implementation Details:**
+- File: `src/mcp/adaptive-threshold.ts` (195 LOC)
+- Algorithm: Sliding Window (50 executions) + False Positive/Negative detection
+- Thresholds persist in memory beyond sliding window (not lost after 50 executions)
+- **No disk persistence yet** - Story 4.1 will add PGlite storage for session continuity
+- **Complementary to ADR-015 (Story 5.1):**
+  - Story 4.2: Adapts **thresholds** based on success/failure rates
+  - Story 5.1: Improves **search quality** via graph-based boost
+  - Both reduce "too many manual confirmations" via different mechanisms
+
+**Prerequisites:** Story 4.1 (episodic memory provides disk persistence)
 
 ---
 

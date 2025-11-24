@@ -63,16 +63,19 @@ development_status:
   2-7-end-to-end-tests-production-hardening: done
   epic-2-retrospective: completed
 
-  # Epic 2.5: Adaptive DAG Feedback Loops (Foundatio
-  # ADR-007 v2.0 (Approved 2025-11-14) - 3 stories, 7-10h
+  # Epic 2.5: Adaptive DAG Feedback Loops (Foundation)
+  # ADR-007 v2.0 (Approved 2025-11-14) - 4 stories, 9-12h → 13-16h with Story 2.5-4
+  # ADR-018 (Proposed 2025-11-24) - Command Handlers Minimalism (4h not 16h)
   # Focus: Loop 1-2 + Loop 3 basic (Foundation before Epic 3 Sandbox)
   # Original 6 stories moved to docs/stories/drafts/epic-2.5-old/
   # Speculation deferred to Epic 3.5, ADR-008 deferred to Epic 4
-  # COMPLETED: 2025-11-14 (13/13 E2E tests passing)
-  epic-2.5: done
+  # NOTE: Story 2.5-4 added 2025-11-24 (command infrastructure hardening)
+  # Scope reduced per ADR-018: Fix race condition + improve error handling (4h)
+  epic-2.5: in-progress
   2.5-1-event-stream-command-queue-state-management: done
   2.5-2-checkpoint-resume: done
   2.5-3-ail-hil-integration-dag-replanning: done
+  2.5-4-command-infrastructure-hardening: drafted  # 4h (ADR-018: replan-first architecture)
   epic-2.5-retrospective: completed
 
   # Epic 3: Agent Code Execution & Local Processing (Sandbox Isolation)
@@ -89,7 +92,7 @@ development_status:
   3-7-code-execution-caching-optimization: done
   3-8-end-to-end-code-execution-tests-documentation: done
   3-9-sandbox-security-hardening: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: completed
 
   # Epic 3.5: Speculative Execution with Sandbox Isolation
   # 1-2 stories, 3-4h
@@ -106,7 +109,7 @@ development_status:
   # Requires Epic 3.5 completion for real-world performance data
   epic-4: backlog
   4-1-episodic-memory-storage-retrieval: backlog
-  4-2-adaptive-threshold-learning-ema: backlog
+  4-2-adaptive-threshold-learning-sliding-window: review
   epic-4-retrospective: optional
 
   # Epic 5: Intelligent Tool Discovery & Graph-Based Recommendations

@@ -260,6 +260,7 @@ Pas d'interface graphique MVP, mais output console optimisé:
 - Checkpoint/resume infrastructure (PGlite persistence)
 - AIL/HIL integration avec multi-turn conversations
 - DAG replanning via DAGSuggester.replanDAG()
+- Command handlers completion (Story 2.5-4): inject_tasks, skip_layer, modify_args, checkpoint_response
 - GraphRAG feedback loop (updateFromExecution)
 - Un seul agent en conversation continue (pas de filtering contexte)
 
@@ -276,7 +277,7 @@ Pas d'interface graphique MVP, mais output console optimisé:
   - Loop 3 avancé avec données réelles de production
 
 **Estimation:**
-- Stories 2.5-1 to 2.5-3: 7-10h / 3 stories
+- Stories 2.5-1 to 2.5-4: 23-26h / 4 stories (Story 2.5-4 added 2025-11-24 after audit findings)
 
 **Rationale de deferral:**
 - Epic 2.5 = Foundation focused (Loop 1-2 + Loop 3 basique)
@@ -304,6 +305,7 @@ Pas d'interface graphique MVP, mais output console optimisé:
 **Related Decisions:**
 - ADR-007 (✅ Approved v2.0 - 2025-11-14)
 - ADR-008 (⏳ Proposed - Deferred to Epic 4)
+- ADR-017 (✅ Proposed - Gateway Exposure Modes, resolves transparency vs meta-tools tension)
 
 ---
 
@@ -370,13 +372,16 @@ Cette propriété débloque la **vraie puissance du speculative execution** (Epi
 **Objectif:** Étendre Loop 3 (Meta-Learning) avec mémoire épisodique et seuils adaptatifs pour système auto-améliorant
 
 **Livrables clés (ADR-008):**
-- Episodic memory storage (hybrid JSONB + typed columns)
-- Context-aware episode retrieval for prediction boost
-- Adaptive threshold learning (EMA algorithm, 0.92 → 0.70-0.95)
-- Per-workflow-type threshold convergence
+- **Story 4.1:** Episodic memory storage (hybrid JSONB + typed columns) avec context-aware episode retrieval
+- **Story 4.2:** Adaptive threshold learning via **Sliding Window + FP/FN Detection** (NOT EMA - see implementation note)
+  - **Implementation Reality (2025-11-05):** Story 4.2 implémentée durant Epic 1 avec Sliding Window algorithm (50 executions) au lieu d'EMA
+  - **Complementary to ADR-015:** Story 4.2 adapts **thresholds** based on success/failure; ADR-015 (Story 5.1) improves **search quality** via graph boost
+  - Both reduce "too many manual confirmations" but via different mechanisms
+  - Thresholds persist in memory beyond sliding window (not lost after 50 executions)
+  - No disk persistence yet - requires Story 4.1 for session continuity
 - State pruning strategy pour checkpoints
 
-**Estimation:** 2 stories, 4.5-5.5h
+**Estimation:** 2 stories, 4.5-5.5h (Story 4.2 already done, needs Story 4.1 for persistence)
 
 **Value Proposition:**
 - **Self-improving system** via adaptive thresholds (85% success rate target)
@@ -396,12 +401,76 @@ Cette propriété débloque la **vraie puissance du speculative execution** (Epi
 
 ---
 
-**Séquence complète:**
+### Epic 5: Intelligent Tool Discovery & Graph-Based Recommendations
+
+**Objectif:** Améliorer la découverte d'outils en combinant recherche sémantique (Epic 1) et recommandations basées sur les patterns d'usage réels via graph traversal
+
+**Livrables clés:**
+- **Story 5.1:** `search_tools` MCP tool - Hybrid semantic + graph search with Adamic-Adar relatedness
+  - Dynamic alpha balancing (ADR-015): `α = max(0.5, 1.0 - density × 2)`
+  - Graph methods: `getNeighbors()`, `computeAdamicAdar()`, `computeGraphRelatedness()`
+  - No strict confidence threshold (returns top-K results, letting agent decide)
+  - **Complementary to Story 4.2:** Improves search quality (confidence boost) vs threshold adaptation
+- **Story 5.2:** Workflow templates & graph bootstrap - Cold start solution with predefined patterns
+
+**Estimation:** 2 stories, ~4-6h
+
+**Value Proposition:**
+- **Better tool discovery** via graph-based recommendations (fixes threshold failures like "screenshot" = 0.48)
+- **Hybrid scoring** balances semantic relevance + usage patterns
+- **Cold start solution** via workflow templates (works even without historical data)
+- **Adaptive weighting** based on graph density (more semantic when sparse, more graph when dense)
+
+**Architectural Insight (ADR-015):**
+- Increases search scores via graph boost (0.48 → 0.64), reducing threshold failures
+- Works alongside Story 4.2: Better scores (5.1) + Adaptive thresholds (4.2) = Fewer manual confirmations
+
+**Prerequisites:** Epic 3 (Sandbox for safe speculation context)
+
+**Status:** Completed (Story 5.1 in review, 2025-11-20)
+
+---
+
+### Epic 6: Real-time Graph Monitoring & Observability
+
+**Objectif:** Fournir visibilité complète sur l'état du graphe de dépendances en temps réel via dashboard interactif pour debugging et compréhension
+
+**Livrables clés:**
+- **Story 6.1:** Real-time events stream (SSE) - `GET /events/stream` endpoint
+- **Story 6.2:** Interactive graph visualization - Force-directed graph avec D3.js/Cytoscape.js
+- **Story 6.3:** Live metrics & analytics panel - Edge count, density, PageRank top 10, communities
+- **Story 6.4:** Graph explorer & search interface - Interactive search, path finding, Adamic-Adar viz
+
+**Estimation:** 4 stories, ~8-12h
+
+**Value Proposition:**
+- **Observable learning** - See how graph evolves in real-time
+- **Debug recommendations** - Understand why tools are suggested together
+- **Performance insights** - Monitor PageRank, communities, edge creation patterns
+- **Interactive exploration** - Search, filter, find paths between tools
+
+**Prerequisites:** Epic 5 (search_tools functional with graph methods)
+
+**Status:** Stories 6.1-6.4 drafted (2025-11-20)
+
+---
+
+**Séquence Planifiée vs Réelle:**
+
+**Planifiée initialement:**
+- Epic 1 → Epic 2 → Epic 2.5 → Epic 3 → Epic 3.5 → Epic 4 → Epic 5 → Epic 6
+
+**Séquence RÉELLE (avec rationale):**
 - Epic 1 → Epic 2 (Production ready baseline)
 - Epic 2.5 → Foundation adaptive (Loop 1-2 + Loop 3 basic)
 - Epic 3 → Sandbox isolation
-- Epic 3.5 → Speculation WITH sandbox (THE feature safe)
-- Epic 4 → Episodic memory + Adaptive learning (self-improving)
+- **Epic 5 → Tool Discovery (MOVED FORWARD)** ✅ COMPLETED
+  - **Rationale:** Epic 3.5 speculation requires `search_tools` for DAGSuggester workflow template discovery
+  - `DAGSuggester.suggestDAG()` needs semantic search to find relevant templates from GraphRAG
+  - Epic 5 is a **dependency** for Epic 3.5, not a post-feature enhancement
+- Epic 3.5 → Speculation WITH sandbox (THE feature safe) - PENDING
+- Epic 4 → Episodic memory + Adaptive learning (self-improving) - PENDING (Story 4.2 done, 4.1 pending)
+- Epic 6 → Real-time monitoring & observability - PENDING (stories drafted)
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)
 
