@@ -252,10 +252,11 @@ export class ParallelExecutor {
         }
       }
 
-      // 3. Apply rate limiting if tool uses MCP server
-      const [serverId] = task.tool.split(":");
-      if (serverId) {
-        await this.rateLimiter.waitForSlot(serverId);
+      // 3. Apply rate limiting per tool (BUG-004 fix)
+      // Use full tool ID (e.g., "github:list_commits") instead of just serverId
+      // This prevents one aggressive tool from exhausting the entire server quota
+      if (task.tool) {
+        await this.rateLimiter.waitForSlot(task.tool);
       }
 
       // 4. Execute tool with timeout

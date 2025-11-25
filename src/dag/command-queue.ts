@@ -78,6 +78,20 @@ export class AsyncQueue<T> {
   }
 
   /**
+   * Drain all items synchronously
+   *
+   * Returns all queued items immediately and clears the queue.
+   * Does NOT wait for pending consumers - only returns already-queued items.
+   *
+   * @returns Array of all queued items (may be empty)
+   */
+  drainSync(): T[] {
+    const items = [...this.queue];
+    this.queue = [];
+    return items;
+  }
+
+  /**
    * Clear all items
    */
   clear(): void {
@@ -187,23 +201,18 @@ export class CommandQueue {
   }
 
   /**
-   * Process all pending commands (non-blocking)
+   * Process all pending commands (non-blocking, synchronous)
    *
-   * Drains queue and returns all commands.
-   * If queue empty, returns empty array immediately.
+   * Drains queue and returns all commands immediately.
+   * If queue empty, returns empty array.
    *
    * @returns Array of pending commands (may be empty)
    */
   processCommands(): Command[] {
-    const commands: Command[] = [];
-
-    // Drain queue (non-blocking)
-    while (!this.queue.isEmpty()) {
-      const cmd = this.queue.dequeue();
-      // Since we checked isEmpty(), dequeue() should resolve immediately
-      // Use a sync unwrap here (Promise.resolve() pattern)
-      Promise.resolve(cmd).then((c) => commands.push(c));
-    }
+    // Use drainSync() to avoid race condition (BUG-001 fix)
+    // Previous implementation used Promise.resolve().then() which
+    // returned before callbacks executed (microtask queue timing)
+    const commands = this.queue.drainSync();
 
     this.stats.processed_commands += commands.length;
 
