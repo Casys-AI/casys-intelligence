@@ -8,6 +8,19 @@
 
 export { main } from "./src/main.ts";
 
+// MCP Gateway Server
+export { AgentCardsGatewayServer } from "./src/mcp/gateway-server.ts";
+export type { GatewayServerConfig } from "./src/mcp/gateway-server.ts";
+export { MCPClient } from "./src/mcp/client.ts";
+export { MCPServerDiscovery } from "./src/mcp/discovery.ts";
+export type {
+  MCPServer,
+  MCPTool,
+  MCPConfig,
+  CodeExecutionRequest,
+  CodeExecutionResponse
+} from "./src/mcp/types.ts";
+
 // Sandbox executor for secure code execution
 export { DenoSandboxExecutor } from "./src/sandbox/executor.ts";
 export type {
