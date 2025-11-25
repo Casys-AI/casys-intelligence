@@ -1,11 +1,21 @@
-# ADR-018: Command Handlers Minimalism - Internal Control Plane
+# ADR-018: Command Handlers Minimalism - Unified Control Plane
 
 ## Status
-**APPROVED** - 2025-11-24
-**Updated** - 2025-11-24 (Clarified for internal native agents - Level 2 AIL)
+**SUPERSEDED** - 2025-11-25 by ADR-020
 
-> **⚠️ IMPORTANT UPDATE 2025-11-24:**
-> Command handlers (Story 2.5-3) are for **internal native agents** (Level 2 AIL - ADR-019), NOT for external MCP agents. Commands provide async control plane for autonomous agents running within Gateway.
+> This ADR documented initial command handler minimalism decisions.
+> See **ADR-020: AIL Control Protocol** for the consolidated architecture.
+
+**History:**
+- 2025-11-24: APPROVED
+- 2025-11-24: Updated (Clarified for internal native agents - Level 2 AIL)
+- 2025-11-25: Updated (Commands exposed as MCP meta-tools for Level 1 external agents)
+- 2025-11-25: SUPERSEDED by ADR-020
+
+> **⚠️ ARCHITECTURE UPDATE 2025-11-25:**
+> The 4 command handlers serve **two purposes**:
+> 1. **Level 1 (External MCP agents)**: Exposed as MCP meta-tools (`agentcards:continue`, `agentcards:abort`, `agentcards:replan_dag`, `agentcards:approval_response`)
+> 2. **Level 2 (Internal native agents)**: Used via CommandQueue for async control
 
 ## Context
 
@@ -20,16 +30,20 @@ During implementation of Epic 2.5 (Adaptive DAG Feedback Loops), we discovered:
 
 ### Use Cases for Commands
 
-**NOT for**:
-- ❌ External MCP agents (Claude Code) - use Gateway HTTP (ADR-019 Level 1)
-- ❌ Embedded MCP agents (agent delegation tasks) - use task output (ADR-019 Level 3)
+**Level 1 - External MCP agents (Claude Code)**:
+- ✅ Via MCP meta-tools: `agentcards:continue`, `agentcards:abort`, `agentcards:replan_dag`, `agentcards:approval_response`
+- ✅ HTTP Request/Response pattern (MCP compatible)
 
-**FOR**:
-- ✅ Internal native agents (JS/TS code in Gateway) - Level 2 AIL
-- ✅ Multi-agent collaboration (multiple native agents)
-- ✅ Background autonomous workflows (no HTTP interruption)
-- ✅ Rule-based decision engines (state machines)
-- ✅ LLM agents via API directe (not via MCP)
+**Level 2 - Internal native agents (JS/TS in Gateway)**:
+- ✅ Via CommandQueue (async message passing)
+- ✅ SSE events + Commands pattern
+- ✅ Multi-agent collaboration
+- ✅ Background autonomous workflows
+- ✅ Rule-based decision engines
+- ✅ LLM agents via API directe
+
+**NOT for**:
+- ❌ Embedded MCP agents (agent delegation tasks) - use task output (ADR-019 Level 3)
 
 ### Evidence-Based Analysis
 
@@ -222,36 +236,218 @@ interface ApprovalResponseCommand {
 
 ---
 
-## Deferred Command Handlers (Explicit YAGNI)
+## MCP Meta-Tools (Level 1 External Agents)
 
-### ❌ `inject_tasks` - NOT NEEDED
+The 4 commands are exposed as MCP meta-tools for external agents (Claude Code):
 
-**Reason**: Redundant with `replan_dag` (intent-based is better)
+### Tool: `agentcards:continue`
 
-**Example of why replan_dag is better**:
 ```typescript
-// INSTEAD OF: Manual task construction
-commandQueue.enqueue({
-  type: "inject_tasks",
-  tasks: [{ id: "parse_xml", tool: "xml:parse", ... }]
-});
-
-// USE: Intent-based replanning
-commandQueue.enqueue({
-  type: "replan_dag",
-  new_requirement: "Parse XML files",
-  available_context: { xml_files: [...] }
-});
-// → GraphRAG finds best tool, validates, optimizes
+{
+  name: "agentcards:continue",
+  description: "Continue workflow execution to next layer",
+  inputSchema: {
+    type: "object",
+    properties: {
+      workflow_id: { type: "string", description: "Workflow ID from execute_workflow" },
+      reason: { type: "string", description: "Optional reason for continuing" }
+    },
+    required: ["workflow_id"]
+  }
+}
 ```
 
-**Reconsider if**: >10 user complaints about replan_dag speed/unpredictability
+### Tool: `agentcards:abort`
+
+```typescript
+{
+  name: "agentcards:abort",
+  description: "Abort workflow execution",
+  inputSchema: {
+    type: "object",
+    properties: {
+      workflow_id: { type: "string", description: "Workflow ID from execute_workflow" },
+      reason: { type: "string", description: "Reason for aborting" }
+    },
+    required: ["workflow_id", "reason"]
+  }
+}
+```
+
+### Tool: `agentcards:replan_dag`
+
+```typescript
+{
+  name: "agentcards:replan_dag",
+  description: "Replan workflow with new requirement (triggers GraphRAG)",
+  inputSchema: {
+    type: "object",
+    properties: {
+      workflow_id: { type: "string", description: "Workflow ID from execute_workflow" },
+      new_requirement: { type: "string", description: "Natural language description of new tasks needed" },
+      available_context: { type: "object", description: "Context data for replanning (e.g., discovered files)" }
+    },
+    required: ["workflow_id", "new_requirement"]
+  }
+}
+```
+
+### Tool: `agentcards:approval_response`
+
+```typescript
+{
+  name: "agentcards:approval_response",
+  description: "Respond to HIL (Human-in-the-Loop) approval checkpoint",
+  inputSchema: {
+    type: "object",
+    properties: {
+      workflow_id: { type: "string", description: "Workflow ID from execute_workflow" },
+      checkpoint_id: { type: "string", description: "Checkpoint ID requiring approval" },
+      approved: { type: "boolean", description: "true to approve, false to reject" },
+      feedback: { type: "string", description: "Optional feedback or reason" }
+    },
+    required: ["workflow_id", "checkpoint_id", "approved"]
+  }
+}
+```
+
+### External Agent Flow (Claude Code)
+
+```typescript
+// 1. Start workflow with per-layer validation
+let response = await agentcards.execute_workflow({
+  intent: "Analyze codebase for security issues",
+  config: { per_layer_validation: true }
+});
+
+// 2. Loop until complete
+while (response.status === "layer_complete") {
+  // Agent analyzes layer results
+  const analysis = analyzeResults(response.layer_results);
+
+  if (analysis.needsMoreTools) {
+    // Replan: Add new tools based on discovery
+    response = await agentcards.replan_dag({
+      workflow_id: response.workflow_id,
+      new_requirement: "Add XML parser for config files",
+      available_context: { xml_files: analysis.discoveredFiles }
+    });
+  } else if (analysis.criticalIssue) {
+    // Abort: Stop execution
+    response = await agentcards.abort({
+      workflow_id: response.workflow_id,
+      reason: "Critical security issue found"
+    });
+    break;
+  } else {
+    // Continue: Proceed to next layer
+    response = await agentcards.continue({
+      workflow_id: response.workflow_id
+    });
+  }
+}
+
+// 3. Final results
+console.log("Workflow complete:", response.results);
+```
 
 ---
 
-### ❌ `skip_layer` - NOT NEEDED
+## Clarification: Two Types of Checkpoints
 
-**Reason**: Safe-to-fail branches (Epic 3.5) cover this use case
+Il y a **deux mécanismes de checkpoint distincts** dans l'architecture :
+
+### Type 1: Fault Tolerance Checkpoints (Story 2.5-2)
+
+**But:** Sauvegarder l'état du workflow pour reprendre après un crash ou une interruption.
+
+```
+Layer 0 → [Checkpoint sauvegardé] → Layer 1 → [Checkpoint] → CRASH
+                                                    ↓
+                                        Resume depuis ce checkpoint
+```
+
+**Réponse:** `checkpoint_response`
+```typescript
+{
+  type: "checkpoint_response",
+  checkpoint_id: string,
+  decision: "continue" | "rollback" | "modify",
+  modifications?: Record<string, unknown>
+}
+```
+
+**Use cases:**
+- `continue` - reprendre l'exécution normalement
+- `rollback` - revenir à un état précédent (ex: layer N-1)
+- `modify` - modifier le state avant de reprendre
+
+**Stockage:** PGlite (5 derniers checkpoints par workflow)
+
+---
+
+### Type 2: HIL Approval Checkpoints (Story 2.5-3)
+
+**But:** Demander l'approbation humaine avant une opération dangereuse ou critique.
+
+```
+Layer 2 → [PAUSE: "About to DELETE 500 files"] → Humain approuve → Layer 3
+```
+
+**Réponse:** `approval_response`
+```typescript
+{
+  type: "approval_response",
+  checkpoint_id: string,
+  approved: boolean,
+  feedback?: string
+}
+```
+
+**Use cases:**
+- `approved: true` - oui, continue l'opération
+- `approved: false` - non, abort le workflow
+
+**Déclencheurs:** Opérations avec `side_effects: true`, DELETE, WRITE, etc.
+
+---
+
+### Différence clé
+
+| Aspect | Fault Tolerance | HIL Approval |
+|--------|-----------------|--------------|
+| **But** | Reprise après crash | Sécurité opérationnelle |
+| **Déclencheur** | Automatique (chaque layer) | Opération critique |
+| **Qui répond** | Système ou agent | Humain (ou agent autorisé) |
+| **Options** | continue/rollback/modify | approved yes/no |
+| **Command** | `checkpoint_response` | `approval_response` |
+
+**Ces deux mécanismes ne sont PAS redondants** - ils adressent des besoins différents.
+
+---
+
+## Deferred Command Handlers (Explicit YAGNI)
+
+### ❌ `inject_tasks` - DEFERRED (not redundant)
+
+**Original reason:** Pensé redondant avec `replan_dag` (intent-based)
+
+**Révision 2025-11-25:** `inject_tasks` n'est PAS redondant - il permet à l'agent de contrôler précisément les tasks à ajouter quand il connaît les tools disponibles.
+
+| Command | Qui décide | Use case |
+|---------|------------|----------|
+| `replan_dag` | GraphRAG | Agent dit "j'ai besoin de parser XML" → GraphRAG choisit le tool |
+| `inject_tasks` | Agent | Agent connaît le tool exact et construit la task manuellement |
+
+**Status:** Déféré (YAGNI) mais pourrait être ajouté si besoin prouvé.
+
+**Reconsider if:** >5 use cases où l'agent veut contrôle précis sans GraphRAG
+
+---
+
+### ❌ `skip_layer` - DEFERRED
+
+**Reason**: Safe-to-fail pattern (Epic 3.5) couvre ce use case
 
 **Example**:
 ```typescript
@@ -268,17 +464,17 @@ commandQueue.enqueue({ type: "skip_layer", target: "next" });
 // → If analyze fails, visualize skips naturally
 ```
 
-**Reconsider if**: >5 proven use cases where conditional skip needed
+**Reconsider if:** >5 proven use cases where conditional skip needed
 
 ---
 
-### ❌ `modify_args` - DEFER to Epic 4
+### ❌ `modify_args` - DEFERRED
 
-**Reason**: No proven HIL correction workflow yet
+**Reason**: Pas de workflow HIL correction prouvé pour le moment
 
-**Possible future use case**:
+**Use case potentiel:**
 ```typescript
-// FUTURE: HIL correction workflow
+// HIL correction: Human veut modifier les args avant exécution
 commandQueue.enqueue({
   type: "modify_args",
   task_id: "create_issue",
@@ -286,28 +482,40 @@ commandQueue.enqueue({
 });
 ```
 
-**Reconsider if**: >3 user requests for runtime argument modification
+**Reconsider if:** >3 user requests for runtime argument modification
 
 ---
 
-### ❌ `checkpoint_response` - NOT NEEDED
+### ❌ `retry_task` - DEFERRED
 
-**Reason**: Composition of `approval_response` + `replan_dag` sufficient
+**Reason**: Géré automatiquement par l'executor (retry avec backoff)
 
-**Example**:
+**Use case potentiel:**
 ```typescript
-// INSTEAD OF: Complex checkpoint_response
+// Manual retry avec config custom
 commandQueue.enqueue({
-  type: "checkpoint_response",
-  action: "modify_and_continue",
-  modifications: [...]
+  type: "retry_task",
+  task_id: "api_call",
+  backoff_ms: 5000
 });
-
-// USE: Composition
-commandQueue.enqueue({ type: "approval_response", approved: true });
-// If modifications needed:
-commandQueue.enqueue({ type: "replan_dag", new_requirement: "..." });
 ```
+
+**Reconsider if:** >3 use cases où retry automatique insuffisant
+
+---
+
+### ✅ `checkpoint_response` - APPROVED (separate from approval_response)
+
+**Révision 2025-11-25:** `checkpoint_response` n'est PAS redondant avec `approval_response`.
+
+Voir section "Clarification: Two Types of Checkpoints" ci-dessus.
+
+| Command | Type checkpoint | Options |
+|---------|-----------------|---------|
+| `checkpoint_response` | Fault tolerance (crash recovery) | continue/rollback/modify |
+| `approval_response` | HIL approval (sécurité) | approved yes/no |
+
+**Status:** ✅ Types définis dans `src/dag/types.ts` (lines 282-287). Handler à implémenter (Story 2.5-4).
 
 ---
 
@@ -584,10 +792,10 @@ async function executeWithLLM(dag) {
 
 **Conditions to reconsider deferred handlers:**
 
-**`inject_tasks`**: If >10 complaints about replan_dag speed
+**`inject_tasks`**: If >5 use cases where agent needs precise tool control (not GraphRAG)
 **`skip_layer`**: If >5 use cases where safe-to-fail insufficient
 **`modify_args`**: If >3 requests for HIL correction workflow
-**`checkpoint_response`**: If >5 use cases where composition insufficient
+**`retry_task`**: If >3 use cases where auto-retry insufficient
 
 **Review Date**: 2026-02-24 (3 months post-Epic 2.5 completion)
 

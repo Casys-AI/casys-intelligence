@@ -883,60 +883,101 @@ So that I can tune the speculation aggressiveness vs safety tradeoff.
 
 **Estimation:** 2 stories, 4.5-5.5h
 
-**Note:** Story 4.2 déjà implémentée durant Epic 1 (2025-11-05), Story 4.1 reste à implémenter pour persistence.
+**Note:** Story 4.2 déjà implémentée durant Epic 1 (2025-11-05). Story 4.1 **split en 2 phases** (2025-11-25) :
+- **Phase 1** (Stories 4.1a/b/c) : Storage layer indépendant (~2-3h) - ✅ **DONE**
+- **Phase 2** (Stories 4.1d/e) : Intégrations ControlledExecutor + DAGSuggester (après Epic 2.5/3.5)
 
 ---
 
 ### Story Breakdown - Epic 4
 
-**Story 4.1: Episodic Memory Storage & Retrieval**
+**Story 4.1: Episodic Memory Storage & Retrieval** *(Split en Phase 1 + Phase 2)*
 
-As a system learning from past executions,
-I want to persist workflow execution contexts and retrieve relevant episodes,
-So that I can improve predictions based on historical patterns.
+---
+
+#### Phase 1 - Storage Foundation (Independent) ✅ DONE 2025-11-25
+
+**Story 4.1a: Schema PGlite** ✅
+
+As a developer,
+I want database tables for episodic events and adaptive thresholds,
+So that I can persist learning data between sessions.
 
 **Acceptance Criteria:**
-1. PGlite table: `episodic_memory`
-   - Hybrid schema: JSONB `state_snapshot` + typed columns pour fast queries
-   - Columns: `episode_id`, `workflow_type`, `context_embedding`, `state_snapshot`, `outcome`, `confidence`, `timestamp`
-   - Indexes: B-tree sur workflow_type, Vector index (HNSW) sur context_embedding
+1. Migration `007_episodic_memory.sql` created
+2. Table `episodic_events` with hybrid schema (typed + JSONB)
+3. Table `adaptive_thresholds` for threshold persistence
+4. Indexes created (workflow_id, event_type, context_hash, GIN on JSONB)
 
-2. Episode capture:
-   - Store workflow state snapshots at key decision points
-   - Capture: initial context, intermediate states, final outcome
-   - Embeddings générés pour context (semantic search sur historical episodes)
-   - Max episode size: 100KB (compression si nécessaire)
+**Status:** ✅ Done - [Migration 007](../src/db/migrations/007_episodic_memory.sql)
 
-3. Episode retrieval:
-   - `retrieveSimilarEpisodes(current_context, workflow_type, top_k=5)` method
-   - Hybrid search: semantic similarity + workflow_type filter
-   - Return: similar past executions avec leurs outcomes
-   - Use case: DAGSuggester peut query similar past workflows pour better predictions
+---
 
-4. State pruning strategy:
-   - Auto-prune episodes >90 days old (configurable)
-   - Keep only successful episodes with high confidence (>0.80)
-   - Compression: Remove redundant state information
-   - Max storage: 1GB episodic memory (oldest episodes deleted first)
+**Story 4.1b: EpisodicMemoryStore Class** ✅
 
-5. Integration avec DAGSuggester:
-   - Query similar episodes avant suggesting DAG
-   - Boost confidence si similar episode succeeded
-   - Learn from failed episodes: avoid patterns that failed historically
+As a system developer,
+I want an episodic memory store with buffered async writes,
+So that event capture has <1ms overhead.
 
-6. Persistence pour adaptive thresholds (Story 4.2):
-   - Store current thresholds dans PGlite: `adaptive_thresholds` table
-   - Columns: `context_id`, `suggestion_threshold`, `explicit_threshold`, `last_updated`, `execution_count`
-   - Load thresholds at startup (survive server restarts)
-   - Update thresholds après each adjustment
+**Acceptance Criteria:**
+1. `EpisodicMemoryStore` class implemented
+2. Methods: `capture()`, `flush()`, `retrieveRelevant()`, `prune()`
+3. Buffer system (non-blocking writes)
+4. Context hash-based retrieval
+5. 9 unit tests passing
 
-7. Tests:
-   - Storage test: Execute workflow → verify episode stored
-   - Retrieval test: Query similar context → verify relevant episodes returned
-   - Pruning test: Create old episodes → trigger cleanup → verify pruned
-   - Threshold persistence test: Adjust threshold → restart server → verify threshold preserved
+**Status:** ✅ Done - [episodic-memory-store.ts](../src/learning/episodic-memory-store.ts) (280 LOC, 9 tests)
 
-**Prerequisites:** Epic 2.5 (checkpointing foundation), Epic 3.5 (speculation generates execution data)
+---
+
+**Story 4.1c: Threshold Persistence** ✅
+
+As a system that learns optimal thresholds,
+I want thresholds to survive server restarts,
+So that learning is not lost.
+
+**Acceptance Criteria:**
+1. `AdaptiveThresholdManager` extended with PGlite client
+2. `loadThresholds(context)` method added
+3. `saveThresholds(context)` method added (auto-saves on adjustment)
+4. Context-based threshold lookup
+5. Cache layer for performance
+
+**Status:** ✅ Done - Extended [adaptive-threshold.ts](../src/mcp/adaptive-threshold.ts) (+100 LOC)
+
+---
+
+#### Phase 2 - Loop Integrations (After Epic 2.5/3.5) 🔴 Backlog
+
+**Story 4.1d: ControlledExecutor Integration** 🔴
+
+As a workflow execution system,
+I want to capture episodic events automatically during execution,
+So that learning happens without manual instrumentation.
+
+**Acceptance Criteria:**
+1. ControlledExecutor emits events to EpisodicMemoryStore
+2. Events captured: speculation_start, task_complete, ail_decision, hil_decision
+3. Context captured at each decision point
+4. Integration tests verify auto-capture works
+
+**Prerequisites:** Epic 2.5 done (ControlledExecutor exists)
+
+---
+
+**Story 4.1e: DAGSuggester Context Boost** 🔴
+
+As an AI agent,
+I want DAGSuggester to use past episodes for better predictions,
+So that recommendations improve based on historical success.
+
+**Acceptance Criteria:**
+1. DAGSuggester queries similar episodes before suggesting
+2. Confidence boost if similar episode succeeded
+3. Avoid patterns that failed historically
+4. Integration tests verify context-aware suggestions
+
+**Prerequisites:** Epic 3.5 done (DAGSuggester with speculation)
 
 ---
 

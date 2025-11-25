@@ -379,33 +379,33 @@ Cette propriété débloque la **vraie puissance du speculative execution** (Epi
 
 **Objectif:** Étendre Loop 3 (Meta-Learning) avec mémoire épisodique et seuils adaptatifs pour système auto-améliorant
 
-**Livrables clés (ADR-008):**
-- **Story 4.1:** Episodic memory storage (hybrid JSONB + typed columns) avec context-aware episode retrieval
-- **Story 4.2:** Adaptive threshold learning via **Sliding Window + FP/FN Detection** (NOT EMA - see implementation note)
-  - **Implementation Reality (2025-11-05):** Story 4.2 implémentée durant Epic 1 avec Sliding Window algorithm (50 executions) au lieu d'EMA
-  - **Complementary to ADR-015:** Story 4.2 adapts **thresholds** based on success/failure; ADR-015 (Story 5.1) improves **search quality** via graph boost
-  - Both reduce "too many manual confirmations" but via different mechanisms
-  - Thresholds persist in memory beyond sliding window (not lost after 50 executions)
-  - No disk persistence yet - requires Story 4.1 for session continuity
-- State pruning strategy pour checkpoints
+**Status:** 🟡 IN PROGRESS (Phase 1 Done 2025-11-25)
 
-**Estimation:** 2 stories, 4.5-5.5h (Story 4.2 already done, needs Story 4.1 for persistence)
+**Livrables clés (ADR-008):**
+- **Story 4.1 (Split en 2 phases):**
+  - ✅ **Phase 1 (Storage Foundation):** DONE 2025-11-25
+    - Migration 007: tables `episodic_events` + `adaptive_thresholds`
+    - `EpisodicMemoryStore` class (280 LOC, 9 tests)
+    - Threshold persistence via PGlite (+100 LOC)
+  - 🔴 **Phase 2 (Loop Integrations):** Backlog (after Epic 2.5/3.5)
+    - ControlledExecutor auto-capture
+    - DAGSuggester context boost
+- **Story 4.2:** ✅ DONE (Sliding Window + FP/FN Detection, now with persistence)
+  - **Implementation Reality (2025-11-05):** Sliding Window algorithm (50 executions)
+  - **Update (2025-11-25):** Now persists to PGlite via Story 4.1c
+
+**Estimation:** Phase 1: ~2.5h ✅ | Phase 2: ~2h (after dependencies)
 
 **Value Proposition:**
 - **Self-improving system** via adaptive thresholds (85% success rate target)
 - **Historical context** améliore prédictions (episodic memory)
 - **Optimal thresholds** appris par type de workflow
 - **Loop 3 complet** avec apprentissage continu
+- ✅ **Persistence:** Thresholds survive server restarts (Phase 1)
 
-**Pourquoi après Epic 3.5 ?**
-- Nécessite données réelles de production (Epic 2.5 + 3 + 3.5)
-- Adaptive thresholds apprennent des vrais succès/échecs
-- Episodic memory bénéficie de volume d'exécutions
-- Optimisation basée sur mesures empiriques
+**Phase 2 Prerequisites:** Epic 2.5-4 (CommandQueue), Epic 3.5 (DAGSuggester speculation)
 
-**Prerequisites:** Epic 2.5 (Foundation), Epic 3 (Sandbox), Epic 3.5 (Speculation)
-
-**Related Decisions:** ADR-008 (Proposed - Deferred)
+**Related Decisions:** ADR-008 (Partially Implemented)
 
 ---
 
@@ -477,7 +477,9 @@ Cette propriété débloque la **vraie puissance du speculative execution** (Epi
   - `DAGSuggester.suggestDAG()` needs semantic search to find relevant templates from GraphRAG
   - Epic 5 is a **dependency** for Epic 3.5, not a post-feature enhancement
 - Epic 3.5 → Speculation WITH sandbox (THE feature safe) - PENDING
-- Epic 4 → Episodic memory + Adaptive learning (self-improving) - PENDING (Story 4.2 done, 4.1 pending)
+- Epic 4 → Episodic memory + Adaptive learning (self-improving) - 🟡 IN PROGRESS
+  - ✅ Phase 1 (Storage): Migration 007, EpisodicMemoryStore, Threshold persistence (2025-11-25)
+  - 🔴 Phase 2 (Integrations): ControlledExecutor + DAGSuggester (after 2.5/3.5)
 - Epic 6 → Real-time monitoring & observability - PENDING (stories drafted)
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)

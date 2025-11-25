@@ -64,18 +64,16 @@ development_status:
   epic-2-retrospective: completed
 
   # Epic 2.5: Adaptive DAG Feedback Loops (Foundation)
-  # ADR-007 v2.0 (Approved 2025-11-14) - 4 stories, 9-12h → 13-16h with Story 2.5-4
-  # ADR-018 (Proposed 2025-11-24) - Command Handlers Minimalism (4h not 16h)
+  # ADR-007 v2.0 (Approved 2025-11-14) - 4 stories
+  # ADR-020 (2025-11-25) - AIL Control Protocol (supersedes ADR-018, ADR-019)
   # Focus: Loop 1-2 + Loop 3 basic (Foundation before Epic 3 Sandbox)
   # Original 6 stories moved to docs/stories/drafts/epic-2.5-old/
   # Speculation deferred to Epic 3.5, ADR-008 deferred to Epic 4
-  # NOTE: Story 2.5-4 added 2025-11-24 (command infrastructure hardening)
-  # Scope reduced per ADR-018: Fix race condition + improve error handling (4h)
   epic-2.5: in-progress
   2.5-1-event-stream-command-queue-state-management: done
   2.5-2-checkpoint-resume: done
   2.5-3-ail-hil-integration-dag-replanning: done
-  2.5-4-command-infrastructure-hardening: drafted  # 4h (ADR-018: replan-first architecture)
+  2.5-4-mcp-control-tools-per-layer-validation: ready-for-review  # 7.5h (Spike: workflow_dags table for DAG persistence) - All ACs complete, 13 tests passing
   epic-2.5-retrospective: completed
 
   # Epic 3: Agent Code Execution & Local Processing (Sandbox Isolation)
@@ -106,10 +104,16 @@ development_status:
   # Epic 4: Episodic Memory & Adaptive Learning (ADR-008)
   # 2 stories, 4.5-5.5h
   # Self-improving system with production data
-  # Requires Epic 3.5 completion for real-world performance data
-  epic-4: backlog
-  4-1-episodic-memory-storage-retrieval: backlog
-  4-2-adaptive-threshold-learning-sliding-window: review
+  # SPLIT 2025-11-25: Phase 1 (independent) + Phase 2 (after 2.5/3.5)
+  # Phase 1: Schema + EpisodicMemoryStore + Threshold persistence (2-3h) - DONE
+  # Phase 2: ControlledExecutor + DAGSuggester integration (after Epic 3.5)
+  epic-4: in-progress
+  4-1a-schema-pglite-episodic-memory: done  # Migration 007 created
+  4-1b-episodic-memory-store-class: done  # EpisodicMemoryStore implemented (9 tests passing)
+  4-1c-threshold-persistence: done  # AdaptiveThresholdManager extended with PGlite persistence
+  4-1d-controlledexecutor-integration: backlog  # Phase 2 - after Epic 2.5
+  4-1e-dagsugggester-integration: backlog  # Phase 2 - after Epic 3.5
+  4-2-adaptive-threshold-learning-sliding-window: done  # Already implemented 2025-11-05, now with persistence
   epic-4-retrospective: optional
 
   # Epic 5: Intelligent Tool Discovery & Graph-Based Recommendations
@@ -117,7 +121,7 @@ development_status:
   # Hybrid search: semantic + graph-based relatedness (Adamic-Adar)
   # See spike: docs/spikes/spike-search-tools-graph-traversal.md
   epic-5: contexted
-  5-1-search-tools-semantic-graph-hybrid: review
+  5-1-search-tools-semantic-graph-hybrid: done
   5-2-workflow-templates-graph-bootstrap: drafted
   epic-5-retrospective: optional
 

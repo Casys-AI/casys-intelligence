@@ -1,18 +1,27 @@
 # ADR-008: Episodic Memory & Adaptive Thresholds for Meta-Learning
 
-**Status:** ⏳ Proposed - Deferred to Epic 4
+**Status:** 🟡 Partially Implemented (Phase 1 Done)
 **Date:** 2025-11-13
-**Updated:** 2025-11-14 (Deferred to Epic 4 - After Epic 3 Sandbox)
+**Updated:** 2025-11-25 (Phase 1 implemented - Storage layer done)
 **Deciders:** BMad
 **Technical Review:** Complete
 **Prerequisite:** ADR-007 implementation + Epic 3 (Sandbox) completion
 
-**Deferral Rationale:**
+**Implementation Status (2025-11-25):**
+- ✅ **Phase 1 (Storage Foundation):** DONE
+  - Migration 007: `episodic_events` + `adaptive_thresholds` tables
+  - `EpisodicMemoryStore` class (280 LOC, 9 tests passing)
+  - `AdaptiveThresholdManager` persistence (+100 LOC)
+  - Story 4.2 adaptive learning already implemented (2025-11-05)
+- 🔴 **Phase 2 (Loop Integrations):** Backlog (after Epic 2.5/3.5)
+  - ControlledExecutor integration (auto-capture events)
+  - DAGSuggester context boost (episodic memory queries)
+
+**Original Deferral Rationale:**
 - Epic 2.5 focuses on foundation (Loop 1-2 + basic Loop 3)
 - Epic 3 (Sandbox) prioritized for security and isolation
 - Epic 3.5 will implement speculation WITH sandbox (safe)
-- Epic 4 will add episodic memory + adaptive thresholds with real production data
-- Fixed threshold 0.7 sufficient for MVP validation
+- Phase 2 will add integrations with real production data
 
 ---
 

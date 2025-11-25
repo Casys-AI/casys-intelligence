@@ -1,8 +1,16 @@
 # ADR-019: Three-Level AIL Architecture - MCP Compatibility + Internal Agents
 
 ## Status
-**APPROVED** - 2025-11-24
-**Updated** - 2025-11-24 (Clarified internal native agents can use SSE - Level 2)
+**SUPERSEDED** - 2025-11-25 by ADR-020
+
+> This ADR documented the three-level AIL architecture discovery.
+> See **ADR-020: AIL Control Protocol** for the consolidated architecture.
+
+**History:**
+- 2025-11-24: APPROVED
+- 2025-11-24: Updated (Clarified internal native agents can use SSE - Level 2)
+- 2025-11-25: Updated (Level 1 commands exposed as MCP meta-tools)
+- 2025-11-25: SUPERSEDED by ADR-020
 
 ## Context
 
@@ -246,29 +254,46 @@ async executeLayerByLayer(dag: DAGStructure, config: ExecutionConfig) {
 }
 ```
 
+### MCP Meta-Tools (ADR-018)
+
+Level 1 external agents use **4 MCP meta-tools** (see ADR-018 for full specification):
+
+- `agentcards:continue` - Continue to next layer
+- `agentcards:abort` - Abort workflow execution
+- `agentcards:replan_dag` - Replan with new requirement (triggers GraphRAG)
+- `agentcards:approval_response` - Respond to HIL approval checkpoint
+
 **External Agent Workflow (Claude Code via MCP):**
 ```typescript
-// Claude Code (MCP Client) execution flow
-let response = await executeWorkflow({ intent: "Analyze codebase" });
+// Claude Code (MCP Client) execution flow - using MCP meta-tools
+let response = await agentcards.execute_workflow({
+  intent: "Analyze codebase",
+  config: { per_layer_validation: true }
+});
 
-// Agent constructs DAG "petit à petit" via multiple HTTP cycles
+// Agent constructs DAG "petit à petit" via multiple MCP tool calls
 while (response.status === "layer_complete") {
   // Agent validates layer results
-  const shouldContinue = analyzeResults(response.layer_results);
+  const analysis = analyzeResults(response.layer_results);
 
-  if (shouldContinue) {
-    // Send new HTTP request to continue
-    response = await continueWorkflow({
+  if (analysis.needsMoreTools) {
+    // Replan: Add new tools based on discovery
+    response = await agentcards.replan_dag({
       workflow_id: response.workflow_id,
-      action: "continue"
-    });
-  } else if (needsReplanning) {
-    // Send new HTTP request to replan
-    response = await continueWorkflow({
-      workflow_id: response.workflow_id,
-      action: "replan",
       new_requirement: "Add XML parser for discovered files",
       available_context: { xml_files: ["data.xml", "config.xml"] }
+    });
+  } else if (analysis.criticalIssue) {
+    // Abort: Stop execution
+    response = await agentcards.abort({
+      workflow_id: response.workflow_id,
+      reason: "Critical security issue found"
+    });
+    break;
+  } else {
+    // Continue: Proceed to next layer
+    response = await agentcards.continue({
+      workflow_id: response.workflow_id
     });
   }
 }
