@@ -11,7 +11,7 @@
  * - Episodic memory
  *
  * Usage:
- *   deno run --allow-all playground/examples/server.ts
+ *   deno run --allow-all playground/server.ts
  *
  * Available MCP tools:
  * - agentcards__agentcards_execute_code
@@ -27,7 +27,7 @@
 import {
   AgentCardsGatewayServer,
   DenoSandboxExecutor,
-  ParallelExecutor,
+  ControlledExecutor,
   createDefaultClient,
   MigrationRunner,
   getAllMigrations,
@@ -35,8 +35,9 @@ import {
   VectorSearch,
   GraphRAGEngine,
   DAGSuggester,
+  EpisodicMemoryStore,
   type ToolExecutor,
-} from "../../mod.ts";
+} from "../mod.ts";
 
 const PORT = parseInt(Deno.env.get("PORT") || "3000");
 
@@ -82,11 +83,18 @@ try {
     throw new Error(`Unknown tool: ${toolName}`);
   };
 
-  const executor = new ParallelExecutor(toolExecutor, {
+  // Initialize episodic memory store
+  const memoryStore = new EpisodicMemoryStore({ dbPath: ":memory:" });
+
+  const executor = new ControlledExecutor(toolExecutor, {
     verbose: false,
     taskTimeout: 30000,
   });
-  console.log("   ✓ Sandbox ready\n");
+
+  // Connect episodic memory for learning
+  executor.setEpisodicMemoryStore(memoryStore);
+
+  console.log("   ✓ Sandbox ready with ControlledExecutor\n");
 
   // 4. Create gateway server (standalone mode without external MCP servers)
   console.log("Step 4/5: Creating gateway server...");

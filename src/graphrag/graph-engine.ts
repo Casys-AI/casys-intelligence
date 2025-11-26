@@ -303,6 +303,92 @@ export class GraphRAGEngine {
   }
 
   /**
+   * Get edge data between two tools (Story 3.5-1)
+   *
+   * Returns the edge attributes if edge exists, null otherwise.
+   *
+   * @param fromToolId - Source tool
+   * @param toToolId - Target tool
+   * @returns Edge attributes or null
+   */
+  getEdgeData(fromToolId: string, toToolId: string): { weight: number; count: number } | null {
+    if (!this.graph.hasEdge(fromToolId, toToolId)) return null;
+
+    const attrs = this.graph.getEdgeAttributes(fromToolId, toToolId);
+    return {
+      weight: attrs.weight as number,
+      count: attrs.count as number,
+    };
+  }
+
+  /**
+   * Add or update edge between two tools (Story 3.5-1 AC #12)
+   *
+   * Used for agent hints and pattern import/export.
+   *
+   * @param fromToolId - Source tool
+   * @param toToolId - Target tool
+   * @param attributes - Edge attributes (weight, count, source)
+   */
+  async addEdge(
+    fromToolId: string,
+    toToolId: string,
+    attributes: { weight: number; count: number; source?: string },
+  ): Promise<void> {
+    // Ensure nodes exist
+    if (!this.graph.hasNode(fromToolId)) {
+      this.graph.addNode(fromToolId, { type: "tool" });
+    }
+    if (!this.graph.hasNode(toToolId)) {
+      this.graph.addNode(toToolId, { type: "tool" });
+    }
+
+    // Update or add edge
+    if (this.graph.hasEdge(fromToolId, toToolId)) {
+      this.graph.setEdgeAttribute(fromToolId, toToolId, "weight", attributes.weight);
+      this.graph.setEdgeAttribute(fromToolId, toToolId, "count", attributes.count);
+      if (attributes.source) {
+        this.graph.setEdgeAttribute(fromToolId, toToolId, "source", attributes.source);
+      }
+    } else {
+      this.graph.addEdge(fromToolId, toToolId, {
+        weight: attributes.weight,
+        count: attributes.count,
+        source: attributes.source ?? "manual",
+      });
+    }
+  }
+
+  /**
+   * Get all edges from the graph (Story 3.5-1 AC #13)
+   *
+   * Returns all edges with their attributes for export.
+   *
+   * @returns Array of edges with source, target, and attributes
+   */
+  getEdges(): Array<{
+    source: string;
+    target: string;
+    attributes: Record<string, unknown>;
+  }> {
+    const edges: Array<{
+      source: string;
+      target: string;
+      attributes: Record<string, unknown>;
+    }> = [];
+
+    this.graph.forEachEdge((_edge: string, attrs: Record<string, unknown>, source: string, target: string) => {
+      edges.push({
+        source,
+        target,
+        attributes: { ...attrs },
+      });
+    });
+
+    return edges;
+  }
+
+  /**
    * Get neighbors of a tool
    *
    * @param toolId - Tool identifier

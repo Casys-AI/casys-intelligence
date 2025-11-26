@@ -47,7 +47,18 @@ That's it! AgentCards will discover your MCP servers, extract schemas, and gener
 
 ### 🎮 Try the Playground
 
-Explore AgentCards features with interactive Jupyter notebooks:
+Explore AgentCards features with interactive Jupyter notebooks (Deno kernel):
+
+**8 Progressive Notebooks:**
+- 01-03: Sandbox basics, context injection, DAG workflows
+- 04-05: MCP discovery, LLM integration with tool calling
+- 06-07: Multi-LLM support, security demonstrations
+- 08: **ControlledExecutor** - Advanced execution with event streaming, episodic memory, decision points
+
+**Visualization Features:**
+- Mermaid diagrams for DAG structures and execution timelines
+- GraphRAG relationship graphs showing tool co-usage patterns
+- Real-time learning visualization
 
 ```bash
 cd playground
@@ -56,7 +67,8 @@ jupyter notebook notebooks/
 ```
 
 Or open directly in GitHub Codespaces:
-- [Open Playground](https://github.com/codespaces/new/Casys-AI/AgentCards)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Casys-AI/AgentCards?devcontainer_path=.devcontainer/playground/devcontainer.json)
 
 See [`playground/README.md`](playground/README.md) for details.
 

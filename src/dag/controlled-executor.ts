@@ -30,6 +30,10 @@ import { DenoSandboxExecutor } from "../sandbox/executor.ts";
 import { ContextBuilder } from "../sandbox/context-builder.ts";
 import type { VectorSearch } from "../vector/search.ts";
 import type { MCPClient } from "../mcp/client.ts";
+import type { EpisodicMemoryStore } from "../learning/episodic-memory-store.ts";
+import { SpeculativeExecutor } from "../speculation/speculative-executor.ts";
+import { SpeculationManager, DEFAULT_SPECULATION_CONFIG } from "../speculation/speculation-manager.ts";
+import type { SpeculationConfig, SpeculationCache, SpeculationMetrics, CompletedTask } from "../graphrag/types.ts";
 
 const log = getLogger("controlled-executor");
 
@@ -70,6 +74,13 @@ export class ControlledExecutor extends ParallelExecutor {
   private readonly MAX_REPLANS = 3; // Maximum replans per workflow
   private vectorSearch: VectorSearch | null = null; // Story 3.4
   private contextBuilder: ContextBuilder | null = null; // Story 3.4
+  private episodicMemory: EpisodicMemoryStore | null = null; // Story 4.1d - Episodic memory integration
+
+  // Story 3.5-1: Speculative Execution
+  private speculativeExecutor: SpeculativeExecutor | null = null;
+  private speculationManager: SpeculationManager | null = null;
+  private speculationConfig: SpeculationConfig = DEFAULT_SPECULATION_CONFIG;
+  private lastCompletedTool: string | null = null; // For pattern reinforcement
 
   /**
    * Create a new controlled executor
@@ -124,6 +135,415 @@ export class ControlledExecutor extends ParallelExecutor {
     this.vectorSearch = vectorSearch;
     this.contextBuilder = new ContextBuilder(vectorSearch, mcpClients);
     log.debug("Code execution support enabled");
+  }
+
+  /**
+   * Set episodic memory store for event capture (Story 4.1d)
+   *
+   * Enables automatic capture of episodic events during workflow execution.
+   * Events captured: task_complete, ail_decision, hil_decision, speculation_start.
+   * Optional - if not set, workflow executes normally without event capture (graceful degradation).
+   *
+   * @param store - EpisodicMemoryStore instance
+   */
+  setEpisodicMemoryStore(store: EpisodicMemoryStore): void {
+    this.episodicMemory = store;
+    log.debug("Episodic memory capture enabled");
+  }
+
+  // =============================================================================
+  // Story 3.5-1: Speculative Execution Integration
+  // =============================================================================
+
+  /**
+   * Enable speculative execution (Story 3.5-1)
+   *
+   * Configures speculation with optional custom settings.
+   * When enabled, ControlledExecutor will:
+   * - Predict next likely tools after each layer
+   * - Execute high-confidence predictions speculatively in sandbox
+   * - Return cached results instantly when predictions are correct
+   *
+   * @param config - Optional speculation configuration
+   */
+  enableSpeculation(config?: Partial<SpeculationConfig>): void {
+    this.speculationConfig = {
+      ...DEFAULT_SPECULATION_CONFIG,
+      ...config,
+    };
+
+    // Initialize components if not already done
+    if (!this.speculativeExecutor) {
+      this.speculativeExecutor = new SpeculativeExecutor({
+        maxConcurrent: this.speculationConfig.max_concurrent,
+      });
+    }
+
+    if (!this.speculationManager) {
+      this.speculationManager = new SpeculationManager(this.speculationConfig);
+
+      // Connect to AdaptiveThresholdManager if available via DAGSuggester
+      // (The threshold manager would need to be passed separately or accessed via config)
+    }
+
+    // Connect components
+    this.speculativeExecutor.setSpeculationManager(this.speculationManager);
+
+    // Connect to GraphRAG if DAGSuggester is available
+    if (this.dagSuggester) {
+      this.speculationManager.setGraphEngine(this.dagSuggester.getGraphEngine());
+    }
+
+    log.info("[ControlledExecutor] Speculation enabled", {
+      threshold: this.speculationConfig.confidence_threshold,
+      maxConcurrent: this.speculationConfig.max_concurrent,
+    });
+  }
+
+  /**
+   * Disable speculative execution
+   */
+  disableSpeculation(): void {
+    this.speculationConfig.enabled = false;
+    if (this.speculativeExecutor) {
+      this.speculativeExecutor.destroy();
+      this.speculativeExecutor = null;
+    }
+    this.speculationManager = null;
+    log.info("[ControlledExecutor] Speculation disabled");
+  }
+
+  /**
+   * Start speculative execution for predicted tasks (Story 3.5-1 Task 4.1)
+   *
+   * Called internally before each layer to predict and speculatively execute
+   * likely next tools.
+   *
+   * @param completedTasks - Tasks completed so far
+   * @param context - Execution context
+   */
+  private async startSpeculativeExecution(
+    completedTasks: CompletedTask[],
+    context: Record<string, unknown>,
+  ): Promise<void> {
+    if (!this.speculationConfig.enabled || !this.dagSuggester || !this.speculativeExecutor) {
+      return;
+    }
+
+    try {
+      const startTime = performance.now();
+
+      // Get predictions from DAGSuggester
+      const predictions = await this.dagSuggester.predictNextNodes(null, completedTasks);
+
+      if (predictions.length === 0) {
+        log.debug("[ControlledExecutor] No predictions for speculation");
+        return;
+      }
+
+      // Filter predictions that meet threshold
+      const toSpeculate = this.speculationManager
+        ? this.speculationManager.filterForSpeculation(predictions)
+        : predictions.filter((p) => p.confidence >= this.speculationConfig.confidence_threshold);
+
+      if (toSpeculate.length === 0) {
+        log.debug("[ControlledExecutor] No predictions meet speculation threshold");
+        return;
+      }
+
+      // Capture speculation start events for metrics
+      for (const prediction of toSpeculate) {
+        this.captureSpeculationStart(
+          this.state?.workflow_id ?? "unknown",
+          prediction.toolId,
+          prediction.confidence,
+          prediction.reasoning,
+        );
+      }
+
+      // Start speculative execution (non-blocking)
+      await this.speculativeExecutor.startSpeculations(toSpeculate, context);
+
+      const elapsedMs = performance.now() - startTime;
+      log.info(
+        `[ControlledExecutor] Started ${toSpeculate.length} speculations (${elapsedMs.toFixed(1)}ms)`,
+      );
+    } catch (error) {
+      log.error(`[ControlledExecutor] Speculation start failed: ${error}`);
+      // Non-critical: Continue with normal execution
+    }
+  }
+
+  /**
+   * Check speculation cache for a tool (Story 3.5-1 Task 4.4)
+   *
+   * Called when executing a task to check if we already have
+   * a speculative result cached.
+   *
+   * @param toolId - Tool to check
+   * @returns Cached result or null
+   */
+  checkSpeculativeCache(toolId: string): SpeculationCache | null {
+    if (!this.speculativeExecutor) {
+      return null;
+    }
+
+    return this.speculativeExecutor.checkCache(toolId);
+  }
+
+  /**
+   * Validate and consume speculation result (Story 3.5-1 Task 4.5)
+   *
+   * Called when a task is about to execute. If speculation was correct,
+   * returns cached result. Otherwise, signals miss and clears cache.
+   *
+   * Note: Currently exposed as public for external use (e.g., MCP gateway).
+   * Will be integrated into executeTask in future iteration.
+   *
+   * @param toolId - Tool being executed
+   * @returns Cached result if speculation was correct, null otherwise
+   */
+  async consumeSpeculation(toolId: string): Promise<SpeculationCache | null> {
+    if (!this.speculativeExecutor) {
+      return null;
+    }
+
+    return await this.speculativeExecutor.validateAndConsume(toolId, this.lastCompletedTool ?? undefined);
+  }
+
+  /**
+   * Get speculation metrics (Story 3.5-1)
+   *
+   * @returns Current speculation metrics or null if not enabled
+   */
+  getSpeculationMetrics(): SpeculationMetrics | null {
+    if (!this.speculationManager) {
+      return null;
+    }
+    return this.speculationManager.getMetrics();
+  }
+
+  /**
+   * Get current speculation configuration
+   */
+  getSpeculationConfig(): SpeculationConfig {
+    return { ...this.speculationConfig };
+  }
+
+  /**
+   * Capture episodic event for task completion (Story 4.1d - Task 2)
+   *
+   * Non-blocking capture with graceful degradation if episodic memory not set.
+   * Includes workflow context hash for later retrieval.
+   *
+   * @param workflowId - Workflow identifier
+   * @param taskId - Task identifier
+   * @param status - Task status ('success' | 'error' | 'failed_safe')
+   * @param output - Task output (not stored for PII safety, only metadata)
+   * @param executionTimeMs - Execution time in milliseconds
+   * @param error - Error message if task failed
+   */
+  private captureTaskComplete(
+    workflowId: string,
+    taskId: string,
+    status: "success" | "error" | "failed_safe",
+    output: unknown,
+    executionTimeMs?: number,
+    error?: string,
+  ): void {
+    if (!this.episodicMemory) return; // Graceful degradation
+
+    // Non-blocking capture (fire-and-forget)
+    this.episodicMemory.capture({
+      workflow_id: workflowId,
+      event_type: "task_complete",
+      task_id: taskId,
+      timestamp: Date.now(),
+      context_hash: this.state ? this.getContextHash() : undefined,
+      data: {
+        result: {
+          status: status === "failed_safe" ? "error" : status,
+          executionTimeMs,
+          errorMessage: error,
+          // No output/arguments content for PII safety (ADR-008)
+          // Enriched metadata allowed: output_size, output_type
+          output: output !== null && output !== undefined ? {
+            type: typeof output,
+            size: typeof output === "string" ? output.length :
+                  Array.isArray(output) ? output.length :
+                  typeof output === "object" ? Object.keys(output as object).length : undefined,
+          } : undefined,
+        },
+        context: this.state ? {
+          currentLayer: this.state.current_layer,
+          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
+          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
+        } : undefined,
+      },
+    }).catch((err) => {
+      // Non-critical: Log but don't fail workflow
+      log.error(`Episodic capture failed for task ${taskId}: ${err}`);
+    });
+  }
+
+  /**
+   * Generate context hash from current workflow state (Story 4.1d)
+   *
+   * Hash includes workflow type, current layer, and complexity metrics.
+   * Used for context-based retrieval of similar episodes.
+   */
+  private getContextHash(): string {
+    if (!this.state) return "no-state";
+
+    // Build context for hashing (consistent with EpisodicMemoryStore.hashContext)
+    const context = {
+      workflowType: "dag-execution",
+      domain: "agentcards",
+      complexity: this.state.tasks.length > 10 ? "high" :
+                  this.state.tasks.length > 5 ? "medium" : "low",
+    };
+
+    // Simple hash matching EpisodicMemoryStore pattern
+    return ["workflowType", "domain", "complexity"]
+      .map((k) => `${k}:${context[k as keyof typeof context] ?? "default"}`)
+      .join("|");
+  }
+
+  /**
+   * Capture episodic event for AIL decision (Story 4.1d - Task 3)
+   *
+   * Non-blocking capture with context at decision point.
+   *
+   * @param workflowId - Workflow identifier
+   * @param outcome - Decision outcome (continue, abort, replan_success, etc.)
+   * @param reasoning - Decision reasoning/description
+   * @param metadata - Additional decision metadata
+   */
+  private captureAILDecision(
+    workflowId: string,
+    outcome: string,
+    reasoning: string,
+    metadata?: Record<string, unknown>,
+  ): void {
+    if (!this.episodicMemory) return; // Graceful degradation
+
+    // Non-blocking capture (fire-and-forget)
+    this.episodicMemory.capture({
+      workflow_id: workflowId,
+      event_type: "ail_decision",
+      timestamp: Date.now(),
+      context_hash: this.state ? this.getContextHash() : undefined,
+      data: {
+        decision: {
+          type: "ail",
+          action: outcome,
+          reasoning,
+        },
+        context: this.state ? {
+          currentLayer: this.state.current_layer,
+          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
+          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
+        } : undefined,
+        metadata,
+      },
+    }).catch((err) => {
+      log.error(`Episodic capture failed for AIL decision: ${err}`);
+    });
+  }
+
+  /**
+   * Capture episodic event for HIL decision (Story 4.1d - Task 4)
+   *
+   * Non-blocking capture with approval data and context.
+   *
+   * @param workflowId - Workflow identifier
+   * @param approved - Whether human approved
+   * @param checkpointId - Checkpoint ID for this decision
+   * @param feedback - Human feedback/comments
+   */
+  private captureHILDecision(
+    workflowId: string,
+    approved: boolean,
+    checkpointId: string,
+    feedback?: string,
+  ): void {
+    if (!this.episodicMemory) return; // Graceful degradation
+
+    // Non-blocking capture (fire-and-forget)
+    this.episodicMemory.capture({
+      workflow_id: workflowId,
+      event_type: "hil_decision",
+      timestamp: Date.now(),
+      context_hash: this.state ? this.getContextHash() : undefined,
+      data: {
+        decision: {
+          type: "hil",
+          action: approved ? "approve" : "reject",
+          reasoning: feedback || (approved ? "Human approved" : "Human rejected"),
+          approved,
+        },
+        context: this.state ? {
+          currentLayer: this.state.current_layer,
+          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
+          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
+        } : undefined,
+        metadata: {
+          checkpoint_id: checkpointId,
+        },
+      },
+    }).catch((err) => {
+      log.error(`Episodic capture failed for HIL decision: ${err}`);
+    });
+  }
+
+  /**
+   * Capture episodic event for speculation start (Story 4.1d - Task 5)
+   *
+   * Placeholder for Epic 3.5 integration. Call this when speculation begins
+   * to track prediction accuracy over time.
+   *
+   * Non-blocking capture with prediction data.
+   *
+   * @param workflowId - Workflow identifier
+   * @param toolId - Tool being speculatively executed
+   * @param confidence - Confidence score (0-1) of the speculation
+   * @param reasoning - Why this tool was selected speculatively
+   * @returns Event ID (string) for later updating wasCorrect field
+   */
+  captureSpeculationStart(
+    workflowId: string,
+    toolId: string,
+    confidence: number,
+    reasoning: string,
+  ): string | null {
+    if (!this.episodicMemory) return null; // Graceful degradation
+
+    const eventId = crypto.randomUUID();
+
+    // Non-blocking capture (fire-and-forget)
+    this.episodicMemory.capture({
+      workflow_id: workflowId,
+      event_type: "speculation_start",
+      timestamp: Date.now(),
+      context_hash: this.state ? this.getContextHash() : undefined,
+      data: {
+        prediction: {
+          toolId,
+          confidence,
+          reasoning,
+          wasCorrect: undefined, // Will be updated after validation
+        },
+        context: this.state ? {
+          currentLayer: this.state.current_layer,
+          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
+          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
+        } : undefined,
+      },
+    }).catch((err) => {
+      log.error(`Episodic capture failed for speculation_start: ${err}`);
+    });
+
+    return eventId;
   }
 
   /**
@@ -341,6 +761,20 @@ export class ControlledExecutor extends ParallelExecutor {
         }
       }
 
+      // 4b.5 Story 3.5-1: Start speculative execution for next layer
+      // Build completed tasks list for prediction
+      const completedTasksForPrediction: CompletedTask[] = this.state.tasks.map((t) => ({
+        taskId: t.taskId,
+        tool: dag.tasks.find((dt) => dt.id === t.taskId)?.tool ?? "unknown",
+        status: t.status as "success" | "error" | "failed_safe",
+        executionTimeMs: t.executionTimeMs,
+      }));
+
+      // Start speculation in background (non-blocking)
+      this.startSpeculativeExecution(completedTasksForPrediction, {}).catch((err) => {
+        log.debug(`[ControlledExecutor] Speculation failed: ${err}`);
+      });
+
       // 4c. Emit task_start for each task
       for (const task of layer) {
         const taskStartEvent: ExecutionEvent = {
@@ -386,6 +820,18 @@ export class ControlledExecutor extends ParallelExecutor {
           };
           await this.eventStream.emit(completeEvent);
           yield completeEvent;
+
+          // Story 4.1d: Capture episodic event for task completion
+          this.captureTaskComplete(
+            workflowId,
+            task.id,
+            "success",
+            result.value.output,
+            result.value.executionTimeMs,
+          );
+
+          // Story 3.5-1: Track last completed tool for pattern reinforcement
+          this.lastCompletedTool = task.tool;
         } else {
           // Story 3.5: Differentiate safe-to-fail vs critical failures
           const errorMsg = result.reason?.message || String(result.reason);
@@ -414,6 +860,16 @@ export class ControlledExecutor extends ParallelExecutor {
             };
             await this.eventStream.emit(warningEvent);
             yield warningEvent;
+
+            // Story 4.1d: Capture episodic event for failed_safe task
+            this.captureTaskComplete(
+              workflowId,
+              task.id,
+              "failed_safe",
+              null,
+              undefined,
+              errorMsg,
+            );
           } else {
             // Critical failure: Halt workflow
             failedTasks++;
@@ -435,6 +891,16 @@ export class ControlledExecutor extends ParallelExecutor {
             };
             await this.eventStream.emit(errorEvent);
             yield errorEvent;
+
+            // Story 4.1d: Capture episodic event for critical error
+            this.captureTaskComplete(
+              workflowId,
+              task.id,
+              "error",
+              null,
+              undefined,
+              errorMsg,
+            );
           }
         }
       }
@@ -525,6 +991,14 @@ export class ControlledExecutor extends ParallelExecutor {
             }],
           };
           this.state = updateState(this.state, decision);
+
+          // Story 4.1d: Capture AIL decision event
+          this.captureAILDecision(
+            workflowId,
+            "continue",
+            "Agent decision: continue",
+            { reason: command?.reason || "default" },
+          );
         } else if (command.type === "abort") {
           log.warn(`AIL decision: abort (${command.reason})`);
           const decision: StateUpdate = {
@@ -537,6 +1011,15 @@ export class ControlledExecutor extends ParallelExecutor {
             }],
           };
           this.state = updateState(this.state, decision);
+
+          // Story 4.1d: Capture AIL decision event
+          this.captureAILDecision(
+            workflowId,
+            "abort",
+            "Agent decision: abort",
+            { reason: command.reason },
+          );
+
           throw new Error(`Workflow aborted by agent: ${command.reason}`);
         } else if (command.type === "replan_dag") {
           // Story 2.5-3 Task 3: Handle replan command
@@ -557,6 +1040,15 @@ export class ControlledExecutor extends ParallelExecutor {
               }],
             };
             this.state = updateState(this.state, decision);
+
+            // Story 4.1d: Capture AIL replan_rejected decision
+            this.captureAILDecision(
+              workflowId,
+              "replan_rejected",
+              "Agent decision: replan rejected (rate limit)",
+              { reason: "rate_limit", max_replans: this.MAX_REPLANS },
+            );
+
             continue; // Skip replan, continue execution
           }
 
@@ -573,6 +1065,15 @@ export class ControlledExecutor extends ParallelExecutor {
               }],
             };
             this.state = updateState(this.state, decision);
+
+            // Story 4.1d: Capture AIL replan_failed decision
+            this.captureAILDecision(
+              workflowId,
+              "replan_failed",
+              "Agent decision: replan failed (no DAGSuggester)",
+              { error: "DAGSuggester not set" },
+            );
+
             continue;
           }
 
@@ -601,6 +1102,15 @@ export class ControlledExecutor extends ParallelExecutor {
                 }],
               };
               this.state = updateState(this.state, decision);
+
+              // Story 4.1d: Capture AIL replan_no_changes decision
+              this.captureAILDecision(
+                workflowId,
+                "replan_no_changes",
+                "Agent decision: replan (no changes)",
+                { replan_time_ms: replanTime },
+              );
+
               continue;
             }
 
@@ -640,6 +1150,18 @@ export class ControlledExecutor extends ParallelExecutor {
             };
             await this.eventStream.emit(replanEvent);
             yield replanEvent;
+
+            // Story 4.1d: Capture AIL replan_success decision
+            this.captureAILDecision(
+              workflowId,
+              "replan_success",
+              "Agent decision: replan successful",
+              {
+                new_tasks_count: augmentedDAG.tasks.length - dag.tasks.length,
+                replan_time_ms: replanTime,
+                replan_count: this.replanCount,
+              },
+            );
           } catch (error) {
             log.error(`Replanning failed: ${error}`);
             const decision: StateUpdate = {
@@ -652,6 +1174,14 @@ export class ControlledExecutor extends ParallelExecutor {
               }],
             };
             this.state = updateState(this.state, decision);
+
+            // Story 4.1d: Capture AIL replan_failed decision
+            this.captureAILDecision(
+              workflowId,
+              "replan_failed",
+              "Agent decision: replan failed",
+              { error: String(error) },
+            );
           }
         }
       }
@@ -686,6 +1216,10 @@ export class ControlledExecutor extends ParallelExecutor {
             }],
           };
           this.state = updateState(this.state, decision);
+
+          // Story 4.1d: Capture HIL timeout decision
+          this.captureHILDecision(workflowId, false, checkpointId, "timeout");
+
           throw new Error("Workflow aborted: HIL approval timeout");
         }
 
@@ -702,6 +1236,9 @@ export class ControlledExecutor extends ParallelExecutor {
               }],
             };
             this.state = updateState(this.state, decision);
+
+            // Story 4.1d: Capture HIL approval decision
+            this.captureHILDecision(workflowId, true, checkpointId, command.feedback);
           } else {
             log.warn(`HIL approval: rejected (${command.feedback})`);
             const decision: StateUpdate = {
@@ -714,6 +1251,10 @@ export class ControlledExecutor extends ParallelExecutor {
               }],
             };
             this.state = updateState(this.state, decision);
+
+            // Story 4.1d: Capture HIL rejection decision
+            this.captureHILDecision(workflowId, false, checkpointId, command.feedback);
+
             throw new Error(
               `Workflow aborted by human: ${command.feedback || "no reason provided"}`,
             );
@@ -920,6 +1461,15 @@ export class ControlledExecutor extends ParallelExecutor {
           };
           await this.eventStream.emit(completeEvent);
           yield completeEvent;
+
+          // Story 4.1d: Capture episodic event for task completion (resume)
+          this.captureTaskComplete(
+            workflowId,
+            task.id,
+            "success",
+            result.value.output,
+            result.value.executionTimeMs,
+          );
         } else {
           failedTasks++;
           const errorMsg = result.reason?.message || String(result.reason);
@@ -940,6 +1490,16 @@ export class ControlledExecutor extends ParallelExecutor {
           };
           await this.eventStream.emit(errorEvent);
           yield errorEvent;
+
+          // Story 4.1d: Capture episodic event for error (resume)
+          this.captureTaskComplete(
+            workflowId,
+            task.id,
+            "error",
+            null,
+            undefined,
+            errorMsg,
+          );
         }
       }
 

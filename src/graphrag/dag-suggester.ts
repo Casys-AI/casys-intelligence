@@ -15,6 +15,9 @@ import type {
   SuggestedDAG,
   DependencyPath,
   DAGStructure,
+  PredictedNode,
+  WorkflowPredictionState,
+  CompletedTask,
 } from "./types.ts";
 
 /**
@@ -359,6 +362,365 @@ export class DAGSuggester {
       // Graceful degradation: return current DAG unchanged
       return currentDAG;
     }
+  }
+
+  // =============================================================================
+  // Story 3.5-1: Speculative Execution - predictNextNodes()
+  // =============================================================================
+
+  /**
+   * Dangerous operations blacklist - never speculate on these (ADR-006)
+   */
+  private static readonly DANGEROUS_OPERATIONS = [
+    "delete",
+    "remove",
+    "deploy",
+    "payment",
+    "send_email",
+    "execute_shell",
+    "drop",
+    "truncate",
+    "transfer",
+    "admin",
+  ];
+
+  /**
+   * Predict next likely tools based on workflow state (Story 3.5-1)
+   *
+   * Uses GraphRAG community detection, co-occurrence patterns, and PageRank
+   * to predict which tools are likely to be requested next.
+   *
+   * Process:
+   * 1. Get last completed tool from workflow state
+   * 2. Query community members (Louvain algorithm)
+   * 3. Query outgoing edges (co-occurrence patterns)
+   * 4. Calculate confidence scores using:
+   *    - Edge weight (historical co-occurrence)
+   *    - PageRank (tool importance)
+   *    - Observation count (pattern frequency)
+   * 5. Filter dangerous operations
+   * 6. Return sorted predictions
+   *
+   * Performance target: <50ms (AC #10)
+   *
+   * @param workflowState - Current workflow state with completed tasks
+   * @param completedTasks - Alternative: Array of completed tasks
+   * @returns Sorted array of predicted nodes (highest confidence first)
+   */
+  async predictNextNodes(
+    workflowState: WorkflowPredictionState | null,
+    completedTasks?: CompletedTask[],
+  ): Promise<PredictedNode[]> {
+    const startTime = performance.now();
+
+    try {
+      // 1. Get completed tasks from either source
+      const tasks = workflowState?.completed_tasks ?? completedTasks ?? [];
+
+      if (tasks.length === 0) {
+        log.debug("[predictNextNodes] No completed tasks, returning empty predictions");
+        return [];
+      }
+
+      // 2. Get last successful completed tool
+      const successfulTasks = tasks.filter((t) => t.status === "success");
+      if (successfulTasks.length === 0) {
+        log.debug("[predictNextNodes] No successful tasks, returning empty predictions");
+        return [];
+      }
+
+      const lastTask = successfulTasks[successfulTasks.length - 1];
+      const lastToolId = lastTask.tool;
+
+      log.debug(`[predictNextNodes] Predicting next tools after: ${lastToolId}`);
+
+      const predictions: PredictedNode[] = [];
+      const seenTools = new Set<string>();
+
+      // Exclude tools already executed in this workflow
+      const executedTools = new Set(tasks.map((t) => t.tool));
+
+      // 3. Query community members (Louvain algorithm)
+      const communityMembers = this.graphEngine.findCommunityMembers(lastToolId);
+      for (const memberId of communityMembers.slice(0, 5)) {
+        if (seenTools.has(memberId) || executedTools.has(memberId)) continue;
+        if (this.isDangerousOperation(memberId)) continue;
+
+        const pageRank = this.graphEngine.getPageRank(memberId);
+        const confidence = this.calculateCommunityConfidence(memberId, lastToolId, pageRank);
+
+        predictions.push({
+          toolId: memberId,
+          confidence,
+          reasoning: `Same community as ${lastToolId} (PageRank: ${(pageRank * 100).toFixed(1)}%)`,
+          source: "community",
+        });
+        seenTools.add(memberId);
+      }
+
+      // 4. Query outgoing edges (co-occurrence patterns)
+      const neighbors = this.graphEngine.getNeighbors(lastToolId, "out");
+      for (const neighborId of neighbors) {
+        if (seenTools.has(neighborId) || executedTools.has(neighborId)) continue;
+        if (this.isDangerousOperation(neighborId)) continue;
+
+        const edgeData = this.graphEngine.getEdgeData(lastToolId, neighborId);
+        const confidence = this.calculateCooccurrenceConfidence(edgeData);
+
+        predictions.push({
+          toolId: neighborId,
+          confidence,
+          reasoning: `Historical co-occurrence with ${lastToolId} (${edgeData?.count ?? 0} observations, ${((edgeData?.weight ?? 0) * 100).toFixed(0)}% confidence)`,
+          source: "co-occurrence",
+        });
+        seenTools.add(neighborId);
+      }
+
+      // 5. Boost with Adamic-Adar similarity for 2-hop patterns
+      const adamicAdarResults = this.graphEngine.computeAdamicAdar(lastToolId, 5);
+      for (const { toolId, score } of adamicAdarResults) {
+        if (seenTools.has(toolId) || executedTools.has(toolId)) continue;
+        if (this.isDangerousOperation(toolId)) continue;
+
+        const pageRank = this.graphEngine.getPageRank(toolId);
+        const confidence = Math.min((score * 0.3) + (pageRank * 0.2), 0.65); // Cap at 0.65 for indirect
+
+        predictions.push({
+          toolId,
+          confidence,
+          reasoning: `2-hop pattern similarity (Adamic-Adar: ${score.toFixed(2)})`,
+          source: "learned",
+        });
+        seenTools.add(toolId);
+      }
+
+      // 6. Sort by confidence (descending)
+      predictions.sort((a, b) => b.confidence - a.confidence);
+
+      const elapsedMs = performance.now() - startTime;
+      log.info(
+        `[predictNextNodes] Generated ${predictions.length} predictions for ${lastToolId} (${elapsedMs.toFixed(1)}ms)`,
+      );
+
+      // Log top predictions
+      if (predictions.length > 0) {
+        const top3 = predictions.slice(0, 3).map((p) => `${p.toolId}:${p.confidence.toFixed(2)}`);
+        log.debug(`[predictNextNodes] Top predictions: ${top3.join(", ")}`);
+      }
+
+      return predictions;
+    } catch (error) {
+      log.error(`[predictNextNodes] Failed: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Check if a tool is a dangerous operation (never speculate)
+   *
+   * @param toolId - Tool identifier to check
+   * @returns true if tool is dangerous
+   */
+  private isDangerousOperation(toolId: string): boolean {
+    const lowerToolId = toolId.toLowerCase();
+    return DAGSuggester.DANGEROUS_OPERATIONS.some((op) => lowerToolId.includes(op));
+  }
+
+  /**
+   * Calculate confidence for community-based prediction
+   *
+   * @param toolId - Target tool
+   * @param sourceToolId - Source tool (last executed)
+   * @param pageRank - PageRank score of target tool
+   * @returns Confidence score (0-1)
+   */
+  private calculateCommunityConfidence(
+    toolId: string,
+    sourceToolId: string,
+    pageRank: number,
+  ): number {
+    // Base confidence for community membership: 0.40
+    let confidence = 0.40;
+
+    // Boost by PageRank (up to +0.20)
+    confidence += Math.min(pageRank * 2, 0.20);
+
+    // Boost if direct edge exists (historical pattern)
+    const edgeData = this.graphEngine.getEdgeData(sourceToolId, toolId);
+    if (edgeData) {
+      confidence += Math.min(edgeData.weight * 0.25, 0.25);
+    }
+
+    // Boost by Adamic-Adar similarity (indirect patterns)
+    const aaScore = this.graphEngine.adamicAdarBetween(sourceToolId, toolId);
+    if (aaScore > 0) {
+      confidence += Math.min(aaScore * 0.1, 0.10);
+    }
+
+    return Math.min(confidence, 0.95); // Cap at 0.95
+  }
+
+  /**
+   * Calculate confidence for co-occurrence-based prediction
+   *
+   * @param edgeData - Edge attributes from GraphRAG
+   * @returns Confidence score (0-1)
+   */
+  private calculateCooccurrenceConfidence(
+    edgeData: { weight: number; count: number } | null,
+  ): number {
+    if (!edgeData) return 0.30;
+
+    // Base: edge weight (confidence_score from DB)
+    let confidence = edgeData.weight;
+
+    // Boost by observation count (diminishing returns)
+    // 1 observation: +0, 5: +0.10, 10: +0.15, 20+: +0.20
+    const countBoost = Math.min(Math.log2(edgeData.count + 1) * 0.05, 0.20);
+    confidence += countBoost;
+
+    return Math.min(confidence, 0.95); // Cap at 0.95
+  }
+
+  // =============================================================================
+  // Story 3.5-1: Agent Hints & Pattern Export (AC #12, #13)
+  // =============================================================================
+
+  /**
+   * Register agent hint for graph bootstrap (Story 3.5-1 AC #12)
+   *
+   * Allows agents to hint expected tool sequences before patterns are learned.
+   * Useful for:
+   * - Initial bootstrap of new workflows
+   * - Explicit knowledge injection
+   * - Testing speculation behavior
+   *
+   * @param toToolId - Tool that typically follows
+   * @param fromToolId - Tool that typically precedes
+   * @param confidence - Optional confidence override (default: 0.60)
+   */
+  async registerAgentHint(
+    toToolId: string,
+    fromToolId: string,
+    confidence: number = 0.60,
+  ): Promise<void> {
+    try {
+      log.info(`[DAGSuggester] Registering agent hint: ${fromToolId} -> ${toToolId} (confidence: ${confidence})`);
+
+      // Add or update edge in graph
+      await this.graphEngine.addEdge(fromToolId, toToolId, {
+        weight: confidence,
+        count: 1,
+        source: "hint",
+      });
+
+      log.debug(`[DAGSuggester] Agent hint registered successfully`);
+    } catch (error) {
+      log.error(`[DAGSuggester] Failed to register agent hint: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Export learned patterns for portability (Story 3.5-1 AC #13)
+   *
+   * Returns all learned tool-to-tool patterns from the graph.
+   * Useful for:
+   * - Sharing patterns between instances
+   * - Debugging speculation behavior
+   * - Cold-start initialization
+   *
+   * @returns Array of learned patterns with metadata
+   */
+  exportLearnedPatterns(): Array<{
+    from: string;
+    to: string;
+    weight: number;
+    count: number;
+    source: string;
+  }> {
+    const patterns: Array<{
+      from: string;
+      to: string;
+      weight: number;
+      count: number;
+      source: string;
+    }> = [];
+
+    try {
+      // Get all edges from graph
+      const edges = this.graphEngine.getEdges();
+
+      for (const { source: from, target: to, attributes } of edges) {
+        patterns.push({
+          from,
+          to,
+          weight: (attributes.weight as number) ?? 0.5,
+          count: (attributes.count as number) ?? 1,
+          source: (attributes.source as string) ?? "learned",
+        });
+      }
+
+      log.info(`[DAGSuggester] Exported ${patterns.length} learned patterns`);
+      return patterns;
+    } catch (error) {
+      log.error(`[DAGSuggester] Failed to export patterns: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Import learned patterns (Story 3.5-1 AC #13)
+   *
+   * Imports patterns exported from another instance.
+   * Useful for cold-start initialization.
+   *
+   * @param patterns - Patterns to import
+   * @param mergeStrategy - How to handle existing patterns ("replace" | "merge")
+   */
+  async importLearnedPatterns(
+    patterns: Array<{
+      from: string;
+      to: string;
+      weight: number;
+      count: number;
+      source?: string;
+    }>,
+    mergeStrategy: "replace" | "merge" = "merge",
+  ): Promise<number> {
+    let imported = 0;
+
+    for (const pattern of patterns) {
+      try {
+        const existingEdge = this.graphEngine.getEdgeData(pattern.from, pattern.to);
+
+        if (existingEdge && mergeStrategy === "merge") {
+          // Merge: Average weights, sum counts
+          const newWeight = (existingEdge.weight + pattern.weight) / 2;
+          const newCount = existingEdge.count + pattern.count;
+
+          await this.graphEngine.addEdge(pattern.from, pattern.to, {
+            weight: newWeight,
+            count: newCount,
+            source: "merged",
+          });
+        } else {
+          // Replace or new edge
+          await this.graphEngine.addEdge(pattern.from, pattern.to, {
+            weight: pattern.weight,
+            count: pattern.count,
+            source: pattern.source ?? "imported",
+          });
+        }
+
+        imported++;
+      } catch (error) {
+        log.error(`[DAGSuggester] Failed to import pattern ${pattern.from} -> ${pattern.to}: ${error}`);
+      }
+    }
+
+    log.info(`[DAGSuggester] Imported ${imported}/${patterns.length} patterns`);
+    return imported;
   }
 
   /**

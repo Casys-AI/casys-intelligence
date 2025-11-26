@@ -162,3 +162,88 @@ export interface SpeculativeMetrics {
   wastedComputeCost: number;
   savedLatency: number;
 }
+
+// =============================================================================
+// Story 3.5-1: DAG Suggester & Speculative Execution
+// =============================================================================
+
+/**
+ * Predicted next node for speculative execution (Story 3.5-1)
+ *
+ * Represents a tool that is likely to be requested next based on:
+ * - Historical co-occurrence patterns
+ * - Community membership (Louvain)
+ * - Context similarity
+ */
+export interface PredictedNode {
+  toolId: string;
+  confidence: number;
+  reasoning: string;
+  source: "community" | "co-occurrence" | "hint" | "learned";
+  wasCorrect?: boolean; // Set after validation
+}
+
+/**
+ * Configuration for speculative execution (Story 3.5-1)
+ */
+export interface SpeculationConfig {
+  enabled: boolean;
+  confidence_threshold: number; // Default: 0.70
+  max_concurrent: number; // Default: 3
+}
+
+/**
+ * Cached result from speculative execution (Story 3.5-1)
+ */
+export interface SpeculationCache {
+  prediction_id: string;
+  toolId: string;
+  result: unknown;
+  confidence: number;
+  timestamp: number;
+  executionTimeMs: number;
+}
+
+/**
+ * Speculation metrics for monitoring (Story 3.5-1)
+ */
+export interface SpeculationMetrics {
+  hit_rate: number;
+  net_benefit_ms: number;
+  false_positive_rate: number;
+  total_speculations: number;
+  total_hits: number;
+  total_misses: number;
+}
+
+/**
+ * Learned pattern from execution history (Story 3.5-1)
+ */
+export interface LearnedPattern {
+  from_tool: string;
+  to_tool: string;
+  success_rate: number;
+  observation_count: number;
+  avg_confidence: number;
+  source: "user" | "learned";
+}
+
+/**
+ * Workflow state for prediction (Story 3.5-1)
+ */
+export interface WorkflowPredictionState {
+  workflow_id: string;
+  current_layer: number;
+  completed_tasks: CompletedTask[];
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Completed task for prediction context (Story 3.5-1)
+ */
+export interface CompletedTask {
+  taskId: string;
+  tool: string;
+  status: "success" | "error" | "failed_safe";
+  executionTimeMs?: number;
+}

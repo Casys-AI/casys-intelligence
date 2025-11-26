@@ -24,22 +24,26 @@ jupyter notebook notebooks/
 
 ## Notebooks
 
-### Core Features
+Follow the numbered progression for the best learning experience:
 
-| Notebook | Description |
-|----------|-------------|
-| `sandbox-basics.ipynb` | Code execution, error handling, timeouts |
-| `context-injection.ipynb` | Inject data and context into executions |
-| `security-demo.ipynb` | Security boundaries, permissions, limits |
+| # | Notebook | Description |
+|---|----------|-------------|
+| 01 | `sandbox-basics.ipynb` | Code execution, error handling, timeouts |
+| 02 | `context-injection.ipynb` | Inject data and context into executions |
+| 03 | `dag-workflows.ipynb` | Multi-step DAG workflows with dependencies + **visualization** |
+| 04 | `mcp-discovery.ipynb` | MCP server discovery and tool aggregation + **GraphRAG viz** |
+| 05 | `mcp-usage.ipynb` | LLM + MCP integration with tool calling + **DAG viz** |
+| 06 | `llm-integration.ipynb` | Multi-LLM support (OpenAI, Anthropic, Google) |
+| 07 | `security-demo.ipynb` | Security boundaries, permissions, limits |
+| 08 | `controlled-executor.ipynb` | **Advanced DAG execution** with event streaming, episodic memory, decision points |
 
-### Advanced Features
+### Visualization Features
 
-| Notebook | Description |
-|----------|-------------|
-| `dag-workflows.ipynb` | Multi-step DAG workflows with dependencies |
-| `mcp-discovery.ipynb` | MCP server discovery and tool aggregation |
-| `mcp-usage.ipynb` | LLM + MCP integration with tool calling |
-| `llm-demo.ipynb` | Multi-LLM support (OpenAI, Anthropic, Google) |
+All notebooks include Mermaid diagram generation for:
+- **DAG structures** - Visualize task dependencies and execution layers
+- **GraphRAG relations** - See tool co-usage patterns and learning
+- **Execution timelines** - Track real-time workflow progress
+- **Fan-in/fan-out** - Understand parallel vs sequential execution
 
 ## MCP HTTP Server
 
@@ -47,7 +51,7 @@ Start the full MCP Gateway with HTTP access:
 
 ```bash
 # From AgentCards root
-deno run --allow-all playground/examples/server.ts
+deno run --allow-all playground/server.ts
 ```
 
 **First run:** ~2-3 minutes (downloads BGE-M3 model - 2.2GB)
