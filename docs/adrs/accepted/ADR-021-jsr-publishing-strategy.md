@@ -1,12 +1,13 @@
 # ADR-021: JSR Publishing Strategy
 
-**Status:** Proposed
+**Status:** accepted
 **Date:** 2025-11-25
 **Context:** Publication du projet pour l'article blog Part 3
 
 ## Context
 
 Le projet AgentCards contient :
+
 - Code source (sandbox, MCP gateway, DAG executor, etc.)
 - Documentation de gestion de projet (stories, epics, sprints)
 - Configuration BMAD (workflows Claude)
@@ -16,29 +17,32 @@ Le projet AgentCards contient :
 
 **Options considérées :**
 
-| Option | Avantages | Inconvénients |
-|--------|-----------|---------------|
-| GitHub seul | Simple, historique git | Clone + setup nécessaire |
-| GitHub + .gitignore | Sépare public/privé | Perd versioning des fichiers internes |
-| 2 repos (dev + public) | Séparation claire | Double maintenance |
-| JSR (package registry) | Import 1 ligne, doc auto | Packaging nécessaire |
+| Option                 | Avantages                | Inconvénients                         |
+| ---------------------- | ------------------------ | ------------------------------------- |
+| GitHub seul            | Simple, historique git   | Clone + setup nécessaire              |
+| GitHub + .gitignore    | Sépare public/privé      | Perd versioning des fichiers internes |
+| 2 repos (dev + public) | Séparation claire        | Double maintenance                    |
+| JSR (package registry) | Import 1 ligne, doc auto | Packaging nécessaire                  |
 
 ## Decision
 
 **Publier sur JSR** avec une approche incrémentale :
 
 ### Phase 1 : Sandbox seul (v0.1.0)
+
 ```
 jsr:@casys/mcp-gateway
 ```
 
 **Exports :**
+
 ```typescript
 export { DenoSandboxExecutor } from "./sandbox/executor.ts";
 export type { ExecutionResult, SandboxConfig } from "./sandbox/types.ts";
 ```
 
 **Usage :**
+
 ```typescript
 import { DenoSandboxExecutor } from "jsr:@casys/mcp-gateway";
 
@@ -47,9 +51,11 @@ const result = await sandbox.execute("return 1 + 1");
 ```
 
 ### Phase 2 : Context Builder (v0.2.0)
+
 Ajouter injection de contexte MCP.
 
 ### Phase 3 : Workflow Executor (v0.3.0)
+
 Ajouter exécution DAG complète.
 
 ## Structure du Package
@@ -68,6 +74,7 @@ deno.json               # Métadonnées JSR
 ```
 
 **deno.json modifié :**
+
 ```json
 {
   "name": "@casys/mcp-gateway",
@@ -83,16 +90,19 @@ deno.json               # Métadonnées JSR
 ## Conséquences
 
 ### Positives
+
 - **Import simple** : 1 ligne pour les utilisateurs
 - **Documentation auto-générée** : JSR génère la doc depuis les types
 - **Versioning sémantique** : Mises à jour contrôlées
 - **Séparation propre** : Code public ≠ gestion projet interne
 
 ### Négatives
+
 - **Maintenance** : Garder JSR et dev repo en sync
 - **API publique** : Engagement de stabilité pour les exports
 
 ### Neutres
+
 - Le repo GitHub personnel reste inchangé (dev complet avec BMAD)
 - L'article pointe vers JSR pour l'usage, GitHub pour le code source
 
@@ -116,6 +126,7 @@ Pour permettre aux lecteurs d'essayer le code sans installation :
 - Gratuit
 
 **Exemple de playground partageable :**
+
 ```typescript
 // https://dash.deno.com/playground/casys-mcp-sandbox
 import { DenoSandboxExecutor } from "jsr:@casys/mcp-gateway";
@@ -132,12 +143,13 @@ Deno.serve(async () => {
   `);
 
   return new Response(JSON.stringify(result, null, 2), {
-    headers: { "content-type": "application/json" }
+    headers: { "content-type": "application/json" },
   });
 });
 ```
 
 **Dans l'article :**
+
 > **Essayer en ligne :** [Deno Deploy Playground](https://dash.deno.com/playground/casys-mcp-sandbox)
 
 ## Références
