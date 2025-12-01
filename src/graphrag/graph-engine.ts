@@ -19,6 +19,7 @@ import * as log from "@std/log";
 import type { PGliteClient } from "../db/client.ts";
 import type { VectorSearch } from "../vector/search.ts";
 import type { DAGStructure, GraphStats, WorkflowExecution, HybridSearchResult } from "./types.ts";
+import type { GraphEvent } from "./events.ts";
 
 // Extract exports from Graphology packages
 const { DirectedGraph } = graphologyPkg as any;
@@ -36,9 +37,51 @@ export class GraphRAGEngine {
   private graph: any;
   private pageRanks: Record<string, number> = {};
   private communities: Record<string, string> = {};
+  private eventTarget: EventTarget;
+  private listenerMap: Map<(event: GraphEvent) => void, EventListener> = new Map();
 
   constructor(private db: PGliteClient) {
     this.graph = new DirectedGraph({ allowSelfLoops: false });
+    this.eventTarget = new EventTarget();
+  }
+
+  /**
+   * Subscribe to graph events
+   *
+   * @param event - Event name (always "graph_event")
+   * @param listener - Event listener function
+   */
+  on(event: "graph_event", listener: (event: GraphEvent) => void): void {
+    const wrappedListener = ((e: CustomEvent<GraphEvent>) => {
+      listener(e.detail);
+    }) as EventListener;
+
+    this.listenerMap.set(listener, wrappedListener);
+    this.eventTarget.addEventListener(event, wrappedListener);
+  }
+
+  /**
+   * Unsubscribe from graph events
+   *
+   * @param event - Event name (always "graph_event")
+   * @param listener - Event listener function to remove
+   */
+  off(event: "graph_event", listener: (event: GraphEvent) => void): void {
+    const wrappedListener = this.listenerMap.get(listener);
+    if (wrappedListener) {
+      this.eventTarget.removeEventListener(event, wrappedListener);
+      this.listenerMap.delete(listener);
+    }
+  }
+
+  /**
+   * Emit a graph event
+   *
+   * @param event - Graph event to emit
+   */
+  private emit(event: GraphEvent): void {
+    const customEvent = new CustomEvent("graph_event", { detail: event });
+    this.eventTarget.dispatchEvent(customEvent);
   }
 
   /**
@@ -95,6 +138,17 @@ export class GraphRAGEngine {
       if (this.graph.order > 0) {
         await this.precomputeMetrics();
       }
+
+      // 4. Emit graph_synced event
+      this.emit({
+        type: "graph_synced",
+        data: {
+          node_count: this.graph.order,
+          edge_count: this.graph.size,
+          sync_duration_ms: syncTime,
+          timestamp: new Date().toISOString(),
+        },
+      });
     } catch (error) {
       log.error(`Graph sync failed: ${error}`);
       throw error;
@@ -228,6 +282,9 @@ export class GraphRAGEngine {
    * @param execution - Workflow execution record
    */
   async updateFromExecution(execution: WorkflowExecution): Promise<void> {
+    const startTime = performance.now();
+    const toolIds = execution.dag_structure.tasks.map((t) => t.tool);
+
     try {
       // Extract dependencies from executed DAG
       for (const task of execution.dag_structure.tasks) {
@@ -241,15 +298,40 @@ export class GraphRAGEngine {
           // Update or add edge in Graphology
           if (this.graph.hasEdge(fromTool, toTool)) {
             const edge = this.graph.getEdgeAttributes(fromTool, toTool);
+            const oldConfidence = edge.weight as number;
             const newCount = (edge.count as number) + 1;
-            const newWeight = Math.min((edge.weight as number) * 1.1, 1.0);
+            const newConfidence = Math.min(oldConfidence * 1.1, 1.0);
 
             this.graph.setEdgeAttribute(fromTool, toTool, "count", newCount);
-            this.graph.setEdgeAttribute(fromTool, toTool, "weight", newWeight);
+            this.graph.setEdgeAttribute(fromTool, toTool, "weight", newConfidence);
+
+            // Emit edge_updated event
+            this.emit({
+              type: "edge_updated",
+              data: {
+                from_tool_id: fromTool,
+                to_tool_id: toTool,
+                old_confidence: oldConfidence,
+                new_confidence: newConfidence,
+                observed_count: newCount,
+                timestamp: new Date().toISOString(),
+              },
+            });
           } else if (this.graph.hasNode(fromTool) && this.graph.hasNode(toTool)) {
             this.graph.addEdge(fromTool, toTool, {
               count: 1,
               weight: 0.5,
+            });
+
+            // Emit edge_created event
+            this.emit({
+              type: "edge_created",
+              data: {
+                from_tool_id: fromTool,
+                to_tool_id: toTool,
+                confidence_score: 0.5,
+                timestamp: new Date().toISOString(),
+              },
             });
           }
         }
@@ -262,6 +344,33 @@ export class GraphRAGEngine {
 
       // Persist updated edges to PGlite
       await this.persistEdgesToDB();
+
+      const executionTime = performance.now() - startTime;
+
+      // Emit workflow_executed event
+      this.emit({
+        type: "workflow_executed",
+        data: {
+          workflow_id: execution.execution_id,
+          tool_ids: toolIds,
+          success: execution.success,
+          execution_time_ms: executionTime,
+          timestamp: new Date().toISOString(),
+        },
+      });
+
+      // Emit metrics_updated event
+      this.emit({
+        type: "metrics_updated",
+        data: {
+          edge_count: this.graph.size,
+          node_count: this.graph.order,
+          density: this.getDensity(),
+          pagerank_top_10: this.getTopPageRank(10),
+          communities_count: this.getCommunitiesCount(),
+          timestamp: new Date().toISOString(),
+        },
+      });
     } catch (error) {
       log.error(`Failed to update graph from execution: ${error}`);
       throw error;
@@ -548,6 +657,36 @@ export class GraphRAGEngine {
       communities: new Set(Object.values(this.communities)).size,
       avgPageRank,
     };
+  }
+
+  /**
+   * Get graph density (0-1)
+   * Density = actual_edges / max_possible_edges
+   */
+  private getDensity(): number {
+    const nodeCount = this.graph.order;
+    if (nodeCount <= 1) return 0;
+
+    const maxPossibleEdges = nodeCount * (nodeCount - 1); // directed graph
+    return this.graph.size / maxPossibleEdges;
+  }
+
+  /**
+   * Get top N tools by PageRank score
+   */
+  private getTopPageRank(n: number): Array<{ tool_id: string; score: number }> {
+    const entries = Object.entries(this.pageRanks)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, n);
+
+    return entries.map(([tool_id, score]) => ({ tool_id, score }));
+  }
+
+  /**
+   * Get total number of communities detected
+   */
+  private getCommunitiesCount(): number {
+    return new Set(Object.values(this.communities)).size;
   }
 
   // ============================================

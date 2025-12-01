@@ -1,4 +1,4 @@
-# AgentCards Playground - Deno Development Environment
+# Casys MCP gateway Playground - Deno Development Environment
 # For GitHub Codespaces with Jupyter notebook support
 
 FROM denoland/deno:debian-2.1.4
@@ -18,7 +18,7 @@ RUN pip3 install --break-system-packages jupyterlab notebook
 RUN deno jupyter --install
 
 # Set working directory
-WORKDIR /workspaces/AgentCards
+WORKDIR /workspaces/CasysMCPGateway
 
 # Cache Deno dependencies (will be overwritten by mount)
 COPY deno.json deno.lock* ./

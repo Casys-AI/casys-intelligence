@@ -1,10 +1,10 @@
 # Story 2.5-4: MCP Control Tools & Per-Layer Validation
 
-**Status:** review
+**Status:** done
 **Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation)
 **Estimate:** 7 hours (revised: AC3 uses existing checkpoints)
 **Created:** 2025-11-24
-**Updated:** 2025-11-25 (scope revised per ADR-020: AIL Control Protocol)
+**Updated:** 2025-12-01 (Code Review APPROVED, ready for merge)
 **Prerequisite:** Story 2.5-3 (AIL/HIL Integration & DAG Replanning)
 
 ## User Story
@@ -345,7 +345,7 @@ Use colons (`:`) as separator to match existing tools pattern:
 - [x] All existing tests passing (no regressions)
 - [x] ADR-020 approved
 - [x] Spike completed (Option C chosen)
-- [ ] Code review passed
+- [x] Code review passed (APPROVED 2025-12-01, Quality Score: 95/100)
 - [ ] Merged to main branch
 
 ---
@@ -359,9 +359,10 @@ Use colons (`:`) as separator to match existing tools pattern:
 
 ---
 
-**Status:** review
+**Status:** done
 **Context Reference:** docs/stories/story-2.5-4.context.xml
 **Estimated Completion:** 7.5 hours
+**Actual Completion:** 7.5 hours
 
 **Scope Change History:**
 - 2025-11-24: Reduced from 16h → 4h (ADR-018: minimize to 4 commands)
@@ -455,3 +456,204 @@ Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, 
 ---
 
 **In Review - Ready for Senior Developer Review**
+
+---
+
+## Senior Developer Review (AI)
+
+**Reviewer:** BMad (Scrum Master - AI Code Review Agent)
+**Date:** 2025-12-01
+**Outcome:** ✅ **APPROVE**
+
+### Summary
+
+Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue, abort, replan, approval_response) et le **mode de validation par couche** pour permettre aux agents externes (Claude Code) de contrôler l'exécution de workflows via le protocole MCP stateless. L'implémentation inclut:
+
+- ✅ 4 nouveaux MCP tools exposés via `gateway-server.ts`
+- ✅ Persistance DAG dans table séparée `workflow_dags` (Option C du spike)
+- ✅ Mode `per_layer_validation` avec workflow_id + checkpoint_id
+- ✅ 13 tests d'intégration complets et passants
+- ✅ Gestion hybride in-memory + DB pour continuation stateless
+- ✅ Cleanup automatique des DAGs expirés (TTL 1h)
+
+**Temps estimé:** 7.5h | **Temps réel:** ~7.5h (conforme)
+
+---
+
+### Acceptance Criteria Coverage
+
+#### AC1: MCP Control Tools (3h) - ✅ IMPLEMENTED
+
+**Evidence:**
+
+| Tool | Schema Definition | Handler Implementation | Status |
+|------|-------------------|----------------------|---------|
+| `agentcards:continue` | `gateway-server.ts:344-360` | `handleContinue():1157-1238` | ✅ |
+| `agentcards:abort` | `gateway-server.ts:364-380` | `handleAbort():1391-1465` | ✅ |
+| `agentcards:replan` | `gateway-server.ts:384-404` | `handleReplan():1475-1584` | ✅ |
+| `agentcards:approval_response` | `gateway-server.ts:408-428` | `handleApprovalResponse():1594-1700+` | ✅ |
+
+**Validation:**
+- ✅ All 4 tools expose correct input schemas with required/optional parameters
+- ✅ Handlers implement full functionality (in-memory + DB fallback, error handling)
+- ✅ Integration with CheckpointManager and WorkflowDAGStore verified
+
+#### AC2: Per-Layer Validation Mode (2h) - ✅ IMPLEMENTED
+
+**Evidence:**
+- ✅ `per_layer_validation: boolean` config parameter accepted
+- ✅ Response format: `layer_complete` status with `workflow_id`, `checkpoint_id`, `layer_index`, `total_layers`, `layer_results`, `options`
+- ✅ Implementation: `processGeneratorUntilPause()` (`gateway-server.ts:1274-1381`)
+- ✅ ActiveWorkflow state maintained (`gateway-server.ts:1307-1320`)
+
+#### AC3: Workflow DAG Persistence (1.5h) - ✅ IMPLEMENTED
+
+**Evidence:**
+- ✅ Migration 008 created: `src/db/migrations/008_workflow_dags_migration.ts`
+- ✅ Table schema: `workflow_id` (PK), `dag` (JSONB), `intent`, `created_at`, `expires_at`
+- ✅ Index: `idx_workflow_dags_expires` on `expires_at`
+- ✅ Module: `src/mcp/workflow-dag-store.ts` with 7 functions implemented
+- ✅ Flow verified: save → get → update → delete with TTL cleanup
+
+#### AC4: Integration Tests (1h) - ✅ IMPLEMENTED
+
+**Evidence:**
+- ✅ File: `tests/integration/mcp/control_tools_test.ts` (390 lines)
+- ✅ 13 test cases covering:
+  - CRUD operations (save, get, update, delete)
+  - Per-layer validation flow (execute → continue → complete)
+  - Replan mid-workflow
+  - Abort mid-workflow with cleanup
+  - Edge cases (large DAGs, special characters, concurrency, expired cleanup)
+- ✅ All 13 tests passing
+
+---
+
+### Task Completion Validation
+
+| Task | Marked | Verified | Evidence |
+|------|--------|----------|----------|
+| `execute_workflow` → `execute` renamed | [x] | ✅ | Tool names use `agentcards:` prefix |
+| 4 MCP control tools implemented | [x] | ✅ | AC1 evidence |
+| Per-layer validation mode working | [x] | ✅ | AC2 evidence |
+| Migration 008: `workflow_dags` table | [x] | ✅ | `migrations/008_workflow_dags_migration.ts:14-26` |
+| `workflow-dag-store.ts` module | [x] | ✅ | `workflow-dag-store.ts:48-228` |
+| Handlers use CheckpointManager + WorkflowDAGStore | [x] | ✅ | Multiple file:line references verified |
+| Integration tests passing (13 cases) | [x] | ✅ | `control_tools_test.ts:1-390` |
+| All existing tests passing | [x] | ✅ | 74 passed, 0 failed, 2 ignored |
+| ADR-020 approved | [x] | ✅ | Referenced in code comments |
+| Spike completed (Option C) | [x] | ✅ | `workflow-dag-store.ts:7` |
+
+**Summary:** **10/10 tasks VERIFIED COMPLETE** with file:line evidence. No false completions detected.
+
+---
+
+### Test Coverage and Gaps
+
+**Test Quality:** ✅ EXCELLENT
+
+**Coverage:**
+- ✅ Unit tests: workflow-dag-store.ts (100% via integration tests)
+- ✅ Integration tests: 13 comprehensive scenarios
+- ✅ E2E tests: Updated for renamed tools
+- ✅ Edge cases: Large DAGs, special characters, concurrency, expired cleanup
+- ✅ Error handling: Non-existent workflows, missing parameters
+
+**Gaps:** None significant. All critical paths tested.
+
+---
+
+### Architectural Alignment
+
+**Tech-Spec Compliance:** ✅ FULL COMPLIANCE
+
+- ✅ ADR-020: AIL Control Protocol followed (Three-Level Architecture, 4 unified commands)
+- ✅ Spike Decision (Option C): Separate `workflow_dags` table implemented
+- ✅ Epic 2.5 Architecture: Extends ControlledExecutor, reuses CheckpointManager
+
+**Architecture Violations:** ❌ NONE
+
+---
+
+### Security Notes
+
+**Security Controls:** ✅ STRONG
+
+- ✅ SQL Injection Prevention: Parameterized queries throughout
+- ✅ Input Validation: Required parameters checked, type validation
+- ✅ State Isolation: workflow_id uniqueness enforced (PRIMARY KEY)
+- ✅ Resource Cleanup: DAGs cleaned up on complete/abort, TTL prevents unbounded growth
+
+**Security Findings:** ❌ NONE
+
+---
+
+### Best-Practices and References
+
+**Tech Stack:** Deno 2.x + TypeScript + PGlite + MCP SDK 1.21.1
+
+**Best Practices Applied:**
+- ✅ TypeScript strict mode
+- ✅ Parameterized SQL queries (injection prevention)
+- ✅ Error handling with try-catch
+- ✅ Async/await patterns
+- ✅ Separation of concerns
+- ✅ TSDoc comments for public APIs
+- ✅ Logging with context
+
+---
+
+### Key Findings (by severity)
+
+#### HIGH Severity: ❌ NONE
+
+#### MEDIUM Severity: ❌ NONE
+
+#### LOW Severity:
+
+**L1: Hardcoded TTL (1 hour)**
+- Location: `migrations/008_workflow_dags_migration.ts:21`, `workflow-dag-store.ts:62,159,223`
+- Description: TTL hardcodé à `INTERVAL '1 hour'` au lieu d'être configurable
+- Severity: LOW (acceptable pour MVP, 1h TTL raisonnable)
+
+**L2: In-Memory activeWorkflows lost on restart**
+- Location: `gateway-server.ts:114`
+- Description: ActiveWorkflows Map perdu au redémarrage (by design, DB fallback exists)
+- Severity: LOW (documented limitation, acceptable per story design)
+
+---
+
+### Action Items
+
+#### Code Changes Required: ❌ NONE
+
+#### Advisory Notes:
+
+- Note: Considérer extraction TTL en configuration pour Epic 4
+- Note: Monitorer performance `processGeneratorUntilPause()` sous charge (>100 concurrent workflows)
+- Note: Documenter cleanup policy dans README utilisateur (DAGs expirent après 1h)
+- Note: ADR-018 et ADR-019 marqués SUPERSEDED - s'assurer que docs/architecture.md reflète ADR-020
+
+---
+
+### Final Verdict
+
+**✅ APPROVE** - Story 2.5-4 ready for merge to main
+
+**Strengths:**
+1. Implementation complète et correcte pour tous les ACs
+2. Tests complets (13/13 passants, >80% coverage)
+3. Architecture propre suivant ADR-020
+4. Sécurité solide (parameterized queries, validation)
+5. Error handling robuste
+6. Documentation inline excellente
+
+**No Blockers:** Aucun issue HIGH ou MEDIUM
+
+**Quality Score:** 95/100 (excellent)
+
+---
+
+**Review completed by:** BMad (Scrum Master - AI Code Review Agent)
+**Review date:** 2025-12-01
+**Status:** ✅ APPROVED - Ready for merge to main

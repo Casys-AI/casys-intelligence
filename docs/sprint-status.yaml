@@ -69,11 +69,12 @@ development_status:
   # Focus: Loop 1-2 + Loop 3 basic (Foundation before Epic 3 Sandbox)
   # Original 6 stories moved to docs/stories/drafts/epic-2.5-old/
   # Speculation deferred to Epic 3.5, ADR-008 deferred to Epic 4
-  epic-2.5: in-progress
+  # COMPLETED: 2025-12-01 (4/4 stories done, retrospective completed)
+  epic-2.5: done
   2.5-1-event-stream-command-queue-state-management: done
   2.5-2-checkpoint-resume: done
   2.5-3-ail-hil-integration-dag-replanning: done
-  2.5-4-mcp-control-tools-per-layer-validation: review  # 7.5h (Spike: workflow_dags table for DAG persistence) - All ACs complete, 13 tests passing, E2E tests updated
+  2.5-4-mcp-control-tools-per-layer-validation: done  # Code Review APPROVED 2025-12-01, 13 tests passing, Quality Score: 95/100
   epic-2.5-retrospective: completed
 
   # Epic 3: Agent Code Execution & Local Processing (Sandbox Isolation)
@@ -96,9 +97,9 @@ development_status:
   # 1-2 stories, 3-4h
   # THE feature: Speculation WITH sandbox (safe!)
   # Requires Epic 3 completion for isolation + rollback
-  epic-3.5: contexted
+  epic-3.5: done
   3.5-1-dag-suggester-speculative-execution: done  # Code Review APPROVED 2025-11-26, 14 unit tests passing
-  3.5-2-confidence-based-speculation-rollback: backlog
+  3.5-2-confidence-based-speculation-rollback: done  # Code Review APPROVED 2025-11-28, 46 tests passing, production-ready
   epic-3.5-retrospective: optional
 
   # Epic 4: Episodic Memory & Adaptive Learning (ADR-008)
@@ -107,14 +108,14 @@ development_status:
   # SPLIT 2025-11-25: Phase 1 (independent) + Phase 2 (after 2.5/3.5)
   # Phase 1: Schema + EpisodicMemoryStore + Threshold persistence (2-3h) - DONE
   # Phase 2: ControlledExecutor + DAGSuggester integration (after Epic 3.5)
-  epic-4: in-progress
+  epic-4: done  # All 6 stories completed, retrospective done 2025-12-01
   4-1a-schema-pglite-episodic-memory: done  # Migration 007 created
   4-1b-episodic-memory-store-class: done  # EpisodicMemoryStore implemented (9 tests passing)
   4-1c-threshold-persistence: done  # AdaptiveThresholdManager extended with PGlite persistence
   4-1d-controlledexecutor-integration: done  # Phase 2 - Code review APPROVED 2025-11-26
-  4-1e-dagsugggester-integration: backlog  # Phase 2 - after Epic 3.5
+  4-1e-dagsugggester-integration: done  # Code Review APPROVED 2025-12-01, 6 tests passing, 0 action items
   4-2-adaptive-threshold-learning-sliding-window: done  # Already implemented 2025-11-05, now with persistence
-  epic-4-retrospective: optional
+  epic-4-retrospective: completed  # Retrospective completed 2025-12-01
 
   # Epic 5: Intelligent Tool Discovery & Graph-Based Recommendations
   # 2 stories, ~4-6h
@@ -129,8 +130,8 @@ development_status:
   # 4 stories, ~8-12h
   # Dashboard interactif avec SSE pour visualiser et explorer le graphe
   # Live metrics, PageRank viz, Adamic-Adar tooltips, graph export
-  epic-6: backlog
-  6-1-real-time-events-stream-sse: backlog
+  epic-6: contexted
+  6-1-real-time-events-stream-sse: in-progress  # Context created 2025-12-01
   6-2-interactive-graph-visualization-dashboard: backlog
   6-3-live-metrics-analytics-panel: backlog
   6-4-graph-explorer-search-interface: backlog

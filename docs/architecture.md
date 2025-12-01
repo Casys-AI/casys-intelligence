@@ -36,7 +36,7 @@ cd agentcards
 | Runtime | Deno | 2.5 / 2.2 LTS | Epic 1, Epic 2 | PROVIDED BY INIT - TypeScript native, secure by default, npm compat |
 | Database | PGlite | 0.3.11 | Epic 1 | Embedded PostgreSQL WASM, portable single-file, 3MB footprint |
 | Vector Search | pgvector (HNSW) | Built-in PGlite | Epic 1 | Production-ready ANN search, <100ms P95, supports cosine/L2/IP |
-| Embeddings | @huggingface/transformers | 3.7.6 | Epic 1 | BGE-Large-EN-v1.5 local inference, Deno compatible, 1024-dim vectors, v3 with WebGPU |
+| Embeddings | @huggingface/transformers | 3.7.6 | Epic 1 | BGE-M3 (Xenova/bge-m3) local inference, Deno compatible, 1024-dim vectors, v3 with WebGPU |
 | MCP Protocol | @modelcontextprotocol/sdk | 1.21.1 | Epic 1, Epic 2 | Official TypeScript SDK, 10.5k stars, stdio + SSE transport |
 | CLI Framework | cliffy | 1.0.0-rc.8 | Epic 1 | Type-safe args parsing, auto-help, shell completions, Deno-first (JSR) |
 | Configuration | @std/yaml | 1.0.5 | Epic 1 | Standard YAML parsing for config.yaml (JSR stable) |
@@ -65,7 +65,7 @@ All versions have been verified against their official registries to ensure:
 |------------|---------|----------|--------|-------|
 | Deno | 2.5 / 2.2 LTS | deno.com | Stable | LTS (2.2) recommended for production |
 | PGlite | 0.3.11 | npm | Stable | Electric SQL, production-ready |
-| @huggingface/transformers | 3.7.6 | npm | Stable | v3 released Oct 2024, WebGPU support, Deno compatible |
+| @huggingface/transformers | 3.7.6 | npm | Stable | v3 released Oct 2024, WebGPU support, Deno compatible, using BGE-M3 model |
 | @modelcontextprotocol/sdk | 1.21.1 | npm | Stable | Published recently, 16k+ dependents, active development |
 | cliffy | 1.0.0-rc.8 | JSR | RC | Latest stable RC on JSR (July 2024) |
 | @std/yaml | 1.0.5 | JSR | Stable | Stable 1.x on JSR, production-ready |
@@ -134,15 +134,26 @@ agentcards/
 │   │   ├── checkpoint-manager.ts # Story 2.5-2 - Checkpoints
 │   │   └── types.ts             # DAG node/edge types
 │   │
-│   ├── graphrag/                # GraphRAG (Epic 2.5)
+│   ├── graphrag/                # GraphRAG (Epic 2.5, 5)
 │   │   ├── engine.ts            # Story 2.5-3 - Graph engine
 │   │   ├── dag-suggester.ts     # Story 2.5-3 - DAG replanning
+│   │   ├── workflow-templates.ts # Story 5.2 - Template sync
 │   │   └── types.ts             # Graph types
 │   │
-│   ├── sandbox/                 # Code execution (Epic 3) 🆕
+│   ├── sandbox/                 # Code execution (Epic 3)
 │   │   ├── executor.ts          # Story 3.1 - Deno sandbox
 │   │   ├── context-builder.ts   # Story 3.2 - Tool injection
 │   │   └── types.ts             # Story 3.1 - Sandbox types
+│   │
+│   ├── speculation/             # Speculative execution (Epic 3.5)
+│   │   ├── speculative-executor.ts # Story 3.5-1 - Speculation engine
+│   │   ├── cache.ts             # Story 3.5-1 - Result caching
+│   │   └── types.ts             # Speculation types
+│   │
+│   ├── learning/                # Adaptive learning (Epic 4)
+│   │   ├── episodic-memory-store.ts # Story 4.1 - Episode storage
+│   │   ├── adaptive-threshold.ts # Story 4.2 - Threshold manager
+│   │   └── types.ts             # Learning types
 │   │
 │   ├── streaming/               # SSE streaming (Epic 2)
 │   │   ├── sse.ts               # Story 2.3 - Event stream
@@ -191,21 +202,29 @@ agentcards/
 |------|--------|----------------|---------|--------|
 | **Epic 1: Foundation & Context Optimization** | `src/db/`, `src/vector/`, `src/mcp/`, `src/cli/`, `src/telemetry/` | PGlite client, Vector search, Embeddings, MCP discovery, Migration tool | 1.1-1.8 | ✅ DONE |
 | **Epic 2: DAG Execution & Production** | `src/dag/`, `src/streaming/`, `src/mcp/gateway.ts`, `tests/e2e/` | DAG builder, Parallel executor, SSE streaming, MCP gateway, Health checks | 2.1-2.7 | ✅ DONE |
-| **Epic 2.5: Adaptive DAG Feedback Loops** | `src/dag/controlled-executor.ts`, `src/dag/state.ts`, `src/graphrag/` | ControlledExecutor, EventStream, CommandQueue, WorkflowState, Checkpoints, AIL/HIL, DAGSuggester | 2.5-1 to 2.5-3 | ✅ DONE |
-| **Epic 3: Agent Code Execution & Local Processing** | `src/sandbox/` | DenoSandboxExecutor, ContextBuilder, execute_code MCP tool, Safe-to-fail pattern | 3.1-3.8 | 🟡 IN PROGRESS |
+| **Epic 2.5: Adaptive DAG Feedback Loops** | `src/dag/controlled-executor.ts`, `src/dag/state.ts`, `src/graphrag/` | ControlledExecutor, EventStream, CommandQueue, WorkflowState, Checkpoints, AIL/HIL, DAGSuggester | 2.5-1 to 2.5-4 | ✅ DONE |
+| **Epic 3: Agent Code Execution & Local Processing** | `src/sandbox/` | DenoSandboxExecutor, ContextBuilder, execute_code MCP tool, Safe-to-fail pattern | 3.1-3.8 | ✅ DONE |
+| **Epic 3.5: Speculative Execution** | `src/speculation/` | SpeculativeExecutor, Confidence scoring, Cache management, Rollback | 3.5-1, 3.5-2 | ✅ DONE |
+| **Epic 4: Episodic Memory & Adaptive Learning** | `src/learning/` | EpisodicMemoryStore, AdaptiveThresholdManager, PGlite persistence | 4.1, 4.2 | 🟡 Phase 1 DONE |
+| **Epic 5: Intelligent Tool Discovery** | `src/graphrag/`, `src/mcp/gateway-server.ts` | search_tools MCP tool, Hybrid semantic+graph search, Workflow templates | 5.1, 5.2 | ✅ DONE |
+| **Epic 6: Real-time Graph Monitoring** | `src/server/`, `public/` | SSE events stream, Graph visualization, Metrics dashboard | 6.1-6.4 | 📋 DRAFTED |
 
 **Boundaries:**
 - **Epic 1** delivers: Standalone context optimization (vector search functional, <5% context)
 - **Epic 2** builds on: Epic 1 complete, adds DAG parallelization + production hardening
 - **Epic 2.5** extends: Epic 2 with adaptive feedback loops (AIL/HIL, checkpoints, replanning)
 - **Epic 3** extends: Epic 2.5 with code execution in sandbox (safe-to-fail, local processing)
+- **Epic 3.5** extends: Epic 3 with speculative execution (confidence-based prediction, cache)
+- **Epic 4** extends: Epic 2.5/3.5 with episodic memory and adaptive threshold learning
+- **Epic 5** extends: Epic 1 with hybrid search (semantic + graph-based recommendations)
+- **Epic 6** extends: Epic 5 with real-time observability and graph visualization
 
-**Epic 3 Implementation Status:**
-- ✅ Story 3.1: DenoSandboxExecutor (subprocess isolation, timeout, memory limits) - DONE
-- ✅ Story 3.2: MCP Tools Injection (vector search, type-safe wrappers) - REVIEW
-- ⏳ Story 3.4: execute_code MCP tool (DAG integration, checkpoint compatibility) - READY FOR DEV
-- ⚠️ Story 3.3: Local Data Processing Pipeline - SCOPE CLARIFICATION NEEDED (likely skip/defer)
-- 📋 Stories 3.5-3.8: PII detection, caching, E2E tests, security hardening - DRAFTED/BACKLOG
+**Implementation Status Summary:**
+- ✅ Epic 1-3: Core foundation complete (context optimization, DAG execution, sandbox)
+- ✅ Epic 3.5: Speculative execution with confidence scoring
+- ✅ Epic 5: Intelligent tool discovery with hybrid search
+- 🟡 Epic 4: Phase 1 complete (storage), Phase 2 pending (integrations)
+- 📋 Epic 6: Stories drafted, pending implementation
 
 ---
 
@@ -224,8 +243,8 @@ agentcards/
 - IndexedDB persistence (browser) / Filesystem (Deno)
 
 **ML & Embeddings:**
-- @huggingface/transformers 2.17.2
-- BGE-Large-EN-v1.5 model (1024-dim embeddings)
+- @huggingface/transformers 3.7.6
+- BGE-M3 model (Xenova/bge-m3, 1024-dim embeddings)
 - ONNX Runtime (WASM backend)
 
 **MCP Integration:**
@@ -1715,14 +1734,15 @@ deno task dev -- serve
 
 ---
 
-### ADR-003: BGE-Large-EN-v1.5 for Local Embeddings
+### ADR-003: BGE-M3 for Local Embeddings
 
-**Decision:** Use BGE-Large-EN-v1.5 via @huggingface/transformers (local inference)
+**Decision:** Use BGE-M3 (Xenova/bge-m3) via @huggingface/transformers v3.7.6 (local inference)
 
 **Rationale:**
 - 1024-dim embeddings (good quality/size trade-off)
 - Local inference = no API calls, no API keys, privacy preserved
 - Deno compatible via npm: prefix
+- Multi-lingual support (M3 = Multi-lingual, Multi-granularity, Multi-task)
 - SOTA open model for semantic search
 
 **Consequences:**
@@ -1889,7 +1909,114 @@ class ControlledExecutor extends ParallelExecutor {
 
 **User Insight:** "maintenant dans langgraph ya le message state je crois qui est plus flexible" - Analysis révèle que MessagesState + Event Stream sont complémentaires, pas opposés.
 
-**Status:** ✅ Approved v2.0 (2025-11-14) - Ready for implementation
+**Status:** ✅ Approved v2.0 (2025-11-14) - Implemented
+
+---
+
+### ADR-008: Episodic Memory & Adaptive Thresholds for Meta-Learning
+
+**Decision:** Extend Loop 3 (Meta-Learning) with episodic memory storage and adaptive threshold learning
+
+**Status:** 🟡 Partially Implemented (Phase 1 Done 2025-11-25)
+
+**Rationale:**
+- Complete the 3-loop learning architecture (ADR-007)
+- Persist learning between sessions (thresholds survive restarts)
+- Enable context-aware predictions via historical episode retrieval
+- Implement sliding window algorithm (50 executions) for adaptive thresholds
+
+**Implementation:**
+- ✅ Phase 1: `EpisodicMemoryStore` (280 LOC), `AdaptiveThresholdManager` persistence (+100 LOC)
+- 🔴 Phase 2: ControlledExecutor + DAGSuggester integrations (after Epic 2.5/3.5)
+
+**Consequences:**
+- Self-improving system targeting 85% success rate
+- Thresholds adapt based on false positive/negative detection
+- Historical context improves prediction accuracy
+
+---
+
+### ADR-017: Gateway Exposure Modes
+
+**Decision:** Support multiple gateway exposure modes (meta-tools only, transparent proxy, hybrid)
+
+**Status:** Proposed (2025-11-24)
+
+**Rationale:**
+- Resolves tension between PRD vision ("transparent gateway") and ADR-013 ("meta-tools only")
+- Provides flexibility for different user mental models
+- Addresses competitive positioning (drop-in replacement vs intent-based paradigm)
+
+**Consequences:**
+- Users can choose exposure mode based on preference
+- Documentation aligned with actual behavior
+- Broader addressable market
+
+---
+
+### ADR-022: Hybrid Search Integration in DAG Suggester
+
+**Decision:** Make Hybrid Search (Semantic + Adamic-Adar + Graph Neighbors) the default for tool discovery
+
+**Status:** Accepted (2025-11-27)
+
+**Rationale:**
+- Pure semantic search misses intermediate/related tools not explicitly in prompt
+- Story 5.1's hybrid search logic was trapped in `GatewayServer`, not reusable
+- Hybrid approach finds "hidden gems" (e.g., `npm_install` between `git_clone` and `deploy`)
+
+**Implementation:**
+- Extract hybrid search into `GraphRAGEngine.searchToolsHybrid()`
+- Update `DAGSuggester.suggestDAG()` to use hybrid search
+- Deprecate direct `VectorSearch` for high-level discovery
+
+**Consequences:**
+- More robust DAGs with fewer missing intermediate steps
+- Graph intelligence leveraged during candidate selection
+
+---
+
+### ADR-023: Dynamic Candidate Expansion for Hybrid Search
+
+**Decision:** Implement dynamic expansion multiplier based on graph maturity (density)
+
+**Status:** Proposed
+
+**Rationale:**
+- Static `limit * 2` is suboptimal for both cold start and mature graph scenarios
+- Cold start: Extra candidates wasteful (no graph signal)
+- Mature graph: Valuable tools might be semantically distant
+
+**Implementation:**
+- `expansion_multiplier` based on graph density:
+  - Cold start (<0.01 density): 1.5x
+  - Growing (0.01-0.10): 2.0x
+  - Mature (>0.10): 3.0x
+
+**Consequences:**
+- Efficient resource usage in cold start
+- Better serendipitous discovery in mature systems
+
+---
+
+### ADR-024: Full Adjacency Matrix for Dependency Resolution
+
+**Decision:** Replace triangular loop with full adjacency matrix in `buildDAG`
+
+**Status:** Proposed
+
+**Rationale:**
+- Current greedy triangular approach creates ordering bias
+- If Parent appears after Child in list, dependency is missed
+- Risk increases with Hybrid Search injecting graph-related tools
+
+**Implementation:**
+- Check dependencies in both directions (N*N instead of N*(N-1)/2)
+- Add cycle detection and breaking (keep edge with higher confidence)
+
+**Consequences:**
+- Order-independent dependency detection
+- More robust DAG construction
 
 ---
 
@@ -1897,4 +2024,5 @@ _Generated by BMAD Decision Architecture Workflow v1.3.2_
 _Date: 2025-11-03_
 _Updated: 2025-11-14 (ADR-007 Approved - Pattern 4: 3-Loop Learning Architecture with Checkpoint & Context Management clarifications)_
 _Updated: 2025-11-24 (ADR-019 - Two-Level AIL Architecture, MCP compatibility corrections)_
+_Updated: 2025-11-28 (Sync with PRD: BGE-M3 model, Epics 3.5-6 mapping, ADRs 008/017/022-024, modules learning/speculation)_
 _For: BMad_

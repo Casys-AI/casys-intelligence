@@ -19,3 +19,12 @@ export type {
   WorkflowExecution,
   WorkflowIntent,
 } from "./types.ts";
+export type {
+  EdgeCreatedEvent,
+  EdgeUpdatedEvent,
+  GraphEvent,
+  GraphSyncedEvent,
+  HeartbeatEvent,
+  MetricsUpdatedEvent,
+  WorkflowExecutedEvent,
+} from "./events.ts";

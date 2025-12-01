@@ -194,6 +194,7 @@ export class SpeculationManager {
    * Reinforce pattern in GraphRAG when speculation succeeds (AC #6)
    *
    * Strengthens edge weight between fromTool and toTool.
+   * Story 3.5-2: Actual persistence via graphEngine.addEdge()
    *
    * @param fromToolId - Source tool
    * @param toToolId - Target tool (correctly predicted)
@@ -207,15 +208,30 @@ export class SpeculationManager {
       if (currentEdge) {
         // Boost existing edge weight (up to 0.95 max)
         const newWeight = Math.min(currentEdge.weight * 1.05, 0.95);
+        const newCount = currentEdge.count + 1;
+
         log.debug(
-          `[SpeculationManager] Reinforcing edge ${fromToolId} -> ${toToolId}: ${currentEdge.weight.toFixed(2)} -> ${newWeight.toFixed(2)}`,
+          `[SpeculationManager] Reinforcing edge ${fromToolId} -> ${toToolId}: ${currentEdge.weight.toFixed(2)} -> ${newWeight.toFixed(2)} (count: ${newCount})`,
         );
-        // Note: GraphRAGEngine.updateFromExecution handles persistence
-        // For now, just log the reinforcement intent
+
+        // Persist the reinforced edge via GraphRAGEngine
+        await this.graphEngine.addEdge(fromToolId, toToolId, {
+          weight: newWeight,
+          count: newCount,
+          source: "learned",
+        });
       } else {
+        // Create new edge for learned pattern
         log.debug(
           `[SpeculationManager] New pattern learned: ${fromToolId} -> ${toToolId}`,
         );
+
+        // Start with initial weight of 0.5 for new learned patterns
+        await this.graphEngine.addEdge(fromToolId, toToolId, {
+          weight: 0.5,
+          count: 1,
+          source: "learned",
+        });
       }
     } catch (error) {
       log.error(`[SpeculationManager] Failed to reinforce pattern: ${error}`);

@@ -5,12 +5,14 @@
  * Caches results for instant retrieval when predictions are correct.
  *
  * Story 3.5-1: DAG Suggester & Speculative Execution
+ * Story 3.5-2: Confidence-Based Speculation & Rollback
  *
  * Features:
  * - Parallel speculative execution of predicted tools
  * - Sandbox isolation (no side effects on incorrect predictions)
  * - Result caching with confidence metadata
  * - Cache hit/miss tracking
+ * - AbortController-based timeout handling (Story 3.5-2)
  *
  * @module speculation/speculative-executor
  */
@@ -52,6 +54,7 @@ export class SpeculativeExecutor {
   private config: SpeculativeExecutorConfig;
   private speculationCache: Map<string, SpeculationCache> = new Map();
   private activeSpeculations: Map<string, Promise<void>> = new Map();
+  private activeAbortControllers: Map<string, AbortController> = new Map();
   private sandbox: DenoSandboxExecutor;
   private speculationManager: SpeculationManager | null = null;
   private cleanupIntervalId: number | null = null;
@@ -130,7 +133,9 @@ export class SpeculativeExecutor {
   }
 
   /**
-   * Execute a single speculation in sandbox
+   * Execute a single speculation in sandbox with AbortController timeout
+   *
+   * Story 3.5-2: Uses AbortController for clean timeout termination
    *
    * @param prediction - Predicted node
    * @param context - Execution context
@@ -142,18 +147,44 @@ export class SpeculativeExecutor {
     const startTime = performance.now();
     const predictionId = `spec_${Date.now()}_${prediction.toolId}`;
 
+    // Create AbortController for timeout handling (Story 3.5-2)
+    const abortController = new AbortController();
+    this.activeAbortControllers.set(prediction.toolId, abortController);
+
+    // Set up timeout
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+      log.warn(
+        `[SpeculativeExecutor] Speculation timeout for ${prediction.toolId} after ${this.config.timeout}ms`,
+      );
+    }, this.config.timeout);
+
     log.debug(
-      `[SpeculativeExecutor] Executing speculation: ${prediction.toolId} (confidence: ${prediction.confidence.toFixed(2)})`,
+      `[SpeculativeExecutor] Executing speculation: ${prediction.toolId} (confidence: ${prediction.confidence.toFixed(2)}, timeout: ${this.config.timeout}ms)`,
     );
 
     try {
+      // Check if already aborted
+      if (abortController.signal.aborted) {
+        log.debug(`[SpeculativeExecutor] Speculation aborted before start: ${prediction.toolId}`);
+        return;
+      }
+
       // Build speculation code
       // For MCP tools, we generate a mock execution
       // Real MCP execution would require tool-specific code generation
       const speculationCode = this.generateSpeculationCode(prediction, context);
 
-      // Execute in sandbox
-      const result = await this.sandbox.execute(speculationCode, context);
+      // Execute in sandbox with abort signal
+      // Wrap in a race between execution and abort signal
+      const result = await Promise.race([
+        this.sandbox.execute(speculationCode, context),
+        new Promise<never>((_, reject) => {
+          abortController.signal.addEventListener("abort", () => {
+            reject(new Error("Speculation aborted due to timeout"));
+          });
+        }),
+      ]);
 
       const executionTimeMs = performance.now() - startTime;
 
@@ -177,9 +208,20 @@ export class SpeculativeExecutor {
         );
       }
     } catch (error) {
-      log.error(
-        `[SpeculativeExecutor] Speculation error for ${prediction.toolId}: ${error}`,
-      );
+      // Check if this was an abort error
+      if (abortController.signal.aborted || (error instanceof Error && error.message.includes("aborted"))) {
+        log.debug(
+          `[SpeculativeExecutor] Speculation aborted for ${prediction.toolId} (timeout reached)`,
+        );
+      } else {
+        log.error(
+          `[SpeculativeExecutor] Speculation error for ${prediction.toolId}: ${error}`,
+        );
+      }
+    } finally {
+      // Clean up
+      clearTimeout(timeoutId);
+      this.activeAbortControllers.delete(prediction.toolId);
     }
   }
 
@@ -368,9 +410,64 @@ export class SpeculativeExecutor {
   }
 
   /**
+   * Abort active speculation by tool ID (Story 3.5-2)
+   *
+   * @param toolId - Tool ID to abort
+   * @returns true if speculation was aborted, false if not found
+   */
+  abortSpeculation(toolId: string): boolean {
+    const controller = this.activeAbortControllers.get(toolId);
+    if (controller) {
+      controller.abort();
+      log.debug(`[SpeculativeExecutor] Manually aborted speculation for ${toolId}`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Abort all active speculations (Story 3.5-2)
+   *
+   * Clean termination of all active speculations.
+   *
+   * @returns Number of speculations aborted
+   */
+  abortAllSpeculations(): number {
+    let aborted = 0;
+    for (const [toolId, controller] of this.activeAbortControllers) {
+      controller.abort();
+      log.debug(`[SpeculativeExecutor] Aborted speculation for ${toolId}`);
+      aborted++;
+    }
+    this.activeAbortControllers.clear();
+    return aborted;
+  }
+
+  /**
+   * Update timeout configuration (Story 3.5-2)
+   *
+   * @param timeout - New timeout in milliseconds
+   */
+  updateTimeout(timeout: number): void {
+    if (timeout > 0) {
+      this.config.timeout = timeout;
+      log.debug(`[SpeculativeExecutor] Timeout updated to ${timeout}ms`);
+    }
+  }
+
+  /**
+   * Get current configuration (Story 3.5-2)
+   */
+  getConfig(): SpeculativeExecutorConfig {
+    return { ...this.config };
+  }
+
+  /**
    * Cleanup resources
    */
   destroy(): void {
+    // Abort all active speculations first
+    this.abortAllSpeculations();
     this.stopCleanup();
     this.speculationCache.clear();
     this.activeSpeculations.clear();

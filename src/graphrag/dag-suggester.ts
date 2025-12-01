@@ -10,6 +10,7 @@
 import * as log from "@std/log";
 import type { VectorSearch } from "../vector/search.ts";
 import type { GraphRAGEngine } from "./graph-engine.ts";
+import type { EpisodicMemoryStore } from "../learning/episodic-memory-store.ts";
 import type {
   WorkflowIntent,
   SuggestedDAG,
@@ -27,6 +28,8 @@ import type {
  * for dependency inference and DAG construction.
  */
 export class DAGSuggester {
+  private episodicMemory: EpisodicMemoryStore | null = null; // Story 4.1e - Episodic memory integration
+
   constructor(
     private graphEngine: GraphRAGEngine,
     private vectorSearch: VectorSearch,
@@ -42,6 +45,20 @@ export class DAGSuggester {
    */
   getGraphEngine(): GraphRAGEngine {
     return this.graphEngine;
+  }
+
+  /**
+   * Set episodic memory store for learning-enhanced predictions (Story 4.1e)
+   *
+   * Enables DAGSuggester to query historical episodes and adjust confidence
+   * based on past success/failure patterns. Optional dependency with graceful
+   * degradation when not set.
+   *
+   * @param store - EpisodicMemoryStore instance
+   */
+  setEpisodicMemoryStore(store: EpisodicMemoryStore): void {
+    this.episodicMemory = store;
+    log.debug("[DAGSuggester] Episodic memory enabled for learning-enhanced predictions");
   }
 
   /**
@@ -494,6 +511,16 @@ export class DAGSuggester {
 
       log.debug(`[predictNextNodes] Predicting next tools after: ${lastToolId}`);
 
+      // Story 4.1e: Retrieve relevant historical episodes for learning-enhanced predictions
+      const episodes = await this.retrieveRelevantEpisodes(workflowState);
+      const episodeStats = this.parseEpisodeStatistics(episodes);
+
+      if (episodeStats.size > 0) {
+        log.debug(
+          `[predictNextNodes] Loaded episode statistics for ${episodeStats.size} tools from ${episodes.length} episodes`,
+        );
+      }
+
       const predictions: PredictedNode[] = [];
       const seenTools = new Set<string>();
 
@@ -507,11 +534,15 @@ export class DAGSuggester {
         if (this.isDangerousOperation(memberId)) continue;
 
         const pageRank = this.graphEngine.getPageRank(memberId);
-        const confidence = this.calculateCommunityConfidence(memberId, lastToolId, pageRank);
+        const baseConfidence = this.calculateCommunityConfidence(memberId, lastToolId, pageRank);
+
+        // Story 4.1e: Apply episodic learning adjustments
+        const adjusted = this.adjustConfidenceFromEpisodes(baseConfidence, memberId, episodeStats);
+        if (!adjusted) continue; // Excluded due to high failure rate
 
         predictions.push({
           toolId: memberId,
-          confidence,
+          confidence: adjusted.confidence,
           reasoning: `Same community as ${lastToolId} (PageRank: ${(pageRank * 100).toFixed(1)}%)`,
           source: "community",
         });
@@ -525,11 +556,15 @@ export class DAGSuggester {
         if (this.isDangerousOperation(neighborId)) continue;
 
         const edgeData = this.graphEngine.getEdgeData(lastToolId, neighborId);
-        const confidence = this.calculateCooccurrenceConfidence(edgeData);
+        const baseConfidence = this.calculateCooccurrenceConfidence(edgeData);
+
+        // Story 4.1e: Apply episodic learning adjustments
+        const adjusted = this.adjustConfidenceFromEpisodes(baseConfidence, neighborId, episodeStats);
+        if (!adjusted) continue; // Excluded due to high failure rate
 
         predictions.push({
           toolId: neighborId,
-          confidence,
+          confidence: adjusted.confidence,
           reasoning: `Historical co-occurrence with ${lastToolId} (${edgeData?.count ?? 0} observations, ${((edgeData?.weight ?? 0) * 100).toFixed(0)}% confidence)`,
           source: "co-occurrence",
         });
@@ -543,11 +578,15 @@ export class DAGSuggester {
         if (this.isDangerousOperation(toolId)) continue;
 
         const pageRank = this.graphEngine.getPageRank(toolId);
-        const confidence = Math.min((score * 0.3) + (pageRank * 0.2), 0.65); // Cap at 0.65 for indirect
+        const baseConfidence = Math.min((score * 0.3) + (pageRank * 0.2), 0.65); // Cap at 0.65 for indirect
+
+        // Story 4.1e: Apply episodic learning adjustments
+        const adjusted = this.adjustConfidenceFromEpisodes(baseConfidence, toolId, episodeStats);
+        if (!adjusted) continue; // Excluded due to high failure rate
 
         predictions.push({
           toolId,
-          confidence,
+          confidence: adjusted.confidence,
           reasoning: `2-hop pattern similarity (Adamic-Adar: ${score.toFixed(2)})`,
           source: "learned",
         });
@@ -584,6 +623,221 @@ export class DAGSuggester {
   private isDangerousOperation(toolId: string): boolean {
     const lowerToolId = toolId.toLowerCase();
     return DAGSuggester.DANGEROUS_OPERATIONS.some((op) => lowerToolId.includes(op));
+  }
+
+  /**
+   * Generate context hash for episodic memory retrieval (Story 4.1e)
+   *
+   * Consistent with EpisodicMemoryStore.hashContext() pattern.
+   * Hash includes workflow type, domain, and complexity for context matching.
+   *
+   * @param workflowState - Current workflow state
+   * @returns Context hash string
+   */
+  private getContextHash(workflowState: WorkflowPredictionState | null): string {
+    if (!workflowState) return "no-state";
+
+    // Extract from context field or use defaults
+    const ctx = workflowState.context || {};
+    const workflowType = (ctx.workflowType as string) || "unknown";
+    const domain = (ctx.domain as string) || "general";
+    const complexity = workflowState.completed_tasks?.length.toString() || "0";
+
+    return `workflowType:${workflowType}|domain:${domain}|complexity:${complexity}`;
+  }
+
+  /**
+   * Retrieve relevant historical episodes for context (Story 4.1e Task 2)
+   *
+   * Queries episodic memory for similar past workflows based on context hash.
+   * Returns empty array if episodic memory not configured (graceful degradation).
+   *
+   * @param workflowState - Current workflow state
+   * @returns Array of relevant episodic events
+   */
+  private async retrieveRelevantEpisodes(
+    workflowState: WorkflowPredictionState | null,
+  ): Promise<Array<{
+    id: string;
+    event_type: string;
+    data: {
+      prediction?: { toolId: string; confidence: number; wasCorrect?: boolean };
+      result?: { status: string };
+    };
+  }>> {
+    if (!this.episodicMemory || !workflowState) return [];
+
+    const startTime = performance.now();
+    const contextHash = this.getContextHash(workflowState);
+
+    try {
+      const ctx = workflowState.context || {};
+      const context = {
+        workflowType: (ctx.workflowType as string) || "unknown",
+        domain: (ctx.domain as string) || "general",
+        complexity: workflowState.completed_tasks?.length.toString() || "0",
+      };
+
+      const episodes = await this.episodicMemory.retrieveRelevant(context, {
+        limit: 10,
+        eventTypes: ["speculation_start", "task_complete"],
+      });
+
+      const retrievalTime = performance.now() - startTime;
+      log.debug(
+        `[DAGSuggester] Retrieved ${episodes.length} episodes for context ${contextHash} (${retrievalTime.toFixed(1)}ms)`,
+      );
+
+      return episodes;
+    } catch (error) {
+      log.error(`[DAGSuggester] Episode retrieval failed: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Parse episodes to extract success/failure statistics per tool (Story 4.1e Task 2.3)
+   *
+   * Analyzes historical episodes to compute success rates for each tool.
+   *
+   * @param episodes - Retrieved episodic events
+   * @returns Map of toolId to episode statistics
+   */
+  private parseEpisodeStatistics(
+    episodes: Array<{
+      id: string;
+      event_type: string;
+      data: {
+        prediction?: { toolId: string; confidence: number; wasCorrect?: boolean };
+        result?: { status: string };
+      };
+    }>,
+  ): Map<
+    string,
+    {
+      total: number;
+      successes: number;
+      failures: number;
+      successRate: number;
+      failureRate: number;
+    }
+  > {
+    const stats = new Map<
+      string,
+      {
+        total: number;
+        successes: number;
+        failures: number;
+        successRate: number;
+        failureRate: number;
+      }
+    >();
+
+    for (const episode of episodes) {
+      let toolId: string | undefined;
+      let success = false;
+
+      // Extract toolId and outcome from different event types
+      if (episode.event_type === "speculation_start" && episode.data.prediction) {
+        toolId = episode.data.prediction.toolId;
+        success = episode.data.prediction.wasCorrect === true;
+      } else if (episode.event_type === "task_complete" && episode.data.result) {
+        // For task_complete events, we'd need task_id mapped to toolId (simplified here)
+        // In practice, you might need to correlate with speculation_start events
+        continue; // Skip for now, focus on speculation_start
+      }
+
+      if (!toolId) continue;
+
+      const current = stats.get(toolId) || {
+        total: 0,
+        successes: 0,
+        failures: 0,
+        successRate: 0,
+        failureRate: 0,
+      };
+
+      current.total++;
+      if (success) {
+        current.successes++;
+      } else {
+        current.failures++;
+      }
+
+      current.successRate = current.total > 0 ? current.successes / current.total : 0;
+      current.failureRate = current.total > 0 ? current.failures / current.total : 0;
+
+      stats.set(toolId, current);
+    }
+
+    return stats;
+  }
+
+  /**
+   * Adjust confidence based on episodic memory patterns (Story 4.1e Tasks 3 & 4)
+   *
+   * Applies confidence boost for successful patterns and penalty for failures.
+   * Returns null if tool should be excluded due to high failure rate.
+   *
+   * Algorithm (from Dev Notes):
+   * - Boost: min(0.15, successRate * 0.20)
+   * - Penalty: min(0.15, failureRate * 0.25)
+   * - Exclusion: failureRate > 0.50 → exclude entirely
+   *
+   * @param baseConfidence - Base confidence from graph patterns
+   * @param toolId - Tool being predicted
+   * @param episodeStats - Episode statistics map
+   * @returns Adjusted confidence (0-1) or null if excluded
+   */
+  private adjustConfidenceFromEpisodes(
+    baseConfidence: number,
+    toolId: string,
+    episodeStats: Map<
+      string,
+      {
+        total: number;
+        successes: number;
+        failures: number;
+        successRate: number;
+        failureRate: number;
+      }
+    >,
+  ): { confidence: number; adjustment: number } | null {
+    const stats = episodeStats.get(toolId);
+
+    // No historical data: return base confidence unchanged
+    if (!stats || stats.total === 0) {
+      return { confidence: baseConfidence, adjustment: 0 };
+    }
+
+    // Task 4.4: Exclude if failure rate > 50%
+    if (stats.failureRate > 0.50) {
+      log.debug(
+        `[DAGSuggester] Excluding ${toolId} due to high failure rate: ${(stats.failureRate * 100).toFixed(0)}% (${stats.failures}/${stats.total})`,
+      );
+      return null; // Exclude entirely
+    }
+
+    // Task 3.2: Calculate boost for successful patterns
+    const boost = Math.min(0.15, stats.successRate * 0.20);
+
+    // Task 4.2: Calculate penalty for failed patterns
+    const penalty = Math.min(0.15, stats.failureRate * 0.25);
+
+    // Net adjustment
+    const adjustment = boost - penalty;
+
+    // Task 3.3 & 4.3: Apply adjustment with clamping
+    const adjustedConfidence = Math.max(0, Math.min(1.0, baseConfidence + adjustment));
+
+    // Task 3.4: Log adjustments for observability
+    if (Math.abs(adjustment) > 0.01) {
+      log.debug(
+        `[DAGSuggester] Confidence adjusted for ${toolId}: ${baseConfidence.toFixed(2)} → ${adjustedConfidence.toFixed(2)} (boost: +${boost.toFixed(2)}, penalty: -${penalty.toFixed(2)}, stats: ${stats.successes}/${stats.total} success)`,
+      );
+    }
+
+    return { confidence: adjustedConfidence, adjustment };
   }
 
   /**
