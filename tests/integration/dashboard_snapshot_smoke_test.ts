@@ -47,15 +47,25 @@ Deno.test("Smoke test - getGraphSnapshot retourne structure JSON valide", async 
   await db.close();
 });
 
-// TEST CRITIQUE: Le fichier dashboard.html existe et contient Cytoscape.js
-Deno.test("Smoke test - dashboard.html existe et contient Cytoscape", async () => {
-  const html = await Deno.readTextFile("public/dashboard.html");
+// TEST CRITIQUE: Le Fresh dashboard route existe et contient les éléments requis
+Deno.test("Smoke test - Fresh dashboard.tsx exists and contains required elements", async () => {
+  // Story 6.2: Dashboard migrated from public/dashboard.html to Fresh
+  const routeCode = await Deno.readTextFile("src/web/routes/dashboard.tsx");
+  const islandCode = await Deno.readTextFile("src/web/islands/GraphVisualization.tsx");
+  const metricsCode = await Deno.readTextFile("src/web/islands/MetricsPanel.tsx");
 
-  // Vérifier contenu essentiel
-  assertEquals(html.includes("<!DOCTYPE html>"), true, "Doit être du HTML valide");
-  assertEquals(html.includes("cytoscape"), true, "Doit inclure Cytoscape.js");
-  assertEquals(html.includes("graph-container"), true, "Doit avoir le container du graph");
-  assertEquals(html.includes("/api/graph/snapshot"), true, "Doit appeler l'API snapshot");
-  assertEquals(html.includes("/events/stream"), true, "Doit se connecter au SSE");
-  assertEquals(html.includes("EventSource"), true, "Doit utiliser EventSource pour SSE");
+  // Vérifier dashboard route
+  assertEquals(routeCode.includes("AgentCards - Graph Dashboard"), true, "Route doit avoir le titre");
+  assertEquals(routeCode.includes("cytoscape"), true, "Route doit inclure Cytoscape CDN");
+  assertEquals(routeCode.includes("GraphVisualization"), true, "Route doit utiliser GraphVisualization island");
+  assertEquals(routeCode.includes("MetricsPanel"), true, "Route doit utiliser MetricsPanel island (Story 6.3)");
+
+  // Vérifier GraphVisualization island
+  assertEquals(islandCode.includes("/api/graph/snapshot"), true, "Island doit appeler l'API snapshot");
+  assertEquals(islandCode.includes("/events/stream"), true, "Island doit se connecter au SSE");
+  assertEquals(islandCode.includes("EventSource"), true, "Island doit utiliser EventSource pour SSE");
+
+  // Vérifier MetricsPanel island (Story 6.3)
+  assertEquals(metricsCode.includes("/api/metrics"), true, "MetricsPanel doit appeler l'API metrics");
+  assertEquals(metricsCode.includes("Chart"), true, "MetricsPanel doit utiliser Chart.js");
 });

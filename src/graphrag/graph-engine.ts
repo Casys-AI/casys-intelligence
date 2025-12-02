@@ -18,7 +18,15 @@ import { bidirectional } from "graphology-shortest-path";
 import * as log from "@std/log";
 import type { PGliteClient } from "../db/client.ts";
 import type { VectorSearch } from "../vector/search.ts";
-import type { DAGStructure, GraphStats, WorkflowExecution, HybridSearchResult } from "./types.ts";
+import type {
+  DAGStructure,
+  GraphStats,
+  WorkflowExecution,
+  HybridSearchResult,
+  GraphMetricsResponse,
+  MetricsTimeRange,
+  TimeSeriesPoint,
+} from "./types.ts";
 import type { GraphEvent } from "./events.ts";
 
 // Extract exports from Graphology packages
@@ -344,6 +352,20 @@ export class GraphRAGEngine {
 
       // Persist updated edges to PGlite
       await this.persistEdgesToDB();
+
+      // Persist workflow execution for time-series analytics (Story 6.3)
+      await this.db.query(
+        `INSERT INTO workflow_execution
+         (intent_text, dag_structure, success, execution_time_ms, error_message)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          execution.intent_text || null,
+          JSON.stringify(execution.dag_structure),
+          execution.success,
+          execution.execution_time_ms,
+          execution.error_message || null,
+        ],
+      );
 
       const executionTime = performance.now() - startTime;
 
@@ -715,8 +737,8 @@ export class GraphRAGEngine {
       return {
         source: this.graph.source(edgeKey),
         target: this.graph.target(edgeKey),
-        confidence: edge.confidence_score,
-        observed_count: edge.observed_count,
+        confidence: edge.weight ?? 0,
+        observed_count: edge.count ?? 0,
       };
     });
 
@@ -862,6 +884,260 @@ export class GraphRAGEngine {
         log.error(`[searchToolsHybrid] Fallback also failed: ${fallbackError}`);
         return [];
       }
+    }
+  }
+
+  // ============================================
+  // Story 6.3: Live Metrics & Analytics Panel
+  // ============================================
+
+  /**
+   * Get adaptive alpha value for hybrid search (Story 6.3 AC2)
+   *
+   * Alpha controls the balance between semantic and graph scores:
+   * - alpha=1.0: Pure semantic search (cold start, no graph data)
+   * - alpha=0.5: Equal weight (dense graph)
+   *
+   * Formula: alpha = max(0.5, 1.0 - density * 2)
+   *
+   * @returns Alpha value between 0.5 and 1.0
+   */
+  getAdaptiveAlpha(): number {
+    const nodeCount = this.graph.order;
+    if (nodeCount <= 1) return 1.0;
+
+    const maxPossibleEdges = nodeCount * (nodeCount - 1);
+    const density = maxPossibleEdges > 0 ? this.graph.size / maxPossibleEdges : 0;
+    return Math.max(0.5, 1.0 - density * 2);
+  }
+
+  /**
+   * Get graph density (0-1) - public version for metrics (Story 6.3)
+   *
+   * Density = actual_edges / max_possible_edges
+   */
+  getGraphDensity(): number {
+    return this.getDensity();
+  }
+
+  /**
+   * Get top N tools by PageRank - public version for metrics (Story 6.3)
+   */
+  getPageRankTop(n: number): Array<{ tool_id: string; score: number }> {
+    return this.getTopPageRank(n);
+  }
+
+  /**
+   * Get total communities count - public version for metrics (Story 6.3)
+   */
+  getTotalCommunities(): number {
+    return this.getCommunitiesCount();
+  }
+
+  /**
+   * Get comprehensive metrics for dashboard (Story 6.3 AC4)
+   *
+   * Aggregates current snapshot, time series data, and period statistics.
+   *
+   * @param range - Time range for historical data ("1h", "24h", "7d")
+   * @returns Complete metrics response for dashboard
+   */
+  async getMetrics(range: MetricsTimeRange): Promise<GraphMetricsResponse> {
+    const startTime = performance.now();
+
+    // Current snapshot metrics
+    const current = {
+      node_count: this.graph.order,
+      edge_count: this.graph.size,
+      density: this.getDensity(),
+      adaptive_alpha: this.getAdaptiveAlpha(),
+      communities_count: this.getCommunitiesCount(),
+      pagerank_top_10: this.getTopPageRank(10),
+    };
+
+    // Calculate interval for time range
+    const intervalHours = range === "1h" ? 1 : range === "24h" ? 24 : 168; // 7d = 168h
+    const intervalMs = intervalHours * 60 * 60 * 1000;
+    const startDate = new Date(Date.now() - intervalMs);
+
+    // Fetch time series data
+    const timeseries = await this.getMetricsTimeSeries(range, startDate);
+
+    // Fetch period statistics
+    const period = await this.getPeriodStats(range, startDate);
+
+    const elapsed = performance.now() - startTime;
+    log.debug(`[getMetrics] Collected metrics in ${elapsed.toFixed(1)}ms (range=${range})`);
+
+    return {
+      current,
+      timeseries,
+      period,
+    };
+  }
+
+  /**
+   * Get time series data for metrics charts (Story 6.3 AC3)
+   *
+   * Queries metrics table for historical data points.
+   *
+   * @param range - Time range
+   * @param startDate - Start date for query
+   * @returns Time series data for charts
+   */
+  private async getMetricsTimeSeries(
+    range: MetricsTimeRange,
+    startDate: Date,
+  ): Promise<{
+    edge_count: TimeSeriesPoint[];
+    avg_confidence: TimeSeriesPoint[];
+    workflow_rate: TimeSeriesPoint[];
+  }> {
+    // Determine bucket size based on range
+    const bucketMinutes = range === "1h" ? 5 : range === "24h" ? 60 : 360; // 6h buckets for 7d
+
+    try {
+      // Query edge count over time from metrics table
+      const edgeCountResult = await this.db.query(
+        `
+        SELECT
+          date_trunc('hour', timestamp) +
+          (EXTRACT(minute FROM timestamp)::int / $1) * interval '1 minute' * $1 as bucket,
+          AVG(value) as avg_value
+        FROM metrics
+        WHERE metric_name = 'graph_edge_count'
+          AND timestamp >= $2
+        GROUP BY bucket
+        ORDER BY bucket
+        `,
+        [bucketMinutes, startDate.toISOString()],
+      );
+
+      // Query average confidence score over time
+      const avgConfidenceResult = await this.db.query(
+        `
+        SELECT
+          date_trunc('hour', timestamp) +
+          (EXTRACT(minute FROM timestamp)::int / $1) * interval '1 minute' * $1 as bucket,
+          AVG(value) as avg_value
+        FROM metrics
+        WHERE metric_name = 'avg_confidence_score'
+          AND timestamp >= $2
+        GROUP BY bucket
+        ORDER BY bucket
+        `,
+        [bucketMinutes, startDate.toISOString()],
+      );
+
+      // Query workflow execution rate (workflows per hour)
+      const workflowRateResult = await this.db.query(
+        `
+        SELECT
+          date_trunc('hour', executed_at) as bucket,
+          COUNT(*) as count
+        FROM workflow_execution
+        WHERE executed_at >= $1
+        GROUP BY bucket
+        ORDER BY bucket
+        `,
+        [startDate.toISOString()],
+      );
+
+      return {
+        edge_count: edgeCountResult.map((row: Record<string, unknown>) => ({
+          timestamp: String(row.bucket),
+          value: Number(row.avg_value) || 0,
+        })),
+        avg_confidence: avgConfidenceResult.map((row: Record<string, unknown>) => ({
+          timestamp: String(row.bucket),
+          value: Number(row.avg_value) || 0,
+        })),
+        workflow_rate: workflowRateResult.map((row: Record<string, unknown>) => ({
+          timestamp: String(row.bucket),
+          value: Number(row.count) || 0,
+        })),
+      };
+    } catch (error) {
+      log.warn(`[getMetricsTimeSeries] Query failed, returning empty data: ${error}`);
+      return {
+        edge_count: [],
+        avg_confidence: [],
+        workflow_rate: [],
+      };
+    }
+  }
+
+  /**
+   * Get period statistics (Story 6.3 AC2)
+   *
+   * @param range - Time range
+   * @param startDate - Start date for query
+   * @returns Period statistics
+   */
+  private async getPeriodStats(
+    range: MetricsTimeRange,
+    startDate: Date,
+  ): Promise<{
+    range: MetricsTimeRange;
+    workflows_executed: number;
+    workflows_success_rate: number;
+    new_edges_created: number;
+    new_nodes_added: number;
+  }> {
+    try {
+      // Workflow statistics
+      const workflowStats = await this.db.query(
+        `
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN success THEN 1 ELSE 0 END) as successful
+        FROM workflow_execution
+        WHERE executed_at >= $1
+        `,
+        [startDate.toISOString()],
+      );
+
+      const total = Number(workflowStats[0]?.total) || 0;
+      const successful = Number(workflowStats[0]?.successful) || 0;
+      const successRate = total > 0 ? (successful / total) * 100 : 0;
+
+      // New edges created in period
+      const newEdges = await this.db.query(
+        `
+        SELECT COUNT(*) as count
+        FROM tool_dependency
+        WHERE last_observed >= $1
+        `,
+        [startDate.toISOString()],
+      );
+
+      // New nodes added (tools embedded in period) - approximate via metrics
+      const newNodes = await this.db.query(
+        `
+        SELECT COUNT(DISTINCT metadata->>'tool_id') as count
+        FROM metrics
+        WHERE metric_name = 'tool_embedded'
+          AND timestamp >= $1
+        `,
+        [startDate.toISOString()],
+      );
+
+      return {
+        range,
+        workflows_executed: total,
+        workflows_success_rate: Math.round(successRate * 10) / 10,
+        new_edges_created: Number(newEdges[0]?.count) || 0,
+        new_nodes_added: Number(newNodes[0]?.count) || 0,
+      };
+    } catch (error) {
+      log.warn(`[getPeriodStats] Query failed, returning zeros: ${error}`);
+      return {
+        range,
+        workflows_executed: 0,
+        workflows_success_rate: 0,
+        new_edges_created: 0,
+        new_nodes_added: 0,
+      };
     }
   }
 }

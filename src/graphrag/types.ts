@@ -279,3 +279,54 @@ export interface HybridSearchResult {
   /** Original schema from tool_schema table */
   schema?: Record<string, unknown>;
 }
+
+// =============================================================================
+// Story 6.3: Live Metrics & Analytics Panel
+// =============================================================================
+
+/**
+ * Time range for metrics queries
+ */
+export type MetricsTimeRange = "1h" | "24h" | "7d";
+
+/**
+ * Time series data point
+ */
+export interface TimeSeriesPoint {
+  timestamp: string;
+  value: number;
+}
+
+/**
+ * Graph metrics response for dashboard (Story 6.3 AC4)
+ *
+ * Contains current snapshot metrics, time series data for charts,
+ * and period statistics for the selected time range.
+ */
+export interface GraphMetricsResponse {
+  /** Current snapshot metrics */
+  current: {
+    node_count: number;
+    edge_count: number;
+    density: number;
+    adaptive_alpha: number;
+    communities_count: number;
+    pagerank_top_10: Array<{ tool_id: string; score: number }>;
+  };
+
+  /** Time series data for charts */
+  timeseries: {
+    edge_count: TimeSeriesPoint[];
+    avg_confidence: TimeSeriesPoint[];
+    workflow_rate: TimeSeriesPoint[];
+  };
+
+  /** Period statistics */
+  period: {
+    range: MetricsTimeRange;
+    workflows_executed: number;
+    workflows_success_rate: number;
+    new_edges_created: number;
+    new_nodes_added: number;
+  };
+}

@@ -43,7 +43,7 @@ development_status:
   1-1-devcontainer-configuration: done
   1-2-mcp-servers-configuration: done
   1-3-workflow-templates-configuration: done
-  1-4-llm-api-key-setup-script: backlog
+  1-4-llm-api-key-setup-script: done
   1-5-idempotent-init-helper: backlog
   1-6-mermaid-rendering-helper: done
   1-7-metrics-visualization-helper: backlog

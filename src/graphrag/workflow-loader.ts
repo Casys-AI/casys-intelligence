@@ -176,7 +176,7 @@ export class WorkflowLoader {
   private validateSteps(
     workflow: WorkflowTemplate,
     errors: string[],
-    warnings: string[],
+    _warnings: string[],
   ): void {
     const steps = workflow.steps!;
 
@@ -193,8 +193,8 @@ export class WorkflowLoader {
       if (!step || typeof step !== "string") {
         errors.push(`Step ${i} in workflow '${workflow.name}' is not a valid string`);
       } else if (this.knownTools.size > 0 && !this.knownTools.has(step)) {
-        // AC #5: Log warnings for unknown tools (don't fail)
-        warnings.push(`Unknown tool ID '${step}' in workflow '${workflow.name}'`);
+        // Strict validation: unknown tools are errors (ADR-021)
+        errors.push(`Unknown tool ID '${step}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
       }
     }
   }
@@ -205,7 +205,7 @@ export class WorkflowLoader {
   private validateEdges(
     workflow: WorkflowTemplate,
     errors: string[],
-    warnings: string[],
+    _warnings: string[],
   ): void {
     const edges = workflow.edges!;
 
@@ -226,13 +226,15 @@ export class WorkflowLoader {
       if (!from || typeof from !== "string") {
         errors.push(`Edge ${i} 'from' in workflow '${workflow.name}' is not a valid string`);
       } else if (this.knownTools.size > 0 && !this.knownTools.has(from)) {
-        warnings.push(`Unknown tool ID '${from}' in workflow '${workflow.name}'`);
+        // Strict validation: unknown tools are errors (ADR-021)
+        errors.push(`Unknown tool ID '${from}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
       }
 
       if (!to || typeof to !== "string") {
         errors.push(`Edge ${i} 'to' in workflow '${workflow.name}' is not a valid string`);
       } else if (this.knownTools.size > 0 && !this.knownTools.has(to)) {
-        warnings.push(`Unknown tool ID '${to}' in workflow '${workflow.name}'`);
+        // Strict validation: unknown tools are errors (ADR-021)
+        errors.push(`Unknown tool ID '${to}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
       }
     }
   }

@@ -184,15 +184,6 @@ export function createServeCommand() {
         const runner = new MigrationRunner(db);
         await runner.runUp(getAllMigrations());
 
-        // Story 5.2: Auto-bootstrap graph from workflow templates if empty
-        const workflowSyncService = new WorkflowSyncService(db);
-        const bootstrapped = await workflowSyncService.bootstrapIfEmpty(
-          getWorkflowTemplatesPath(),
-        );
-        if (bootstrapped) {
-          log.info("✓ Graph bootstrapped from workflow-templates.yaml");
-        }
-
         // 3. Connect to MCP servers
         log.info("Step 3/6: Connecting to MCP servers...");
         const mcpClients = await connectToMCPServers(config.servers);
@@ -203,6 +194,17 @@ export function createServeCommand() {
         await embeddingModel.load();
 
         const vectorSearch = new VectorSearch(db, embeddingModel);
+
+        // Story 5.2: Auto-bootstrap graph from workflow templates if empty
+        // Must be after MCP connection (tool_schema populated) and embedding model loaded
+        const workflowSyncService = new WorkflowSyncService(db);
+        const bootstrapped = await workflowSyncService.bootstrapIfEmpty(
+          getWorkflowTemplatesPath(),
+        );
+        if (bootstrapped) {
+          log.info("✓ Graph bootstrapped from workflow-templates.yaml");
+        }
+
         const graphEngine = new GraphRAGEngine(db);
         await graphEngine.syncFromDatabase();
 

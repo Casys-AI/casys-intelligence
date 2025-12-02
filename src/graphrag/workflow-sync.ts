@@ -10,6 +10,7 @@
 import * as log from "@std/log";
 import type { PGliteClient } from "../db/client.ts";
 import { WorkflowLoader, type WorkflowEdge } from "./workflow-loader.ts";
+import { EmbeddingModel, schemaToText } from "../vector/embeddings.ts";
 
 /**
  * Config key for storing workflow file checksum in adaptive_config table
@@ -35,9 +36,25 @@ export interface SyncResult {
  */
 export class WorkflowSyncService {
   private loader: WorkflowLoader;
+  private embeddingModel: EmbeddingModel | null = null;
 
   constructor(private db: PGliteClient) {
     this.loader = new WorkflowLoader();
+  }
+
+  /**
+   * Load known tool IDs from tool_schema table
+   * Used for strict validation of workflow templates
+   */
+  private async loadKnownTools(): Promise<string[]> {
+    try {
+      const result = await this.db.query(
+        `SELECT tool_id FROM tool_schema ORDER BY tool_id`,
+      );
+      return result.map((row) => row.tool_id as string);
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -69,10 +86,26 @@ export class WorkflowSyncService {
         }
       }
 
-      // 2. Load and validate workflows
+      // 2. Load known tools from tool_schema for strict validation
+      const knownTools = await this.loadKnownTools();
+      if (knownTools.length === 0) {
+        log.warn("[WorkflowSync] No tools found in tool_schema. Run 'agentcards serve' first to discover tools.");
+        return {
+          success: false,
+          edgesCreated: 0,
+          edgesUpdated: 0,
+          workflowsProcessed: 0,
+          warnings: [],
+          error: "No tools in tool_schema. Start the gateway to discover MCP tools first.",
+        };
+      }
+      log.info(`[WorkflowSync] Found ${knownTools.length} known tools in tool_schema`);
+      this.loader.setKnownTools(knownTools);
+
+      // 3. Load and validate workflows (now with strict tool validation)
       const { validWorkflows, validationResults, edges } = await this.loader.loadAndProcess(yamlPath);
 
-      // Collect warnings
+      // Collect warnings and errors
       const warnings: string[] = [];
       for (const result of validationResults) {
         for (const warning of result.warnings) {
@@ -86,18 +119,25 @@ export class WorkflowSyncService {
       if (validWorkflows.length === 0) {
         log.warn("[WorkflowSync] No valid workflows found");
         return {
-          success: true,
+          success: false,
           edgesCreated: 0,
           edgesUpdated: 0,
           workflowsProcessed: 0,
           warnings,
+          error: "No valid workflows. Check that tool IDs match tools in tool_schema.",
         };
       }
 
-      // 3. Upsert edges to database
+      // 4. Ensure embeddings exist for referenced tools (ADR-021 fix)
+      const embeddingsCreated = await this.ensureEmbeddingsExist(edges);
+      if (embeddingsCreated > 0) {
+        log.info(`[WorkflowSync] Generated ${embeddingsCreated} embeddings for tool_embedding`);
+      }
+
+      // 5. Upsert edges to database
       const { created, updated } = await this.upsertEdges(edges);
 
-      // 4. Store new checksum
+      // 6. Store new checksum
       const newChecksum = await this.loader.calculateChecksum(yamlPath);
       await this.storeChecksum(newChecksum);
 
@@ -174,6 +214,106 @@ export class WorkflowSyncService {
   }
 
   /**
+   * Ensure embeddings exist in tool_embedding for all referenced tools (ADR-021 fix)
+   *
+   * GraphRAGEngine.syncFromDatabase() requires nodes in tool_embedding
+   * to load edges. This method generates real embeddings from tool_schema.
+   *
+   * @param edges - Workflow edges containing tool IDs
+   * @returns Number of embeddings created
+   */
+  private async ensureEmbeddingsExist(edges: WorkflowEdge[]): Promise<number> {
+    // Collect unique tool IDs
+    const toolIds = new Set<string>();
+    for (const edge of edges) {
+      toolIds.add(edge.from);
+      toolIds.add(edge.to);
+    }
+
+    // Check which tools are missing from tool_embedding
+    const missingToolIds: string[] = [];
+    for (const toolId of toolIds) {
+      const existing = await this.db.queryOne(
+        `SELECT tool_id FROM tool_embedding WHERE tool_id = $1`,
+        [toolId],
+      );
+      if (!existing) {
+        missingToolIds.push(toolId);
+      }
+    }
+
+    if (missingToolIds.length === 0) {
+      log.debug("[WorkflowSync] All tools already have embeddings");
+      return 0;
+    }
+
+    log.info(`[WorkflowSync] Generating embeddings for ${missingToolIds.length} tools...`);
+
+    // Lazy-load embedding model
+    if (!this.embeddingModel) {
+      this.embeddingModel = new EmbeddingModel();
+    }
+    await this.embeddingModel.load();
+
+    let created = 0;
+    for (const toolId of missingToolIds) {
+      try {
+        // Fetch schema from tool_schema
+        const schema = await this.db.queryOne(
+          `SELECT tool_id, server_id, name, description, input_schema
+           FROM tool_schema WHERE tool_id = $1`,
+          [toolId],
+        );
+
+        if (!schema) {
+          log.warn(`[WorkflowSync] Tool ${toolId} not found in tool_schema`);
+          continue;
+        }
+
+        // Generate embedding from schema text
+        const schemaObj = {
+          tool_id: schema.tool_id as string,
+          server_id: schema.server_id as string,
+          name: schema.name as string,
+          description: (schema.description as string) || "",
+          input_schema: (typeof schema.input_schema === "string"
+            ? JSON.parse(schema.input_schema)
+            : schema.input_schema) as Record<string, unknown>,
+        };
+        const text = schemaToText(schemaObj);
+        const embedding = await this.embeddingModel.encode(text);
+
+        // Insert into tool_embedding
+        await this.db.query(
+          `INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding, metadata, created_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (tool_id) DO UPDATE
+           SET embedding = EXCLUDED.embedding,
+               metadata = EXCLUDED.metadata,
+               created_at = NOW()`,
+          [
+            schemaObj.tool_id,
+            schemaObj.server_id,
+            schemaObj.name,
+            `[${embedding.join(",")}]`,
+            JSON.stringify({
+              source: "workflow_sync",
+              generated_at: new Date().toISOString(),
+            }),
+          ],
+        );
+
+        created++;
+        log.debug(`[WorkflowSync] Generated embedding for: ${toolId}`);
+      } catch (error) {
+        log.warn(`[WorkflowSync] Failed to generate embedding for ${toolId}: ${error}`);
+      }
+    }
+
+    return created;
+  }
+
+  /**
    * Check if sync is needed by comparing checksums (AC #4)
    */
   async needsSync(yamlPath: string): Promise<boolean> {
@@ -220,12 +360,15 @@ export class WorkflowSyncService {
   }
 
   /**
-   * Check if graph is empty (0 edges) - for bootstrap detection (AC #6)
+   * Check if graph is empty - for bootstrap detection (AC #6)
+   *
+   * Checks tool_embedding (nodes) rather than tool_dependency (edges)
+   * because GraphRAGEngine.syncFromDatabase() requires nodes to load edges.
    */
   async isGraphEmpty(): Promise<boolean> {
     try {
       const result = await this.db.queryOne(
-        `SELECT COUNT(*) as count FROM tool_dependency`,
+        `SELECT COUNT(*) as count FROM tool_embedding`,
       );
       return (result?.count as number) === 0;
     } catch {

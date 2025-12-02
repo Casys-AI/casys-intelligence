@@ -1885,6 +1885,41 @@ export class AgentCardsGatewayServer {
         return new Response(null, { headers: corsHeaders });
       }
 
+      // MCP Streamable HTTP endpoint (for Claude Code HTTP transport)
+      // Spec: https://modelcontextprotocol.io/specification/2025-03-26/basic/transports
+      if (url.pathname === "/mcp") {
+        // POST: Client-to-server JSON-RPC messages
+        if (req.method === "POST") {
+          try {
+            const body = await req.json();
+            const response = await this.handleJsonRpcRequest(body);
+            return new Response(JSON.stringify(response), {
+              headers: {
+                "Content-Type": "application/json",
+                ...corsHeaders,
+              },
+            });
+          } catch (error) {
+            return new Response(
+              JSON.stringify({ error: `Invalid request: ${error}` }),
+              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
+            );
+          }
+        }
+        // GET: Server-to-client SSE stream
+        if (req.method === "GET") {
+          if (!this.eventsStream) {
+            return new Response(
+              JSON.stringify({ error: "Events stream not initialized" }),
+              { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } },
+            );
+          }
+          return this.eventsStream.handleRequest(req);
+        }
+        // Method not allowed
+        return new Response(null, { status: 405, headers: corsHeaders });
+      }
+
       // Health check endpoint
       if (url.pathname === "/health" && req.method === "GET") {
         return new Response(JSON.stringify({ status: "ok" }), {
@@ -1903,19 +1938,12 @@ export class AgentCardsGatewayServer {
         return this.eventsStream.handleRequest(req);
       }
 
-      // Dashboard static HTML (Story 6.2)
+      // Dashboard redirect to Fresh (Story 6.2 migrated to Fresh)
       if (url.pathname === "/dashboard" && req.method === "GET") {
-        try {
-          const html = await Deno.readTextFile("public/dashboard.html");
-          return new Response(html, {
-            headers: { "Content-Type": "text/html; charset=utf-8" },
-          });
-        } catch (error) {
-          return new Response(
-            JSON.stringify({ error: "Dashboard not found" }),
-            { status: 404, headers: { "Content-Type": "application/json" } },
-          );
-        }
+        return new Response(null, {
+          status: 302,
+          headers: { "Location": "http://localhost:8080/dashboard" },
+        });
       }
 
       // Graph snapshot API (Story 6.2)
@@ -1928,6 +1956,29 @@ export class AgentCardsGatewayServer {
         } catch (error) {
           return new Response(
             JSON.stringify({ error: `Failed to get graph snapshot: ${error}` }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
+          );
+        }
+      }
+
+      // Metrics API (Story 6.3)
+      if (url.pathname === "/api/metrics" && req.method === "GET") {
+        try {
+          const range = url.searchParams.get("range") || "24h";
+          // Validate range parameter
+          if (range !== "1h" && range !== "24h" && range !== "7d") {
+            return new Response(
+              JSON.stringify({ error: `Invalid range parameter: ${range}. Must be one of: 1h, 24h, 7d` }),
+              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
+            );
+          }
+          const metrics = await this.graphEngine.getMetrics(range as "1h" | "24h" | "7d");
+          return new Response(JSON.stringify(metrics), {
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ error: `Failed to get metrics: ${error}` }),
             { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } },
           );
         }
@@ -1963,7 +2014,7 @@ export class AgentCardsGatewayServer {
     log.info(`  Server: ${this.config.name} v${this.config.version}`);
     log.info(`  Connected MCP servers: ${this.mcpClients.size}`);
     log.info(
-      `  Endpoints: GET /health, GET /events/stream, GET /dashboard, GET /api/graph/snapshot, POST /message`,
+      `  Endpoints: GET /health, GET /events/stream, GET /dashboard, GET /api/graph/snapshot, GET /api/metrics, POST /message`,
     );
   }
 
@@ -1979,6 +2030,29 @@ export class AgentCardsGatewayServer {
     const { id, method, params } = request;
 
     try {
+      // MCP initialize handshake
+      if (method === "initialize") {
+        return {
+          jsonrpc: "2.0",
+          id,
+          result: {
+            protocolVersion: "2024-11-05",
+            capabilities: {
+              tools: { listChanged: true },
+            },
+            serverInfo: {
+              name: this.config.name || "agentcards-gateway",
+              version: this.config.version || "0.1.0",
+            },
+          },
+        };
+      }
+
+      // MCP initialized notification (no response needed but we ack it)
+      if (method === "notifications/initialized") {
+        return { jsonrpc: "2.0", id, result: {} };
+      }
+
       if (method === "tools/list") {
         const result = await this.handleListTools(
           params as { query?: string; limit?: number } | undefined,

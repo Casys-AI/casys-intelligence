@@ -13,13 +13,16 @@ Interactive Jupyter notebooks demonstrating AgentCards MCP Gateway features.
 ```bash
 # Clone and navigate
 git clone https://github.com/Casys-AI/AgentCards.git
-cd AgentCards/playground
+cd AgentCards
+
+# Setup MCP config
+cp .mcp-servers.example.json .mcp-servers.json
 
 # Install Jupyter kernel
 deno jupyter --install
 
 # Launch notebooks
-jupyter notebook notebooks/
+jupyter notebook playground/notebooks/
 ```
 
 ## Notebooks
@@ -37,21 +40,31 @@ Follow the numbered progression for the best learning experience:
 | 07 | `security-demo.ipynb` | Security boundaries, permissions, limits |
 | 08 | `controlled-executor.ipynb` | **Advanced DAG execution** with event streaming, episodic memory, decision points |
 
-### Visualization Features
+## Configuration
 
-All notebooks include Mermaid diagram generation for:
-- **DAG structures** - Visualize task dependencies and execution layers
-- **GraphRAG relations** - See tool co-usage patterns and learning
-- **Execution timelines** - Track real-time workflow progress
-- **Fan-in/fan-out** - Understand parallel vs sequential execution
+All configuration is at **project root**:
+
+```
+AgentCards/
+├── .mcp-servers.example.json  # Template (copy to .mcp-servers.json)
+├── .mcp-servers.json          # Your local config (gitignored)
+├── config/
+│   ├── workflow-templates.yaml
+│   └── speculation_config.yaml
+└── playground/
+    ├── notebooks/
+    └── lib/
+```
+
+See [config/README.md](../config/README.md) for details.
 
 ## MCP HTTP Server
 
-Start the full MCP Gateway with HTTP access:
+Start the full MCP Gateway:
 
 ```bash
 # From AgentCards root
-deno run --allow-all playground/server.ts
+deno task serve:playground
 ```
 
 **First run:** ~2-3 minutes (downloads BGE-M3 model - 2.2GB)
@@ -75,8 +88,13 @@ deno run --allow-all playground/server.ts
 ## Environment Variables
 
 ```bash
-# Optional - for LLM demos
-export ANTHROPIC_API_KEY="sk-ant-..."
-export OPENAI_API_KEY="sk-..."
-export GOOGLE_API_KEY="..."
+# Optional - for LLM demos (copy from .env.example)
+cp .env.example .env
+
+# Edit .env with your key:
+ANTHROPIC_API_KEY="sk-ant-..."
+# or
+OPENAI_API_KEY="sk-..."
+# or
+GOOGLE_API_KEY="..."
 ```

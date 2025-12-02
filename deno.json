@@ -33,7 +33,7 @@
     "cli:init:dry": "deno run --allow-all src/main.ts init --dry-run --config tests/fixtures/mcp-config-sample.json",
     "cli:init:dry:mocks": "deno run --allow-all src/main.ts init --dry-run --config tests/fixtures/mcp-config-mocks.json",
     "cli:init:help": "deno run --allow-all src/main.ts init --help",
-    "serve:playground": "AGENTCARDS_WORKFLOW_PATH=playground/config/workflow-templates.yaml AGENTCARDS_DB_PATH=/home/ubuntu/CascadeProjects/AgentCards/.agentcards.db deno run --allow-all src/main.ts serve --port 3001 --config playground/config/mcp-servers.json",
+    "serve:playground": "AGENTCARDS_WORKFLOW_PATH=config/workflow-templates.yaml AGENTCARDS_DB_PATH=/home/ubuntu/CascadeProjects/AgentCards/.agentcards.db deno run --allow-all src/main.ts serve --port 3001 --config config/.mcp-servers.json",
     "mock:fs": "deno run --allow-all tests/mocks/filesystem-mock.ts",
     "mock:db": "deno run --allow-all tests/mocks/database-mock.ts",
     "mock:api": "deno run --allow-all tests/mocks/api-mock.ts"
