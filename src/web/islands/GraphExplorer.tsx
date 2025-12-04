@@ -2,6 +2,7 @@
  * GraphExplorer Island - Search and explore graph with advanced features
  *
  * Story 6.4: Graph Explorer & Search Interface
+ * Styled with Casys.ai design system
  */
 
 import { useState, useEffect, useRef } from "preact/hooks";
@@ -169,6 +170,43 @@ export default function GraphExplorer() {
     setPathTo("");
   };
 
+  // Casys design tokens
+  const styles = {
+    panel: {
+      background: 'var(--bg-elevated, #12110f)',
+      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
+      backdropFilter: 'blur(12px)',
+    },
+    input: {
+      background: 'var(--bg-surface, #1a1816)',
+      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
+      color: 'var(--text, #f5f0ea)',
+    },
+    inputFocus: {
+      borderColor: 'var(--accent, #FFB86F)',
+      boxShadow: '0 0 0 2px var(--accent-dim, rgba(255, 184, 111, 0.1))',
+    },
+    button: {
+      background: 'var(--bg-surface, #1a1816)',
+      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
+      color: 'var(--text-muted, #d5c3b5)',
+    },
+    buttonActive: {
+      background: 'var(--accent-dim, rgba(255, 184, 111, 0.1))',
+      borderColor: 'var(--accent, #FFB86F)',
+      color: 'var(--accent, #FFB86F)',
+    },
+    buttonPrimary: {
+      background: 'var(--accent, #FFB86F)',
+      color: 'var(--bg, #0a0908)',
+    },
+    kbd: {
+      background: 'var(--accent-dim, rgba(255, 184, 111, 0.1))',
+      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
+      color: 'var(--text-dim, #8a8078)',
+    },
+  };
+
   return (
     <div class="w-full h-full relative overflow-hidden">
       {/* Search Bar */}
@@ -177,15 +215,29 @@ export default function GraphExplorer() {
           <input
             ref={searchInputRef}
             type="text"
-            class="w-[420px] py-3.5 px-5 pr-[70px] bg-slate-900/80 border border-slate-700/30 rounded-2xl text-slate-100 text-[15px] font-medium outline-none backdrop-blur-xl shadow-lg transition-all duration-300 placeholder:text-slate-600 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.4),0_8px_32px_rgba(0,0,0,0.4)]"
+            class="w-[420px] py-3.5 px-5 pr-[70px] rounded-xl text-[15px] font-medium outline-none transition-all duration-200 placeholder:opacity-50"
+            style={{
+              ...styles.input,
+              fontFamily: 'var(--font-sans)',
+            }}
             placeholder="Search tools... (/ or Ctrl+K)"
             value={searchQuery}
             onInput={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
-            onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-            onBlur={() => setTimeout(() => setShowResults(false), 200)}
+            onFocus={(e) => {
+              searchQuery.length >= 2 && setShowResults(true);
+              Object.assign(e.currentTarget.style, styles.inputFocus);
+            }}
+            onBlur={(e) => {
+              setTimeout(() => setShowResults(false), 200);
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           />
           <span class="absolute right-4 top-1/2 -translate-y-1/2">
-            <kbd class="bg-gradient-to-br from-blue-500/10 to-purple-500/10 px-2.5 py-1 rounded-md text-xs text-slate-500 font-semibold border border-blue-500/20">
+            <kbd
+              class="px-2.5 py-1 rounded-md text-xs font-medium"
+              style={styles.kbd}
+            >
               /
             </kbd>
           </span>
@@ -193,22 +245,31 @@ export default function GraphExplorer() {
 
         {/* Autocomplete Results */}
         {showResults && searchResults.length > 0 && (
-          <div class="absolute top-full left-0 right-auto w-[420px] mt-2 bg-slate-900/80 border border-slate-700/30 rounded-2xl overflow-hidden max-h-[400px] overflow-y-auto backdrop-blur-xl shadow-2xl animate-fade-slide">
+          <div
+            class="absolute top-full left-0 right-auto w-[420px] mt-2 rounded-xl overflow-hidden max-h-[400px] overflow-y-auto shadow-2xl"
+            style={styles.panel}
+          >
             {searchResults.map((result) => (
               <div
                 key={result.tool_id}
-                class="px-5 py-3.5 cursor-pointer border-b border-slate-700/10 flex justify-between items-center transition-colors hover:bg-blue-500/10"
+                class="px-5 py-3.5 cursor-pointer flex justify-between items-center transition-colors"
+                style={{ borderBottom: '1px solid var(--border)' }}
                 onClick={() => selectSearchResult(result)}
+                onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-dim)'}
+                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 <div class="flex gap-3.5 items-center">
-                  <span class="text-slate-100 font-semibold text-sm">{result.name}</span>
-                  <span class="text-slate-500 text-xs bg-slate-800/80 px-2 py-1 rounded-md font-medium">
+                  <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.875rem' }}>{result.name}</span>
+                  <span
+                    class="text-xs px-2 py-1 rounded-md font-medium"
+                    style={{ background: 'var(--bg-surface)', color: 'var(--text-dim)' }}
+                  >
                     {result.server}
                   </span>
                 </div>
                 <div class="flex gap-4 text-xs">
-                  <span class="text-emerald-400 font-semibold">{(result.score * 100).toFixed(0)}%</span>
-                  <span class="text-purple-400 font-semibold">PR: {result.pagerank.toFixed(3)}</span>
+                  <span style={{ color: 'var(--success)', fontWeight: 600 }}>{(result.score * 100).toFixed(0)}%</span>
+                  <span style={{ color: 'var(--accent)', fontWeight: 600 }}>PR: {result.pagerank.toFixed(3)}</span>
                 </div>
               </div>
             ))}
@@ -217,9 +278,12 @@ export default function GraphExplorer() {
 
         {/* Path Finder Toggle */}
         <button
-          class={`py-3.5 px-5 bg-slate-900/80 border border-slate-700/30 rounded-xl text-slate-500 cursor-pointer text-sm font-semibold transition-all duration-200 backdrop-blur-xl hover:bg-blue-500/10 hover:border-blue-500 hover:text-slate-100 hover:shadow-glow-blue ${showPathFinder ? "bg-blue-500/10 border-blue-500 text-slate-100 shadow-glow-blue" : ""}`}
+          class="py-3.5 px-5 rounded-xl text-sm font-semibold transition-all duration-200"
+          style={showPathFinder ? styles.buttonActive : styles.button}
           onClick={() => setShowPathFinder(!showPathFinder)}
           title="Find Path (Ctrl+P)"
+          onMouseOver={(e) => !showPathFinder && (e.currentTarget.style.borderColor = 'var(--accent-medium)')}
+          onMouseOut={(e) => !showPathFinder && (e.currentTarget.style.borderColor = 'var(--border)')}
         >
           Path
         </button>
@@ -227,48 +291,72 @@ export default function GraphExplorer() {
 
       {/* Path Finder Panel */}
       {showPathFinder && (
-        <div class="absolute top-20 left-1/2 -translate-x-1/2 z-[90] bg-slate-900/80 border border-slate-700/30 rounded-2xl p-4 px-5 backdrop-blur-xl shadow-2xl">
+        <div
+          class="absolute top-20 left-1/2 -translate-x-1/2 z-[90] p-4 px-5 rounded-xl shadow-2xl"
+          style={styles.panel}
+        >
           <div class="flex gap-3 items-center">
             <input
               type="text"
-              class="w-[200px] py-3 px-4 bg-slate-900/60 border border-slate-700/30 rounded-xl text-slate-100 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_0_2px_rgba(59,130,246,0.4)]"
+              class="w-[200px] py-3 px-4 rounded-lg text-sm font-medium outline-none transition-all"
+              style={styles.input}
               placeholder="From tool..."
               value={pathFrom}
               onInput={(e) => setPathFrom((e.target as HTMLInputElement).value)}
+              onFocus={(e) => Object.assign(e.currentTarget.style, styles.inputFocus)}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
             />
-            <span class="text-cyan-400 text-xl">→</span>
+            <span style={{ color: 'var(--accent)', fontSize: '1.25rem' }}>→</span>
             <input
               type="text"
-              class="w-[200px] py-3 px-4 bg-slate-900/60 border border-slate-700/30 rounded-xl text-slate-100 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:shadow-[0_0_0_2px_rgba(59,130,246,0.4)]"
+              class="w-[200px] py-3 px-4 rounded-lg text-sm font-medium outline-none transition-all"
+              style={styles.input}
               placeholder="To tool..."
               value={pathTo}
               onInput={(e) => setPathTo((e.target as HTMLInputElement).value)}
+              onFocus={(e) => Object.assign(e.currentTarget.style, styles.inputFocus)}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
             />
             <button
               onClick={findPath}
-              class="py-3 px-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl text-white text-sm font-semibold cursor-pointer transition-all duration-200 shadow-glow-blue hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(59,130,246,0.4)]"
+              class="py-3 px-5 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 hover:brightness-110"
+              style={styles.buttonPrimary}
             >
               Find Path
             </button>
             {pathNodes && (
               <button
                 onClick={clearPath}
-                class="py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm font-medium cursor-pointer transition-all hover:bg-red-500/20"
+                class="py-3 px-4 rounded-lg text-sm font-medium cursor-pointer transition-all"
+                style={{
+                  background: 'rgba(248, 113, 113, 0.1)',
+                  border: '1px solid rgba(248, 113, 113, 0.2)',
+                  color: 'var(--error)',
+                }}
               >
                 Clear
               </button>
             )}
           </div>
           {pathNodes && pathNodes.length > 0 && (
-            <div class="mt-4 pt-4 border-t border-slate-700/30">
-              <span class="text-emerald-400 text-sm font-semibold">Path ({pathNodes.length - 1} hops):</span>
+            <div class="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+              <span style={{ color: 'var(--success)', fontSize: '0.875rem', fontWeight: 600 }}>
+                Path ({pathNodes.length - 1} hops):
+              </span>
               <div class="mt-2.5 flex flex-wrap gap-1.5 items-center">
                 {pathNodes.map((nodeId, i) => (
                   <span key={nodeId}>
-                    {i > 0 && <span class="text-cyan-400 mx-1 font-semibold">→</span>}
+                    {i > 0 && <span style={{ color: 'var(--accent)', margin: '0 0.25rem', fontWeight: 600 }}>→</span>}
                     <span
-                      class="text-blue-400 cursor-pointer px-2.5 py-1.5 bg-blue-500/15 border border-blue-500/30 rounded-lg text-sm font-medium transition-all hover:bg-blue-500/25 hover:shadow-glow-blue"
+                      class="cursor-pointer px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all"
+                      style={{
+                        color: 'var(--accent)',
+                        background: 'var(--accent-dim)',
+                        border: '1px solid var(--accent-medium)',
+                      }}
                       onClick={() => setHighlightedNode(nodeId)}
+                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-medium)'}
+                      onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-dim)'}
                     >
                       {nodeId.split(":")[1] || nodeId}
                     </span>
@@ -282,23 +370,47 @@ export default function GraphExplorer() {
 
       {/* Breadcrumbs */}
       {breadcrumbs.length > 0 && (
-        <div class="absolute top-20 left-5 z-[80] bg-slate-900/80 py-2.5 px-4 rounded-xl flex items-center gap-2.5 text-sm border border-slate-700/30 backdrop-blur-xl">
-          <span class="text-slate-600 font-medium">History:</span>
+        <div
+          class="absolute top-20 left-5 z-[80] py-2.5 px-4 rounded-xl flex items-center gap-2.5 text-sm"
+          style={styles.panel}
+        >
+          <span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>History:</span>
           {breadcrumbs.map((item, index) => (
             <span key={item.id}>
-              {index > 0 && <span class="text-slate-700">/</span>}
+              {index > 0 && <span style={{ color: 'var(--text-dim)', opacity: 0.5 }}>/</span>}
               <span
-                class={`text-slate-400 cursor-pointer px-2.5 py-1 rounded-md font-medium transition-all hover:bg-blue-500/10 hover:text-slate-100 ${index === breadcrumbs.length - 1 ? "text-blue-400 bg-blue-500/10" : ""}`}
+                class="cursor-pointer px-2.5 py-1 rounded-md font-medium transition-all"
+                style={{
+                  color: index === breadcrumbs.length - 1 ? 'var(--accent)' : 'var(--text-muted)',
+                  background: index === breadcrumbs.length - 1 ? 'var(--accent-dim)' : 'transparent',
+                }}
                 onClick={() => navigateBreadcrumb(item, index)}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'var(--accent-dim)';
+                  e.currentTarget.style.color = 'var(--text)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = index === breadcrumbs.length - 1 ? 'var(--accent-dim)' : 'transparent';
+                  e.currentTarget.style.color = index === breadcrumbs.length - 1 ? 'var(--accent)' : 'var(--text-muted)';
+                }}
               >
                 {item.label}
               </span>
             </span>
           ))}
           <button
-            class="bg-transparent border-none text-slate-600 cursor-pointer ml-2 px-2 py-1 rounded transition-all hover:text-red-400 hover:bg-red-500/10"
+            class="border-none cursor-pointer ml-2 px-2 py-1 rounded transition-all"
+            style={{ background: 'transparent', color: 'var(--text-dim)' }}
             onClick={() => setBreadcrumbs([])}
             title="Clear history"
+            onMouseOver={(e) => {
+              e.currentTarget.style.color = 'var(--error)';
+              e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.color = 'var(--text-dim)';
+              e.currentTarget.style.background = 'transparent';
+            }}
           >
             ✕
           </button>
@@ -307,20 +419,42 @@ export default function GraphExplorer() {
 
       {/* Related Tools Panel */}
       {relatedTools.length > 0 && (
-        <div class="absolute top-[300px] right-5 z-[80] bg-slate-900/80 p-4 px-5 rounded-2xl border border-slate-700/30 min-w-[260px] max-w-[300px] backdrop-blur-xl max-h-[280px] overflow-y-auto shadow-glass">
-          <h4 class="text-slate-500 text-xs uppercase tracking-widest mb-3 font-semibold">
+        <div
+          class="absolute top-[300px] right-5 z-[80] p-4 px-5 rounded-xl min-w-[260px] max-w-[300px] max-h-[280px] overflow-y-auto shadow-xl"
+          style={styles.panel}
+        >
+          <h4
+            class="text-xs uppercase tracking-widest mb-3 font-semibold"
+            style={{ color: 'var(--text-dim)' }}
+          >
             Related Tools (Adamic-Adar)
           </h4>
           <div class="flex flex-col gap-2">
             {relatedTools.map((tool) => (
               <div
                 key={tool.tool_id}
-                class="flex justify-between items-center p-2.5 px-3 bg-slate-800/50 border border-transparent rounded-xl cursor-pointer transition-all duration-200 hover:bg-orange-500/10 hover:border-orange-500/20 hover:translate-x-1"
+                class="flex justify-between items-center p-2.5 px-3 rounded-xl cursor-pointer transition-all duration-200"
+                style={{
+                  background: 'var(--bg-surface)',
+                  border: '1px solid transparent',
+                }}
                 onClick={() => setHighlightedNode(tool.tool_id)}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = 'var(--accent-dim)';
+                  e.currentTarget.style.borderColor = 'var(--accent-medium)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = 'var(--bg-surface)';
+                  e.currentTarget.style.borderColor = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
               >
-                <span class="text-slate-100 text-sm font-medium">{tool.name}</span>
-                <span class="text-slate-500 text-xs ml-2">{tool.server}</span>
-                <span class="text-orange-400 text-xs font-semibold">AA: {tool.adamic_adar_score.toFixed(2)}</span>
+                <span style={{ color: 'var(--text)', fontSize: '0.875rem', fontWeight: 500 }}>{tool.name}</span>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{tool.server}</span>
+                <span style={{ color: 'var(--accent)', fontSize: '0.75rem', fontWeight: 600 }}>
+                  AA: {tool.adamic_adar_score.toFixed(2)}
+                </span>
               </div>
             ))}
           </div>
@@ -336,17 +470,20 @@ export default function GraphExplorer() {
       />
 
       {/* Keyboard Shortcuts Help */}
-      <div class="absolute bottom-5 right-5 z-[80] bg-slate-900/80 py-3 px-4 rounded-xl text-xs text-slate-600 flex gap-5 border border-slate-700/30 backdrop-blur-xl">
-        <span>
-          <kbd class="bg-gradient-to-br from-blue-500/10 to-purple-500/10 px-2 py-0.5 rounded mr-1.5 text-slate-400 font-semibold text-[11px] border border-blue-500/20">/</kbd>
+      <div
+        class="absolute bottom-5 right-5 z-[80] py-3 px-4 rounded-xl text-xs flex gap-5"
+        style={styles.panel}
+      >
+        <span style={{ color: 'var(--text-dim)' }}>
+          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>/</kbd>
           Search
         </span>
-        <span>
-          <kbd class="bg-gradient-to-br from-blue-500/10 to-purple-500/10 px-2 py-0.5 rounded mr-1.5 text-slate-400 font-semibold text-[11px] border border-blue-500/20">Esc</kbd>
+        <span style={{ color: 'var(--text-dim)' }}>
+          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>Esc</kbd>
           Clear
         </span>
-        <span>
-          <kbd class="bg-gradient-to-br from-blue-500/10 to-purple-500/10 px-2 py-0.5 rounded mr-1.5 text-slate-400 font-semibold text-[11px] border border-blue-500/20">Ctrl+P</kbd>
+        <span style={{ color: 'var(--text-dim)' }}>
+          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>Ctrl+P</kbd>
           Path
         </span>
       </div>

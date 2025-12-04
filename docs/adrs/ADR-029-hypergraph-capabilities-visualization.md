@@ -44,6 +44,9 @@ Mais une capability est une **hyperedge** qui connecte N nodes simultanément:
 - **Performance:** Pas de surcharge pour le graph existant
 - **Simplicité:** Réutiliser l'infrastructure existante (Cytoscape.js)
 - **Évolutivité:** Permettre des visualisations plus riches à l'avenir
+- **Intégration:** Le mode hypergraph DOIT s'intégrer dans le dashboard EXISTANT (Epic 6), pas une nouvelle page
+
+> **CONSTRAINT:** L'implémentation doit ajouter un toggle de vue au dashboard existant, pas créer une interface séparée. Consultation avec UX Designer requise avant implémentation pour valider l'intégration UI.
 
 ## Options Considered
 

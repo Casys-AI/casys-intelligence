@@ -57,6 +57,119 @@ L'objectif de cet ADR est de définir comment faire **émerger des capabilities 
 3. **Apprentissage continu** - Le système s'améliore avec l'usage
 4. **UX** - Suggestions proactives réduisent la charge cognitive
 
+## Key Design Decisions (2025-12-04)
+
+### 1. Eager Learning (pas 3+ exécutions)
+> **Décision:** Storage dès la 1ère exécution réussie, pas d'attente de pattern répété.
+>
+> - ON CONFLICT → UPDATE usage_count++ (deduplication par code_hash)
+> - Storage is cheap (~2KB/capability), on garde tout
+> - **Lazy Suggestions:** Le filtrage se fait au moment des suggestions (via AdaptiveThresholdManager), pas du stockage
+
+### 2. Inférence Schema via ts-morph + Zod
+> **Décision:** Le schema des paramètres est inféré automatiquement depuis le code TypeScript.
+>
+> **Stack (Deno compatible ✅):**
+> - `ts-morph` (deno.land/x/ts_morph@22.0.0) - Parse AST, trouve `args.xxx`
+> - `Zod` (npm:zod ou JSR) - Construit le schema typé
+> - `zod-to-json-schema` (npm:) - Export pour stockage DB
+>
+> **Flow:**
+> ```
+> Code TypeScript → ts-morph parse → trouve args.filePath, args.debug
+>     → Inférer types depuis MCP schemas utilisés
+>     → Générer Zod schema → Convertir en JSON Schema → Stocker
+> ```
+
+### 3. Réutilisation du pattern wrapMCPClient
+> **Décision:** Les capabilities sont injectées dans le contexte exactement comme les MCP tools.
+>
+> Voir `src/sandbox/context-builder.ts:355` - même pattern pour `wrapCapability()`.
+> **Pas de nouveau mécanisme** - extension du `ContextBuilder` existant.
+>
+> ```typescript
+> const context = {
+>   // MCP tools (existant)
+>   github: { createIssue: async (args) => ... },
+>   // Capabilities (même pattern)
+>   capabilities: { createIssueFromFile: async (args) => ... }
+> };
+> ```
+
+### 4. Traces capabilities : seulement pour les appels nested
+> **Décision:** Les traces `__TRACE__ capability_*` sont émises uniquement pour les appels capability → capability (layers).
+>
+> | Contexte | Observable ? | Trace ? |
+> |----------|--------------|---------|
+> | Gateway → Capability | ✅ On sait côté Gateway | ❌ Pas besoin |
+> | Capability → MCP tool | ❌ Dans sandbox | ✅ `tool_start/end` |
+> | Capability → Capability | ❌ Dans sandbox | ✅ `capability_start/end` |
+>
+> **Rationale:** Même logique que MCP tools - on trace ce qu'on ne peut pas observer depuis l'extérieur du sandbox.
+>
+> ```typescript
+> // Dans wrapCapability() - seulement pour appels nested
+> wrapped[capName] = async (args) => {
+>   console.log(`__TRACE__${JSON.stringify({
+>     type: "capability_start",
+>     capability_id: cap.id,
+>     name: cap.name
+>   })}`);
+>
+>   const result = await executeCodeSnippet(cap.code_snippet, args);
+>
+>   console.log(`__TRACE__${JSON.stringify({
+>     type: "capability_end",
+>     capability_id: cap.id,
+>     success: true
+>   })}`);
+>
+>   return result;
+> };
+> ```
+
+### 5. Layers de capabilities (capability → capability)
+> **Décision:** Une capability peut appeler une autre capability naturellement.
+>
+> Les deux sont injectées dans le même contexte sandbox :
+> ```typescript
+> // Exemple: code_snippet de "deployProd"
+> await capabilities.runTests({ path: "./tests" });   // ← capability
+> await capabilities.buildDocker({ tag: "v1.0" });    // ← capability
+> await mcp.kubernetes.deploy({ image: "app:v1.0" }); // ← MCP tool
+> ```
+>
+> **Pas de nouveau mécanisme requis** - conséquence naturelle de l'injection uniforme.
+>
+> **Limites à considérer (future story si besoin):**
+> - Profondeur max de récursion (3 niveaux?)
+> - Détection de cycles (A → B → A)
+> - Tracing de la stack d'appels pour debug
+
+### 6. Capability Graph Learning (capability → capability edges)
+> **Décision:** Les relations capability → capability sont apprises et stockées dans GraphRAG.
+>
+> **Flow:**
+> 1. Capability A appelle Capability B (dans sandbox)
+> 2. `wrapCapability()` émet `__TRACE__ capability_start/end`
+> 3. Gateway parse les traces → détecte A → B
+> 4. `graphEngine.updateFromExecution()` crée edge A → B
+>
+> **Stockage:** Même graph que les MCP tools (GraphRAG)
+> - Node type: `capability` (en plus de `tool`)
+> - Edge: `capability_A → capability_B` avec weight basé sur fréquence
+>
+> **Use cases:**
+> - Suggérer capabilities souvent appelées ensemble
+> - "Cette capability utilise souvent X et Y"
+> - Détecter les capability chains (A → B → C)
+>
+> **Queries GraphRAG:**
+> ```typescript
+> graphEngine.getNeighbors(capability_A, "out") → [capability_B, capability_C]
+> graphEngine.getNeighbors(capability_A, "in") → [capability_parent]
+> ```
+
 ## Considered Options
 
 ### Option A: Status Quo
@@ -245,11 +358,13 @@ export function parseTraces(stdout: string): IPCEvent[] {
 }
 ```
 
-### Capability Lifecycle
+### Capability Lifecycle (Eager Learning)
+
+> **UPDATED 2025-12-04:** Eager Learning - storage dès la 1ère exécution réussie
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  PHASE 1: COLD START (0-3 exécutions d'un pattern)              │
+│  PHASE 1: IMMEDIATE STORAGE (1ère exécution réussie)             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Intent: "analyze commits"                                       │
@@ -264,51 +379,38 @@ export function parseTraces(stdout: string): IPCEvent[] {
 │  GraphRAG: updateFromExecution() → edges créés                  │
 │       │                                                          │
 │       ▼                                                          │
-│  Store in workflow_execution (not yet a capability)             │
+│  ts-morph: Parse code → Extract args.xxx → Infer types          │
+│       │                                                          │
+│       ▼                                                          │
+│  Zod: Generate schema → zod-to-json-schema → parameters_schema  │
+│       │                                                          │
+│       ▼                                                          │
+│  INSERT INTO workflow_pattern (Eager Learning):                  │
+│    ON CONFLICT (code_hash) DO UPDATE SET                        │
+│      usage_count = usage_count + 1,                             │
+│      last_used = NOW()                                          │
+│                                                                  │
+│  ✅ Capability IMMÉDIATEMENT disponible                          │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│  PHASE 2: PATTERN DETECTION (3+ exécutions similaires)          │
+│  PHASE 2: LAZY SUGGESTIONS (filtrage adaptatif)                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Background job (ou trigger):                                    │
+│  Quand search_capabilities ou suggestions:                       │
 │       │                                                          │
 │       ▼                                                          │
-│  Query workflow_execution:                                       │
-│    - Group by tools_used (set comparison)                       │
-│    - Filter: count >= 3 AND success_rate > 0.7                  │
+│  AdaptiveThresholdManager.getThresholds().suggestionThreshold   │
 │       │                                                          │
 │       ▼                                                          │
-│  Pattern candidat détecté:                                       │
-│    tools: [github:list_commits, memory:store]                   │
-│    count: 5, success_rate: 0.8                                  │
+│  Filter capabilities:                                            │
+│    score = (success_rate * 0.6) + (normalized_usage * 0.4)      │
+│    return score >= threshold                                    │
 │       │                                                          │
 │       ▼                                                          │
-│  Extract best code snippet:                                      │
-│    - Fastest successful execution                               │
-│    - Most complete (all tools called)                           │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│  PHASE 3: CAPABILITY PROMOTION                                   │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  INSERT INTO workflow_pattern:                                   │
-│    - pattern_hash: hash(sorted tools)                           │
-│    - intent_embedding: embed(representative intent)             │
-│    - dag_structure: { tasks: [...] }                            │
-│    - code_snippet: best code from phase 2                       │
-│    - name: auto-generated or null                               │
-│    - usage_count: N                                             │
-│    - success_rate: 0.8                                          │
-│       │                                                          │
-│       ▼                                                          │
-│  Capability now discoverable via:                               │
-│    - Intent similarity (vector search)                          │
-│    - Community membership (Louvain)                             │
-│    - Explicit search_capabilities tool                          │
+│  Only high-quality capabilities shown to user                   │
+│  (Storage cheap, suggestions filtered)                          │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 

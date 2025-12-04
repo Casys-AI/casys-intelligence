@@ -3,7 +3,7 @@
 **Author:** BMad
 **Date:** 2025-11-03 (Updated: 2025-12-04)
 **Project Level:** 3
-**Target Scale:** 9 epics, 42+ stories total (baseline + adaptive features + emergent capabilities)
+**Target Scale:** 10 epics, 50+ stories total (baseline + adaptive features + emergent capabilities + hypergraph viz)
 
 ---
 
@@ -1308,7 +1308,7 @@ console.log(`__TRACE__${JSON.stringify({
 
 ---
 
-**Story 7.2: Capability Storage & Schema Extension (Eager Learning)**
+**Story 7.2a: Capability Storage - Migration & Eager Learning**
 
 As a system persisting learned patterns,
 I want to store capabilities immediately after first successful execution,
@@ -1323,7 +1323,7 @@ So that learning happens instantly without waiting for repeated patterns.
 **Acceptance Criteria:**
 1. Migration 011 créée: extension table `workflow_pattern`
    - `code_snippet TEXT` - Le code exécuté
-   - `parameters JSONB` - Paramètres extraits
+   - `parameters_schema JSONB` - Schema JSON des paramètres (nullable, rempli par Story 7.2b)
    - `cache_config JSONB` - Configuration cache (ttl, cacheable)
    - `name TEXT` - Nom auto-généré ou manuel
    - `description TEXT` - Description de la capability
@@ -1348,15 +1348,53 @@ So that learning happens instantly without waiting for repeated patterns.
 
 **Prerequisites:** Story 7.1 (tracking operational)
 
+**Estimation:** 1-2 jours
+
+---
+
+**Story 7.2b: Schema Inference (ts-morph + Zod)**
+
+As a system exposing capability interfaces,
+I want to automatically infer parameter schemas from TypeScript code,
+So that Claude knows what arguments to pass when calling capabilities.
+
+**Stack (Deno compatible ✅):**
+- `ts-morph` via `deno.land/x/ts_morph@22.0.0` ou JSR `@ts-morph/ts-morph`
+- `zod` via `npm:zod` ou `deno.land/x/zod` ou JSR natif
+- `zod-to-json-schema` via `npm:zod-to-json-schema`
+
+> Note: ts-morph analyse du TS simple (pas d'imports Deno exotiques) - OK pour notre code généré.
+
+**Acceptance Criteria:**
+1. `SchemaInferrer` class créée (`src/capabilities/schema-inferrer.ts`)
+2. Method `inferSchema(code: string, mcpSchemas: Map<string, JSONSchema>)` → JSONSchema
+3. Flow d'inférence:
+   ```typescript
+   // 1. ts-morph parse AST → trouve args.filePath, args.debug
+   // 2. Inférer types depuis MCP schemas (args.filePath → fs.read.path → string)
+   // 3. Générer Zod schema → z.object({ filePath: z.string(), ... })
+   // 4. Convertir en JSON Schema pour stockage DB
+   ```
+4. Détection `args.xxx` via AST traversal (PropertyAccessExpression)
+5. Inférence de type depuis les MCP schemas quand possible
+6. Fallback à `unknown` si type non-inférable
+7. Génération de Zod schema avec `z.object({...})`
+8. Conversion vers JSON Schema via `zod-to-json-schema`
+9. Update `workflow_pattern.parameters_schema` après inférence
+10. Tests: code avec `args.filePath` utilisé dans `fs.read()` → schema.filePath = string
+11. Tests: code avec `args.unknown` non-mappable → schema.unknown = unknown
+
+**Prerequisites:** Story 7.2a (storage ready)
+
 **Estimation:** 2-3 jours
 
 ---
 
-**Story 7.3: Capability Matching & search_capabilities Tool**
+**Story 7.3a: Capability Matching & search_capabilities Tool**
 
 As an AI agent,
 I want to search for existing capabilities matching my intent,
-So that I can reuse proven code instead of generating new code.
+So that I can discover and reuse proven code.
 
 **Integration avec Adaptive Thresholds (Epic 4):**
 - Réutilise `AdaptiveThresholdManager` existant
@@ -1374,14 +1412,101 @@ So that I can reuse proven code instead of generating new code.
 5. Nouveau tool MCP `agentcards:search_capabilities` exposé
 6. Input schema: `{ intent: string, include_suggestions?: boolean }`
    - Pas de threshold en param - géré par adaptive system
-7. Output: `{ capabilities: Capability[], suggestions?: Suggestion[], threshold_used: number }`
+7. Output: `{ capabilities: Capability[], suggestions?: Suggestion[], threshold_used: number, parameters_schema: JSONSchema }`
 8. Feedback loop: après exécution capability, appeler `adaptiveThresholds.recordExecution()`
 9. Stats update: `usage_count++`, recalc `success_rate` après exécution
 10. Tests: créer capability → search by similar intent → verify match uses adaptive threshold
 
-**Prerequisites:** Story 7.2 (storage ready), Epic 4 (AdaptiveThresholdManager)
+**Prerequisites:** Story 7.2b (schema inference ready), Epic 4 (AdaptiveThresholdManager)
 
-**Estimation:** 2-3 jours
+**Estimation:** 1-2 jours
+
+---
+
+**Story 7.3b: Capability Injection & Nested Tracing**
+
+As a code executor,
+I want capabilities injected into the sandbox context like MCP tools,
+So that code can call capabilities and we can trace nested capability calls.
+
+**IMPORTANT - Réutilisation du pattern existant:**
+> L'injection de capabilities DOIT réutiliser le pattern de `src/sandbox/context-builder.ts`.
+> Voir `wrapMCPClient()` ligne 355 - même approche pour `wrapCapability()`.
+> **Pas de nouveau mécanisme** - extension du `ContextBuilder` existant.
+
+**Tracing : seulement pour les appels nested (capability → capability)**
+> Les traces `__TRACE__ capability_*` sont émises uniquement pour les appels **dans le sandbox**.
+>
+> | Contexte | Observable ? | Trace ? |
+> |----------|--------------|---------|
+> | Gateway → Capability | ✅ On sait côté Gateway | ❌ Track côté Gateway |
+> | Capability → MCP tool | ❌ Dans sandbox | ✅ `tool_start/end` (Story 7.1) |
+> | Capability → Capability | ❌ Dans sandbox | ✅ `capability_start/end` |
+
+**Acceptance Criteria:**
+1. `wrapCapability()` method créée dans `ContextBuilder`
+2. Émission traces `__TRACE__ capability_start/end` dans wrapper:
+   ```typescript
+   console.log(`__TRACE__${JSON.stringify({ type: "capability_start", capability_id, name })}`);
+   const result = await executeCodeSnippet(cap.code_snippet, args);
+   console.log(`__TRACE__${JSON.stringify({ type: "capability_end", capability_id, success: true })}`);
+   ```
+3. Étendre `ContextBuilder.buildContext()` pour inclure capabilities:
+   ```typescript
+   context.capabilities = await this.wrapCapabilities(relevantCapabilities);
+   ```
+4. Capabilities injectées à côté des MCP tools dans le contexte sandbox
+5. Gateway parse `capability_start/end` traces en plus de `tool_start/end`
+6. **Learning loop - Capability Graph:**
+   - Edges créés entre capabilities qui s'appellent (capability_A → capability_B)
+   - Stockage dans GraphRAG via `updateFromExecution()` (même pattern que MCP tools)
+   - Permet de suggérer des capabilities souvent utilisées ensemble
+   - Query: "quelles capabilities appellent capability X ?" / "quelles capabilities sont appelées par X ?"
+7. Tests: capability A appelle capability B → traces parsed correctly → edge A→B créé dans graph
+8. Tests: profondeur max testée (capability → capability → capability)
+9. Tests: GraphRAG.getNeighbors(capability_A) retourne capability_B si A→B edge existe
+
+**Prerequisites:** Story 7.3a (matcher ready)
+
+**Code Reference:** `src/sandbox/context-builder.ts:355` - pattern `wrapMCPClient()` à réutiliser
+
+**Estimation:** 2 jours
+
+---
+
+### Note Architecturale: Layers de Capabilities
+
+Les capabilities peuvent appeler d'autres capabilities car elles sont toutes injectées dans le même contexte :
+
+```typescript
+// Contexte injecté dans le sandbox
+const context = {
+  // MCP tools
+  github: { createIssue: async (args) => ... },
+  filesystem: { read: async (args) => ... },
+
+  // Capabilities (même pattern d'injection)
+  capabilities: {
+    parseConfig: async (args) => ...,
+    createIssueFromFile: async (args) => ...
+  }
+};
+
+// Une capability "haut niveau" peut appeler une capability "bas niveau"
+// Exemple: code_snippet de "deployProd"
+const deployProd = `
+  await capabilities.runTests({ path: "./tests" });   // ← capability
+  await capabilities.buildDocker({ tag: "v1.0" });    // ← capability
+  await mcp.kubernetes.deploy({ image: "app:v1.0" }); // ← MCP tool
+`;
+```
+
+**Pas de nouveau mécanisme requis** - c'est une conséquence naturelle de l'injection uniforme.
+
+**Limites à considérer (future story si besoin):**
+- Profondeur max de récursion (3 niveaux?)
+- Détection de cycles (A → B → A)
+- Tracing de la stack d'appels pour debug
 
 ---
 
@@ -1423,20 +1548,17 @@ So that I can discover relevant capabilities and tools without searching.
 10. Feedback loop: track si user utilise/ignore suggestions
 11. Tests: verify threshold adaptatif utilisé, pas de valeur hardcodée
 
-**Prerequisites:** Story 7.3 (capability matching)
+**Prerequisites:** Story 7.3b (capability injection)
 
 **Estimation:** 2-3 jours
 
 ---
 
-**Story 7.5: Multi-Level Cache & Pruning**
+**Story 7.5a: Capability Result Cache**
 
 As a system optimizing for performance,
-I want cached capability results and periodic cleanup of unused capabilities,
-So that repeat executions are instant and storage stays clean.
-
-**Note:** Avec eager learning (Story 7.2), les capabilities sont créées immédiatement.
-Cette story se concentre sur le **cache des résultats** et le **pruning optionnel**.
+I want cached capability results,
+So that repeat executions are instant.
 
 **Acceptance Criteria:**
 1. Cache multi-niveaux implémenté:
@@ -1460,19 +1582,43 @@ Cette story se concentre sur le **cache des résultats** et le **pruning optionn
    - Tool schema change → invalidate capabilities using this tool
    - 3+ failures consécutifs → invalidate capability cache
    - Manual: `DELETE FROM capability_cache WHERE capability_id = ?`
-6. **Optional pruning job** (peut être désactivé):
+6. Tests: exec capability → verify cache hit on 2nd call → verify result identical
+7. Metrics: `cache_hit_rate`
+8. Config: `CAPABILITY_CACHE_TTL` (default: 1 hour)
+
+**Prerequisites:** Story 7.4 (suggestion engine)
+
+**Estimation:** 1-2 jours
+
+---
+
+**Story 7.5b: Capability Pruning (Optional)**
+
+As a system managing storage,
+I want periodic cleanup of unused capabilities,
+So that storage stays clean.
+
+**Note:** Cette story est optionnelle. Avec eager learning, on stocke tout.
+Le pruning peut être activé si le stockage devient un problème.
+
+**Acceptance Criteria:**
+1. Pruning job configurable (cron ou trigger manuel)
+2. Pruning query:
    ```sql
    DELETE FROM workflow_pattern
    WHERE usage_count = 1
      AND last_used < NOW() - INTERVAL '30 days'
+     AND source = 'emergent'  -- Never prune manual capabilities
    ```
-7. Tests: exec capability → verify cache hit on 2nd call → verify result identical
-8. Metrics: `cache_hit_rate`, `capabilities_pruned_total`
-9. Config: `CAPABILITY_CACHE_TTL` (default: 1 hour), `PRUNING_ENABLED` (default: false)
+3. Pruning désactivé par défaut: `PRUNING_ENABLED` (default: false)
+4. Dry-run mode: `prune(dryRun: true)` → returns count without deleting
+5. Logs: "Pruned N capabilities older than 30 days with usage_count=1"
+6. Tests: create old capability → run pruning → verify deleted
+7. Metrics: `capabilities_pruned_total`
 
-**Prerequisites:** Story 7.4 (suggestion engine)
+**Prerequisites:** Story 7.5a (cache ready)
 
-**Estimation:** 2-3 jours
+**Estimation:** 0.5-1 jour
 
 ---
 
@@ -1566,6 +1712,295 @@ So that [benefit/value].
 - **No forward dependencies** - Only depend on previous work
 - **AI-agent sized** - Completable in 2-4 hour focused session
 - **Value-focused** - Integrate technical enablers into value-delivering stories
+
+---
+
+## Epic 8: Hypergraph Capabilities Visualization
+
+> **ADR:** ADR-029 (Hypergraph Capabilities Visualization)
+> **Depends on:** Epic 6 (Dashboard), Epic 7 (Capabilities Storage)
+> **Status:** Proposed (2025-12-04)
+
+**Expanded Goal (2-3 sentences):**
+
+Visualiser les capabilities comme **hyperedges** (relations N-aires entre tools) via Cytoscape.js compound graphs, permettant aux utilisateurs de voir, explorer et réutiliser le code appris par le système. Une capability n'est pas une relation binaire mais une relation N-aire connectant plusieurs tools ensemble, nécessitant une approche de visualisation différente du graph classique.
+
+**Value Delivery:**
+
+À la fin de cet epic, un développeur peut:
+- Voir visuellement quelles capabilities ont été apprises par le système
+- Explorer les relations hypergraph entre tools et capabilities
+- Visualiser le code_snippet de chaque capability avec syntax highlighting
+- Copier et réutiliser le code prouvé directement depuis le dashboard
+- Filtrer et rechercher les capabilities par intent, success_rate, usage
+
+**Décision Architecturale (ADR-029):** Cytoscape.js Compound Graphs
+- Capability = parent node (violet, expandable)
+- Tools = child nodes (colored by server)
+- Click capability → Code Panel avec syntax highlighting
+- Toggle button: [Tools] [Capabilities] [Hypergraph]
+
+**Estimation:** 5 stories, ~1-2 semaines
+
+---
+
+### Story Breakdown - Epic 8
+
+**Story 8.1: Capability Data API**
+
+As a dashboard developer,
+I want API endpoints to fetch capabilities and hypergraph data,
+So that the frontend can visualize the learned capabilities.
+
+**Acceptance Criteria:**
+1. Endpoint `GET /api/capabilities` créé
+   - Response: `{ capabilities: Capability[], total: number }`
+   - Capability includes: id, name, description, code_snippet, tools_used[], success_rate, usage_count, community_id
+2. Query parameters supportés:
+   - `?community_id=N` - Filter by Louvain community
+   - `?min_success_rate=0.7` - Filter by quality
+   - `?min_usage=2` - Filter by usage
+   - `?limit=50&offset=0` - Pagination
+3. Endpoint `GET /api/graph/hypergraph` créé
+   - Response: `{ nodes: CytoscapeNode[], edges: CytoscapeEdge[], capabilities_count, tools_count }`
+   - Nodes include both tools and capabilities with `type` field
+4. Join sur `workflow_pattern` et `tool_schemas` pour récupérer metadata
+5. Intent preview: premiers 100 caractères de l'intent embedding description
+6. Tests HTTP: verify JSON structure, filters work correctly
+7. OpenAPI documentation for both endpoints
+
+**Prerequisites:** Epic 7 Story 7.2 (workflow_pattern table with code_snippet)
+
+---
+
+**Story 8.2: Compound Graph Builder**
+
+As a system architect,
+I want a HypergraphBuilder class that converts capabilities to Cytoscape compound nodes,
+So that the visualization can represent N-ary relationships correctly.
+
+**Acceptance Criteria:**
+1. `HypergraphBuilder` class créée (`src/visualization/hypergraph-builder.ts`)
+2. Method `buildCompoundGraph(capabilities: Capability[], tools: Tool[])` → CytoscapeElements
+3. Capability node structure:
+   ```javascript
+   {
+     data: {
+       id: 'cap-uuid-1',
+       type: 'capability',
+       label: 'Create Issue from File',
+       code_snippet: 'await mcp.github...',
+       success_rate: 0.95,
+       usage_count: 12
+     }
+   }
+   ```
+4. Tool child node structure:
+   ```javascript
+   {
+     data: {
+       id: 'filesystem:read',
+       parent: 'cap-uuid-1',  // Links to capability
+       type: 'tool',
+       server: 'filesystem'
+     }
+   }
+   ```
+5. Handle tools belonging to multiple capabilities (create separate instances with unique IDs)
+6. Edge creation between tools within same capability (optional, can be toggled)
+7. Include edges between capabilities if they share tools (cross-capability links)
+8. Unit tests: verify compound structure correct for various capability configurations
+
+**Prerequisites:** Story 8.1 (API endpoints ready)
+
+---
+
+**Story 8.3: Hypergraph View Mode**
+
+As a power user,
+I want a "Hypergraph" view mode in the dashboard,
+So that I can visualize capabilities as compound nodes containing their tools.
+
+> **IMPORTANT:** Cette story DOIT intégrer le mode hypergraph dans le dashboard EXISTANT (Epic 6).
+> Pas de nouvelle page - c'est un toggle de vue dans le même dashboard.
+> **Requiert:** Consultation avec UX Designer agent avant implémentation pour valider l'intégration UI.
+
+**Acceptance Criteria:**
+1. Toggle button group in dashboard header: `[Tools] [Capabilities] [Hypergraph]`
+   - **Intégration:** Utilise le header existant du dashboard Epic 6
+   - **Transition:** Smooth animation entre les vues, même container graph
+2. Hypergraph view uses `fcose` or `cola` layout (compound-aware)
+3. Capability node styling:
+   - Background: violet/purple (`#8b5cf6`)
+   - Border: rounded rectangle
+   - Label: capability name or intent preview
+   - Expandable: click to show/hide children
+4. Tool node styling: same as existing (colored by server)
+5. Layout options:
+   - Expand all capabilities (default)
+   - Collapse all (show only capability nodes)
+   - Mixed (user can expand/collapse individually)
+6. Performance: render <500ms for 50 capabilities, 200 tools
+7. Smooth transitions between view modes
+8. Persist view mode preference in localStorage
+9. Mobile responsive (optional, nice-to-have)
+
+**Prerequisites:** Story 8.2 (HypergraphBuilder ready)
+
+**UX Design Considerations (à valider avec UX Designer):**
+- Comment cohabitent les 3 vues dans le même espace?
+- Le graph container reste le même, seules les données changent
+- Les filtres existants (Epic 6) s'appliquent-ils au mode Hypergraph?
+- Position du Code Panel: sidebar droite ou modal?
+
+---
+
+**Story 8.4: Code Panel Integration**
+
+As a developer,
+I want to see the code_snippet when I click on a capability,
+So that I can understand what the capability does and copy the code.
+
+**Acceptance Criteria:**
+1. Code Panel component créé (sidebar or modal)
+2. Appears on capability node click
+3. Syntax highlighting using Prism.js or highlight.js (TypeScript syntax)
+4. Code panel contents:
+   - Capability name (editable if manual)
+   - Intent/description
+   - `code_snippet` with syntax highlighting
+   - Stats: success_rate %, usage_count, last_used date
+   - Tools used: list with server icons
+5. Actions:
+   - "Copy Code" button → clipboard with toast notification
+   - "Try This" button → opens capability in execute_code context (future)
+   - "Edit Name" → allows user to rename capability
+6. Keyboard shortcuts:
+   - `Esc` to close panel
+   - `Cmd/Ctrl+C` to copy code when panel focused
+7. Dark mode support (match dashboard theme)
+8. Responsive: panel doesn't overflow on small screens
+
+**Prerequisites:** Story 8.3 (Hypergraph view mode)
+
+---
+
+**Story 8.5: Capability Explorer**
+
+As a user looking for reusable capabilities,
+I want to search and filter capabilities,
+So that I can find relevant code patterns quickly.
+
+**Acceptance Criteria:**
+1. Search bar in Hypergraph view: search by name, description, or intent
+2. Autocomplete suggestions while typing
+3. Filter controls:
+   - Success rate slider: 0% - 100%
+   - Minimum usage count input
+   - Community dropdown (Louvain clusters)
+   - Date range: capabilities created/used in last X days
+4. Sort options:
+   - By usage_count (most used first)
+   - By success_rate (highest quality first)
+   - By last_used (recent first)
+   - By created_at (newest first)
+5. Results highlight:
+   - Matching capabilities highlighted in graph
+   - Non-matching capabilities dimmed (0.3 opacity)
+6. "Try This Capability" action:
+   - Pre-fills `execute_code` with capability code
+   - Opens in new conversation or copies to clipboard
+7. Export capabilities:
+   - "Export Selected" → JSON file with code_snippets
+   - "Export All" → Full capability dump
+8. Bulk actions (optional):
+   - Delete unused capabilities
+   - Merge similar capabilities
+9. Keyboard navigation: arrow keys to navigate results
+
+**Prerequisites:** Story 8.4 (Code Panel working)
+
+---
+
+### Epic 8 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PGlite                                                         │
+│  ┌─────────────────┐      ┌─────────────────────┐              │
+│  │ workflow_pattern│      │  tool_schemas       │              │
+│  │ - code_snippet  │      │  - tool_id          │              │
+│  │ - tools_used[]  │      │  - server           │              │
+│  │ - intent_embed  │      │                     │              │
+│  └────────┬────────┘      └──────────┬──────────┘              │
+└───────────┼─────────────────────────┼───────────────────────────┘
+            │                          │
+            ▼                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  HypergraphBuilder                                              │
+│  - buildCompoundGraph(capabilities, tools)                      │
+│  - Returns Cytoscape elements with parent relationships         │
+└────────────────────────────────────────────────────────────────┘
+            │
+            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Cytoscape.js (existing dashboard)                              │
+│  - Compound layout (cola, dagre, or fcose)                     │
+│  - Capability nodes: violet, expandable                        │
+│  - Tool nodes: colored by server (existing)                    │
+│  - Click capability → CodePanel with syntax highlighting       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Epic 8 UI Preview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Dashboard Header                                               │
+│  [Tools] [Capabilities] [Hypergraph]  ← View mode toggle       │
+│  Search: [____________] Filters: [Success ≥ 70%] [Usage ≥ 2]   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │                    Graph Area                             │  │
+│  │                                                           │  │
+│  │   ┌─────────────────────────────┐                        │  │
+│  │   │  Cap: Create Issue from File │ ← Compound node        │  │
+│  │   │  success: 95% | usage: 12   │                        │  │
+│  │   │  ┌───────┐  ┌────────────┐ │                        │  │
+│  │   │  │fs:read│  │gh:issue    │ │                        │  │
+│  │   │  └───────┘  └────────────┘ │                        │  │
+│  │   └─────────────────────────────┘                        │  │
+│  │                                                           │  │
+│  │   ┌─────────────────────────────┐                        │  │
+│  │   │  Cap: Parse Config          │                        │  │
+│  │   │  ┌───────┐  ┌────────────┐ │                        │  │
+│  │   │  │fs:read│  │json:parse  │ │                        │  │
+│  │   │  └───────┘  └────────────┘ │                        │  │
+│  │   └─────────────────────────────┘                        │  │
+│  │                                                           │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  Code Panel (on capability click)                               │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Capability: Create Issue from File                       │  │
+│  │  Tools: filesystem:read, github:create_issue              │  │
+│  │                                                           │  │
+│  │  const content = await mcp.filesystem.read("config.json");│  │
+│  │  const data = JSON.parse(content);                        │  │
+│  │  await mcp.github.createIssue({                           │  │
+│  │    title: data.title,                                     │  │
+│  │    body: data.description                                 │  │
+│  │  });                                                      │  │
+│  │                                                           │  │
+│  │  [Copy Code] [Try This]                                   │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│  Success: 95% | Usage: 12 | Last used: 2h ago                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 

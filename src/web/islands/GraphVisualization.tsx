@@ -59,25 +59,25 @@ export default function GraphVisualization({
   // Generate distinct colors dynamically for each server discovered
   const serverColorsRef = useRef<Map<string, string>>(new Map());
 
-  // Base colors palette - extended for scalability
+  // Base colors palette - Casys warm theme with high contrast
   const colorPalette = [
-    "#3b82f6", // blue
-    "#10b981", // green
-    "#f59e0b", // amber
-    "#8b5cf6", // purple
-    "#ef4444", // red
-    "#06b6d4", // cyan
-    "#f97316", // orange
-    "#ec4899", // pink
-    "#84cc16", // lime
-    "#14b8a6", // teal
-    "#6366f1", // indigo
-    "#a855f7", // violet
+    "#FFB86F", // accent orange (primary)
+    "#FF6B6B", // coral red
+    "#4ECDC4", // teal
+    "#FFE66D", // bright yellow
+    "#95E1D3", // mint green
+    "#F38181", // salmon pink
+    "#AA96DA", // lavender
+    "#FCBAD3", // light pink
+    "#A8D8EA", // sky blue
+    "#FF9F43", // bright orange
+    "#6C5CE7", // purple
+    "#00CEC9", // cyan
   ];
 
   // Get or generate color for a server (Neo4j Color on Demand)
   const getServerColor = (server: string): string => {
-    if (server === "unknown") return "#6b7280";
+    if (server === "unknown") return "#8a8078"; // Casys text-dim
 
     if (!serverColorsRef.current.has(server)) {
       const index = serverColorsRef.current.size % colorPalette.length;
@@ -143,8 +143,8 @@ export default function GraphVisualization({
           selector: "edge",
           style: {
             width: (ele: any) => Math.max(1, (ele.data("confidence") || 0) * 5),
-            "line-color": "#444",
-            "target-arrow-color": "#444",
+            "line-color": "rgba(255, 184, 111, 0.3)",
+            "target-arrow-color": "rgba(255, 184, 111, 0.3)",
             "target-arrow-shape": "triangle",
             "curve-style": "bezier",
             opacity: 0.6,
@@ -153,8 +153,8 @@ export default function GraphVisualization({
         {
           selector: "edge.highlight",
           style: {
-            "line-color": "#0066cc",
-            "target-arrow-color": "#0066cc",
+            "line-color": "#FFB86F",
+            "target-arrow-color": "#FFB86F",
             opacity: 1,
             width: 3,
           },
@@ -170,7 +170,7 @@ export default function GraphVisualization({
           selector: "node.selected",
           style: {
             "border-width": 6,
-            "border-color": "#ffcc00",
+            "border-color": "#f5f0ea",
             "border-opacity": 1,
             "z-index": 100,
           },
@@ -547,46 +547,91 @@ export default function GraphVisualization({
       <div ref={containerRef} class="w-full h-full absolute top-0 left-0" />
 
       {/* Legend Panel */}
-      <div class="absolute top-5 right-5 bg-slate-900/80 p-5 rounded-2xl border border-slate-700/30 backdrop-blur-xl z-10 shadow-glass transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
-        <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
+      <div
+        class="absolute top-5 right-5 p-5 rounded-xl z-10 transition-all duration-300"
+        style={{
+          background: 'rgba(18, 17, 15, 0.9)',
+          border: '1px solid rgba(255, 184, 111, 0.1)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
+        <h3
+          class="text-xs font-semibold uppercase tracking-widest mb-4"
+          style={{ color: '#8a8078' }}
+        >
           MCP Servers
         </h3>
         {Array.from(servers).map((server) => (
           <div
             key={server}
-            class={`flex items-center gap-2.5 py-2 px-3 -mx-3 cursor-pointer rounded-lg transition-all duration-200 hover:bg-white/5 ${hiddenServers.has(server) ? "opacity-35" : ""}`}
+            class={`flex items-center gap-2.5 py-2 px-3 -mx-3 cursor-pointer rounded-lg transition-all duration-200 ${hiddenServers.has(server) ? "opacity-35" : ""}`}
+            style={{ ':hover': { background: 'rgba(255, 184, 111, 0.05)' } }}
             onClick={() => toggleServer(server)}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 184, 111, 0.05)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <div
-              class="w-3 h-3 rounded-full shadow-glow transition-all duration-200 hover:scale-125"
+              class="w-3 h-3 rounded-full transition-all duration-200 hover:scale-125"
               style={{ backgroundColor: serverColors[server] || serverColors.unknown }}
             />
-            <span class="text-slate-200 text-sm font-medium">{server}</span>
+            <span class="text-sm font-medium" style={{ color: '#d5c3b5' }}>{server}</span>
           </div>
         ))}
 
         {/* Orphan toggle */}
-        <div class="h-px bg-gradient-to-r from-transparent via-slate-700/30 to-transparent my-3" />
+        <div class="h-px my-3" style={{ background: 'linear-gradient(to right, transparent, rgba(255, 184, 111, 0.2), transparent)' }} />
         <div
-          class={`flex items-center gap-2.5 py-2 px-3 -mx-3 cursor-pointer rounded-lg transition-all duration-200 hover:bg-white/5 ${showOrphanNodes ? "" : "opacity-35"}`}
+          class={`flex items-center gap-2.5 py-2 px-3 -mx-3 cursor-pointer rounded-lg transition-all duration-200 ${showOrphanNodes ? "" : "opacity-35"}`}
           onClick={toggleOrphanNodes}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 184, 111, 0.05)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          <div class="w-3 h-3 rounded-full border-2 border-dashed border-slate-500 bg-slate-600" />
-          <span class="text-slate-200 text-sm font-medium">Orphan nodes</span>
+          <div class="w-3 h-3 rounded-full border-2 border-dashed" style={{ borderColor: '#8a8078', background: '#1a1816' }} />
+          <span class="text-sm font-medium" style={{ color: '#d5c3b5' }}>Orphan nodes</span>
         </div>
 
         {/* Export buttons */}
-        <div class="h-px bg-gradient-to-r from-transparent via-slate-700/30 to-transparent my-3" />
+        <div class="h-px my-3" style={{ background: 'linear-gradient(to right, transparent, rgba(255, 184, 111, 0.2), transparent)' }} />
         <div class="flex gap-2 mt-3">
           <button
             onClick={() => exportGraph("json")}
-            class="flex-1 py-2 px-3.5 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg text-slate-400 text-xs font-medium cursor-pointer transition-all duration-200 hover:from-blue-500/20 hover:to-purple-500/20 hover:border-blue-500 hover:text-slate-100 hover:-translate-y-0.5 hover:shadow-glow-blue"
+            class="flex-1 py-2 px-3.5 rounded-lg text-xs font-medium cursor-pointer transition-all duration-200"
+            style={{
+              background: 'rgba(255, 184, 111, 0.1)',
+              border: '1px solid rgba(255, 184, 111, 0.2)',
+              color: '#d5c3b5',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 184, 111, 0.2)';
+              e.currentTarget.style.borderColor = '#FFB86F';
+              e.currentTarget.style.color = '#FFB86F';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 184, 111, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 184, 111, 0.2)';
+              e.currentTarget.style.color = '#d5c3b5';
+            }}
           >
             Export JSON
           </button>
           <button
             onClick={() => exportGraph("png")}
-            class="flex-1 py-2 px-3.5 bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-lg text-slate-400 text-xs font-medium cursor-pointer transition-all duration-200 hover:from-blue-500/20 hover:to-purple-500/20 hover:border-blue-500 hover:text-slate-100 hover:-translate-y-0.5 hover:shadow-glow-blue"
+            class="flex-1 py-2 px-3.5 rounded-lg text-xs font-medium cursor-pointer transition-all duration-200"
+            style={{
+              background: 'rgba(255, 184, 111, 0.1)',
+              border: '1px solid rgba(255, 184, 111, 0.2)',
+              color: '#d5c3b5',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 184, 111, 0.2)';
+              e.currentTarget.style.borderColor = '#FFB86F';
+              e.currentTarget.style.color = '#FFB86F';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 184, 111, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 184, 111, 0.2)';
+              e.currentTarget.style.color = '#d5c3b5';
+            }}
           >
             Export PNG
           </button>
@@ -595,36 +640,64 @@ export default function GraphVisualization({
 
       {/* Node Details Panel */}
       {selectedNode && (
-        <div class="absolute bottom-5 left-5 bg-slate-900/80 p-5 rounded-2xl border border-slate-700/30 min-w-[280px] z-10 backdrop-blur-xl shadow-glass animate-slide-up">
+        <div
+          class="absolute bottom-5 left-5 p-5 rounded-xl min-w-[280px] z-10"
+          style={{
+            background: 'rgba(18, 17, 15, 0.9)',
+            border: '1px solid rgba(255, 184, 111, 0.1)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
           <span
-            class="absolute top-3 right-3 text-slate-500 cursor-pointer w-7 h-7 flex items-center justify-center rounded-md transition-all hover:bg-red-500/10 hover:text-red-400"
+            class="absolute top-3 right-3 cursor-pointer w-7 h-7 flex items-center justify-center rounded-md transition-all"
+            style={{ color: '#8a8078' }}
             onClick={() => setSelectedNode(null)}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+              e.currentTarget.style.color = '#f87171';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = '#8a8078';
+            }}
           >
             ✕
           </span>
-          <h3 class="text-lg font-semibold mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+          <h3
+            class="text-lg font-semibold mb-3"
+            style={{ color: '#FFB86F' }}
+          >
             {selectedNode.label}
           </h3>
-          <p class="text-slate-400 text-sm my-2 leading-relaxed">Server: {selectedNode.server}</p>
-          <p class="text-slate-400 text-sm my-2 leading-relaxed">PageRank: {selectedNode.pagerank.toFixed(4)}</p>
-          <p class="text-slate-400 text-sm my-2 leading-relaxed">Degree: {selectedNode.degree}</p>
+          <p class="text-sm my-2 leading-relaxed" style={{ color: '#d5c3b5' }}>
+            <span style={{ color: '#8a8078' }}>Server:</span> {selectedNode.server}
+          </p>
+          <p class="text-sm my-2 leading-relaxed" style={{ color: '#d5c3b5' }}>
+            <span style={{ color: '#8a8078' }}>PageRank:</span> {selectedNode.pagerank.toFixed(4)}
+          </p>
+          <p class="text-sm my-2 leading-relaxed" style={{ color: '#d5c3b5' }}>
+            <span style={{ color: '#8a8078' }}>Degree:</span> {selectedNode.degree}
+          </p>
         </div>
       )}
 
       {/* Enriched Tooltip on Hover */}
       {tooltip && (
         <div
-          class="absolute bg-black/90 py-2 px-3 rounded-md border border-slate-700 text-xs pointer-events-none z-[1000] whitespace-nowrap"
+          class="absolute py-2 px-3 rounded-lg text-xs pointer-events-none z-[1000] whitespace-nowrap"
           style={{
             left: `${tooltip.x}px`,
             top: `${tooltip.y}px`,
             transform: "translate(-50%, -100%)",
+            background: 'rgba(18, 17, 15, 0.95)',
+            border: '1px solid rgba(255, 184, 111, 0.2)',
+            backdropFilter: 'blur(8px)',
           }}
         >
           <div class="font-semibold mb-1" style={{ color: getServerColor(tooltip.data.server) }}>
             {tooltip.data.label}
           </div>
-          <div class="text-slate-400">
+          <div style={{ color: '#8a8078' }}>
             <span class="mr-3">Server: {tooltip.data.server}</span>
             <span class="mr-3">PR: {tooltip.data.pagerank.toFixed(3)}</span>
             <span>Deg: {tooltip.data.degree}</span>

@@ -3,7 +3,7 @@
 **Author:** BMad
 **Date:** 2025-11-03 (Updated: 2025-12-04 - Epic 7 & 8 added)
 **Project Level:** 3
-**Target Scale:** Complex System - 10 epics, 47+ stories (baseline + adaptive features + emergent capabilities + hypergraph viz)
+**Target Scale:** Complex System - 10 epics, 50+ stories (baseline + adaptive features + emergent capabilities + hypergraph viz)
 
 > **Note:** Le business model a été raffiné dans le [Market Research Report](research/research-market-2025-11-11.md) (2025-11-11). Modèle confirmé: **Open Core Freemium** avec Free tier (3 servers) → Pro ($15/mo) → Team ($25/mo) → Enterprise (custom). Voir Section 9 ci-dessous pour détails complets.
 
@@ -524,7 +524,7 @@ Cette propriété débloque la **vraie puissance du speculative execution** (Epi
 - Cache multi-niveaux: Execution → Capability → Intent similarity
 - Invalidation sur tool schema change ou failures répétés
 
-**Estimation:** 5 stories, ~2-3 semaines
+**Estimation:** 8 stories (7.1, 7.2a, 7.2b, 7.3a, 7.3b, 7.4, 7.5a, 7.5b), ~2-3 semaines
 
 **Value Proposition:**
 - **Différenciation unique** - Aucun concurrent (Docker MCP, Anthropic PTC) n'offre le learning
@@ -557,6 +557,66 @@ Execute & Learn (exec 1) → Capability Matching → Lazy Suggestions → Option
 **Prerequisites:** Epic 3 (Sandbox), Epic 5 (search_tools), Epic 6 (observability)
 
 **Status:** Proposed (ADR-027, ADR-028)
+
+---
+
+### Epic 8: Hypergraph Capabilities Visualization
+
+> **ADR:** ADR-029 (Hypergraph Capabilities Visualization)
+> **Depends on:** Epic 6 (Dashboard), Epic 7 (Capabilities Storage)
+
+**Objectif:** Visualiser les capabilities comme **hyperedges** (relations N-aires entre tools) via Cytoscape.js compound graphs, permettant aux utilisateurs de voir, explorer et réutiliser le code appris par le système.
+
+**Le Problème:**
+Une capability n'est pas une relation binaire (A → B) mais une relation N-aire connectant plusieurs tools:
+```
+┌─────────────────────────────────┐
+│  Capability "Create Issue"      │
+│  Connecte: fs, json, github     │
+│  Code: await mcp.github...      │
+└─────────────────────────────────┘
+```
+
+**Décision Architecturale (ADR-029):** Cytoscape.js Compound Graphs
+- Capability = parent node (violet, expandable)
+- Tools = child nodes (colored by server)
+- Click capability → Code Panel avec syntax highlighting
+
+**Livrables clés:**
+- **Story 8.1:** Capability Data API (`/api/capabilities`, `/api/graph/hypergraph`)
+- **Story 8.2:** Compound Graph Builder (HypergraphBuilder class)
+- **Story 8.3:** Hypergraph View Mode (toggle dans dashboard header)
+- **Story 8.4:** Code Panel Integration (syntax highlighting, copy button)
+- **Story 8.5:** Capability Explorer (search, filter, "try this capability")
+
+**Estimation:** 5 stories, ~1-2 semaines
+
+**Value Proposition:**
+- **Visualisation claire** de ce que le système a appris
+- **Debug facile** : "pourquoi cette capability a été suggérée?"
+- **Code réutilisable** visible et copiable directement
+- **Builds on existing** infrastructure (Cytoscape.js)
+
+**UI Preview:**
+```
+┌─────────────────────────────────────────┐
+│  Dashboard: [Tools] [Capabilities] [Hypergraph]
+├─────────────────────────────────────────┤
+│  ┌─────────────────────────┐            │
+│  │  Cap: Create Issue      │            │
+│  │  ┌─────┐  ┌─────┐      │            │
+│  │  │ fs  │  │ gh  │      │            │
+│  │  └─────┘  └─────┘      │            │
+│  └─────────────────────────┘            │
+├─────────────────────────────────────────┤
+│  Code Panel:                            │
+│  const content = await mcp.fs.read(...);│
+│  await mcp.github.createIssue({...});   │
+│  Success: 95% | Usage: 12               │
+└─────────────────────────────────────────┘
+```
+
+**Status:** Proposed (ADR-029)
 
 ---
 
