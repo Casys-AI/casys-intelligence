@@ -1,9 +1,9 @@
 # AgentCards - Epic Breakdown
 
 **Author:** BMad
-**Date:** 2025-11-03 (Updated: 2025-11-24)
+**Date:** 2025-11-03 (Updated: 2025-12-04)
 **Project Level:** 3
-**Target Scale:** 8 epics, 37+ stories total (baseline + adaptive features)
+**Target Scale:** 9 epics, 42+ stories total (baseline + adaptive features + emergent capabilities)
 
 ---
 
@@ -1219,6 +1219,324 @@ So that I can find specific tools and understand their relationships.
 10. API endpoint: `GET /api/tools/search?q=screenshot` pour autocomplete
 
 **Prerequisites:** Story 6.3 (metrics panel)
+
+---
+
+## Epic 7: Emergent Capabilities & Learning System
+
+> **ADRs:** ADR-027 (Execute Code Graph Learning), ADR-028 (Emergent Capabilities System)
+> **Research:** docs/research/research-technical-2025-12-03.md
+> **Status:** Proposed (2025-12-04)
+
+**Expanded Goal (2-3 sentences):**
+
+Transformer AgentCards en système où les capabilities **émergent de l'usage** plutôt que d'être pré-définies. Implémenter un paradigme où Claude devient un **orchestrateur de haut niveau** qui délègue l'exécution à AgentCards, récupérant des capabilities apprises et des suggestions proactives. Ce système apprend continuellement des patterns d'exécution pour cristalliser des capabilities réutilisables, offrant une différenciation unique par rapport aux solutions concurrentes (Docker Dynamic MCP, Anthropic Programmatic Tool Calling).
+
+**Value Delivery:**
+
+À la fin de cet epic, AgentCards:
+- **Track** les tools réellement appelés via IPC (`__TRACE__` events)
+- **Apprend** des patterns d'exécution et les cristallise en capabilities
+- **Suggère** proactivement des capabilities et tools pertinents
+- **Réutilise** le code prouvé (skip génération Claude ~2-5s)
+- **S'améliore** continuellement avec chaque exécution
+
+**Architecture 3 Couches:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 1: ORCHESTRATION (Claude)                                 │
+│  • Reçoit l'intent utilisateur                                   │
+│  • Query: "Capability existante?" → YES: execute cached          │
+│  • NO: génère code → execute → learn                             │
+│  • NE VOIT PAS: données brutes, traces, détails exécution        │
+└─────────────────────────────────────────────────────────────────┘
+                          ▲ IPC: result + suggestions
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 2: CAPABILITY ENGINE                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│  │ Capability   │  │   Snippet    │  │  Suggestion  │           │
+│  │   Matcher    │  │   Library    │  │    Engine    │           │
+│  └──────────────┘  └──────────────┘  └──────────────┘           │
+│                          │                                       │
+│              GraphRAG (PageRank, Louvain, Adamic-Adar)          │
+└─────────────────────────────────────────────────────────────────┘
+                          ▲ __TRACE__ events
+┌─────────────────────────────────────────────────────────────────┐
+│  LAYER 3: EXECUTION (Deno Sandbox)                               │
+│  • Wrappers tracés (tool_start, tool_end, progress)             │
+│  • Isolation complète, pas de discovery runtime                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Estimation:** 5 stories, ~2-3 semaines
+
+---
+
+### Story Breakdown - Epic 7
+
+**Story 7.1: IPC Tracking - Tool Usage Capture (Quick Win)**
+
+As a system learning from execution,
+I want to track which tools are ACTUALLY called during code execution,
+So that GraphRAG learns from real usage patterns instead of just injected tools.
+
+**Acceptance Criteria:**
+1. Wrappers `__TRACE__` ajoutés dans `context-builder.ts:wrapMCPClient()` (~30 LOC)
+2. Event types émis: `tool_start` (avec trace_id, ts) et `tool_end` (avec success, duration_ms)
+3. Parser `parseTraces(stdout)` dans `gateway-server.ts` extrait les traces
+4. Appel `graphEngine.updateFromExecution()` avec tools réellement appelés
+5. Traces filtrées du stdout retourné (user ne voit pas `__TRACE__`)
+6. Tests: exécuter code avec 2 tools → vérifier edges créés dans GraphRAG
+7. Performance: overhead < 5ms par tool call
+8. Backward compatible: code sans traces fonctionne toujours
+
+**Technical Implementation:**
+```typescript
+// context-builder.ts:~381
+console.log(`__TRACE__${JSON.stringify({
+  type: "tool_start",
+  tool: `${client.serverId}:${toolName}`,
+  trace_id: crypto.randomUUID(),
+  ts: Date.now()
+})}`);
+```
+
+**Prerequisites:** Epic 3 (Sandbox operational)
+
+**Estimation:** 1-2 jours (~70 LOC)
+
+---
+
+**Story 7.2: Capability Storage & Schema Extension (Eager Learning)**
+
+As a system persisting learned patterns,
+I want to store capabilities immediately after first successful execution,
+So that learning happens instantly without waiting for repeated patterns.
+
+**Philosophy: Eager Learning**
+- Storage dès la 1ère exécution réussie (pas d'attente de 3+)
+- ON CONFLICT → UPDATE usage_count++ (deduplication par code_hash)
+- Storage is cheap (~2KB/capability), on garde tout
+- Le filtrage se fait au moment des suggestions, pas du stockage
+
+**Acceptance Criteria:**
+1. Migration 011 créée: extension table `workflow_pattern`
+   - `code_snippet TEXT` - Le code exécuté
+   - `parameters JSONB` - Paramètres extraits
+   - `cache_config JSONB` - Configuration cache (ttl, cacheable)
+   - `name TEXT` - Nom auto-généré ou manuel
+   - `description TEXT` - Description de la capability
+   - `success_rate REAL` - Taux de succès (0-1)
+   - `avg_duration_ms INTEGER` - Durée moyenne
+   - `created_at TIMESTAMPTZ` - Date de création (1ère exec)
+   - `last_used TIMESTAMPTZ` - Dernière utilisation
+   - `source TEXT` - 'emergent' ou 'manual'
+2. Extension table `workflow_execution` avec `code_snippet TEXT`, `code_hash TEXT`
+3. **Eager insert:** Après chaque exec réussie avec intent:
+   ```sql
+   INSERT INTO workflow_pattern (code_hash, code_snippet, intent_embedding, ...)
+   ON CONFLICT (code_hash) DO UPDATE SET
+     usage_count = usage_count + 1,
+     last_used = NOW(),
+     success_rate = (success_count + 1) / (usage_count + 1)
+   ```
+4. Index HNSW sur `intent_embedding` pour recherche rapide
+5. Index sur `code_hash` pour upsert rapide
+6. Tests: exec 1x → verify capability créée → exec 2x même code → verify usage_count = 2
+7. Migration idempotente (peut être rejouée)
+
+**Prerequisites:** Story 7.1 (tracking operational)
+
+**Estimation:** 2-3 jours
+
+---
+
+**Story 7.3: Capability Matching & search_capabilities Tool**
+
+As an AI agent,
+I want to search for existing capabilities matching my intent,
+So that I can reuse proven code instead of generating new code.
+
+**Integration avec Adaptive Thresholds (Epic 4):**
+- Réutilise `AdaptiveThresholdManager` existant
+- Nouveau context type: `capability_matching`
+- Seuil initial: `suggestionThreshold` (0.70 par défaut)
+- Auto-ajustement basé sur FP (capability échoue) / FN (user génère nouveau code alors que capability existait)
+
+**Acceptance Criteria:**
+1. `CapabilityMatcher` class créée (`src/capabilities/matcher.ts`)
+2. Constructor prend `AdaptiveThresholdManager` en injection
+3. Method `findMatch(intent)` → Capability | null
+   - Threshold = `adaptiveThresholds.getThresholds().suggestionThreshold`
+   - Pas de threshold hardcodé!
+4. Vector search sur `workflow_pattern.intent_embedding`
+5. Nouveau tool MCP `agentcards:search_capabilities` exposé
+6. Input schema: `{ intent: string, include_suggestions?: boolean }`
+   - Pas de threshold en param - géré par adaptive system
+7. Output: `{ capabilities: Capability[], suggestions?: Suggestion[], threshold_used: number }`
+8. Feedback loop: après exécution capability, appeler `adaptiveThresholds.recordExecution()`
+9. Stats update: `usage_count++`, recalc `success_rate` après exécution
+10. Tests: créer capability → search by similar intent → verify match uses adaptive threshold
+
+**Prerequisites:** Story 7.2 (storage ready), Epic 4 (AdaptiveThresholdManager)
+
+**Estimation:** 2-3 jours
+
+---
+
+**Story 7.4: Suggestion Engine & Proactive Recommendations (Lazy Suggestions)**
+
+As an AI agent,
+I want proactive suggestions based on current context,
+So that I can discover relevant capabilities and tools without searching.
+
+**Philosophy: Lazy Suggestions**
+- On a TOUT stocké (eager learning), mais on ne suggère PAS tout
+- Seuil adaptatif: utilise `AdaptiveThresholdManager.getThresholds().suggestionThreshold`
+- Score combiné: `(success_rate × 0.6) + (normalized_usage × 0.4)`
+- Capability suggérée si `combined_score >= suggestionThreshold`
+
+**Integration avec Adaptive Thresholds (Epic 4):**
+- Réutilise `AdaptiveThresholdManager` existant
+- Feedback: si user ignore suggestion → FN, si user utilise → TP
+- Seuil s'ajuste automatiquement au fil du temps
+
+**Acceptance Criteria:**
+1. `SuggestionEngine` class créée (`src/capabilities/suggestion-engine.ts`)
+2. Constructor prend `AdaptiveThresholdManager` en injection
+3. Method `suggest(contextTools: string[])` → Suggestion[]
+4. Suggestion types: `capability`, `tool`, `next_tool`
+5. **Lazy filter (adaptatif):**
+   ```typescript
+   const threshold = adaptiveThresholds.getThresholds().suggestionThreshold;
+   const score = (cap.success_rate * 0.6) + (normalizedUsage * 0.4);
+   return score >= threshold;
+   ```
+6. Algorithms utilisés:
+   - Louvain communities: capabilities de la même community
+   - Adamic-Adar: tools related au context actuel
+   - Out-neighbors: "next likely tool" basé sur dernier tool
+7. Confidence scoring: score combiné retourné avec chaque suggestion
+8. Suggestions incluses dans response `execute_code` si demandé
+9. Max 5 suggestions retournées, triées par score
+10. Feedback loop: track si user utilise/ignore suggestions
+11. Tests: verify threshold adaptatif utilisé, pas de valeur hardcodée
+
+**Prerequisites:** Story 7.3 (capability matching)
+
+**Estimation:** 2-3 jours
+
+---
+
+**Story 7.5: Multi-Level Cache & Pruning**
+
+As a system optimizing for performance,
+I want cached capability results and periodic cleanup of unused capabilities,
+So that repeat executions are instant and storage stays clean.
+
+**Note:** Avec eager learning (Story 7.2), les capabilities sont créées immédiatement.
+Cette story se concentre sur le **cache des résultats** et le **pruning optionnel**.
+
+**Acceptance Criteria:**
+1. Cache multi-niveaux implémenté:
+   - **Level 1:** Execution cache (existant) - hash(code + context)
+   - **Level 2:** Capability result cache - capability_id + params_hash
+   - **Level 3:** Intent similarity cache (optional) - embedding similarity > 0.95
+2. Table `capability_cache` créée:
+   ```sql
+   CREATE TABLE capability_cache (
+     capability_id UUID REFERENCES workflow_pattern(id),
+     params_hash TEXT,
+     result JSONB,
+     created_at TIMESTAMPTZ,
+     expires_at TIMESTAMPTZ,
+     PRIMARY KEY (capability_id, params_hash)
+   )
+   ```
+3. Cache lookup avant exécution: `findCachedResult(capability_id, params)`
+4. Cache write après exécution réussie
+5. Invalidation triggers:
+   - Tool schema change → invalidate capabilities using this tool
+   - 3+ failures consécutifs → invalidate capability cache
+   - Manual: `DELETE FROM capability_cache WHERE capability_id = ?`
+6. **Optional pruning job** (peut être désactivé):
+   ```sql
+   DELETE FROM workflow_pattern
+   WHERE usage_count = 1
+     AND last_used < NOW() - INTERVAL '30 days'
+   ```
+7. Tests: exec capability → verify cache hit on 2nd call → verify result identical
+8. Metrics: `cache_hit_rate`, `capabilities_pruned_total`
+9. Config: `CAPABILITY_CACHE_TTL` (default: 1 hour), `PRUNING_ENABLED` (default: false)
+
+**Prerequisites:** Story 7.4 (suggestion engine)
+
+**Estimation:** 2-3 jours
+
+---
+
+### Epic 7 Capability Lifecycle (Eager Learning)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 1: EXECUTE & LEARN (Eager - dès exec 1)                  │
+├─────────────────────────────────────────────────────────────────┤
+│  Intent → VectorSearch → Tools → Execute → Track via IPC       │
+│  → Success? UPSERT workflow_pattern immédiatement               │
+│  → ON CONFLICT: usage_count++, update success_rate              │
+│  → Capability discoverable IMMÉDIATEMENT                        │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 2: CAPABILITY MATCHING                                    │
+├─────────────────────────────────────────────────────────────────┤
+│  Intent → CapabilityMatcher.findMatch() → MATCH (score > 0.85) │
+│  → Filter: success_rate > 0.7 (quality gate)                   │
+│  → Cache hit? Return cached result                              │
+│  → Cache miss? Execute code_snippet → cache result              │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 3: LAZY SUGGESTIONS                                       │
+├─────────────────────────────────────────────────────────────────┤
+│  SuggestionEngine.suggest(context) avec filtres:                │
+│  → usage_count >= 2 (validé par répétition)                    │
+│  → OU success_rate > 0.9 (validé par qualité)                  │
+│  → Évite de suggérer les one-shots non validés                 │
+└─────────────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  PHASE 4: OPTIONAL PRUNING (background, désactivé par défaut)   │
+├─────────────────────────────────────────────────────────────────┤
+│  DELETE WHERE usage_count = 1 AND last_used < 30 days ago      │
+│  → Nettoie les capabilities jamais réutilisées                  │
+│  → Configurable: PRUNING_ENABLED=true                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Différence clé vs approche "3+ exécutions":**
+- ❌ Ancien: Attendre 3 exécutions → Pattern detection → Promotion
+- ✅ Nouveau: 1 exécution réussie → Capability créée → Filtrage au moment des suggestions
+
+---
+
+### Epic 7 Market Comparison
+
+| Feature | Docker Dynamic MCP | Anthropic PTC | **AgentCards Epic 7** |
+|---------|-------------------|---------------|----------------------|
+| **Discovery** | Runtime | Pre-config | Pre-exec + Capability Match |
+| **Learning** | ❌ None | ❌ None | ✅ GraphRAG + Capabilities |
+| **Suggestions** | ❌ None | ❌ None | ✅ Louvain + Adamic-Adar |
+| **Code Reuse** | ❌ None | ❌ None | ✅ Capability cache |
+| **Recursion Risk** | ⚠️ Possible | N/A | ❌ Impossible (scope fixe) |
+| **Security** | Container | Sandbox | Sandbox + scope fixe |
+
+**Différenciateur clé:**
+> "AgentCards apprend de chaque exécution et suggère des capabilities optimisées - comme un pair-programmer qui se souvient de tout."
 
 ---
 

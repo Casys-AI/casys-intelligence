@@ -1,36 +1,44 @@
-# Story Technique: Renommage AgentCards → mcp-gateway
+# Story Technique: Renommage AgentCards → Casys Intelligence
 
 **Type:** Refactoring Technique
 **Story ID:** TECH-001
 **Status:** draft
-**Estimation:** 4-6 heures
-**Branche:** `refactor/rename-to-mcp-gateway`
+**Branche:** `refactor/rename-to-casys-intelligence`
 
 ---
 
 ## Contexte
 
-Le repo a été renommé de `AgentsCards` vers `Casys-AI/mcp-gateway` pour la release open source. Les URLs externes sont à jour, mais le code interne utilise encore le naming "agentcards".
+Le projet évolue vers une vision plus large : **Casys Intelligence** - un framework de **Collective Agentic Intelligence** (CAI). Le naming interne doit refléter cette nouvelle identité.
+
+### Branding
+
+| Élément | Valeur |
+|---------|--------|
+| **Nom court** | Casys Intelligence |
+| **Tagline** | Collective Agentic Intelligence |
+| **Acronyme code** | CAI |
+| **Repo GitHub** | `Casys-AI/casys-intelligence` |
 
 ### État Actuel
 
-| Élément | Valeur | Status |
-|---------|--------|--------|
-| Repo GitHub | `Casys-AI/mcp-gateway` | ✅ Done |
-| Package | `@casys/mcp-gateway` | ✅ Done |
-| Branding externe | "Casys MCP Gateway" | ✅ Done |
-| Code interne | `agentcards` | ❌ À faire |
+| Élément | Valeur Actuelle | Cible | Status |
+|---------|-----------------|-------|--------|
+| Repo GitHub | `Casys-AI/mcp-gateway` | `Casys-AI/casys-intelligence` | ❌ À faire |
+| Package | `@casys/mcp-gateway` | `@casys/casys-intelligence` | ❌ À faire |
+| Branding externe | "MCP Gateway" | "Casys Intelligence" | ❌ À faire |
+| Code interne | `agentcards` | `cai` | ❌ À faire |
 
 ### Périmètre
 
-**581 occurrences** dans **100 fichiers** à renommer :
+**~600 occurrences** dans **~100 fichiers** à renommer :
 
 | Catégorie | ~Count | Exemples |
 |-----------|--------|----------|
-| Variables d'env | 80 | `AGENTCARDS_DB_PATH` → `MCP_GATEWAY_DB_PATH` |
-| Fichier DB | 5 | `.agentcards.db` → `.mcp-gateway.db` |
-| Noms d'outils MCP | 30 | `agentcards:execute_dag` → `mcp_gateway:execute_dag` |
-| Logs/strings | 100 | "AgentCards" dans les messages |
+| Variables d'env | 80 | `AGENTCARDS_DB_PATH` → `CAI_DB_PATH` |
+| Fichier DB | 5 | `.agentcards.db` → `.cai.db` |
+| Noms d'outils MCP | 30 | `agentcards:execute_dag` → `cai:execute_dag` |
+| Logs/strings | 100 | "AgentCards" → "Casys Intelligence" |
 | Tests | 120 | Références dans fixtures et mocks |
 | Docs internes | 100 | ADRs, spikes, comments |
 | Config | 40 | docker-compose, deno.json, monitoring |
@@ -58,12 +66,13 @@ Le repo a été renommé de `AgentsCards` vers `Casys-AI/mcp-gateway` pour la re
 ## Tasks
 
 ### Phase 1: Préparation
-- [ ] **T1.1** Créer branche `refactor/rename-to-mcp-gateway` depuis `main`
-- [ ] **T1.2** Backup de la DB de dev si nécessaire
+- [ ] **T1.1** Renommer repo GitHub vers `Casys-AI/casys-intelligence`
+- [ ] **T1.2** Créer branche `refactor/rename-to-casys-intelligence` depuis `main`
+- [ ] **T1.3** Backup de la DB de dev si nécessaire
 
 ### Phase 2: Variables d'Environnement
-- [ ] **T2.1** Renommer `AGENTCARDS_DB_PATH` → `MCP_GATEWAY_DB_PATH`
-- [ ] **T2.2** Renommer `AGENTCARDS_WORKFLOW_PATH` → `MCP_GATEWAY_WORKFLOW_PATH`
+- [ ] **T2.1** Renommer `AGENTCARDS_DB_PATH` → `CAI_DB_PATH`
+- [ ] **T2.2** Renommer `AGENTCARDS_WORKFLOW_PATH` → `CAI_WORKFLOW_PATH`
 - [ ] **T2.3** Ajouter backward-compat avec deprecation warning
 - [ ] **T2.4** Mettre à jour `.env.example`
 - [ ] **T2.5** Mettre à jour `docker-compose.yml`
@@ -77,7 +86,7 @@ Le repo a été renommé de `AgentsCards` vers `Casys-AI/mcp-gateway` pour la re
 - `monitoring/` configs
 
 ### Phase 3: Dossier Base de Données (PGlite)
-- [ ] **T3.1** Renommer dossier `.agentcards.db/` → `.mcp-gateway.db/`
+- [ ] **T3.1** Renommer dossier `.agentcards.db/` → `.cai.db/`
 - [ ] **T3.2** Mettre à jour `.gitignore` (pattern `*.db` couvre déjà)
 - [ ] **T3.3** Mettre à jour les paths dans le code
 - [ ] **T3.4** Ajouter script de migration automatique pour users existants
@@ -90,7 +99,7 @@ Le repo a été renommé de `AgentsCards` vers `Casys-AI/mcp-gateway` pour la re
 - Tests d'intégration
 
 ### Phase 4: Noms d'Outils MCP
-- [ ] **T4.1** Renommer préfixe `agentcards:` → `mcp_gateway:`
+- [ ] **T4.1** Renommer préfixe `agentcards:` → `cai:`
 - [ ] **T4.2** Mettre à jour les schémas d'outils
 - [ ] **T4.3** Mettre à jour les tests
 
@@ -101,7 +110,7 @@ Le repo a été renommé de `AgentsCards` vers `Casys-AI/mcp-gateway` pour la re
 - Tests MCP
 
 ### Phase 5: Logs et Strings
-- [ ] **T5.1** Remplacer "AgentCards" → "MCP Gateway" dans les logs
+- [ ] **T5.1** Remplacer "AgentCards" → "Casys Intelligence" dans les logs
 - [ ] **T5.2** Mettre à jour les messages d'erreur
 - [ ] **T5.3** Mettre à jour les banners CLI
 
@@ -162,7 +171,7 @@ Pour les utilisateurs existants avec une installation `agentcards` :
 AGENTCARDS_DB_PATH=./data/.agentcards.db
 
 # Nouveau (recommandé)
-MCP_GATEWAY_DB_PATH=./data/.mcp-gateway.db
+CAI_DB_PATH=./data/.cai.db
 ```
 
 Les anciennes variables seront supportées avec un warning de dépréciation pendant 2 versions mineures.

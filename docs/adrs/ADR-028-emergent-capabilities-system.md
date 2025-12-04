@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+**Approved** (2025-12-04) → Integrated into Epic 7 (Stories 7.1-7.5)
 
 ## Context
 

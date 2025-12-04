@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed → **Decision: Option B (Accurate Tracking)**
+**Approved** (2025-12-04) → Integrated into Epic 7 (Story 7.1)
+
+> **Decision: Option B (Accurate Tracking)** - IPC via `__TRACE__` prefix on stdout
 
 > **Rationale (2025-12-03):** Code execution is expected to become a central feature. Claude may reuse code snippets, store successful patterns, and learn from execution history. Accurate tracking is worth the implementation complexity.
 

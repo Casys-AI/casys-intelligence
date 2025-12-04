@@ -1,9 +1,9 @@
 # AgentCards Product Requirements Document (PRD)
 
 **Author:** BMad
-**Date:** 2025-11-03 (Updated: 2025-11-24 - Project migrated to Level 3)
+**Date:** 2025-11-03 (Updated: 2025-12-04 - Epic 7 & 8 added)
 **Project Level:** 3
-**Target Scale:** Complex System - 8 epics, 37 stories (baseline + adaptive features)
+**Target Scale:** Complex System - 10 epics, 47+ stories (baseline + adaptive features + emergent capabilities + hypergraph viz)
 
 > **Note:** Le business model a été raffiné dans le [Market Research Report](research/research-market-2025-11-11.md) (2025-11-11). Modèle confirmé: **Open Core Freemium** avec Free tier (3 servers) → Pro ($15/mo) → Team ($25/mo) → Enterprise (custom). Voir Section 9 ci-dessous pour détails complets.
 
@@ -463,24 +463,127 @@ Cette propriété débloque la **vraie puissance du speculative execution** (Epi
 
 ---
 
+### Epic 7: Emergent Capabilities & Learning System
+
+> **ADRs:** ADR-027 (Execute Code Graph Learning), ADR-028 (Emergent Capabilities System)
+> **Research:** docs/research/research-technical-2025-12-03.md
+
+**Objectif:** Transformer AgentCards en système où les capabilities **émergent de l'usage** plutôt que d'être pré-définies. Claude devient un **orchestrateur de haut niveau** qui délègue l'exécution à AgentCards, récupérant des capabilities apprises et des suggestions proactives basées sur les patterns d'exécution réels.
+
+**Architecture 3 Couches:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 1: ORCHESTRATION (Claude)                            │
+│  • Reçoit l'intent utilisateur                              │
+│  • Query: "Capability existante?" → YES: execute cached     │
+│  • NO: génère code → execute → learn                        │
+│  • NE VOIT PAS: données brutes, traces, détails exécution   │
+└─────────────────────────────────────────────────────────────┘
+                          ▲ IPC: result + suggestions
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 2: CAPABILITY ENGINE                                  │
+│  • CapabilityMatcher: intent → capability matching          │
+│  • SnippetLibrary: code prouvé stocké                       │
+│  • SuggestionEngine: Louvain + Adamic-Adar                  │
+│  • GraphRAG: PageRank, communities, edges                   │
+└─────────────────────────────────────────────────────────────┘
+                          ▲ __TRACE__ events
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 3: EXECUTION (Deno Sandbox)                          │
+│  • Wrappers tracés (tool_start, tool_end)                   │
+│  • Isolation complète, pas de discovery runtime             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Livrables clés:**
+
+**Phase 1 - IPC Tracking (Quick Win ~70 LOC):**
+- Wrappers `__TRACE__` dans `context-builder.ts` pour tracker tools appelés
+- Parser traces dans `gateway-server.ts` après exécution
+- Appel `graphEngine.updateFromExecution()` avec tools réels
+
+**Phase 2 - Capability Storage:**
+- Migration 011: Extension table `workflow_pattern` (code_snippet, parameters, success_rate)
+- Store code_snippet dans `workflow_execution`
+- Pattern detection query (count >= 3, success_rate > 0.7)
+
+**Phase 3 - Capability Matching:**
+- `CapabilityMatcher` class avec vector search sur intent_embedding
+- Nouveau tool MCP `search_capabilities`
+- Execute capability code si match > 0.85
+
+**Phase 4 - Suggestion Engine:**
+- `SuggestionEngine` class utilisant Louvain communities
+- Adamic-Adar pour related tools
+- Out-neighbors pour "next likely tool"
+- Suggestions incluses dans response `execute_code`
+
+**Phase 5 - Auto-promotion & Cache:**
+- Background job: pattern detection → capability promotion
+- Cache multi-niveaux: Execution → Capability → Intent similarity
+- Invalidation sur tool schema change ou failures répétés
+
+**Estimation:** 5 stories, ~2-3 semaines
+
+**Value Proposition:**
+- **Différenciation unique** - Aucun concurrent (Docker MCP, Anthropic PTC) n'offre le learning
+- **Performance** - Skip génération Claude si capability existe (~2-5s saved)
+- **UX proactive** - Suggestions réduisent friction cognitive
+- **Self-improving** - Système apprend continuellement de chaque exécution
+- **Code reuse** - Capabilities cristallisées réutilisables
+
+**Capability Lifecycle (Eager Learning + Lazy Suggestions):**
+```
+Execute & Learn (exec 1) → Capability Matching → Lazy Suggestions → Optional Pruning
+         │                        │                    │                  │
+  UPSERT immédiat          Match intent > 0.85   Filter: usage >= 2   Cleanup unused
+  usage_count++            success_rate > 0.7    OU success > 0.9     after 30 days
+```
+
+**Philosophy:**
+- **Eager Learning:** Stocke dès la 1ère exécution réussie (storage is cheap)
+- **Lazy Suggestions:** Ne suggère que les capabilities validées par usage ou qualité
+
+**Comparaison Marché:**
+
+| Critère | Docker MCP | Anthropic PTC | **AgentCards Epic 7** |
+|---------|------------|---------------|----------------------|
+| Learning | ❌ | ❌ | ✅ GraphRAG + Capabilities |
+| Suggestions | ❌ | ❌ | ✅ Louvain/Adamic-Adar |
+| Code Reuse | ❌ | ❌ | ✅ Capability cache |
+| Sécurité | Container | Sandbox | Sandbox + scope fixe |
+
+**Prerequisites:** Epic 3 (Sandbox), Epic 5 (search_tools), Epic 6 (observability)
+
+**Status:** Proposed (ADR-027, ADR-028)
+
+---
+
 **Séquence Planifiée vs Réelle:**
 
 **Planifiée initialement:**
 - Epic 1 → Epic 2 → Epic 2.5 → Epic 3 → Epic 3.5 → Epic 4 → Epic 5 → Epic 6
 
 **Séquence RÉELLE (avec rationale):**
-- Epic 1 → Epic 2 (Production ready baseline)
-- Epic 2.5 → Foundation adaptive (Loop 1-2 + Loop 3 basic)
-- Epic 3 → Sandbox isolation
-- **Epic 5 → Tool Discovery (MOVED FORWARD)** ✅ COMPLETED
+- Epic 1 → Epic 2 (Production ready baseline) ✅ DONE
+- Epic 2.5 → Foundation adaptive (Loop 1-2 + Loop 3 basic) ✅ DONE
+- Epic 3 → Sandbox isolation ✅ DONE
+- **Epic 5 → Tool Discovery (MOVED FORWARD)** ✅ DONE
   - **Rationale:** Epic 3.5 speculation requires `search_tools` for DAGSuggester workflow template discovery
   - `DAGSuggester.suggestDAG()` needs semantic search to find relevant templates from GraphRAG
   - Epic 5 is a **dependency** for Epic 3.5, not a post-feature enhancement
-- Epic 3.5 → Speculation WITH sandbox (THE feature safe) - PENDING
-- Epic 4 → Episodic memory + Adaptive learning (self-improving) - 🟡 IN PROGRESS
-  - ✅ Phase 1 (Storage): Migration 007, EpisodicMemoryStore, Threshold persistence (2025-11-25)
-  - 🔴 Phase 2 (Integrations): ControlledExecutor + DAGSuggester (after 2.5/3.5)
-- Epic 6 → Real-time monitoring & observability - PENDING (stories drafted)
+- Epic 3.5 → Speculation WITH sandbox (THE feature safe) ✅ DONE
+- Epic 4 → Episodic memory + Adaptive learning (self-improving) ✅ DONE
+- Epic 6 → Real-time monitoring & observability - 🟡 IN PROGRESS (story 6-4 in review)
+- **Epic 7 → Emergent Capabilities & Learning System** - 📋 PROPOSED
+  - **Rationale:** ADR-027/028 définissent un nouveau paradigme où Claude devient orchestrateur
+  - Débloque learning continu + suggestions proactives (différenciateur unique)
+  - Builds on Epic 3 (sandbox), Epic 5 (search_tools), Epic 6 (observability)
+- **Epic 8 → Hypergraph Capabilities Visualization** - 📋 PROPOSED
+  - **Rationale:** ADR-029 - Visualiser les capabilities comme hyperedges (relations N-aires)
+  - Cytoscape.js compound graphs pour représentation intuitive
+  - Builds on Epic 6 (dashboard), Epic 7 (capabilities storage)
 
 > **Note:** Detailed epic breakdown with full story specifications is available in [epics.md](./epics.md)
 
