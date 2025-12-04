@@ -42,8 +42,8 @@ interface GraphMetricsResponse {
   };
 }
 
-export default function MetricsPanel({ apiBase: _apiBase, position = "sidebar" }: MetricsPanelProps) {
-  const apiBase = "http://localhost:3001";
+export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar" }: MetricsPanelProps) {
+  const apiBase = apiBaseProp || "http://localhost:3001";
 
   const [metrics, setMetrics] = useState<GraphMetricsResponse | null>(null);
   const [dateRange, setDateRange] = useState<MetricsTimeRange>("24h");

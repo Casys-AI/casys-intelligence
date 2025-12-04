@@ -38,13 +38,13 @@ interface NodeData {
 }
 
 export default function GraphVisualization({
-  apiBase: _apiBase,
+  apiBase: apiBaseProp,
   onNodeSelect,
   highlightedNodeId,
   pathNodes,
 }: GraphVisualizationProps) {
-  // Hard-code gateway URL - Fresh props don't serialize Deno.env properly
-  const apiBase = "http://localhost:3001";
+  // Use prop or fallback to localhost for dev
+  const apiBase = apiBaseProp || "http://localhost:3001";
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<any>(null);
   const [selectedNode, setSelectedNode] = useState<NodeData | null>(null);

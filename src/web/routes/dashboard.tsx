@@ -5,12 +5,14 @@ import MetricsPanel from "../islands/MetricsPanel.tsx";
 
 export const handler = {
   GET(_ctx: any) {
-    return page();
+    // Read API base from env, default to localhost for dev
+    const apiBase = Deno.env.get("API_BASE") || "http://localhost:3001";
+    return page({ data: { apiBase } });
   },
 };
 
-export default function Dashboard() {
-  const apiBase = "http://localhost:3001";
+export default function Dashboard({ data }: { data: { apiBase: string } }) {
+  const apiBase = data?.apiBase || "http://localhost:3001";
 
   return (
     <>
@@ -110,7 +112,7 @@ export default function Dashboard() {
             background: 'radial-gradient(ellipse at center, rgba(255, 184, 111, 0.02) 0%, transparent 70%)',
           }}
         >
-          <GraphExplorer />
+          <GraphExplorer apiBase={apiBase} />
         </div>
 
         {/* Metrics Panel */}

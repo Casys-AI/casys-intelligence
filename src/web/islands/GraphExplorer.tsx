@@ -38,8 +38,12 @@ interface BreadcrumbItem {
   server: string;
 }
 
-export default function GraphExplorer() {
-  const apiBase = "http://localhost:3001";
+interface GraphExplorerProps {
+  apiBase?: string;
+}
+
+export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerProps) {
+  const apiBase = apiBaseProp || "http://localhost:3001";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ToolSearchResult[]>([]);
