@@ -9,3 +9,8 @@ import { App, staticFiles } from "fresh";
 export const app = new App()
   .use(staticFiles())
   .fsRoutes();
+
+// Export handler for Deno Deploy
+export default {
+  fetch: app.handler(),
+};
