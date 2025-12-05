@@ -1,7 +1,7 @@
 # Tech-Spec: Blog Fresh pour inelligence.casys.ai
 
 **Created:** 2025-12-05
-**Status:** Ready for Development
+**Status:** Completed
 
 ## Overview
 
@@ -92,40 +92,40 @@ author: Erwan Lee Pesle
 
 #### Part A: Fresh Blog Implementation
 
-- [ ] Task 1: Créer `posts/` et déplacer un article test
-- [ ] Task 2: Créer `src/web/utils/posts.ts` - fonctions getPosts(), getPost(slug)
-- [ ] Task 3: Créer `src/web/routes/blog/index.tsx` - page liste des articles
-- [ ] Task 4: Créer `src/web/routes/blog/[slug].tsx` - article individuel
-- [ ] Task 5: Ajouter styles markdown (gfm CSS)
+- [x] Task 1: Créer `posts/` et déplacer un article test
+- [x] Task 2: Créer `src/web/utils/posts.ts` - fonctions getPosts(), getPost(slug)
+- [x] Task 3: Créer `src/web/routes/blog/index.tsx` - page liste des articles
+- [x] Task 4: Créer `src/web/routes/blog/[slug].tsx` - article individuel
+- [x] Task 5: Ajouter styles markdown (gfm CSS)
 
 #### Part B: Intégration Site
 
-- [ ] Task 6: Modifier header nav dans `index.tsx` - ajouter lien "Blog"
-- [ ] Task 7: Ajouter section "Latest Posts" sur la landing (avant CTA)
-- [ ] Task 8: Créer composant `BlogPreviewCard` pour preview articles
+- [x] Task 6: Modifier header nav dans `index.tsx` - ajouter lien "Blog"
+- [x] Task 7: Ajouter section "Latest Posts" sur la landing (avant CTA)
+- [x] Task 8: Créer composant `BlogPreviewCard` pour preview articles
 
 #### Part C: RSS & Automation
 
-- [ ] Task 9: Créer `src/web/routes/blog/feed.xml.ts` - flux RSS Atom
-- [ ] Task 10: Ajouter route `/blog/feed.xml` avec métadonnées (title, description, author)
-- [ ] Task 11: Webhook endpoint `/api/blog/published` pour notifier Make.com (optionnel)
+- [x] Task 9: Créer `src/web/routes/blog/feed.xml.ts` - flux RSS Atom
+- [x] Task 10: Ajouter route `/blog/feed.xml` avec métadonnées (title, description, author)
+- [x] Task 11: Webhook endpoint `/api/blog/published` pour notifier Make.com (optionnel)
 
 #### Part D: Workflow work-to-blog Modification
 
-- [ ] Task 12: Modifier `step-05-finalize.md` - enrichir frontmatter avec category, tags, snippet
-- [ ] Task 13: Ajouter prompt pour category/tags dans le flow de sauvegarde
-- [ ] Task 14: Mettre à jour output folder vers `posts/` (publié) vs `docs/blog/draft/` (brouillon)
+- [x] Task 12: Modifier `step-05-finalize.md` - enrichir frontmatter avec category, tags, snippet
+- [x] Task 13: Ajouter prompt pour category/tags dans le flow de sauvegarde
+- [x] Task 14: Mettre à jour output folder vers `posts/` (publié) vs `docs/blog/draft/` (brouillon)
 
 ### Acceptance Criteria
 
-- [ ] AC1: Articles markdown dans `posts/` sont listés sur `/blog`
-- [ ] AC2: Clic sur un article → page `/blog/[slug]` avec contenu rendu
-- [ ] AC3: Frontmatter parsé correctement (title, date, tags, snippet affichés)
-- [ ] AC4: Lien "Blog" visible dans le menu header du site
-- [ ] AC5: Landing page affiche preview des 3 derniers articles
-- [ ] AC6: Flux RSS accessible sur `/blog/feed.xml` et valide
-- [ ] AC7: Workflow work-to-blog génère le nouveau format frontmatter
-- [ ] AC8: Articles existants peuvent être migrés (ajout manuel des champs manquants)
+- [x] AC1: Articles markdown dans `posts/` sont listés sur `/blog`
+- [x] AC2: Clic sur un article → page `/blog/[slug]` avec contenu rendu
+- [x] AC3: Frontmatter parsé correctement (title, date, tags, snippet affichés)
+- [x] AC4: Lien "Blog" visible dans le menu header du site
+- [x] AC5: Landing page affiche preview des 3 derniers articles
+- [x] AC6: Flux RSS accessible sur `/blog/feed.xml` et valide
+- [x] AC7: Workflow work-to-blog génère le nouveau format frontmatter
+- [x] AC8: Articles existants peuvent être migrés (ajout manuel des champs manquants)
 
 ## Additional Context
 

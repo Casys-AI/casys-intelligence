@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { page } from "fresh";
 import { Head } from "fresh/runtime";
+import { getPosts, formatDate, type Post } from "../utils/posts.ts";
 
 import {
   ThreeLoopIllustration,
@@ -13,12 +14,22 @@ import {
 } from "../components/FeatureIllustrations.tsx";
 
 export const handler = {
-  GET(_ctx: any) {
-    return page();
+  async GET(_ctx: any) {
+    try {
+      const posts = await getPosts();
+      const latestPosts = posts.slice(0, 3);
+      return page({ latestPosts });
+    } catch (error) {
+      console.error("Error loading posts for landing page:", error);
+      // Return empty array on error - landing page should still work
+      return page({ latestPosts: [] });
+    }
   },
 };
 
-export default function LandingPage() {
+export default function LandingPage({ data }: { data: { latestPosts: Post[] } }) {
+  const { latestPosts } = data;
+
   return (
     <>
       <Head>
@@ -97,6 +108,7 @@ export default function LandingPage() {
               <a href="#problem" class="nav-link">Why</a>
               <a href="#how" class="nav-link">How</a>
               <a href="#moat" class="nav-link">Moat</a>
+              <a href="/blog" class="nav-link">Blog</a>
               <a href="/dashboard" class="nav-link">Dashboard</a>
               <a href="https://github.com/Casys-AI/casys-intelligence" class="nav-link nav-link-github" target="_blank" rel="noopener">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -409,6 +421,49 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            LATEST POSTS
+        ═══════════════════════════════════════════════════════════════════ */}
+        {latestPosts.length > 0 && (
+          <section class="section-blog">
+            <div class="container">
+              <div class="section-header">
+                <span class="section-label">Engineering Blog</span>
+                <h2 class="section-title">Latest Insights</h2>
+                <p class="section-desc">
+                  Deep dives, debugging stories, and lessons learned.
+                </p>
+              </div>
+
+              <div class="blog-preview-grid">
+                {latestPosts.map((post: Post) => (
+                  <article class="blog-preview-card" key={post.slug}>
+                    <div class="blog-preview-meta">
+                      <span class="blog-preview-category">{post.category}</span>
+                      <time class="blog-preview-date">{formatDate(post.date)}</time>
+                    </div>
+                    <h3 class="blog-preview-title">
+                      <a href={`/blog/${post.slug}`}>{post.title}</a>
+                    </h3>
+                    <p class="blog-preview-snippet">{post.snippet}</p>
+                    <div class="blog-preview-tags">
+                      {post.tags.slice(0, 3).map((tag) => (
+                        <span class="blog-preview-tag" key={tag}>#{tag}</span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div class="blog-preview-cta">
+                <a href="/blog" class="btn btn-ghost">
+                  View All Posts →
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ═══════════════════════════════════════════════════════════════════
             CTA
@@ -1219,6 +1274,97 @@ export default function LandingPage() {
           }
 
           /* ═══════════════════════════════════════════════════════════════════
+             SECTION: BLOG
+          ═══════════════════════════════════════════════════════════════════ */
+          .section-blog {
+            position: relative;
+            z-index: 10;
+            padding: 8rem 2rem;
+            background: var(--bg);
+          }
+
+          .blog-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+          }
+
+          .blog-preview-card {
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.2s;
+          }
+
+          .blog-preview-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+          }
+
+          .blog-preview-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+          }
+
+          .blog-preview-category {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.2rem 0.6rem;
+            background: var(--accent-dim);
+            border-radius: 4px;
+          }
+
+          .blog-preview-date {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+          }
+
+          .blog-preview-title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 400;
+            margin-bottom: 0.75rem;
+          }
+
+          .blog-preview-title a {
+            color: var(--text);
+            text-decoration: none;
+          }
+
+          .blog-preview-title a:hover {
+            color: var(--accent);
+          }
+
+          .blog-preview-snippet {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+          }
+
+          .blog-preview-tags {
+            display: flex;
+            gap: 0.5rem;
+          }
+
+          .blog-preview-tag {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+          }
+
+          .blog-preview-cta {
+            text-align: center;
+          }
+
+          /* ═══════════════════════════════════════════════════════════════════
              SECTION: CTA
           ═══════════════════════════════════════════════════════════════════ */
           .section-cta {
@@ -1309,6 +1455,9 @@ export default function LandingPage() {
             .tech-grid {
               grid-template-columns: repeat(2, 1fr);
             }
+            .blog-preview-grid {
+              grid-template-columns: repeat(2, 1fr);
+            }
           }
 
           @media (max-width: 768px) {
@@ -1353,6 +1502,10 @@ export default function LandingPage() {
             }
 
             .tech-grid {
+              grid-template-columns: 1fr;
+            }
+
+            .blog-preview-grid {
               grid-template-columns: 1fr;
             }
 

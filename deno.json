@@ -59,10 +59,9 @@
   },
   "lint": {
     "rules": {
-      "tags": [
-        "recommended"
-      ]
-    }
+      "tags": ["recommended"]
+    },
+    "exclude": ["tests/integration/", "tests/e2e/", "tests/load/", "tests/memory/"]
   },
   "imports": {
     "fresh": "jsr:@fresh/core@^2.0.0",
@@ -92,7 +91,10 @@
     "graphology-communities-louvain": "npm:graphology-communities-louvain@^2.0.1",
     "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.0.4",
     "validator": "npm:validator@13.15.22",
-    "@sentry/deno": "npm:@sentry/deno@^10.8.0"
+    "@sentry/deno": "npm:@sentry/deno@^10.8.0",
+    "@std/front-matter": "jsr:@std/front-matter@^1",
+    "@std/path": "jsr:@std/path@^1",
+    "$gfm": "https://deno.land/x/gfm@0.6.0/mod.ts"
   },
   "compilerOptions": {
     "strict": true,

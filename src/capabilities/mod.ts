@@ -14,5 +14,4 @@ export type {
   CapabilitySearchResult,
   JSONSchema,
   SaveCapabilityInput,
-  WorkflowPatternRow,
 } from "./types.ts";

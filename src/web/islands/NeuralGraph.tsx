@@ -21,11 +21,11 @@ export default function NeuralGraph() {
 
     // Set canvas size
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = globalThis.innerWidth;
+      canvas.height = globalThis.innerHeight;
     };
     resize();
-    window.addEventListener("resize", resize);
+    globalThis.addEventListener("resize", resize);
 
     // Warm accent color from Casys palette
     const accentColor = { r: 255, g: 184, b: 111 }; // #FFB86F
@@ -121,7 +121,7 @@ export default function NeuralGraph() {
     animate();
 
     return () => {
-      window.removeEventListener("resize", resize);
+      globalThis.removeEventListener("resize", resize);
       cancelAnimationFrame(animationId);
     };
   }, []);

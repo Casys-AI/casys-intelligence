@@ -47,12 +47,12 @@ development_status:
   1-5-idempotent-init-helper: done
   1-6-mermaid-rendering-helper: done
   1-7-metrics-visualization-helper: done
-  1-8-playground-readme: ready-for-dev
+  1-8-playground-readme: done
   epic-1-retrospective: optional
 
   # Epic 2: Notebooks Pédagogiques
-  epic-2: backlog
-  2-1-notebook-00-introduction: backlog
+  epic-2: contexted
+  2-1-notebook-00-introduction: ready-for-dev
   2-2-notebook-01-the-problem: backlog
   2-3-notebook-02-context-optimization: backlog
   2-4-notebook-03-dag-execution: backlog

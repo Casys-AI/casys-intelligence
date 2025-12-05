@@ -109,7 +109,7 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
     if (typeof window === "undefined" || !chartRef.current || !metrics) return;
 
     // @ts-ignore
-    const Chart = window.Chart;
+    const Chart = globalThis.Chart;
     if (!Chart) return;
 
     if (chartInstanceRef.current) chartInstanceRef.current.destroy();

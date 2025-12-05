@@ -95,7 +95,7 @@ export default function GraphVisualization({
     if (typeof window === "undefined" || !containerRef.current) return;
 
     // @ts-ignore - Cytoscape loaded from CDN
-    const cytoscape = window.cytoscape;
+    const cytoscape = globalThis.cytoscape;
     if (!cytoscape) {
       console.error("Cytoscape not loaded");
       return;

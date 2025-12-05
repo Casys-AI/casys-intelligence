@@ -11,11 +11,11 @@
 
 import type { PGliteClient } from "../db/client.ts";
 import type { EmbeddingModel } from "../vector/embeddings.ts";
+import type { Row } from "../db/client.ts";
 import type {
   Capability,
   CacheConfig,
   SaveCapabilityInput,
-  WorkflowPatternRow,
 } from "./types.ts";
 import { hashCode } from "./hash.ts";
 import { getLogger } from "../telemetry/logger.ts";
@@ -87,7 +87,8 @@ export class CapabilityStore {
     };
 
     // Generate pattern_hash (required by existing schema, distinct from code_hash)
-    const patternHash = await hashCode(JSON.stringify(dagStructure));
+    // Use code_hash as pattern_hash to ensure uniqueness per code snippet
+    const patternHash = codeHash;
 
     logger.debug("Saving capability", {
       codeHash,
@@ -97,7 +98,7 @@ export class CapabilityStore {
     });
 
     // UPSERT: Insert or update on conflict
-    const result = await this.db.query<WorkflowPatternRow>(
+    const result = await this.db.query(
       `INSERT INTO workflow_pattern (
         pattern_hash,
         dag_structure,
@@ -147,7 +148,7 @@ export class CapabilityStore {
     }
 
     const row = result[0];
-    const capability = this.rowToCapability(row);
+    const capability = this.rowToCapability(row as Row);
 
     logger.info("Capability saved", {
       id: capability.id,
@@ -166,7 +167,7 @@ export class CapabilityStore {
    * @returns Capability if found, null otherwise
    */
   async findByCodeHash(codeHash: string): Promise<Capability | null> {
-    const result = await this.db.query<WorkflowPatternRow>(
+    const result = await this.db.query(
       `SELECT * FROM workflow_pattern WHERE code_hash = $1`,
       [codeHash],
     );
@@ -175,7 +176,7 @@ export class CapabilityStore {
       return null;
     }
 
-    return this.rowToCapability(result[0]);
+    return this.rowToCapability(result[0] as Row);
   }
 
   /**
@@ -224,7 +225,7 @@ export class CapabilityStore {
     const embedding = await this.embeddingModel.encode(intent);
     const embeddingStr = `[${embedding.join(",")}]`;
 
-    const result = await this.db.query<WorkflowPatternRow & { similarity: number }>(
+    const result = await this.db.query(
       `SELECT *,
         1 - (intent_embedding <=> $1::vector) as similarity
       FROM workflow_pattern
@@ -236,8 +237,8 @@ export class CapabilityStore {
     );
 
     return result.map((row) => ({
-      capability: this.rowToCapability(row),
-      similarity: row.similarity,
+      capability: this.rowToCapability(row as Row),
+      similarity: row.similarity as number,
     }));
   }
 
@@ -245,10 +246,10 @@ export class CapabilityStore {
    * Get total count of stored capabilities
    */
   async getCapabilityCount(): Promise<number> {
-    const result = await this.db.queryOne<{ count: number }>(
+    const result = await this.db.queryOne(
       `SELECT COUNT(*) as count FROM workflow_pattern WHERE code_hash IS NOT NULL`,
     );
-    return result?.count ?? 0;
+    return Number(result?.count ?? 0);
   }
 
   /**
@@ -260,12 +261,7 @@ export class CapabilityStore {
     avgSuccessRate: number;
     avgDurationMs: number;
   }> {
-    const result = await this.db.queryOne<{
-      total: number;
-      executions: number;
-      avg_success: number;
-      avg_duration: number;
-    }>(
+    const result = await this.db.queryOne(
       `SELECT
         COUNT(*) as total,
         COALESCE(SUM(usage_count), 0) as executions,
@@ -286,31 +282,50 @@ export class CapabilityStore {
   /**
    * Convert database row to Capability object
    */
-  private rowToCapability(row: WorkflowPatternRow): Capability {
+  private rowToCapability(row: Row): Capability {
     // Parse embedding string to Float32Array
-    const embeddingStr = row.intent_embedding;
+    const embeddingStr = row.intent_embedding as string;
     const embeddingArr = embeddingStr
       .replace(/^\[|\]$/g, "")
       .split(",")
       .map(Number);
     const intentEmbedding = new Float32Array(embeddingArr);
 
+    // Parse cache_config - may be object or string
+    let cacheConfig: CacheConfig = DEFAULT_CACHE_CONFIG;
+    if (row.cache_config) {
+      cacheConfig = typeof row.cache_config === "string"
+        ? JSON.parse(row.cache_config)
+        : row.cache_config as CacheConfig;
+    }
+
+    // Parse parameters_schema - may be object or string
+    let parametersSchema: Capability["parametersSchema"] = undefined;
+    if (row.parameters_schema) {
+      const schema = typeof row.parameters_schema === "string"
+        ? JSON.parse(row.parameters_schema)
+        : row.parameters_schema;
+      if (schema && typeof schema.type === "string") {
+        parametersSchema = schema as Capability["parametersSchema"];
+      }
+    }
+
     return {
-      id: row.pattern_id,
-      codeSnippet: row.code_snippet || "",
-      codeHash: row.code_hash || "",
+      id: row.pattern_id as string,
+      codeSnippet: (row.code_snippet as string) || "",
+      codeHash: (row.code_hash as string) || "",
       intentEmbedding,
-      parametersSchema: row.parameters_schema as Capability["parametersSchema"],
-      cacheConfig: row.cache_config || DEFAULT_CACHE_CONFIG,
-      name: row.name || undefined,
-      description: row.description || undefined,
-      usageCount: row.usage_count,
-      successCount: row.success_count,
-      successRate: row.success_rate ?? 1.0,
-      avgDurationMs: row.avg_duration_ms ?? 0,
-      createdAt: new Date(row.created_at || Date.now()),
-      lastUsed: new Date(row.last_used),
-      source: (row.source as "emergent" | "manual") || "emergent",
+      parametersSchema,
+      cacheConfig,
+      name: (row.name as string) || undefined,
+      description: (row.description as string) || undefined,
+      usageCount: row.usage_count as number,
+      successCount: row.success_count as number,
+      successRate: (row.success_rate as number) ?? 1.0,
+      avgDurationMs: (row.avg_duration_ms as number) ?? 0,
+      createdAt: new Date((row.created_at as string) || Date.now()),
+      lastUsed: new Date(row.last_used as string),
+      source: ((row.source as string) as "emergent" | "manual") || "emergent",
     };
   }
 

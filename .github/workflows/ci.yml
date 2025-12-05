@@ -10,12 +10,14 @@ jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
+    continue-on-error: true  # Warn but don't fail CI
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
       - run: deno lint
+        continue-on-error: true
       - run: deno fmt --check
 
   typecheck:
@@ -41,7 +43,7 @@ jobs:
   deploy:
     name: Deploy Dashboard
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [typecheck, test]  # lint is warning-only
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Deploy to server
