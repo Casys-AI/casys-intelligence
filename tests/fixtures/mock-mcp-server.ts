@@ -5,6 +5,9 @@
  * Tracks tool calls, simulates delays, and provides flexible tool handlers.
  */
 
+export type ToolArgs = Record<string, unknown>;
+export type ToolResult = unknown;
+
 export interface ToolSchema {
   name: string;
   description: string;
@@ -17,7 +20,7 @@ export interface ToolSchema {
 
 export interface MockTool {
   name: string;
-  handler: (args: any) => any | Promise<any>;
+  handler: (args: ToolArgs) => ToolResult | Promise<ToolResult>;
   delay: number;
   description?: string;
   inputSchema?: {
@@ -41,7 +44,7 @@ export interface MockTool {
 export class MockMCPServer {
   private tools = new Map<string, MockTool>();
   private callCount = new Map<string, number>();
-  private callHistory: Array<{ tool: string; args: any; timestamp: number }> = [];
+  private callHistory: Array<{ tool: string; args: ToolArgs; timestamp: number }> = [];
 
   constructor(public serverId: string) {}
 
@@ -55,7 +58,7 @@ export class MockMCPServer {
    */
   addTool(
     name: string,
-    handler: (args: any) => any | Promise<any>,
+    handler: (args: ToolArgs) => ToolResult | Promise<ToolResult>,
     delay: number = 0,
     description?: string,
   ): void {
@@ -76,17 +79,19 @@ export class MockMCPServer {
   /**
    * List all available tools (implements MCP tools/list)
    */
-  async listTools(): Promise<ToolSchema[]> {
-    return Array.from(this.tools.values()).map((tool) => ({
-      name: tool.name,
-      description: tool.description || `Mock tool ${tool.name}`,
-      inputSchema: tool.inputSchema || {
-        type: "object",
-        properties: {
-          input: { type: "string" },
+  listTools(): Promise<ToolSchema[]> {
+    return Promise.resolve(
+      Array.from(this.tools.values()).map((tool) => ({
+        name: tool.name,
+        description: tool.description || `Mock tool ${tool.name}`,
+        inputSchema: tool.inputSchema || {
+          type: "object",
+          properties: {
+            input: { type: "string" },
+          },
         },
-      },
-    }));
+      })),
+    );
   }
 
   /**
@@ -97,7 +102,7 @@ export class MockMCPServer {
    * @returns Tool execution result
    * @throws Error if tool not found
    */
-  async callTool(name: string, args: any): Promise<any> {
+  async callTool(name: string, args: ToolArgs): Promise<ToolResult> {
     const tool = this.tools.get(name);
 
     if (!tool) {
@@ -140,7 +145,7 @@ export class MockMCPServer {
   /**
    * Get call history for all tools
    */
-  getCallHistory(): Array<{ tool: string; args: any; timestamp: number }> {
+  getCallHistory(): Array<{ tool: string; args: ToolArgs; timestamp: number }> {
     return [...this.callHistory];
   }
 
@@ -235,7 +240,7 @@ export function createMockJsonServer(): MockMCPServer {
 
   server.addTool(
     "stringify",
-    (args: { obj: any }) => ({
+    (args: { obj: unknown }) => ({
       json: JSON.stringify(args.obj),
       success: true,
     }),
@@ -265,7 +270,7 @@ export function createMockApiServer(): MockMCPServer {
 
   server.addTool(
     "post",
-    (args: { url: string; body: any }) => ({
+    (args: { url: string; body: Record<string, unknown> }) => ({
       status: 201,
       data: { id: "mock-id", ...args.body },
       url: args.url,

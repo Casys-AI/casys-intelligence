@@ -12,15 +12,15 @@
 
 import { ParallelExecutor } from "./executor.ts";
 import type { DAGStructure, Task } from "../graphrag/types.ts";
-import type { ExecutorConfig, ExecutionEvent, ToolExecutor, TaskResult } from "./types.ts";
+import type { ExecutionEvent, ExecutorConfig, TaskResult, ToolExecutor } from "./types.ts";
 import { EventStream, type EventStreamStats } from "./event-stream.ts";
 import { CommandQueue, type CommandQueueStats } from "./command-queue.ts";
 import {
   createInitialState,
   getStateSnapshot,
+  type StateUpdate,
   updateState,
   type WorkflowState,
-  type StateUpdate,
 } from "./state.ts";
 import { CheckpointManager } from "./checkpoint-manager.ts";
 import type { PGliteClient } from "../db/client.ts";
@@ -32,8 +32,16 @@ import type { VectorSearch } from "../vector/search.ts";
 import type { MCPClient } from "../mcp/client.ts";
 import type { EpisodicMemoryStore } from "../learning/episodic-memory-store.ts";
 import { SpeculativeExecutor } from "../speculation/speculative-executor.ts";
-import { SpeculationManager, DEFAULT_SPECULATION_CONFIG } from "../speculation/speculation-manager.ts";
-import type { SpeculationConfig, SpeculationCache, SpeculationMetrics, CompletedTask } from "../graphrag/types.ts";
+import {
+  DEFAULT_SPECULATION_CONFIG,
+  SpeculationManager,
+} from "../speculation/speculation-manager.ts";
+import type {
+  CompletedTask,
+  SpeculationCache,
+  SpeculationConfig,
+  SpeculationMetrics,
+} from "../graphrag/types.ts";
 
 const log = getLogger("controlled-executor");
 
@@ -266,7 +274,9 @@ export class ControlledExecutor extends ParallelExecutor {
 
       const elapsedMs = performance.now() - startTime;
       log.info(
-        `[ControlledExecutor] Started ${toSpeculate.length} speculations (${elapsedMs.toFixed(1)}ms)`,
+        `[ControlledExecutor] Started ${toSpeculate.length} speculations (${
+          elapsedMs.toFixed(1)
+        }ms)`,
       );
     } catch (error) {
       log.error(`[ControlledExecutor] Speculation start failed: ${error}`);
@@ -308,7 +318,10 @@ export class ControlledExecutor extends ParallelExecutor {
       return null;
     }
 
-    return await this.speculativeExecutor.validateAndConsume(toolId, this.lastCompletedTool ?? undefined);
+    return await this.speculativeExecutor.validateAndConsume(
+      toolId,
+      this.lastCompletedTool ?? undefined,
+    );
   }
 
   /**
@@ -367,18 +380,26 @@ export class ControlledExecutor extends ParallelExecutor {
           errorMessage: error,
           // No output/arguments content for PII safety (ADR-008)
           // Enriched metadata allowed: output_size, output_type
-          output: output !== null && output !== undefined ? {
-            type: typeof output,
-            size: typeof output === "string" ? output.length :
-                  Array.isArray(output) ? output.length :
-                  typeof output === "object" ? Object.keys(output as object).length : undefined,
-          } : undefined,
+          output: output !== null && output !== undefined
+            ? {
+              type: typeof output,
+              size: typeof output === "string"
+                ? output.length
+                : Array.isArray(output)
+                ? output.length
+                : typeof output === "object"
+                ? Object.keys(output as object).length
+                : undefined,
+            }
+            : undefined,
         },
-        context: this.state ? {
-          currentLayer: this.state.current_layer,
-          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
-          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
-        } : undefined,
+        context: this.state
+          ? {
+            currentLayer: this.state.current_layer,
+            completedTasksCount: this.state.tasks.filter((t) => t.status === "success").length,
+            failedTasksCount: this.state.tasks.filter((t) => t.status === "error").length,
+          }
+          : undefined,
       },
     }).catch((err) => {
       // Non-critical: Log but don't fail workflow
@@ -399,8 +420,11 @@ export class ControlledExecutor extends ParallelExecutor {
     const context = {
       workflowType: "dag-execution",
       domain: "agentcards",
-      complexity: this.state.tasks.length > 10 ? "high" :
-                  this.state.tasks.length > 5 ? "medium" : "low",
+      complexity: this.state.tasks.length > 10
+        ? "high"
+        : this.state.tasks.length > 5
+        ? "medium"
+        : "low",
     };
 
     // Simple hash matching EpisodicMemoryStore pattern
@@ -439,11 +463,13 @@ export class ControlledExecutor extends ParallelExecutor {
           action: outcome,
           reasoning,
         },
-        context: this.state ? {
-          currentLayer: this.state.current_layer,
-          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
-          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
-        } : undefined,
+        context: this.state
+          ? {
+            currentLayer: this.state.current_layer,
+            completedTasksCount: this.state.tasks.filter((t) => t.status === "success").length,
+            failedTasksCount: this.state.tasks.filter((t) => t.status === "error").length,
+          }
+          : undefined,
         metadata,
       },
     }).catch((err) => {
@@ -482,11 +508,13 @@ export class ControlledExecutor extends ParallelExecutor {
           reasoning: feedback || (approved ? "Human approved" : "Human rejected"),
           approved,
         },
-        context: this.state ? {
-          currentLayer: this.state.current_layer,
-          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
-          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
-        } : undefined,
+        context: this.state
+          ? {
+            currentLayer: this.state.current_layer,
+            completedTasksCount: this.state.tasks.filter((t) => t.status === "success").length,
+            failedTasksCount: this.state.tasks.filter((t) => t.status === "error").length,
+          }
+          : undefined,
         metadata: {
           checkpoint_id: checkpointId,
         },
@@ -533,11 +561,13 @@ export class ControlledExecutor extends ParallelExecutor {
           reasoning,
           wasCorrect: undefined, // Will be updated after validation
         },
-        context: this.state ? {
-          currentLayer: this.state.current_layer,
-          completedTasksCount: this.state.tasks.filter(t => t.status === "success").length,
-          failedTasksCount: this.state.tasks.filter(t => t.status === "error").length,
-        } : undefined,
+        context: this.state
+          ? {
+            currentLayer: this.state.current_layer,
+            completedTasksCount: this.state.tasks.filter((t) => t.status === "success").length,
+            failedTasksCount: this.state.tasks.filter((t) => t.status === "error").length,
+          }
+          : undefined,
       },
     }).catch((err) => {
       log.error(`Episodic capture failed for speculation_start: ${err}`);
@@ -617,9 +647,7 @@ export class ControlledExecutor extends ParallelExecutor {
     const failedTasks = this.state.tasks.filter((t) => t.status === "error")
       .length;
 
-    const nextLayer = layerIdx + 1 < layers.length
-      ? layers[layerIdx + 1]
-      : null;
+    const nextLayer = layerIdx + 1 < layers.length ? layers[layerIdx + 1] : null;
 
     const summary = [
       `=== Workflow Approval Checkpoint ===\n`,
@@ -749,10 +777,12 @@ export class ControlledExecutor extends ParallelExecutor {
       await this.eventStream.emit(layerStartEvent);
       yield layerStartEvent;
 
-      // 4b. Process commands (non-blocking)
-      const commands = await this.commandQueue.processCommandsAsync();
+      // 4b. Process general control commands (non-blocking)
+      // Only process commands that are NOT decision commands (AIL/HIL)
+      // Decision commands (continue, approval_response) are handled by waitForDecisionCommand()
+      const commands = await this.commandQueue.processCommandsByType(["abort", "pause"]);
       for (const cmd of commands) {
-        log.info(`Processing command: ${cmd.type}`);
+        log.info(`Processing control command: ${cmd.type}`);
         // TODO: Story 2.5-3 - Implement command handlers
         // For now, just log them
         if (cmd.type === "abort") {
@@ -1120,7 +1150,9 @@ export class ControlledExecutor extends ParallelExecutor {
             this.replanCount++;
 
             log.info(
-              `✓ DAG replanned: ${dag.tasks.length - augmentedDAG.tasks.length} new tasks added (${replanTime.toFixed(1)}ms)`,
+              `✓ DAG replanned: ${dag.tasks.length - augmentedDAG.tasks.length} new tasks added (${
+                replanTime.toFixed(1)
+              }ms)`,
             );
 
             // Log decision
@@ -1408,10 +1440,12 @@ export class ControlledExecutor extends ParallelExecutor {
       await this.eventStream.emit(layerStartEvent);
       yield layerStartEvent;
 
-      // 6b. Process commands (non-blocking)
-      const commands = await this.commandQueue.processCommandsAsync();
+      // 6b. Process general control commands (non-blocking)
+      // Only process commands that are NOT decision commands (AIL/HIL)
+      // Decision commands (continue, approval_response) are handled by waitForDecisionCommand()
+      const commands = await this.commandQueue.processCommandsByType(["abort", "pause"]);
       for (const cmd of commands) {
-        log.info(`Processing command: ${cmd.type}`);
+        log.info(`Processing control command: ${cmd.type}`);
         if (cmd.type === "abort") {
           log.warn(`Abort command received: ${cmd.reason}`);
         }
@@ -1683,12 +1717,12 @@ export class ControlledExecutor extends ParallelExecutor {
           // Exponential backoff: 100ms, 200ms, 400ms
           const delay = baseDelay * Math.pow(2, attempt - 1);
           log.warn(
-            `Safe-to-fail task ${task.id} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms: ${lastError.message}`
+            `Safe-to-fail task ${task.id} failed (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms: ${lastError.message}`,
           );
           await new Promise((resolve) => setTimeout(resolve, delay));
         } else {
           log.error(
-            `Safe-to-fail task ${task.id} failed after ${maxAttempts} attempts: ${lastError.message}`
+            `Safe-to-fail task ${task.id} failed after ${maxAttempts} attempts: ${lastError.message}`,
           );
         }
       }

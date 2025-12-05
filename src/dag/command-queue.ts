@@ -259,6 +259,43 @@ export class CommandQueue {
   }
 
   /**
+   * Process commands filtered by type
+   *
+   * Only dequeues and returns commands matching the provided types.
+   * Other commands remain in the queue.
+   *
+   * @param types - Array of command types to process (e.g., ["abort", "pause"])
+   * @returns Promise of matching commands
+   */
+  async processCommandsByType(types: string[]): Promise<Command[]> {
+    const matching: Command[] = [];
+    const remaining: Command[] = [];
+
+    // Drain entire queue temporarily
+    while (!this.queue.isEmpty()) {
+      const cmd = await this.queue.dequeue();
+      if (types.includes(cmd.type)) {
+        matching.push(cmd);
+      } else {
+        remaining.push(cmd);
+      }
+    }
+
+    // Re-enqueue non-matching commands (preserves FIFO order)
+    for (const cmd of remaining) {
+      this.queue.enqueue(cmd);
+    }
+
+    this.stats.processed_commands += matching.length;
+
+    if (matching.length > 0) {
+      log.info(`Processed ${matching.length} commands of types: ${types.join(", ")}`);
+    }
+
+    return matching;
+  }
+
+  /**
    * Check if queue has pending commands
    */
   hasPending(): boolean {

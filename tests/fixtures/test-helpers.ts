@@ -6,7 +6,7 @@
  */
 
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { EmbeddingModel } from "../../src/vector/embeddings.ts";
 
 /**
@@ -52,7 +52,7 @@ export async function cleanupTestDatabase(
 
   try {
     await Deno.remove(testDir, { recursive: true });
-  } catch (error) {
+  } catch {
     // Ignore errors if directory doesn't exist
   }
 }
@@ -91,6 +91,12 @@ export async function generateTestEmbeddings(
   return embeddings;
 }
 
+interface ToolSchema {
+  name: string;
+  description?: string;
+  inputSchema?: Record<string, unknown>;
+}
+
 /**
  * Store mock tool schemas in database
  *
@@ -101,7 +107,7 @@ export async function generateTestEmbeddings(
 export async function storeSchemas(
   db: PGliteClient,
   serverId: string,
-  schemas: any[],
+  schemas: ToolSchema[],
 ): Promise<void> {
   for (const schema of schemas) {
     const toolId = `${serverId}:${schema.name}`;
@@ -138,6 +144,13 @@ export async function storeSchemas(
   }
 }
 
+interface ToolRecord {
+  tool_id: string;
+  server_id: string;
+  name: string;
+  description: string | null;
+}
+
 /**
  * Generate embeddings for all tools in database
  *
@@ -154,7 +167,7 @@ export async function generateEmbeddings(
   );
 
   for (const tool of tools) {
-    const toolRecord = tool as any;
+    const toolRecord = tool as ToolRecord;
     const text = `${toolRecord.name}: ${toolRecord.description || ""}`;
 
     // Generate embedding using EmbeddingModel.encode()
@@ -175,14 +188,25 @@ export async function generateEmbeddings(
   }
 }
 
+interface DAGTask {
+  id: string;
+  tool: string;
+  arguments: Record<string, unknown>;
+  depends_on: string[];
+}
+
+interface DAGStructure {
+  tasks: DAGTask[];
+}
+
 /**
  * Create a test DAG structure for testing
  *
  * @param taskCount - Number of tasks in the DAG
  * @returns DAG structure
  */
-export function createTestDAG(taskCount: number): any {
-  const tasks = [];
+export function createTestDAG(taskCount: number): DAGStructure {
+  const tasks: DAGTask[] = [];
 
   for (let i = 0; i < taskCount; i++) {
     tasks.push({
