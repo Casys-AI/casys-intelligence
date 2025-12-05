@@ -66,13 +66,6 @@ memory:
 # Monitoring data (Docker volumes)
 monitoring/data/
 
-# Claude Code personal config (keep .claude/commands/)
-.claude/hooks/
-.claude/settings.json
-.claude/tts-*.txt
-.claude/piper-voices-dir.txt
-.claude/audio/
-.claude/personalities/
-.claude/activation-instructions
-.claude/github-star-reminder.txt
+# Claude Code personal config
+.claude/
 .agentvibes/
