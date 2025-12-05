@@ -9,7 +9,7 @@
 import { Command } from "@cliffy/command";
 import * as log from "@std/log";
 import { createDefaultClient } from "../../db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../db/migrations.ts";
 import { MCPServerDiscovery } from "../../mcp/discovery.ts";
 import { MCPClient } from "../../mcp/client.ts";
 import { EmbeddingModel } from "../../vector/embeddings.ts";
@@ -188,7 +188,9 @@ export function createServeCommand() {
         // 2.5 Auto-init if config changed (discovers tools & generates embeddings)
         const autoInitResult = await autoInitIfConfigChanged(configPath, db);
         if (autoInitResult.performed) {
-          log.info(`✓ Auto-init: ${autoInitResult.toolsCount} tools discovered (${autoInitResult.reason})`);
+          log.info(
+            `✓ Auto-init: ${autoInitResult.toolsCount} tools discovered (${autoInitResult.reason})`,
+          );
         }
 
         // 3. Connect to MCP servers

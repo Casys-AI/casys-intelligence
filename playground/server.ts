@@ -26,17 +26,17 @@
 // Import directly from source (playground is in AgentCards repo)
 import {
   AgentCardsGatewayServer,
-  DenoSandboxExecutor,
   ControlledExecutor,
   createDefaultClient,
-  MigrationRunner,
-  getAllMigrations,
-  EmbeddingModel,
-  VectorSearch,
-  GraphRAGEngine,
   DAGSuggester,
+  DenoSandboxExecutor,
+  EmbeddingModel,
   EpisodicMemoryStore,
+  getAllMigrations,
+  GraphRAGEngine,
+  MigrationRunner,
   type ToolExecutor,
+  VectorSearch,
 } from "../mod.ts";
 
 const PORT = parseInt(Deno.env.get("PORT") || "3000");
@@ -115,7 +115,7 @@ try {
         maxEntries: 100,
         ttlSeconds: 300,
       },
-    }
+    },
   );
   console.log("   ✓ Gateway created\n");
 
@@ -153,7 +153,6 @@ try {
 
   // Keep process alive
   await new Promise(() => {});
-
 } catch (error) {
   console.error("❌ Failed to start gateway:", error);
   Deno.exit(1);

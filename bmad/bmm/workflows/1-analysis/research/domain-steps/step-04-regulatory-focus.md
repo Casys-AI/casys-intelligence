@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current regulatory data
 - 📋 YOU ARE A REGULATORY ANALYST, not content generator
 - 💬 FOCUS on compliance requirements and regulatory landscape
@@ -31,14 +33,15 @@
 
 ## YOUR TASK:
 
-Conduct focused regulatory and compliance analysis using current {{current_year}} web data with emphasis on requirements that impact {{research_topic}}.
+Conduct focused regulatory and compliance analysis using current {{current_year}} web data with
+emphasis on requirements that impact {{research_topic}}.
 
 ## REGULATORY FOCUS SEQUENCE:
 
 ### 1. Begin Regulatory Analysis
 
-Start with regulatory research approach:
-"Now I'll focus on **regulatory and compliance requirements** that impact **{{research_topic}}** using current {{current_year}} data.
+Start with regulatory research approach: "Now I'll focus on **regulatory and compliance
+requirements** that impact **{{research_topic}}** using current {{current_year}} data.
 
 **Regulatory Focus Areas:**
 
@@ -99,33 +102,33 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### Applicable Regulations
 
-[Specific regulations analysis with source citations]
-_Source: [URL with {{current_year}} regulatory data]_
+[Specific regulations analysis with source citations] _Source: [URL with {{current_year}} regulatory
+data]_
 
 ### Industry Standards and Best Practices
 
-[Industry standards analysis with source citations]
-_Source: [URL with {{current_year}} standards data]_
+[Industry standards analysis with source citations] _Source: [URL with {{current_year}} standards
+data]_
 
 ### Compliance Frameworks
 
-[Compliance frameworks analysis with source citations]
-_Source: [URL with {{current_year}} compliance data]_
+[Compliance frameworks analysis with source citations] _Source: [URL with {{current_year}}
+compliance data]_
 
 ### Data Protection and Privacy
 
-[Privacy requirements analysis with source citations]
-_Source: [URL with {{current_year}} privacy data]_
+[Privacy requirements analysis with source citations] _Source: [URL with {{current_year}} privacy
+data]_
 
 ### Licensing and Certification
 
-[Licensing requirements analysis with source citations]
-_Source: [URL with {{current_year}} licensing data]_
+[Licensing requirements analysis with source citations] _Source: [URL with {{current_year}}
+licensing data]_
 
 ### Implementation Considerations
 
-[Practical implementation considerations with source citations]
-_Source: [URL with {{current_year}} implementation data]_
+[Practical implementation considerations with source citations] _Source: [URL with {{current_year}}
+implementation data]_
 
 ### Risk Assessment
 
@@ -134,8 +137,9 @@ _Source: [URL with {{current_year}} implementation data]_
 
 ### 6. Present Analysis and Continue Option
 
-Show the generated regulatory analysis and present continue option:
-"I've completed **regulatory requirements analysis** using current {{current_year}} data to understand compliance requirements for {{research_topic}}.
+Show the generated regulatory analysis and present continue option: "I've completed **regulatory
+requirements analysis** using current {{current_year}} data to understand compliance requirements
+for {{research_topic}}.
 
 **Key Regulatory Findings:**
 
@@ -145,8 +149,8 @@ Show the generated regulatory analysis and present continue option:
 - Implementation considerations provided
 - Risk assessment completed
 
-**Ready to proceed to technical trends?**
-[C] Continue - Save this to the document and move to technical trends
+**Ready to proceed to technical trends?** [C] Continue - Save this to the document and move to
+technical trends
 
 ### 7. Handle Continue Selection
 
@@ -162,26 +166,22 @@ Content is already written to document when generated in step 5. No additional a
 
 ## SUCCESS METRICS:
 
-✅ Applicable regulations identified with current {{current_year}} citations
-✅ Industry standards and best practices documented
-✅ Compliance frameworks clearly mapped
-✅ Data protection requirements analyzed
-✅ Implementation considerations provided
-✅ [C] continue option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Applicable regulations identified with current {{current_year}} citations ✅ Industry standards
+and best practices documented ✅ Compliance frameworks clearly mapped ✅ Data protection
+requirements analyzed ✅ Implementation considerations provided ✅ [C] continue option presented and
+handled correctly ✅ Content properly appended to document when C selected
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in regulatory web searches
-❌ Missing critical regulatory requirements for the domain
-❌ Not providing implementation considerations for compliance
-❌ Not completing risk assessment for regulatory compliance
-❌ Not presenting [C] continue option after content generation
+❌ Not using {{current_year}} in regulatory web searches ❌ Missing critical regulatory requirements
+for the domain ❌ Not providing implementation considerations for compliance ❌ Not completing risk
+assessment for regulatory compliance ❌ Not presenting [C] continue option after content generation
 ❌ Appending content without user selecting 'C'
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## REGULATORY RESEARCH PROTOCOLS:
 
@@ -200,6 +200,8 @@ Content is already written to document when generated in step 5. No additional a
 
 ## NEXT STEP:
 
-After user selects 'C' and content is saved to document, load `./step-04-technical-trends.md` to analyze technical trends and innovations in the domain.
+After user selects 'C' and content is saved to document, load `./step-04-technical-trends.md` to
+analyze technical trends and innovations in the domain.
 
-Remember: Always emphasize current {{current_year}} regulatory data and practical implementation considerations!
+Remember: Always emphasize current {{current_year}} regulatory data and practical implementation
+considerations!

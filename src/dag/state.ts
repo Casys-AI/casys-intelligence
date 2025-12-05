@@ -65,12 +65,14 @@ export interface WorkflowState {
 /**
  * State update type for partial updates
  */
-export type StateUpdate = Partial<
-  Omit<WorkflowState, "workflow_id" | "current_layer">
-> & {
-  workflow_id?: never; // Prevent workflow_id changes
-  current_layer?: number; // Allow layer updates
-};
+export type StateUpdate =
+  & Partial<
+    Omit<WorkflowState, "workflow_id" | "current_layer">
+  >
+  & {
+    workflow_id?: never; // Prevent workflow_id changes
+    current_layer?: number; // Allow layer updates
+  };
 
 /**
  * Messages reducer: Appends new messages to existing array
@@ -188,16 +190,12 @@ export function updateState(
   const newState: WorkflowState = {
     workflow_id: state.workflow_id, // Immutable
     current_layer: update.current_layer ?? state.current_layer,
-    messages: update.messages
-      ? messagesReducer(state.messages, update.messages)
-      : state.messages,
+    messages: update.messages ? messagesReducer(state.messages, update.messages) : state.messages,
     tasks: update.tasks ? tasksReducer(state.tasks, update.tasks) : state.tasks,
     decisions: update.decisions
       ? decisionsReducer(state.decisions, update.decisions)
       : state.decisions,
-    context: update.context
-      ? contextReducer(state.context, update.context)
-      : state.context,
+    context: update.context ? contextReducer(state.context, update.context) : state.context,
   };
 
   // Validate invariants

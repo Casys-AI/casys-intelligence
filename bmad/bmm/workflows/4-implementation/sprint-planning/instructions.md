@@ -1,7 +1,9 @@
 # Sprint Planning - Sprint Status Generator
 
-<critical>The workflow execution engine is governed by: {project-root}/bmad/core/tasks/workflow.xml</critical>
-<critical>You MUST have already loaded and processed: {project-root}/bmad/bmm/workflows/4-implementation/sprint-planning/workflow.yaml</critical>
+<critical>The workflow execution engine is governed by:
+{project-root}/bmad/core/tasks/workflow.xml</critical>
+<critical>You MUST have already loaded and processed:
+{project-root}/bmad/bmm/workflows/4-implementation/sprint-planning/workflow.yaml</critical>
 
 ## 📚 Document Discovery - Full Epic Loading
 
@@ -9,7 +11,8 @@
 
 **Epic Discovery Process:**
 
-1. **Search for whole document first** - Look for `epics.md`, `bmm-epics.md`, or any `*epic*.md` file
+1. **Search for whole document first** - Look for `epics.md`, `bmm-epics.md`, or any `*epic*.md`
+   file
 2. **Check for sharded version** - If whole document not found, look for `epics/index.md`
 3. **If sharded version found**:
    - Read `index.md` to understand the document structure
@@ -18,7 +21,8 @@
    - This ensures complete sprint status coverage
 4. **Priority**: If both whole and sharded versions exist, use the whole document
 
-**Fuzzy matching**: Be flexible with document names - users may use variations like `epics.md`, `bmm-epics.md`, `user-stories.md`, etc.
+**Fuzzy matching**: Be flexible with document names - users may use variations like `epics.md`,
+`bmm-epics.md`, `user-stories.md`, etc.
 
 <workflow>
 
@@ -43,7 +47,7 @@
 <action>Build complete inventory of all epics and stories from all epic files</action>
 </step>
 
-  <step n="0.5" goal="Discover and load project documents">
+<step n="0.5" goal="Discover and load project documents">
     <invoke-protocol name="discover_inputs" />
     <note>After discovery, these content variables are available: {epics_content} (all epics loaded - uses FULL_LOAD strategy)</note>
   </step>
@@ -83,7 +87,8 @@ development_status:
 
 **Story context detection:**
 
-- Check: `{story_location_absolute}/{story-key}-context.md` (e.g., `stories/1-1-user-authentication-context.md`)
+- Check: `{story_location_absolute}/{story-key}-context.md` (e.g.,
+  `stories/1-1-user-authentication-context.md`)
 - If exists → upgrade status to at least `ready-for-dev`
 
 **Preservation rule:**
@@ -142,11 +147,12 @@ tracking_system: { tracking_system }
 story_location: { story_location }
 
 development_status:
-  # All epics, stories, and retrospectives in order
+# All epics, stories, and retrospectives in order
 ```
 
 <action>Write the complete sprint status YAML to {status_file}</action>
-<action>CRITICAL: Metadata appears TWICE - once as comments (#) for documentation, once as YAML key:value fields for parsing</action>
+<action>CRITICAL: Metadata appears TWICE - once as comments (#) for documentation, once as YAML
+key:value fields for parsing</action>
 <action>Ensure all items are ordered: epic, its stories, its retrospective, next epic...</action>
 </step>
 
@@ -231,4 +237,5 @@ optional ↔ completed
 2. **Sequential Default**: Stories are typically worked in order, but parallel work is supported
 3. **Parallel Work Supported**: Multiple stories can be `in-progress` if team capacity allows
 4. **Review Before Done**: Stories should pass through `review` before `done`
-5. **Learning Transfer**: SM typically drafts next story after previous one is `done` to incorporate learnings
+5. **Learning Transfer**: SM typically drafts next story after previous one is `done` to incorporate
+   learnings

@@ -8,10 +8,7 @@
 
 import { parse } from "@std/yaml";
 import * as log from "@std/log";
-import {
-  MCPServer,
-  MCPConfig,
-} from "./types.ts";
+import { MCPConfig, MCPServer } from "./types.ts";
 
 /**
  * MCP Server Discovery Engine

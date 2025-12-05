@@ -15,9 +15,7 @@ Deno.test("withTimeout - operation completes within timeout", async () => {
 });
 
 Deno.test("withTimeout - operation exceeds timeout", async () => {
-  const slowOperation = new Promise((resolve) =>
-    setTimeout(() => resolve("too late"), 200)
-  );
+  const slowOperation = new Promise((resolve) => setTimeout(() => resolve("too late"), 200));
 
   await assertRejects(
     async () => {

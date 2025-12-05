@@ -13,7 +13,8 @@
     <asA>playground user</asA>
     <iWant>workflow templates pre-configured</iWant>
     <soThat>I can see GraphRAG patterns in action immediately</soThat>
-    <tasks>
+    <tasks
+    >
       - Task 1: Analyze workflow template format (AC: #2)
         - Review `agentcards workflows sync` command implementation
         - Identify required YAML schema fields (name, description, nodes, edges)
@@ -40,7 +41,8 @@
     </tasks>
   </story>
 
-  <acceptanceCriteria>
+  <acceptanceCriteria
+  >
     1. `playground/config/workflow-templates.yaml` contient 3+ workflows:
        - Parallélisation pure (3 outils indépendants)
        - Pattern récurrent (séquence filesystem → memory)
@@ -56,35 +58,40 @@
         <path>docs/PRD-playground.md</path>
         <title>Playground PRD</title>
         <section>FR016 - Workflow Templates</section>
-        <snippet>Playground must include workflow templates pre-configured demonstrating: pure parallelization, recurring GraphRAG patterns, multi-level DAG dependencies. Templates should bootstrap the GraphRAG system with common patterns.</snippet>
+        <snippet
+        >Playground must include workflow templates pre-configured demonstrating: pure parallelization, recurring GraphRAG patterns, multi-level DAG dependencies. Templates should bootstrap the GraphRAG system with common patterns.</snippet>
       </doc>
 
       <doc>
         <path>docs/epics-playground.md</path>
         <title>Playground Epics</title>
         <section>Story 1.3 - Workflow Templates Configuration</section>
-        <snippet>Format compatible with `agentcards workflows sync` command. At least 3 workflows covering different execution patterns. Inline comments explaining each workflow's purpose.</snippet>
+        <snippet
+        >Format compatible with `agentcards workflows sync` command. At least 3 workflows covering different execution patterns. Inline comments explaining each workflow's purpose.</snippet>
       </doc>
 
       <doc>
         <path>docs/epics.md</path>
         <title>AgentCards Epics</title>
         <section>Story 5.2 - Workflow Templates &amp; Graph Bootstrap</section>
-        <snippet>Workflow templates bootstrap graph with predefined patterns. Templates stored in config/workflow-templates.yaml with workflows array. Each workflow has name and either steps (linear) or edges (DAG) format.</snippet>
+        <snippet
+        >Workflow templates bootstrap graph with predefined patterns. Templates stored in config/workflow-templates.yaml with workflows array. Each workflow has name and either steps (linear) or edges (DAG) format.</snippet>
       </doc>
 
       <doc>
         <path>config/workflow-templates.yaml</path>
         <title>Example Workflow Templates</title>
         <section>Format Examples</section>
-        <snippet>Two supported formats: 1) steps (linear sequence) - steps: [A, B, C] creates edges A→B, B→C. 2) edges (explicit DAG) - edges: [[A,B], [A,C]] for parallel branches. Tool ID format: serverId:toolName from MCP server config.</snippet>
+        <snippet
+        >Two supported formats: 1) steps (linear sequence) - steps: [A, B, C] creates edges A→B, B→C. 2) edges (explicit DAG) - edges: [[A,B], [A,C]] for parallel branches. Tool ID format: serverId:toolName from MCP server config.</snippet>
       </doc>
 
       <doc>
         <path>playground/config/README.md</path>
         <title>MCP Servers Configuration Documentation</title>
         <section>Server Capabilities</section>
-        <snippet>Filesystem server provides parallel file reading. Memory server enables local knowledge graph for GraphRAG patterns. Sequential-thinking server demonstrates DAG branching.</snippet>
+        <snippet
+        >Filesystem server provides parallel file reading. Memory server enables local knowledge graph for GraphRAG patterns. Sequential-thinking server demonstrates DAG branching.</snippet>
       </doc>
     </docs>
 
@@ -95,7 +102,8 @@
         <kind>service</kind>
         <symbol>WorkflowLoader</symbol>
         <lines>1-150</lines>
-        <reason>Implements YAML template loading and validation. Defines WorkflowTemplate interface with `steps` or `edges` format. Validates tool references and converts to graph edges.</reason>
+        <reason
+        >Implements YAML template loading and validation. Defines WorkflowTemplate interface with `steps` or `edges` format. Validates tool references and converts to graph edges.</reason>
       </artifact>
 
       <artifact>
@@ -103,7 +111,8 @@
         <kind>interface</kind>
         <symbol>WorkflowTemplate</symbol>
         <lines>27-34</lines>
-        <reason>Defines the expected structure for workflow templates in YAML. Key fields: name (string), steps (string[] - linear sequence), edges ([string, string][] - DAG format). Steps and edges are mutually exclusive.</reason>
+        <reason
+        >Defines the expected structure for workflow templates in YAML. Key fields: name (string), steps (string[] - linear sequence), edges ([string, string][] - DAG format). Steps and edges are mutually exclusive.</reason>
       </artifact>
 
       <artifact>
@@ -111,14 +120,16 @@
         <kind>service</kind>
         <symbol>WorkflowSyncService</symbol>
         <lines>36-150</lines>
-        <reason>Synchronizes workflow templates from YAML to database. The `sync()` method is what `agentcards workflows sync` command calls. Validates templates and creates tool_dependency edges with source='user'.</reason>
+        <reason
+        >Synchronizes workflow templates from YAML to database. The `sync()` method is what `agentcards workflows sync` command calls. Validates templates and creates tool_dependency edges with source='user'.</reason>
       </artifact>
 
       <artifact>
         <path>src/cli/commands/workflows.ts</path>
         <kind>command</kind>
         <symbol>workflows sync</symbol>
-        <reason>CLI command implementation for syncing workflow templates. Entry point that will be used to test compatibility (AC #2).</reason>
+        <reason
+        >CLI command implementation for syncing workflow templates. Entry point that will be used to test compatibility (AC #2).</reason>
       </artifact>
 
       <artifact>
@@ -126,7 +137,8 @@
         <kind>config</kind>
         <symbol>mcpServers</symbol>
         <lines>1-27</lines>
-        <reason>Configured MCP servers from Story 1.2: filesystem, memory, sequential-thinking. Tool IDs will be formatted as serverId:toolName (e.g., filesystem:read_file, memory:store_entities).</reason>
+        <reason
+        >Configured MCP servers from Story 1.2: filesystem, memory, sequential-thinking. Tool IDs will be formatted as serverId:toolName (e.g., filesystem:read_file, memory:store_entities).</reason>
       </artifact>
 
       <artifact>
@@ -134,24 +146,42 @@
         <kind>config</kind>
         <symbol>workflows</symbol>
         <lines>1-52</lines>
-        <reason>Example workflow templates structure. Currently empty (workflows: []) but contains comprehensive documentation and examples in comments showing both steps and edges formats.</reason>
+        <reason
+        >Example workflow templates structure. Currently empty (workflows: []) but contains comprehensive documentation and examples in comments showing both steps and edges formats.</reason>
       </artifact>
     </code>
 
     <dependencies>
       <ecosystem name="deno">
-        <package name="@std/yaml" version="1.0.5" reason="YAML parsing for workflow templates file"/>
-        <package name="@std/log" version="0.224.14" reason="Structured logging"/>
+        <package
+          name="@std/yaml"
+          version="1.0.5"
+          reason="YAML parsing for workflow templates file"
+        />
+        <package name="@std/log" version="0.224.14" reason="Structured logging" />
       </ecosystem>
       <ecosystem name="npm">
-        <package name="@modelcontextprotocol/server-filesystem" version="latest" reason="MCP filesystem server with file reading capabilities"/>
-        <package name="@modelcontextprotocol/server-memory" version="latest" reason="MCP memory server for knowledge graph operations"/>
-        <package name="@modelcontextprotocol/server-sequential-thinking" version="latest" reason="MCP sequential-thinking server for DAG branching patterns"/>
+        <package
+          name="@modelcontextprotocol/server-filesystem"
+          version="latest"
+          reason="MCP filesystem server with file reading capabilities"
+        />
+        <package
+          name="@modelcontextprotocol/server-memory"
+          version="latest"
+          reason="MCP memory server for knowledge graph operations"
+        />
+        <package
+          name="@modelcontextprotocol/server-sequential-thinking"
+          version="latest"
+          reason="MCP sequential-thinking server for DAG branching patterns"
+        />
       </ecosystem>
     </dependencies>
   </artifacts>
 
-  <constraints>
+  <constraints
+  >
     - YAML format required for compatibility with WorkflowLoader (src/graphrag/workflow-loader.ts)
     - Must use `workflows` array as root key (WorkflowTemplatesFile interface requirement)
     - Each workflow must have a unique `name` field (string)
@@ -170,7 +200,8 @@
     <interface>
       <name>WorkflowTemplate</name>
       <kind>TypeScript interface</kind>
-      <signature>
+      <signature
+      >
 interface WorkflowTemplate {
   name: string;
   steps?: string[];           // Linear sequence (mutually exclusive with edges)
@@ -183,7 +214,8 @@ interface WorkflowTemplate {
     <interface>
       <name>WorkflowTemplatesFile</name>
       <kind>TypeScript interface</kind>
-      <signature>
+      <signature
+      >
 interface WorkflowTemplatesFile {
   workflows: WorkflowTemplate[];
 }
@@ -202,17 +234,20 @@ agentcards workflows sync [--path &lt;yaml-file&gt;] [--force]
   </interfaces>
 
   <tests>
-    <standards>
+    <standards
+    >
       Testing follows Deno.test framework with unit and integration tests. Workflow template validation should be tested with valid and invalid YAML structures. Integration tests should verify `agentcards workflows sync` command can load and parse the template file. YAML syntax validation using @std/yaml parser. Tool reference validation against configured MCP servers.
     </standards>
 
-    <locations>
+    <locations
+    >
       - tests/unit/graphrag/ - Unit tests for WorkflowLoader
       - tests/integration/ - Integration tests for workflow sync command
       - playground/config/ - Configuration files and templates
     </locations>
 
-    <ideas>
+    <ideas
+    >
       AC #1 (3+ workflows): Test that YAML contains at least 3 distinct workflows with names matching requirements (parallel, sequential, multi-level DAG)
 
       AC #2 (format compatibility): Integration test calling `agentcards workflows sync --path playground/config/workflow-templates.yaml` and verifying success exit code and no parse errors

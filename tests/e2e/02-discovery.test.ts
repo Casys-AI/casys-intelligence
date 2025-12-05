@@ -4,16 +4,16 @@
  * Tests MCP server discovery and tool extraction.
  */
 
-import { assertEquals, assert } from "jsr:@std/assert@1";
+import { assert, assertEquals } from "jsr:@std/assert@1";
 import {
   cleanupTestDatabase,
   initializeTestDatabase,
   storeSchemas,
 } from "../fixtures/test-helpers.ts";
 import {
+  createMockApiServer,
   createMockFilesystemServer,
   createMockJsonServer,
-  createMockApiServer,
 } from "../fixtures/mock-mcp-server.ts";
 
 Deno.test("E2E 02: MCP server discovery and tool extraction", async (t) => {
@@ -75,7 +75,7 @@ Deno.test("E2E 02: MCP server discovery and tool extraction", async (t) => {
       assertEquals(result.length, 3);
 
       for (const row of result) {
-        const schema = typeof row.tool_schema === 'string'
+        const schema = typeof row.tool_schema === "string"
           ? JSON.parse(row.tool_schema)
           : row.tool_schema;
         assert(schema.name, "Schema should have name");

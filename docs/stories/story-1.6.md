@@ -1,17 +1,14 @@
 # Story 1.6: On-Demand Schema Loading & Context Optimization
 
-**Epic:** 1 - Project Foundation & Context Optimization Engine
-**Story ID:** 1.6
-**Status:** done
+**Epic:** 1 - Project Foundation & Context Optimization Engine **Story ID:** 1.6 **Status:** done
 **Estimated Effort:** 3-4 hours
 
 ---
 
 ## User Story
 
-**As a** Claude Code user,
-**I want** AgentCards to load only relevant tool schemas based on my query,
-**So that** my context window is not saturated by unused tool schemas.
+**As a** Claude Code user, **I want** AgentCards to load only relevant tool schemas based on my
+query, **So that** my context window is not saturated by unused tool schemas.
 
 ---
 
@@ -36,22 +33,23 @@
 ## Technical Notes
 
 ### Context Optimization Workflow
+
 ```typescript
 class ContextOptimizer {
   constructor(
     private vectorSearch: VectorSearch,
-    private schemaLoader: SchemaLoader
+    private schemaLoader: SchemaLoader,
   ) {}
 
   async getRelevantSchemas(
     userQuery: string,
-    topK: number = 5
+    topK: number = 5,
   ): Promise<ToolSchema[]> {
     // 1. Semantic search for relevant tools
     const searchResults = await this.vectorSearch.searchTools(userQuery, topK);
 
     // 2. Load only matched schemas
-    const schemas = searchResults.map(result => result.schema);
+    const schemas = searchResults.map((result) => result.schema);
 
     // 3. Log context usage
     await this.logContextUsage(schemas);
@@ -66,10 +64,13 @@ class ContextOptimizer {
     console.log(`📊 Context usage: ${contextUsagePct.toFixed(2)}% (${totalTokens} tokens)`);
 
     // Store metric in database
-    await this.db.exec(`
+    await this.db.exec(
+      `
       INSERT INTO metrics (metric_name, value, timestamp)
       VALUES ('context_usage_pct', $1, NOW())
-    `, [contextUsagePct]);
+    `,
+      [contextUsagePct],
+    );
   }
 
   private estimateTokens(schemas: ToolSchema[]): number {
@@ -80,6 +81,7 @@ class ContextOptimizer {
 ```
 
 ### Before vs After Comparison
+
 ```typescript
 async function showContextComparison(): Promise<void> {
   // Scenario: User has 100 tools across 15 MCP servers
@@ -102,6 +104,7 @@ async function showContextComparison(): Promise<void> {
 ```
 
 ### Schema Caching Strategy
+
 ```typescript
 class SchemaCache {
   private cache = new Map<string, { schema: ToolSchema; hits: number }>();
@@ -143,12 +146,14 @@ class SchemaCache {
 ```
 
 ### Performance Targets
+
 - Vector search: <100ms (from Story 1.5)
 - Schema loading from cache/DB: <50ms
 - Token estimation: <10ms
 - **Total latency P95: <200ms**
 
 ### Metrics Tracked
+
 ```sql
 CREATE TABLE metrics (
   id SERIAL PRIMARY KEY,
@@ -206,6 +211,7 @@ CREATE TABLE metrics (
 ## File List
 
 ### New Files
+
 - src/context/optimizer.ts - Main ContextOptimizer class
 - src/context/cache.ts - LRU SchemaCache implementation
 - src/context/metrics.ts - Context usage measurement utilities
@@ -218,6 +224,7 @@ CREATE TABLE metrics (
 - tests/benchmark/context_latency_bench.ts - P95 latency benchmarks
 
 ### Modified Files
+
 - docs/sprint-status.yaml - Updated story status to in-progress
 - docs/stories/story-1.6.md - Added Tasks/Subtasks section, updated progress
 
@@ -226,6 +233,7 @@ CREATE TABLE metrics (
 ## Change Log
 
 **2025-11-04** - Story 1.6 Implementation Complete
+
 - ✅ Implemented ContextOptimizer with semantic search integration (AC1)
 - ✅ Created on-demand schema loading workflow: query → search → load (AC2, AC3)
 - ✅ Added context usage measurement and logging <5% (AC4)
@@ -241,7 +249,9 @@ CREATE TABLE metrics (
 ## Dev Agent Record
 
 ### Context Reference
-- Context file: [1-6-on-demand-schema-loading-context-optimization.context.xml](1-6-on-demand-schema-loading-context-optimization.context.xml)
+
+- Context file:
+  [1-6-on-demand-schema-loading-context-optimization.context.xml](1-6-on-demand-schema-loading-context-optimization.context.xml)
 - Generated: 2025-11-04
 - Status: ready-for-dev
 
@@ -250,6 +260,7 @@ CREATE TABLE metrics (
 **Implementation Plan - 2025-11-04**
 
 Architecture overview:
+
 - src/context/optimizer.ts - Main ContextOptimizer class integrating VectorSearch
 - src/context/cache.ts - LRU SchemaCache for frequently used tools
 - src/context/metrics.ts - Context usage measurement and comparison utilities
@@ -258,12 +269,14 @@ Architecture overview:
 - tests/benchmark/ - P95 latency verification
 
 Key integration points:
+
 1. VectorSearch.searchTools() → returns SearchResult[] with schemas
 2. EmbeddingModel.encode() → generates query embeddings (already in VectorSearch)
 3. PGliteClient → database access for metrics tracking
 4. MCPTool → schema type definition
 
 Implementation steps:
+
 1. Create metrics table migration (AC4, AC7)
 2. Implement SchemaCache with LRU eviction (AC6)
 3. Implement ContextOptimizer with getRelevantSchemas() (AC1, AC2, AC3)
@@ -276,9 +289,12 @@ Implementation steps:
 
 **Implementation Summary**
 
-Successfully implemented on-demand schema loading and context optimization for AgentCards. The solution integrates semantic vector search with intelligent caching to minimize context window usage.
+Successfully implemented on-demand schema loading and context optimization for AgentCards. The
+solution integrates semantic vector search with intelligent caching to minimize context window
+usage.
 
 **Key Achievements:**
+
 1. **ContextOptimizer Class** - Orchestrates query → search → schema loading workflow
 2. **LRU Cache** - Reduces redundant database queries for frequently used tools
 3. **Metrics System** - Comprehensive tracking of usage, latency, and cache performance
@@ -287,17 +303,20 @@ Successfully implemented on-demand schema loading and context optimization for A
 6. **Context Savings** - Demonstrated 23.75% context recovery (25% → 1.25% usage)
 
 **Technical Decisions:**
+
 - Used LRU eviction strategy for cache (max 50 schemas by default)
 - Implemented rough token estimation (500 tokens/schema) instead of tiktoken for performance
 - Stored metrics in JSONB format for flexible querying
 - Created separate modules (optimizer, cache, metrics) for clean separation of concerns
 
 **Test Results:**
+
 - SchemaCache: 9/9 tests passed - LRU eviction, hit tracking, stats
 - Metrics: 13/13 tests passed - usage calculation, P95, logging
 - ContextOptimizer: 10/10 tests passed - end-to-end workflow, all ACs
 
 **Next Steps:**
+
 - Code review and merge
 - Integration with MCP gateway (Story 2.4)
 - Optional: Real-world P95 verification with actual embedding model
@@ -306,43 +325,42 @@ Successfully implemented on-demand schema loading and context optimization for A
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad
-**Date:** 2025-11-04
-**Review Outcome:** ✅ **APPROVE**
+**Reviewer:** BMad **Date:** 2025-11-04 **Review Outcome:** ✅ **APPROVE**
 
 ### Acceptance Criteria Validation
 
-| AC | Description | Status | Evidence |
-|----|-------------|--------|----------|
-| AC1 | Integration semantic search avec schema loading | ✅ IMPLEMENTED | [optimizer.ts:90-167](src/context/optimizer.ts#L90-L167) - getRelevantSchemas() integrates VectorSearch.searchTools() |
-| AC2 | Workflow: query → vector search → retrieve top-k tools → load schemas | ✅ IMPLEMENTED | [optimizer.ts:102-114](src/context/optimizer.ts#L102-L114) - Complete workflow implemented |
-| AC3 | Schemas retournés uniquement pour matched tools (pas all-at-once) | ✅ IMPLEMENTED | [optimizer.ts:117-136](src/context/optimizer.ts#L117-L136) - Only searchResults schemas loaded, not full catalog |
-| AC4 | Context usage measurement et logging (<5% target) | ✅ IMPLEMENTED | [metrics.ts:87-99](src/context/metrics.ts#L87-L99) - measureContextUsage() + database logging |
-| AC5 | Comparison metric affiché: before (30-50%) vs after (<5%) | ✅ IMPLEMENTED | [metrics.ts:119-180](src/context/metrics.ts#L119-L180) - displayContextComparison() shows before/after |
-| AC6 | Cache hit pour frequently used tools (évite reloading) | ✅ IMPLEMENTED | [cache.ts:46-73](src/context/cache.ts#L46-L73) - LRU cache with hit tracking |
-| AC7 | Performance: Total query-to-schema latency <200ms P95 | ✅ IMPLEMENTED | [metrics.ts:287-305](src/context/metrics.ts#L287-L305) - P95 calculation + benchmarks verify target |
+| AC  | Description                                                           | Status         | Evidence                                                                                                              |
+| --- | --------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| AC1 | Integration semantic search avec schema loading                       | ✅ IMPLEMENTED | [optimizer.ts:90-167](src/context/optimizer.ts#L90-L167) - getRelevantSchemas() integrates VectorSearch.searchTools() |
+| AC2 | Workflow: query → vector search → retrieve top-k tools → load schemas | ✅ IMPLEMENTED | [optimizer.ts:102-114](src/context/optimizer.ts#L102-L114) - Complete workflow implemented                            |
+| AC3 | Schemas retournés uniquement pour matched tools (pas all-at-once)     | ✅ IMPLEMENTED | [optimizer.ts:117-136](src/context/optimizer.ts#L117-L136) - Only searchResults schemas loaded, not full catalog      |
+| AC4 | Context usage measurement et logging (<5% target)                     | ✅ IMPLEMENTED | [metrics.ts:87-99](src/context/metrics.ts#L87-L99) - measureContextUsage() + database logging                         |
+| AC5 | Comparison metric affiché: before (30-50%) vs after (<5%)             | ✅ IMPLEMENTED | [metrics.ts:119-180](src/context/metrics.ts#L119-L180) - displayContextComparison() shows before/after                |
+| AC6 | Cache hit pour frequently used tools (évite reloading)                | ✅ IMPLEMENTED | [cache.ts:46-73](src/context/cache.ts#L46-L73) - LRU cache with hit tracking                                          |
+| AC7 | Performance: Total query-to-schema latency <200ms P95                 | ✅ IMPLEMENTED | [metrics.ts:287-305](src/context/metrics.ts#L287-L305) - P95 calculation + benchmarks verify target                   |
 
 **Result:** 7/7 ACs IMPLEMENTED ✅
 
 ### Task Completion Validation
 
-| Task | Description | Completed? | Verification |
-|------|-------------|------------|--------------|
-| 1.6.1 | Implement ContextOptimizer class with vector search integration | ✅ TRUE | [optimizer.ts:27-235](src/context/optimizer.ts#L27-L235) - Full class implemented |
-| 1.6.2 | Create schema loading workflow (query → search → load) | ✅ TRUE | [optimizer.ts:90-167](src/context/optimizer.ts#L90-L167) - Complete workflow |
-| 1.6.3 | Implement context usage measurement and logging | ✅ TRUE | [metrics.ts:87-99](src/context/metrics.ts#L87-L99) + [metrics.ts:189-223](src/context/metrics.ts#L189-L223) |
-| 1.6.4 | Add before/after comparison metrics display | ✅ TRUE | [metrics.ts:119-180](src/context/metrics.ts#L119-L180) - displayContextComparison() |
-| 1.6.5 | Implement schema caching with LRU eviction | ✅ TRUE | [cache.ts:16-153](src/context/cache.ts#L16-L153) - SchemaCache with LRU |
-| 1.6.6 | Verify P95 latency <200ms requirement | ✅ TRUE | [context_latency_bench.ts](tests/benchmark/context_latency_bench.ts) - Benchmarks verify target |
-| 1.6.7 | Add metrics tracking to database | ✅ TRUE | [002_metrics.sql](src/db/migrations/002_metrics.sql) - metrics table + logging functions |
-| 1.6.8 | Write unit and integration tests | ✅ TRUE | 32 tests across cache_test.ts, metrics_test.ts, optimizer_test.ts - all passing |
-| 1.6.9 | Add documentation with usage examples | ✅ TRUE | [README.md](src/context/README.md) - 303 lines comprehensive docs |
+| Task  | Description                                                     | Completed? | Verification                                                                                                |
+| ----- | --------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| 1.6.1 | Implement ContextOptimizer class with vector search integration | ✅ TRUE    | [optimizer.ts:27-235](src/context/optimizer.ts#L27-L235) - Full class implemented                           |
+| 1.6.2 | Create schema loading workflow (query → search → load)          | ✅ TRUE    | [optimizer.ts:90-167](src/context/optimizer.ts#L90-L167) - Complete workflow                                |
+| 1.6.3 | Implement context usage measurement and logging                 | ✅ TRUE    | [metrics.ts:87-99](src/context/metrics.ts#L87-L99) + [metrics.ts:189-223](src/context/metrics.ts#L189-L223) |
+| 1.6.4 | Add before/after comparison metrics display                     | ✅ TRUE    | [metrics.ts:119-180](src/context/metrics.ts#L119-L180) - displayContextComparison()                         |
+| 1.6.5 | Implement schema caching with LRU eviction                      | ✅ TRUE    | [cache.ts:16-153](src/context/cache.ts#L16-L153) - SchemaCache with LRU                                     |
+| 1.6.6 | Verify P95 latency <200ms requirement                           | ✅ TRUE    | [context_latency_bench.ts](tests/benchmark/context_latency_bench.ts) - Benchmarks verify target             |
+| 1.6.7 | Add metrics tracking to database                                | ✅ TRUE    | [002_metrics.sql](src/db/migrations/002_metrics.sql) - metrics table + logging functions                    |
+| 1.6.8 | Write unit and integration tests                                | ✅ TRUE    | 32 tests across cache_test.ts, metrics_test.ts, optimizer_test.ts - all passing                             |
+| 1.6.9 | Add documentation with usage examples                           | ✅ TRUE    | [README.md](src/context/README.md) - 303 lines comprehensive docs                                           |
 
 **Result:** 9/9 tasks VERIFIED ✅ (0 false completions)
 
 ### Code Quality Assessment
 
 **Architecture Alignment:**
+
 - ✅ Follows project structure: src/context/ directory per [architecture.md](docs/architecture.md)
 - ✅ Uses TypeScript strict mode with no implicit any
 - ✅ ES modules with proper exports via [index.ts](src/context/index.ts)
@@ -350,6 +368,7 @@ Successfully implemented on-demand schema loading and context optimization for A
 - ✅ Uses PGliteClient for database access
 
 **Security Review:**
+
 - ✅ No SQL injection - parameterized queries used throughout
 - ✅ Input validation on topK and minScore parameters
 - ✅ No hardcoded credentials or secrets
@@ -357,12 +376,14 @@ Successfully implemented on-demand schema loading and context optimization for A
 - ✅ Logging uses structured format (no sensitive data exposure)
 
 **Performance Verification:**
+
 - ✅ Context usage: <5% target met (1.25% for topK=5 in typical scenario)
 - ✅ P95 latency: <200ms target met (benchmarks show 50-150ms range)
 - ✅ Cache hit rate optimization with LRU eviction
 - ✅ Token estimation uses fast heuristic (500 tokens/schema)
 
 **Testing Coverage:**
+
 - ✅ 32 unit tests covering all 7 acceptance criteria
 - ✅ 100% test pass rate
 - ✅ Tests use in-memory databases for isolation
@@ -372,6 +393,7 @@ Successfully implemented on-demand schema loading and context optimization for A
 ### Summary
 
 **Strengths:**
+
 1. Comprehensive implementation covering all acceptance criteria
 2. Clean separation of concerns (optimizer, cache, metrics modules)
 3. Excellent test coverage with 100% pass rate
@@ -380,10 +402,12 @@ Successfully implemented on-demand schema loading and context optimization for A
 6. Proper integration with existing VectorSearch infrastructure
 
 **Minor Observations:**
-- Token estimation uses rough heuristic (500 tokens/schema) - acceptable for performance but noted for future refinement if needed
+
+- Token estimation uses rough heuristic (500 tokens/schema) - acceptable for performance but noted
+  for future refinement if needed
 - JSONB handling required special attention (type checking before JSON.parse) - properly addressed
 
-**Recommendation:**
-**APPROVE** - Story 1.6 is complete and ready for merge. All acceptance criteria implemented, all tasks verified, tests passing, no security or quality issues identified.
+**Recommendation:** **APPROVE** - Story 1.6 is complete and ready for merge. All acceptance criteria
+implemented, all tasks verified, tests passing, no security or quality issues identified.
 
 ---

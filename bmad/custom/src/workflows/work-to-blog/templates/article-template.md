@@ -6,7 +6,7 @@ Use this structure for detailed technical articles.
 
 ## Structure
 
-```markdown
+````markdown
 # {{title}}
 
 > {{one_line_summary}}
@@ -17,13 +17,11 @@ Use this structure for detailed technical articles.
 
 ## The Challenge
 
-{{problem_description}}
-{{why_it_was_tricky}}
+{{problem_description}} {{why_it_was_tricky}}
 
 ## The Discovery / Solution
 
-{{what_you_found_or_built}}
-{{key_insight}}
+{{what_you_found_or_built}} {{key_insight}}
 
 ### Implementation Details
 
@@ -32,6 +30,7 @@ Use this structure for detailed technical articles.
 ```{{language}}
 {{code_example_if_relevant}}
 ```
+````
 
 ### Key Points
 
@@ -41,19 +40,17 @@ Use this structure for detailed technical articles.
 
 ## Lessons Learned
 
-{{what_you_learned}}
-{{what_you_would_do_differently}}
+{{what_you_learned}} {{what_you_would_do_differently}}
 
 ## Conclusion
 
-{{summary}}
-{{next_steps_or_call_to_action}}
+{{summary}} {{next_steps_or_call_to_action}}
 
 ---
 
-*{{date}} - {{author}}*
-```
+_{{date}} - {{author}}_
 
+```
 ## Guidelines
 
 ### Title
@@ -80,3 +77,4 @@ Use this structure for detailed technical articles.
 - Target: 800-1500 words
 - Enough detail to be useful
 - Not so long it loses readers
+```

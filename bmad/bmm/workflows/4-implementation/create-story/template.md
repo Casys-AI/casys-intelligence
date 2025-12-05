@@ -4,9 +4,7 @@ Status: drafted
 
 ## Story
 
-As a {{role}},
-I want {{action}},
-so that {{benefit}}.
+As a {{role}}, I want {{action}}, so that {{benefit}}.
 
 ## Acceptance Criteria
 

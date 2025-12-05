@@ -20,12 +20,12 @@ import type { PGliteClient } from "../db/client.ts";
 import type { VectorSearch } from "../vector/search.ts";
 import type {
   DAGStructure,
-  GraphStats,
-  WorkflowExecution,
-  HybridSearchResult,
   GraphMetricsResponse,
+  GraphStats,
+  HybridSearchResult,
   MetricsTimeRange,
   TimeSeriesPoint,
+  WorkflowExecution,
 } from "./types.ts";
 import type { GraphEvent } from "./events.ts";
 
@@ -139,7 +139,9 @@ export class GraphRAGEngine {
 
       const syncTime = performance.now() - startTime;
       log.info(
-        `✓ Graph synced: ${this.graph.order} nodes, ${this.graph.size} edges (${syncTime.toFixed(1)}ms)`,
+        `✓ Graph synced: ${this.graph.order} nodes, ${this.graph.size} edges (${
+          syncTime.toFixed(1)
+        }ms)`,
       );
 
       // 3. Precompute metrics if graph is not empty
@@ -286,10 +288,14 @@ export class GraphRAGEngine {
           // Cycle detected: keep edge with higher weight
           if (edgeWeights[i][j] >= edgeWeights[j][i]) {
             adjacency[j][i] = false; // Remove j→i edge
-            log.debug(`[buildDAG] Cycle broken: keeping ${candidateTools[j]} → ${candidateTools[i]}`);
+            log.debug(
+              `[buildDAG] Cycle broken: keeping ${candidateTools[j]} → ${candidateTools[i]}`,
+            );
           } else {
             adjacency[i][j] = false; // Remove i→j edge
-            log.debug(`[buildDAG] Cycle broken: keeping ${candidateTools[i]} → ${candidateTools[j]}`);
+            log.debug(
+              `[buildDAG] Cycle broken: keeping ${candidateTools[i]} → ${candidateTools[j]}`,
+            );
           }
         }
       }
@@ -542,13 +548,15 @@ export class GraphRAGEngine {
       attributes: Record<string, unknown>;
     }> = [];
 
-    this.graph.forEachEdge((_edge: string, attrs: Record<string, unknown>, source: string, target: string) => {
-      edges.push({
-        source,
-        target,
-        attributes: { ...attrs },
-      });
-    });
+    this.graph.forEachEdge(
+      (_edge: string, attrs: Record<string, unknown>, source: string, target: string) => {
+        edges.push({
+          source,
+          target,
+          attributes: { ...attrs },
+        });
+      },
+    );
 
     return edges;
   }
@@ -671,7 +679,9 @@ export class GraphRAGEngine {
    *
    * @param templates - Workflow templates with edges
    */
-  async bootstrapFromTemplates(templates: Record<string, { edges: [string, string][] }>): Promise<void> {
+  async bootstrapFromTemplates(
+    templates: Record<string, { edges: [string, string][] }>,
+  ): Promise<void> {
     let edgesAdded = 0;
 
     for (const [_templateName, template] of Object.entries(templates)) {
@@ -846,63 +856,64 @@ export class GraphRAGEngine {
     }> = [];
 
     // Search through all nodes in graph
-    this.graph.forEachNode((toolId: string, attrs: { name?: string; serverId?: string; metadata?: { description?: string } }) => {
-      // Extract server and name from tool_id
-      let server = "unknown";
-      let name = toolId;
+    this.graph.forEachNode(
+      (
+        toolId: string,
+        attrs: { name?: string; serverId?: string; metadata?: { description?: string } },
+      ) => {
+        // Extract server and name from tool_id
+        let server = "unknown";
+        let name = toolId;
 
-      if (toolId.includes(":")) {
-        const colonIndex = toolId.indexOf(":");
-        server = toolId.substring(0, colonIndex);
-        name = toolId.substring(colonIndex + 1);
-      } else if (toolId.includes("__")) {
-        const parts = toolId.split("__");
-        if (parts.length >= 3) {
-          server = parts[1];
-          name = parts.slice(2).join("__");
+        if (toolId.includes(":")) {
+          const colonIndex = toolId.indexOf(":");
+          server = toolId.substring(0, colonIndex);
+          name = toolId.substring(colonIndex + 1);
+        } else if (toolId.includes("__")) {
+          const parts = toolId.split("__");
+          if (parts.length >= 3) {
+            server = parts[1];
+            name = parts.slice(2).join("__");
+          }
         }
-      }
 
-      const description = attrs.metadata?.description || attrs.name || "";
-      const lowerName = name.toLowerCase();
-      const lowerServer = server.toLowerCase();
-      const lowerDescription = description.toLowerCase();
+        const description = attrs.metadata?.description || attrs.name || "";
+        const lowerName = name.toLowerCase();
+        const lowerServer = server.toLowerCase();
+        const lowerDescription = description.toLowerCase();
 
-      // Score based on match quality
-      let score = 0;
+        // Score based on match quality
+        let score = 0;
 
-      // Exact name match = highest score
-      if (lowerName === lowerQuery) {
-        score = 1.0;
-      }
-      // Name starts with query = high score
-      else if (lowerName.startsWith(lowerQuery)) {
-        score = 0.9;
-      }
-      // Name contains query = medium score
-      else if (lowerName.includes(lowerQuery)) {
-        score = 0.7;
-      }
-      // Server matches = lower score
-      else if (lowerServer.includes(lowerQuery)) {
-        score = 0.5;
-      }
-      // Description contains query = lowest score
-      else if (lowerDescription.includes(lowerQuery)) {
-        score = 0.3;
-      }
+        // Exact name match = highest score
+        if (lowerName === lowerQuery) {
+          score = 1.0;
+        } // Name starts with query = high score
+        else if (lowerName.startsWith(lowerQuery)) {
+          score = 0.9;
+        } // Name contains query = medium score
+        else if (lowerName.includes(lowerQuery)) {
+          score = 0.7;
+        } // Server matches = lower score
+        else if (lowerServer.includes(lowerQuery)) {
+          score = 0.5;
+        } // Description contains query = lowest score
+        else if (lowerDescription.includes(lowerQuery)) {
+          score = 0.3;
+        }
 
-      if (score > 0) {
-        results.push({
-          tool_id: toolId,
-          name,
-          server,
-          description: description.substring(0, 200), // Truncate for autocomplete
-          score,
-          pagerank: this.pageRanks[toolId] || 0,
-        });
-      }
-    });
+        if (score > 0) {
+          results.push({
+            tool_id: toolId,
+            name,
+            server,
+            description: description.substring(0, 200), // Truncate for autocomplete
+            score,
+            pagerank: this.pageRanks[toolId] || 0,
+          });
+        }
+      },
+    );
 
     // Sort by score (desc), then by pagerank (desc)
     results.sort((a, b) => {
@@ -972,7 +983,9 @@ export class GraphRAGEngine {
       const alpha = Math.max(0.5, 1.0 - density * 2);
 
       log.debug(
-        `[searchToolsHybrid] alpha=${alpha.toFixed(2)}, expansion=${expansionMultiplier}x (density=${density.toFixed(4)}, edges=${edgeCount})`,
+        `[searchToolsHybrid] alpha=${
+          alpha.toFixed(2)
+        }, expansion=${expansionMultiplier}x (density=${density.toFixed(4)}, edges=${edgeCount})`,
       );
 
       // 3. Compute hybrid scores for each candidate
@@ -1027,7 +1040,9 @@ export class GraphRAGEngine {
 
       const elapsedMs = performance.now() - startTime;
       log.info(
-        `[searchToolsHybrid] "${query}" → ${topResults.length} results (alpha=${alpha.toFixed(2)}, ${elapsedMs.toFixed(1)}ms)`,
+        `[searchToolsHybrid] "${query}" → ${topResults.length} results (alpha=${
+          alpha.toFixed(2)
+        }, ${elapsedMs.toFixed(1)}ms)`,
       );
 
       return topResults;

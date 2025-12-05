@@ -4,7 +4,7 @@
  * Tests health checking functionality for MCP servers.
  */
 
-import { assertEquals, assert } from "jsr:@std/assert@1";
+import { assert, assertEquals } from "jsr:@std/assert@1";
 import { MockMCPServer } from "../fixtures/mock-mcp-server.ts";
 
 export interface HealthCheckResult {

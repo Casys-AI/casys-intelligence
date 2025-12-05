@@ -1,25 +1,26 @@
 ---
-name: 'step-05-memory-requirements'
-description: 'Assess memory requirements and configure memory implementation'
+name: "step-05-memory-requirements"
+description: "Assess memory requirements and configure memory implementation"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-05-memory-requirements.md'
-nextStepFile: '{project_path}/steps/step-06-external-tools.md'
-workflowFile: '{workflow_path}/workflow.md'
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
+thisStepFile: "{workflow_path}/steps/step-05-memory-requirements.md"
+nextStepFile: "{project_path}/steps/step-06-external-tools.md"
+workflowFile: "{workflow_path}/workflow.md"
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
 
 # Documentation References
-commonToolsCsv: '{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv'
+commonToolsCsv: "{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv"
 ---
 
 # Step 5: Memory Requirements Assessment
 
 ## STEP GOAL:
 
-Assess whether the workflow needs memory capabilities and configure appropriate memory implementation.
+Assess whether the workflow needs memory capabilities and configure appropriate memory
+implementation.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -48,7 +49,8 @@ Assess whether the workflow needs memory capabilities and configure appropriate 
 
 "Assessing **Memory Requirements**
 
-Most workflows complete their task and exit without needing persistent memory. However, some specialized workflows benefit from session-to-session continuity."
+Most workflows complete their task and exit without needing persistent memory. However, some
+specialized workflows benefit from session-to-session continuity."
 
 ### 2. Present Memory Options from CSV
 
@@ -71,9 +73,8 @@ Load `{commonToolsCsv}` and filter for `type='tool-memory'`:
 3. **Pattern Recognition:** Would semantic search of past experiences be valuable?
 4. **Self-Improvement:** Will your workflow learn from previous executions?
 
-**Most workflows:** No memory needed (they complete and exit)
-**Some workflows:** Sidecar files for history tracking
-**Advanced workflows:** Vector database for semantic learning"
+**Most workflows:** No memory needed (they complete and exit) **Some workflows:** Sidecar files for
+history tracking **Advanced workflows:** Vector database for semantic learning"
 
 ### 4. Configure Memory (If Needed)
 
@@ -99,10 +100,9 @@ Append to {workflowPlanFile}:
 
 ### Memory Requirements
 
-**Sidecar File:** [selected/not selected] - Use case: [specific implementation]
-**Vector Database:** [selected/not selected] - Use case: [specific implementation]
-**Memory Management:** [cleanup, privacy, access patterns]
-**Integration:** [how memory enhances workflow continuity]
+**Sidecar File:** [selected/not selected] - Use case: [specific implementation] **Vector Database:**
+[selected/not selected] - Use case: [specific implementation] **Memory Management:** [cleanup,
+privacy, access patterns] **Integration:** [how memory enhances workflow continuity]
 ```
 
 ### 6. Menu Options
@@ -111,12 +111,14 @@ Display: **Select an Option:** [C] Continue to External Tools [M] Modify Memory
 
 #### Menu Handling Logic:
 
-- IF C: Append memory configuration to {workflowPlanFile}, update frontmatter, then load {nextStepFile}
+- IF C: Append memory configuration to {workflowPlanFile}, update frontmatter, then load
+  {nextStepFile}
 - IF M: Refine memory requirements
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and memory is documented will you load {nextStepFile} to configure external tools.
+ONLY WHEN C is selected and memory is documented will you load {nextStepFile} to configure external
+tools.
 
 ---
 

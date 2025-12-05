@@ -1,8 +1,6 @@
 # Story 3.3: Local Data Processing Pipeline
 
-**Epic:** 3 - Agent Code Execution & Local Processing
-**Story ID:** 3.3
-**Status:** deprecated
+**Epic:** 3 - Agent Code Execution & Local Processing **Story ID:** 3.3 **Status:** deprecated
 **Estimated Effort:** N/A (deprecated)
 
 ---
@@ -11,7 +9,8 @@
 
 **Raison de dépréciation :**
 
-Cette story est **architecturalement incompatible** avec Epic 2.5 (AIL/HIL Feedback Loops) et **redondante** avec Story 3.4.
+Cette story est **architecturalement incompatible** avec Epic 2.5 (AIL/HIL Feedback Loops) et
+**redondante** avec Story 3.4.
 
 **Problèmes identifiés :**
 
@@ -31,14 +30,15 @@ Cette story est **architecturalement incompatible** avec Epic 2.5 (AIL/HIL Feedb
    // Au lieu de pipeline séparé, utiliser DAG hybride avec AIL :
    const workflow = {
      tasks: [
-       { id: "fetch", tool: "github:list_commits" },  // MCP
-       { id: "analyze", type: "code_execution", code: "..." },  // Processing
+       { id: "fetch", tool: "github:list_commits" }, // MCP
+       { id: "analyze", type: "code_execution", code: "..." }, // Processing
        // Agent peut observer + injecter tasks durant execution
-     ]
+     ],
    };
    ```
 
-**Décision :** Utiliser Story 3.4 (DAG + code_execution) qui préserve AIL et permet workflows adaptatifs.
+**Décision :** Utiliser Story 3.4 (DAG + code_execution) qui préserve AIL et permet workflows
+adaptatifs.
 
 **Impact :** Aucun - fonctionnalité déjà couverte par architecture existante.
 
@@ -53,10 +53,12 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 ### Original Intent vs Reality
 
 **Original Story 3.3 Intent:**
+
 - Implement "data processing pipeline" with pre-built helpers (filter, map, reduce, groupBy)
 - Seemed to suggest a library of processing utilities
 
 **Actual Architecture (ADR-007 + Anthropic Code Execution research):**
+
 - The LLM agent **writes TypeScript code directly** to process data
 - No pre-built "pipeline" - agents generate custom processing code
 - Code executes in sandbox (3.1) with MCP tools injection (3.2)
@@ -65,6 +67,7 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 ### The Confusion
 
 **Key questions:**
+
 1. Who writes the processing code?
    - Original 3.3: Pre-built helpers?
    - Reality: Agent writes custom TypeScript code
@@ -80,18 +83,21 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 ### Analysis of Acceptance Criteria Overlap
 
 **Story 3.3 ACs that are actually Story 3.4:**
+
 - AC #1: "Data processing pipeline implemented in sandbox" → 3.4 execute_code
 - AC #2: "Agent code can: filter, map, reduce" → 3.4 with agent-written code
 - AC #8: "Integration with DAG executor" → **3.4 Phase 3 explicitly covers this**
 - AC #9: "Metrics logged" → 3.4 already includes metrics in output schema
 
 **What might be unique to 3.3 (if redefined):**
+
 - AC #6: "Streaming support" - but agents can use ReadableStream in 3.4
 - AC #7: "Memory efficiency" - sandbox config in 3.4
 
 ### Possible Resolutions
 
 **Option A: SKIP Story 3.3 Entirely** ⭐ RECOMMENDED
+
 - Story 3.4 already covers the real need (code execution + data processing)
 - Agent writes custom code, no need for pre-built pipeline
 - PRD FR017-FR019 fully covered by Story 3.4
@@ -99,6 +105,7 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 - **Cons:** None identified
 
 **Option B: REDEFINE as "Standard Library for Sandbox"**
+
 - Provide common utilities available in sandbox context
 - Like lodash, date-fns, or data transformation helpers
 - Agents can use them optionally in their code
@@ -106,6 +113,7 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 - **Cons:** May not be needed, adds maintenance burden
 
 **Option C: DEFER Until Real Need Emerges**
+
 - Implement Story 3.4 first
 - Monitor what patterns emerge from actual usage
 - Extract common patterns into library later if needed
@@ -115,6 +123,7 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 ### Recommendation
 
 **Skip or Defer Story 3.3:**
+
 - Story 3.4 delivers the actual architectural need
 - No clear differentiation from 3.4 in current form
 - If utilities are needed, add them incrementally in future stories
@@ -130,9 +139,8 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 
 ## User Story (ORIGINAL - SUBJECT TO CHANGE)
 
-**As a** user executing workflows with large datasets,
-**I want** data to be processed locally before reaching the LLM context,
-**So that** I save context tokens and get faster responses.
+**As a** user executing workflows with large datasets, **I want** data to be processed locally
+before reaching the LLM context, **So that** I save context tokens and get faster responses.
 
 **⚠️ NOTE:** This user story may be redundant with Story 3.4 execute_code tool.
 
@@ -156,7 +164,8 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 
 ## Tasks / Subtasks (⚠️ ORIGINAL - SUBJECT TO MAJOR REVISION)
 
-**NOTE:** These tasks assume a "pipeline library" approach that may not align with the actual architecture. Awaiting scope clarification.
+**NOTE:** These tasks assume a "pipeline library" approach that may not align with the actual
+architecture. Awaiting scope clarification.
 
 ### Phase 1: Pipeline Foundation (2h) - MAY BE REDUNDANT
 
@@ -222,6 +231,7 @@ Story 3.3 scope **overlaps/conflicts** with Story 3.4 and the actual architectur
 **Example: GitHub Commits Analysis**
 
 **Without Local Processing (baseline):**
+
 ```typescript
 // Fetch 1000 commits via MCP tool
 const commits = await github.listCommits({ repo: "anthropics/claude", limit: 1000 });
@@ -230,6 +240,7 @@ const commits = await github.listCommits({ repo: "anthropics/claude", limit: 100
 ```
 
 **With Local Processing (this story):**
+
 ```typescript
 // Agent writes code that runs in sandbox
 const code = `
@@ -262,19 +273,22 @@ const code = `
 ### Architecture Constraints
 
 **Memory Management:**
+
 - Sandbox heap limit: 512MB (from Story 3.1)
 - For datasets > 512MB: MUST use streaming
 - Streaming allows processing unlimited data size
 - Chunk size: 1000 items per batch (configurable)
 
 **Performance Targets:**
-| Dataset Size | Target Time | Rationale |
-|--------------|-------------|-----------|
-| 100 items | <200ms | Real-time UX |
-| 1000 items | <2s | Acceptable for background |
-| 10000 items | <20s | Batch processing |
+
+| Dataset Size | Target Time | Rationale                 |
+| ------------ | ----------- | ------------------------- |
+| 100 items    | <200ms      | Real-time UX              |
+| 1000 items   | <2s         | Acceptable for background |
+| 10000 items  | <20s        | Batch processing          |
 
 **Integration with Epic 1 & 2:**
+
 - Reuse vector search for tool discovery (Story 1.5)
 - Integrate with DAG executor for hybrid workflows (Story 2.2)
 - Tool injection from Story 3.2 enables data fetching
@@ -282,6 +296,7 @@ const code = `
 ### Project Structure Alignment
 
 **New Module: `src/sandbox/data-pipeline.ts`**
+
 ```
 src/sandbox/
 ├── executor.ts           # Story 3.1 - Sandbox execution
@@ -291,6 +306,7 @@ src/sandbox/
 ```
 
 **Integration Points:**
+
 - `src/dag/executor.ts`: Add `code_execution` task type
 - `src/dag/types.ts`: Extend `TaskType` enum
 - `src/telemetry/metrics.ts`: Log processing metrics
@@ -298,6 +314,7 @@ src/sandbox/
 ### Testing Strategy
 
 **Test Organization:**
+
 ```
 tests/unit/sandbox/
 └── data_pipeline_test.ts         # Pipeline operations tests
@@ -310,13 +327,17 @@ tests/benchmarks/
 ```
 
 **Benchmark Tests:**
+
 ```typescript
 Deno.bench("Process 100 commits", async () => {
   const commits = generateMockCommits(100);
-  const result = await sandbox.execute(`
+  const result = await sandbox.execute(
+    `
     const filtered = commits.filter(c => c.author === "alice");
     return { count: filtered.length };
-  `, { commits });
+  `,
+    { commits },
+  );
   assertEquals(result.result.count, 20);
 });
 ```
@@ -324,55 +345,58 @@ Deno.bench("Process 100 commits", async () => {
 ### Learnings from Previous Stories
 
 **From Story 3.1 (Sandbox Foundation):**
+
 - Sandbox startup <100ms validated
 - Timeout 30s sufficient pour large datasets
-- Memory limit 512MB → streaming needed pour >512MB datasets
-[Source: stories/story-3.1.md]
+- Memory limit 512MB → streaming needed pour >512MB datasets [Source: stories/story-3.1.md]
 
 **From Story 3.2 (Tools Injection):**
+
 - Tool wrappers disponibles dans code context
 - Vector search identifies relevant tools
 - MCP calls routed via gateway
-- Use `github.listCommits()` syntax in agent code
-[Source: stories/story-3.2.md]
+- Use `github.listCommits()` syntax in agent code [Source: stories/story-3.2.md]
 
 **From Story 2.2 (DAG Executor):**
+
 - DAG supports multiple task types (MCP tools)
 - Can extend to support code execution tasks
 - Topological sort handles dependencies
-- Parallel execution for independent tasks
-[Source: stories/story-2.2.md]
+- Parallel execution for independent tasks [Source: stories/story-2.2.md]
 
 ### Example Use Cases
 
 **Use Case 1: Commit Analysis (from AC #3)**
+
 ```typescript
 const commits = await github.listCommits({ limit: 1000 });
-const lastWeek = commits.filter(c => isLastWeek(c.date));
+const lastWeek = commits.filter((c) => isLastWeek(c.date));
 return {
   total: lastWeek.length,
-  authors: [...new Set(lastWeek.map(c => c.author))],
-  files: getMostChanged(lastWeek)
+  authors: [...new Set(lastWeek.map((c) => c.author))],
+  files: getMostChanged(lastWeek),
 };
 // Input: 2MB → Output: 300 bytes
 ```
 
 **Use Case 2: Multi-Source Aggregation**
+
 ```typescript
 const [commits, issues, prs] = await Promise.all([
   github.listCommits({ limit: 100 }),
   github.listIssues({ state: "open" }),
-  github.listPRs({ state: "open" })
+  github.listPRs({ state: "open" }),
 ]);
 
 return {
   activity_score: calculateScore(commits, issues, prs),
-  top_contributors: getTopContributors([commits, issues, prs])
+  top_contributors: getTopContributors([commits, issues, prs]),
 };
 // Input: 5MB → Output: 200 bytes
 ```
 
 **Use Case 3: Streaming Large Dataset**
+
 ```typescript
 const stream = github.listCommitsStream({ limit: 100000 });
 
@@ -382,7 +406,7 @@ let byDay = {};
 for await (const batch of stream) {
   total += batch.length;
   for (const commit of batch) {
-    const day = commit.date.split('T')[0];
+    const day = commit.date.split("T")[0];
     byDay[day] = (byDay[day] || 0) + 1;
   }
 }
@@ -394,25 +418,30 @@ return { total, daily: byDay };
 ### Performance Optimizations
 
 **Strategy 1: Lazy Evaluation**
+
 - Don't process all data if early exit possible
 - Example: `find()` stops at first match
 
 **Strategy 2: Batch Processing**
+
 - Process 1000 items per batch for streaming
 - Balance memory usage vs overhead
 
 **Strategy 3: Parallel Processing (future)**
+
 - Out of scope for Story 3.3
 - Could use Web Workers in sandbox (future optimization)
 
 ### Security Considerations
 
 **Data Privacy:**
+
 - All processing happens locally in sandbox
 - No data sent to external services
 - PII tokenization (Story 3.5) will add extra layer
 
 **Resource Limits:**
+
 - Timeout prevents infinite loops
 - Memory limit prevents OOM attacks
 - CPU throttling (future consideration)
@@ -454,25 +483,29 @@ _Key completion notes for next story (patterns, services, deviations) go here_
 ### File List
 
 **Files to be Created (NEW):**
+
 - `src/sandbox/data-pipeline.ts`
 - `tests/unit/sandbox/data_pipeline_test.ts`
 - `tests/integration/code_execution_flow_test.ts`
 - `tests/benchmarks/data_processing_bench.ts`
 
 **Files to be Modified (MODIFIED):**
+
 - `src/dag/executor.ts` (add code_execution task type)
 - `src/dag/types.ts` (extend TaskType enum)
 - `src/telemetry/metrics.ts` (log processing metrics)
 - `mod.ts` (export data pipeline)
 
 **Files to be Deleted (DELETED):**
+
 - None
 
 ---
 
 ## Change Log
 
-- **2025-11-20**: **SCOPE CLARIFICATION ADDED** - Story overlaps significantly with Story 3.4. Marked for review: Skip, Redefine, or Defer pending BMad decision.
+- **2025-11-20**: **SCOPE CLARIFICATION ADDED** - Story overlaps significantly with Story 3.4.
+  Marked for review: Skip, Redefine, or Defer pending BMad decision.
 - **2025-11-09**: Story drafted by BMM workflow, based on Epic 3 requirements
 
 ---
@@ -499,16 +532,19 @@ During Story 3.4 contextualization, we realized that:
 ### Three Options Forward
 
 **Option A: Skip 3.3** ⭐
+
 - Story 3.4 delivers the actual need
 - No duplication, cleaner Epic 3 scope
 - FR017-FR019 from PRD fully covered by 3.4
 
 **Option B: Redefine as "Sandbox Standard Library"**
+
 - Provide optional utilities (lodash-style)
 - Agents can use if helpful
 - Not a "pipeline" but a "stdlib"
 
 **Option C: Defer**
+
 - Implement 3.4 first
 - See what patterns emerge
 - Extract common utilities later if needed

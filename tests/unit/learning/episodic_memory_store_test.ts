@@ -8,7 +8,7 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 import { EpisodicMemoryStore } from "../../../src/learning/episodic-memory-store.ts";
 import type { EpisodicEventInput } from "../../../src/learning/types.ts";
 

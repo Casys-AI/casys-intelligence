@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current architectural data
 - 📋 YOU ARE A SYSTEMS ARCHITECT, not content generator
 - 💬 FOCUS on architectural patterns and design decisions
@@ -31,14 +33,16 @@
 
 ## YOUR TASK:
 
-Conduct comprehensive architectural patterns analysis using current {{current_year}} web data with emphasis on design decisions and implementation approaches for {{research_topic}}.
+Conduct comprehensive architectural patterns analysis using current {{current_year}} web data with
+emphasis on design decisions and implementation approaches for {{research_topic}}.
 
 ## ARCHITECTURAL PATTERNS SEQUENCE:
 
 ### 1. Begin Architectural Patterns Analysis
 
-Start with architectural research approach:
-"Now I'll focus on **architectural patterns and design decisions** using current {{current_year}} data to understand effective architecture approaches for [technology/domain].
+Start with architectural research approach: "Now I'll focus on **architectural patterns and design
+decisions** using current {{current_year}} data to understand effective architecture approaches for
+[technology/domain].
 
 **Architectural Patterns Focus:**
 
@@ -99,44 +103,44 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### System Architecture Patterns
 
-[System architecture patterns analysis with source citations]
-_Source: [URL with {{current_year}} architecture data]_
+[System architecture patterns analysis with source citations] _Source: [URL with {{current_year}}
+architecture data]_
 
 ### Design Principles and Best Practices
 
-[Design principles analysis with source citations]
-_Source: [URL with {{current_year}} design data]_
+[Design principles analysis with source citations] _Source: [URL with {{current_year}} design data]_
 
 ### Scalability and Performance Patterns
 
-[Scalability patterns analysis with source citations]
-_Source: [URL with {{current_year}} scalability data]_
+[Scalability patterns analysis with source citations] _Source: [URL with {{current_year}}
+scalability data]_
 
 ### Integration and Communication Patterns
 
-[Integration patterns analysis with source citations]
-_Source: [URL with {{current_year}} integration data]_
+[Integration patterns analysis with source citations] _Source: [URL with {{current_year}}
+integration data]_
 
 ### Security Architecture Patterns
 
-[Security patterns analysis with source citations]
-_Source: [URL with {{current_year}} security data]_
+[Security patterns analysis with source citations] _Source: [URL with {{current_year}} security
+data]_
 
 ### Data Architecture Patterns
 
-[Data architecture analysis with source citations]
-_Source: [URL with {{current_year}} data architecture data]_
+[Data architecture analysis with source citations] _Source: [URL with {{current_year}} data
+architecture data]_
 
 ### Deployment and Operations Architecture
 
-[Deployment architecture analysis with source citations]
-_Source: [URL with {{current_year}} deployment data]_
+[Deployment architecture analysis with source citations] _Source: [URL with {{current_year}}
+deployment data]_
 ```
 
 ### 6. Present Analysis and Continue Option
 
-Show the generated architectural patterns and present continue option:
-"I've completed the **architectural patterns analysis** using current {{current_year}} data to understand effective architecture approaches.
+Show the generated architectural patterns and present continue option: "I've completed the
+**architectural patterns analysis** using current {{current_year}} data to understand effective
+architecture approaches.
 
 **Key Architectural Findings:**
 
@@ -146,8 +150,8 @@ Show the generated architectural patterns and present continue option:
 - Integration and communication patterns analyzed
 - Security and data architecture considerations captured
 
-**Ready to proceed to implementation research?**
-[C] Continue - Save this to the document and move to implementation research
+**Ready to proceed to implementation research?** [C] Continue - Save this to the document and move
+to implementation research
 
 ### 7. Handle Continue Selection
 
@@ -159,31 +163,28 @@ Show the generated architectural patterns and present continue option:
 
 ## APPEND TO DOCUMENT:
 
-When user selects 'C', append the content directly to the research document using the structure from step 5.
+When user selects 'C', append the content directly to the research document using the structure from
+step 5.
 
 ## SUCCESS METRICS:
 
-✅ System architecture patterns identified with current {{current_year}} citations
-✅ Design principles clearly documented and analyzed
-✅ Scalability and performance patterns thoroughly mapped
-✅ Integration and communication patterns captured
-✅ Security and data architecture considerations analyzed
-✅ [C] continue option presented and handled correctly
-✅ Content properly appended to document when C selected
-✅ Proper routing to implementation research step
+✅ System architecture patterns identified with current {{current_year}} citations ✅ Design
+principles clearly documented and analyzed ✅ Scalability and performance patterns thoroughly mapped
+✅ Integration and communication patterns captured ✅ Security and data architecture considerations
+analyzed ✅ [C] continue option presented and handled correctly ✅ Content properly appended to
+document when C selected ✅ Proper routing to implementation research step
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in architectural web searches
-❌ Missing critical system architecture patterns
-❌ Not analyzing design trade-offs and considerations
-❌ Incomplete scalability or performance patterns analysis
-❌ Not presenting [C] continue option after content generation
-❌ Appending content without user selecting 'C'
+❌ Not using {{current_year}} in architectural web searches ❌ Missing critical system architecture
+patterns ❌ Not analyzing design trade-offs and considerations ❌ Incomplete scalability or
+performance patterns analysis ❌ Not presenting [C] continue option after content generation ❌
+Appending content without user selecting 'C'
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## ARCHITECTURAL RESEARCH PROTOCOLS:
 
@@ -195,6 +196,8 @@ When user selects 'C', append the content directly to the research document usin
 
 ## NEXT STEP:
 
-After user selects 'C' and content is saved to document, load `./step-04-implementation-research.md` to focus on implementation approaches and technology adoption.
+After user selects 'C' and content is saved to document, load `./step-04-implementation-research.md`
+to focus on implementation approaches and technology adoption.
 
-Remember: Always emphasize current {{current_year}} architectural data and rigorous source verification!
+Remember: Always emphasize current {{current_year}} architectural data and rigorous source
+verification!

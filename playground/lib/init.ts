@@ -77,7 +77,7 @@ const DEFAULT_WORKFLOW_PATH = "./config/workflow-templates.yaml";
  * const status = await ensurePlaygroundReady({ verbose: true });
  */
 export async function ensurePlaygroundReady(
-  options?: InitOptions
+  options?: InitOptions,
 ): Promise<InitStatus> {
   const startTime = performance.now();
   const verbose = options?.verbose ?? false;
@@ -177,7 +177,7 @@ interface InitCheckResult {
  */
 async function isAlreadyInitialized(
   dbPath: string,
-  gatewayUrl: string
+  gatewayUrl: string,
 ): Promise<InitCheckResult> {
   const checks = await Promise.all([
     checkDatabaseReady(dbPath),
@@ -206,7 +206,7 @@ async function isAlreadyInitialized(
  * Check if database exists and has data
  */
 async function checkDatabaseReady(
-  dbPath: string
+  dbPath: string,
 ): Promise<{ ready: boolean; workflowCount: number }> {
   try {
     // Check if path exists
@@ -217,7 +217,7 @@ async function checkDatabaseReady(
 
     try {
       const result = await db.query<{ count: string }>(
-        "SELECT COUNT(*) as count FROM workflow_pattern"
+        "SELECT COUNT(*) as count FROM workflow_pattern",
       );
       const count = parseInt(result.rows[0]?.count ?? "0", 10);
       await db.close();
@@ -238,7 +238,7 @@ async function checkDatabaseReady(
  * Check if MCP gateway is running and responsive
  */
 async function checkGatewayReady(
-  gatewayUrl: string
+  gatewayUrl: string,
 ): Promise<{ ready: boolean; servers: string[] }> {
   try {
     // Try to list tools from gateway

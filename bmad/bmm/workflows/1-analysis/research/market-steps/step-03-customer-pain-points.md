@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current customer data
 - 📋 YOU ARE A CUSTOMER NEEDS ANALYST, not content generator
 - 💬 FOCUS on customer pain points, challenges, and unmet needs
@@ -32,16 +34,20 @@
 
 ## YOUR TASK:
 
-Conduct customer pain points and needs analysis using current {{current_year}} web data with emphasis on challenges and frustrations.
+Conduct customer pain points and needs analysis using current {{current_year}} web data with
+emphasis on challenges and frustrations.
 
 ## CUSTOMER PAIN POINTS ANALYSIS SEQUENCE:
 
 ### 1. Begin Customer Pain Points Analysis
 
-**UTILIZE SUBPROCESSES AND SUBAGENTS**: Use research subagents, subprocesses or parallel processing if available to thoroughly analyze different customer pain point areas simultaneously and thoroughly.
+**UTILIZE SUBPROCESSES AND SUBAGENTS**: Use research subagents, subprocesses or parallel processing
+if available to thoroughly analyze different customer pain point areas simultaneously and
+thoroughly.
 
-Start with customer pain points research approach:
-"Now I'll conduct **customer pain points analysis** for **{{research_topic}}** using current {{current_year}} web data to understand customer challenges.
+Start with customer pain points research approach: "Now I'll conduct **customer pain points
+analysis** for **{{research_topic}}** using current {{current_year}} web data to understand customer
+challenges.
 
 **Customer Pain Points Focus:**
 
@@ -74,7 +80,8 @@ Start with customer pain points research approach:
 
 **Collect and analyze findings from all parallel searches:**
 
-"After executing comprehensive parallel web searches, let me analyze and aggregate customer pain points findings:
+"After executing comprehensive parallel web searches, let me analyze and aggregate customer pain
+points findings:
 
 **Research Coverage:**
 
@@ -83,11 +90,9 @@ Start with customer pain points research approach:
 - Barriers to adoption or usage
 - Service and support pain points
 
-**Cross-Pain Points Analysis:**
-[Identify patterns connecting different types of pain points]
+**Cross-Pain Points Analysis:** [Identify patterns connecting different types of pain points]
 
-**Quality Assessment:**
-[Overall confidence levels and research gaps identified]"
+**Quality Assessment:** [Overall confidence levels and research gaps identified]"
 
 ### 4. Generate Customer Pain Points Content
 
@@ -104,73 +109,60 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### Customer Challenges and Frustrations
 
-[Customer challenges analysis with source citations]
-_Primary Frustrations: [Major customer frustrations identified]_
-_Usage Barriers: [Barriers preventing effective usage]_
-_Service Pain Points: [Customer service and support issues]_
-_Frequency Analysis: [How often these challenges occur]_
-_Source: [URL with {{current_year}} customer challenges data]_
+[Customer challenges analysis with source citations] _Primary Frustrations: [Major customer
+frustrations identified]_ _Usage Barriers: [Barriers preventing effective usage]_ _Service Pain
+Points: [Customer service and support issues]_ _Frequency Analysis: [How often these challenges
+occur]_ _Source: [URL with {{current_year}} customer challenges data]_
 
 ### Unmet Customer Needs
 
-[Unmet needs analysis with source citations]
-_Critical Unmet Needs: [Most important unaddressed needs]_
-_Solution Gaps: [Opportunities to address unmet needs]_
-_Market Gaps: [Market opportunities from unmet needs]_
-_Priority Analysis: [Which needs are most critical]_
-_Source: [URL with {{current_year}} unmet needs data]_
+[Unmet needs analysis with source citations] _Critical Unmet Needs: [Most important unaddressed
+needs]_ _Solution Gaps: [Opportunities to address unmet needs]_ _Market Gaps: [Market opportunities
+from unmet needs]_ _Priority Analysis: [Which needs are most critical]_ _Source: [URL with
+{{current_year}} unmet needs data]_
 
 ### Barriers to Adoption
 
-[Adoption barriers analysis with source citations]
-_Price Barriers: [Cost-related barriers to adoption]_
-_Technical Barriers: [Complexity or technical barriers]_
-_Trust Barriers: [Trust and credibility issues]_
-_Convenience Barriers: [Ease of use or accessibility issues]_
-_Source: [URL with {{current_year}} adoption barriers data]_
+[Adoption barriers analysis with source citations] _Price Barriers: [Cost-related barriers to
+adoption]_ _Technical Barriers: [Complexity or technical barriers]_ _Trust Barriers: [Trust and
+credibility issues]_ _Convenience Barriers: [Ease of use or accessibility issues]_ _Source: [URL
+with {{current_year}} adoption barriers data]_
 
 ### Service and Support Pain Points
 
-[Service pain points analysis with source citations]
-_Customer Service Issues: [Common customer service problems]_
-_Support Gaps: [Areas where customer support is lacking]_
-_Communication Issues: [Communication breakdowns and frustrations]_
-_Response Time Issues: [Slow response and resolution problems]_
-_Source: [URL with {{current_year}} service pain points data]_
+[Service pain points analysis with source citations] _Customer Service Issues: [Common customer
+service problems]_ _Support Gaps: [Areas where customer support is lacking]_ _Communication Issues:
+[Communication breakdowns and frustrations]_ _Response Time Issues: [Slow response and resolution
+problems]_ _Source: [URL with {{current_year}} service pain points data]_
 
 ### Customer Satisfaction Gaps
 
-[Satisfaction gap analysis with source citations]
-_Expectation Gaps: [Differences between expectations and reality]_
-_Quality Gaps: [Areas where quality expectations aren't met]_
-_Value Perception Gaps: [Perceived value vs actual value]_
-_Trust and Credibility Gaps: [Trust issues affecting satisfaction]_
-_Source: [URL with {{current_year}} satisfaction gap data]_
+[Satisfaction gap analysis with source citations] _Expectation Gaps: [Differences between
+expectations and reality]_ _Quality Gaps: [Areas where quality expectations aren't met]_ _Value
+Perception Gaps: [Perceived value vs actual value]_ _Trust and Credibility Gaps: [Trust issues
+affecting satisfaction]_ _Source: [URL with {{current_year}} satisfaction gap data]_
 
 ### Emotional Impact Assessment
 
-[Emotional impact analysis with source citations]
-_Frustration Levels: [Customer frustration severity assessment]_
-_Loyalty Risks: [How pain points affect customer loyalty]_
-_Reputation Impact: [Impact on brand or product reputation]_
-_Customer Retention Risks: [Risk of customer loss from pain points]_
-_Source: [URL with {{current_year}} emotional impact data]_
+[Emotional impact analysis with source citations] _Frustration Levels: [Customer frustration
+severity assessment]_ _Loyalty Risks: [How pain points affect customer loyalty]_ _Reputation Impact:
+[Impact on brand or product reputation]_ _Customer Retention Risks: [Risk of customer loss from pain
+points]_ _Source: [URL with {{current_year}} emotional impact data]_
 
 ### Pain Point Prioritization
 
-[Pain point prioritization with source citations]
-_High Priority Pain Points: [Most critical pain points to address]_
-_Medium Priority Pain Points: [Important but less critical pain points]_
-_Low Priority Pain Points: [Minor pain points with lower impact]_
-_Opportunity Mapping: [Pain points with highest solution opportunity]_
-_Source: [URL with {{current_year}} prioritization data]_
+[Pain point prioritization with source citations] _High Priority Pain Points: [Most critical pain
+points to address]_ _Medium Priority Pain Points: [Important but less critical pain points]_ _Low
+Priority Pain Points: [Minor pain points with lower impact]_ _Opportunity Mapping: [Pain points with
+highest solution opportunity]_ _Source: [URL with {{current_year}} prioritization data]_
 ```
 
 ### 5. Present Analysis and Continue Option
 
 **Show analysis and present continue option:**
 
-"I've completed **customer pain points analysis** using current {{current_year}} data to understand customer challenges for {{research_topic}}.
+"I've completed **customer pain points analysis** using current {{current_year}} data to understand
+customer challenges for {{research_topic}}.
 
 **Key Pain Points Findings:**
 
@@ -180,8 +172,8 @@ _Source: [URL with {{current_year}} prioritization data]_
 - Customer satisfaction gaps assessed
 - Pain points prioritized by impact and opportunity
 
-**Ready to proceed to customer decision processes?**
-[C] Continue - Save this to document and proceed to decision processes analysis
+**Ready to proceed to customer decision processes?** [C] Continue - Save this to document and
+proceed to decision processes analysis
 
 ### 6. Handle Continue Selection
 
@@ -197,29 +189,23 @@ Content is already written to document when generated in step 4. No additional a
 
 ## SUCCESS METRICS:
 
-✅ Customer challenges and frustrations clearly documented
-✅ Unmet needs and solution gaps identified
-✅ Adoption barriers and service pain points analyzed
-✅ Customer satisfaction gaps assessed
-✅ Pain points prioritized by impact and opportunity
-✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
-✅ Proper routing to next step (customer decisions)
-✅ Research goals alignment maintained
+✅ Customer challenges and frustrations clearly documented ✅ Unmet needs and solution gaps
+identified ✅ Adoption barriers and service pain points analyzed ✅ Customer satisfaction gaps
+assessed ✅ Pain points prioritized by impact and opportunity ✅ Content written immediately to
+document ✅ [C] continue option presented and handled correctly ✅ Proper routing to next step
+(customer decisions) ✅ Research goals alignment maintained
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in customer web searches
-❌ Missing critical customer challenges or frustrations
-❌ Not identifying unmet needs or solution gaps
-❌ Incomplete adoption barriers analysis
-❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
-❌ Not routing to customer decisions analysis step
+❌ Not using {{current_year}} in customer web searches ❌ Missing critical customer challenges or
+frustrations ❌ Not identifying unmet needs or solution gaps ❌ Incomplete adoption barriers
+analysis ❌ Not writing content immediately to document ❌ Not presenting [C] continue option after
+content generation ❌ Not routing to customer decisions analysis step
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## CUSTOMER PAIN POINTS RESEARCH PROTOCOLS:
 
@@ -242,6 +228,8 @@ Content is already written to document when generated in step 4. No additional a
 
 ## NEXT STEP:
 
-After user selects 'C', load `./step-04-customer-decisions.md` to analyze customer decision processes, journey mapping, and decision factors for {{research_topic}}.
+After user selects 'C', load `./step-04-customer-decisions.md` to analyze customer decision
+processes, journey mapping, and decision factors for {{research_topic}}.
 
-Remember: Always write research content to document immediately and emphasize current {{current_year}} customer pain points data with rigorous source verification!
+Remember: Always write research content to document immediately and emphasize current
+{{current_year}} customer pain points data with rigorous source verification!

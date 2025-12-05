@@ -2,15 +2,16 @@
 
 Real-time Server-Sent Events (SSE) stream for monitoring graph learning and evolution.
 
-**Story:** 6.1 - Real-time Events Stream (SSE)
-**Endpoint:** `GET /events/stream`
-**Transport:** Server-Sent Events (SSE)
+**Story:** 6.1 - Real-time Events Stream (SSE) **Endpoint:** `GET /events/stream` **Transport:**
+Server-Sent Events (SSE)
 
 ---
 
 ## Overview
 
-The Events API provides a real-time stream of graph events via Server-Sent Events (SSE). This allows clients to observe how AgentCards learns from workflow executions, builds tool dependency relationships, and evolves its knowledge graph over time.
+The Events API provides a real-time stream of graph events via Server-Sent Events (SSE). This allows
+clients to observe how AgentCards learns from workflow executions, builds tool dependency
+relationships, and evolves its knowledge graph over time.
 
 ### Key Features
 
@@ -29,11 +30,13 @@ The Events API provides a real-time stream of graph events via Server-Sent Event
 Establishes a Server-Sent Events stream for graph events.
 
 **Request:**
+
 ```bash
 curl -N -H "Accept: text/event-stream" http://localhost:3000/events/stream
 ```
 
 **Response (200 OK):**
+
 ```
 Content-Type: text/event-stream
 Cache-Control: no-cache
@@ -51,6 +54,7 @@ data: {"connected_clients":1,"uptime_seconds":30,"timestamp":"2025-12-01T12:00:3
 ```
 
 **Response (503 Service Unavailable):**
+
 ```json
 {
   "error": "Too many clients",
@@ -65,15 +69,16 @@ Returns 503 when the server has reached the maximum concurrent client limit (100
 ## Event Types
 
 All events follow the SSE format:
+
 ```
 event: {event_type}
 data: {JSON payload}
-
 ```
 
 ### Common Fields
 
 Every event includes:
+
 - **`timestamp`**: ISO8601 timestamp (e.g., `"2025-12-01T12:00:00.000Z"`)
 - **Event-specific data fields** (see below)
 
@@ -86,15 +91,17 @@ Emitted once when a client first connects to the stream.
 **Event Type:** `connected`
 
 **Payload:**
+
 ```typescript
 {
-  client_id: string;        // Unique client identifier (UUID)
+  client_id: string; // Unique client identifier (UUID)
   connected_clients: number; // Current number of connected clients
-  timestamp: string;         // ISO8601 timestamp
+  timestamp: string; // ISO8601 timestamp
 }
 ```
 
 **Example:**
+
 ```
 event: connected
 data: {"client_id":"550e8400-e29b-41d4-a716-446655440000","connected_clients":5,"timestamp":"2025-12-01T12:00:00.000Z"}
@@ -104,21 +111,24 @@ data: {"client_id":"550e8400-e29b-41d4-a716-446655440000","connected_clients":5,
 
 ### `graph_synced`
 
-Emitted when the graph is synced from the database (typically on server startup or periodic refresh).
+Emitted when the graph is synced from the database (typically on server startup or periodic
+refresh).
 
 **Event Type:** `graph_synced`
 
 **Payload:**
+
 ```typescript
 {
-  node_count: number;       // Total number of tool nodes in graph
-  edge_count: number;       // Total number of dependency edges
+  node_count: number; // Total number of tool nodes in graph
+  edge_count: number; // Total number of dependency edges
   sync_duration_ms: number; // Time taken to sync (milliseconds)
-  timestamp: string;         // ISO8601 timestamp
+  timestamp: string; // ISO8601 timestamp
 }
 ```
 
 **Example:**
+
 ```
 event: graph_synced
 data: {"node_count":150,"edge_count":320,"sync_duration_ms":42.5,"timestamp":"2025-12-01T12:00:01.123Z"}
@@ -133,16 +143,18 @@ Emitted when a new dependency edge is discovered and added to the graph.
 **Event Type:** `edge_created`
 
 **Payload:**
+
 ```typescript
 {
-  from_tool_id: string;      // Source tool ID
-  to_tool_id: string;        // Destination tool ID
-  confidence_score: number;  // Initial confidence (typically 0.5)
-  timestamp: string;          // ISO8601 timestamp
+  from_tool_id: string; // Source tool ID
+  to_tool_id: string; // Destination tool ID
+  confidence_score: number; // Initial confidence (typically 0.5)
+  timestamp: string; // ISO8601 timestamp
 }
 ```
 
 **Example:**
+
 ```
 event: edge_created
 data: {"from_tool_id":"search_tools","to_tool_id":"execute_dag","confidence_score":0.5,"timestamp":"2025-12-01T12:00:05.456Z"}
@@ -157,18 +169,20 @@ Emitted when an existing dependency edge is strengthened through repeated observ
 **Event Type:** `edge_updated`
 
 **Payload:**
+
 ```typescript
 {
-  from_tool_id: string;      // Source tool ID
-  to_tool_id: string;        // Destination tool ID
-  old_confidence: number;    // Previous confidence score
-  new_confidence: number;    // Updated confidence score
-  observed_count: number;    // Total number of times observed
-  timestamp: string;          // ISO8601 timestamp
+  from_tool_id: string; // Source tool ID
+  to_tool_id: string; // Destination tool ID
+  old_confidence: number; // Previous confidence score
+  new_confidence: number; // Updated confidence score
+  observed_count: number; // Total number of times observed
+  timestamp: string; // ISO8601 timestamp
 }
 ```
 
 **Example:**
+
 ```
 event: edge_updated
 data: {"from_tool_id":"search_tools","to_tool_id":"execute_dag","old_confidence":0.5,"new_confidence":0.55,"observed_count":2,"timestamp":"2025-12-01T12:00:10.789Z"}
@@ -185,6 +199,7 @@ Emitted when a workflow execution completes (success or failure).
 **Event Type:** `workflow_executed`
 
 **Payload:**
+
 ```typescript
 {
   workflow_id: string;       // Workflow execution ID
@@ -196,6 +211,7 @@ Emitted when a workflow execution completes (success or failure).
 ```
 
 **Example:**
+
 ```
 event: workflow_executed
 data: {"workflow_id":"exec_123abc","tool_ids":["search_tools","execute_dag","continue"],"success":true,"execution_time_ms":1245.3,"timestamp":"2025-12-01T12:00:15.234Z"}
@@ -210,21 +226,23 @@ Emitted after graph metrics are recomputed (PageRank, communities, density).
 **Event Type:** `metrics_updated`
 
 **Payload:**
+
 ```typescript
 {
-  edge_count: number;        // Current number of edges
-  node_count: number;        // Current number of nodes
-  density: number;           // Graph density (0-1)
-  pagerank_top_10: Array<{   // Top 10 tools by PageRank
+  edge_count: number; // Current number of edges
+  node_count: number; // Current number of nodes
+  density: number; // Graph density (0-1)
+  pagerank_top_10: Array<{ // Top 10 tools by PageRank
     tool_id: string;
     score: number;
   }>;
   communities_count: number; // Number of detected communities (Louvain)
-  timestamp: string;          // ISO8601 timestamp
+  timestamp: string; // ISO8601 timestamp
 }
 ```
 
 **Example:**
+
 ```
 event: metrics_updated
 data: {"edge_count":320,"node_count":150,"density":0.0142,"pagerank_top_10":[{"tool_id":"search_tools","score":0.0234},{"tool_id":"execute_dag","score":0.0198}],"communities_count":8,"timestamp":"2025-12-01T12:00:15.567Z"}
@@ -241,15 +259,17 @@ Emitted every 30 seconds to keep the connection alive and provide server status.
 **Event Type:** `heartbeat`
 
 **Payload:**
+
 ```typescript
 {
   connected_clients: number; // Current number of connected clients
-  uptime_seconds: number;    // Server uptime in seconds
-  timestamp: string;          // ISO8601 timestamp
+  uptime_seconds: number; // Server uptime in seconds
+  timestamp: string; // ISO8601 timestamp
 }
 ```
 
 **Example:**
+
 ```
 event: heartbeat
 data: {"connected_clients":5,"uptime_seconds":3600,"timestamp":"2025-12-01T13:00:00.000Z"}
@@ -327,6 +347,7 @@ curl -N -H "Accept: text/event-stream" http://localhost:3000/events/stream
 ### Automatic Reconnection
 
 EventSource automatically reconnects on connection loss:
+
 - **Default retry interval:** ~3 seconds
 - **Exponential backoff:** Increases on repeated failures
 - **No manual logic needed:** Browser/Deno handles reconnection
@@ -348,16 +369,18 @@ EventSource automatically reconnects on connection loss:
 ## CORS Configuration
 
 Default allowed origins:
+
 - `http://localhost:3000`
 - `http://localhost:8080`
 - `http://127.0.0.1:*` (wildcard pattern)
 
 Custom configuration via `EventsStreamConfig`:
+
 ```typescript
 const config = {
   maxClients: 100,
   heartbeatIntervalMs: 30000,
-  corsOrigins: ["http://localhost:5173", "https://example.com"]
+  corsOrigins: ["http://localhost:5173", "https://example.com"],
 };
 ```
 
@@ -379,6 +402,7 @@ const config = {
 Too many concurrent connections.
 
 **Response:**
+
 ```json
 {
   "error": "Too many clients",

@@ -1,24 +1,22 @@
 # Story 7.1: IPC Tracking - Tool Usage Capture
 
-**Epic:** 7 - Emergent Capabilities & Learning System
-**Story ID:** 7.1
-**Status:** done
-**Estimated Effort:** 1-2 jours (~70 LOC)
+**Epic:** 7 - Emergent Capabilities & Learning System **Story ID:** 7.1 **Status:** done **Estimated
+Effort:** 1-2 jours (~70 LOC)
 
 ---
 
 ## User Story
 
-**As a** system learning from execution,
-**I want** to track which tools are ACTUALLY called during code execution,
-**So that** GraphRAG learns from real usage patterns instead of just injected tools.
+**As a** system learning from execution, **I want** to track which tools are ACTUALLY called during
+code execution, **So that** GraphRAG learns from real usage patterns instead of just injected tools.
 
 ---
 
 ## Acceptance Criteria
 
 1. **AC1:** Wrappers `__TRACE__` ajoutés dans `context-builder.ts:wrapMCPClient()` (~30 LOC)
-2. **AC2:** Event types émis: `tool_start` (avec trace_id, ts) et `tool_end` (avec success, duration_ms)
+2. **AC2:** Event types émis: `tool_start` (avec trace_id, ts) et `tool_end` (avec success,
+   duration_ms)
 3. **AC3:** Parser `parseTraces(stdout)` dans `gateway-server.ts` extrait les traces
 4. **AC4:** Appel `graphEngine.updateFromExecution()` avec tools réellement appelés
 5. **AC5:** Traces filtrées du stdout retourné (user ne voit pas `__TRACE__`)
@@ -84,34 +82,40 @@ const wrapToolCall = (serverId: string, toolName: string, originalFn: Function) 
     const startTs = Date.now();
 
     // Emit tool_start
-    console.log(`__TRACE__${JSON.stringify({
-      type: "tool_start",
-      tool: toolId,
-      trace_id: traceId,
-      ts: startTs
-    })}`);
+    console.log(`__TRACE__${
+      JSON.stringify({
+        type: "tool_start",
+        tool: toolId,
+        trace_id: traceId,
+        ts: startTs,
+      })
+    }`);
 
     try {
       const result = await originalFn(...args);
 
       // Emit tool_end (success)
-      console.log(`__TRACE__${JSON.stringify({
-        type: "tool_end",
-        trace_id: traceId,
-        success: true,
-        duration_ms: Date.now() - startTs
-      })}`);
+      console.log(`__TRACE__${
+        JSON.stringify({
+          type: "tool_end",
+          trace_id: traceId,
+          success: true,
+          duration_ms: Date.now() - startTs,
+        })
+      }`);
 
       return result;
     } catch (error) {
       // Emit tool_end (failure)
-      console.log(`__TRACE__${JSON.stringify({
-        type: "tool_end",
-        trace_id: traceId,
-        success: false,
-        duration_ms: Date.now() - startTs,
-        error: error instanceof Error ? error.message : String(error)
-      })}`);
+      console.log(`__TRACE__${
+        JSON.stringify({
+          type: "tool_end",
+          trace_id: traceId,
+          success: false,
+          duration_ms: Date.now() - startTs,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }`);
       throw error;
     }
   };
@@ -125,38 +129,38 @@ Ajouter `parseTraces()` et intégrer dans le flow d'exécution:
 ```typescript
 interface TraceEvent {
   type: "tool_start" | "tool_end";
-  tool?: string;           // tool_start only
+  tool?: string; // tool_start only
   trace_id: string;
-  ts?: number;             // tool_start only
-  success?: boolean;       // tool_end only
-  duration_ms?: number;    // tool_end only
-  error?: string;          // tool_end only (if failed)
+  ts?: number; // tool_start only
+  success?: boolean; // tool_end only
+  duration_ms?: number; // tool_end only
+  error?: string; // tool_end only (if failed)
 }
 
 interface ParsedTraces {
-  cleanOutput: string;     // stdout sans __TRACE__ lines
-  toolsCalled: string[];   // Liste des tools appelés avec succès
-  traces: TraceEvent[];    // Toutes les traces parsées
+  cleanOutput: string; // stdout sans __TRACE__ lines
+  toolsCalled: string[]; // Liste des tools appelés avec succès
+  traces: TraceEvent[]; // Toutes les traces parsées
 }
 
 function parseTraces(stdout: string): ParsedTraces {
-  const lines = stdout.split('\n');
+  const lines = stdout.split("\n");
   const traces: TraceEvent[] = [];
   const cleanLines: string[] = [];
   const toolsCalled = new Set<string>();
 
   for (const line of lines) {
-    if (line.startsWith('__TRACE__')) {
+    if (line.startsWith("__TRACE__")) {
       try {
-        const json = line.substring('__TRACE__'.length);
+        const json = line.substring("__TRACE__".length);
         const trace = JSON.parse(json) as TraceEvent;
         traces.push(trace);
 
         // Track successful tool calls
-        if (trace.type === 'tool_end' && trace.success) {
+        if (trace.type === "tool_end" && trace.success) {
           // Find corresponding tool_start to get tool name
           const startTrace = traces.find(
-            t => t.type === 'tool_start' && t.trace_id === trace.trace_id
+            (t) => t.type === "tool_start" && t.trace_id === trace.trace_id,
           );
           if (startTrace?.tool) {
             toolsCalled.add(startTrace.tool);
@@ -172,9 +176,9 @@ function parseTraces(stdout: string): ParsedTraces {
   }
 
   return {
-    cleanOutput: cleanLines.join('\n'),
+    cleanOutput: cleanLines.join("\n"),
     toolsCalled: Array.from(toolsCalled),
-    traces
+    traces,
   };
 }
 ```
@@ -200,8 +204,8 @@ return {
   // Optionnel: metadata pour debugging
   _debug: {
     tools_tracked: toolsCalled.length,
-    trace_count: traces.length
-  }
+    trace_count: traces.length,
+  },
 };
 ```
 
@@ -306,9 +310,11 @@ Deno.test("execute_code updates GraphRAG with traced tools", async () => {
 ### Existing Methods to Reuse
 
 From `src/graphrag/graph-engine.ts`:
+
 - `updateFromExecution(toolIds: string[])` - Met à jour les edges entre tools co-utilisés
 
 From `src/sandbox/context-builder.ts`:
+
 - `wrapMCPClient()` - Point d'injection pour le tracing (ligne ~355)
 - `buildContext()` - Construit le contexte sandbox avec MCP tools
 
@@ -344,7 +350,7 @@ From `src/sandbox/context-builder.ts`:
 
 - [x] **Task 5 (AC: 6):** Tests intégration tracing
   - [x] 5.1: Ajouté tests dans `tests/unit/sandbox/context_builder_test.ts`
-  - [x] 5.2: Test: wrapMCPClient émet __TRACE__ sur tool call
+  - [x] 5.2: Test: wrapMCPClient émet **TRACE** sur tool call
   - [x] 5.3: Test: wrapMCPClient émet error trace on tool failure
 
 - [x] **Task 6 (AC: 7):** Performance validation
@@ -372,6 +378,7 @@ From `src/sandbox/context-builder.ts`:
 - **Performance Testing:** Inclure benchmark dans les tests
 
 **Files to Reference:**
+
 - `src/graphrag/graph-engine.ts` - méthode `updateFromExecution()`
 - `src/sandbox/context-builder.ts` - `wrapMCPClient()` à modifier
 - `src/mcp/gateway-server.ts` - handler `execute_code` à étendre
@@ -413,9 +420,12 @@ claude-opus-4-5-20251101
 
 ### Completion Notes List
 
-1. **Tracing Implementation (AC1, AC2):** Added `wrapToolCall()` in context-builder.ts with tool_start/tool_end events
-2. **Trace Parsing (AC3, AC5):** Added `parseTraces()` in gateway-server.ts with cleanOutput filtering
-3. **GraphRAG Integration (AC4):** Modified handleExecuteCode to call graphEngine.updateFromExecution()
+1. **Tracing Implementation (AC1, AC2):** Added `wrapToolCall()` in context-builder.ts with
+   tool_start/tool_end events
+2. **Trace Parsing (AC3, AC5):** Added `parseTraces()` in gateway-server.ts with cleanOutput
+   filtering
+3. **GraphRAG Integration (AC4):** Modified handleExecuteCode to call
+   graphEngine.updateFromExecution()
 4. **ExecutionResult Extended:** Added `rawStdout` field for trace capture in sandbox types
 5. **Performance Validation (AC7):** Measured 0.0034ms overhead per call (far below 5ms target)
 6. **Backward Compatibility (AC8):** All existing tests pass, setTracingEnabled() allows disabling
@@ -423,16 +433,20 @@ claude-opus-4-5-20251101
 ### File List
 
 **Modified:**
+
 - `src/sandbox/context-builder.ts` - Added wrapToolCall(), setTracingEnabled(), isTracingEnabled()
 - `src/sandbox/executor.ts` - Modified executeWithTimeout() to return rawStdout
 - `src/sandbox/types.ts` - Added rawStdout to ExecutionResult
-- `src/mcp/gateway-server.ts` - Added TraceEvent, ParsedTraces, parseTraces(), integrated with handleExecuteCode
+- `src/mcp/gateway-server.ts` - Added TraceEvent, ParsedTraces, parseTraces(), integrated with
+  handleExecuteCode
 
 **Created:**
+
 - `tests/unit/mcp/trace_parsing_test.ts` - 15 unit tests for parseTraces()
 - `tests/unit/sandbox/tracing_performance_test.ts` - 2 performance tests
 
 **Updated:**
+
 - `tests/unit/sandbox/context_builder_test.ts` - 4 new tracing tests + updated security test
 
 ---
@@ -440,12 +454,14 @@ claude-opus-4-5-20251101
 ## Change Log
 
 **2025-12-05** - Story completed
+
 - All 7 tasks and 8 acceptance criteria met
 - 41 tests passing
 - Performance: 0.0034ms overhead (well below 5ms target)
 - LOC: ~120 (slightly above estimate due to comprehensive testing)
 
 **2025-12-05** - Story drafted
+
 - Created from Epic 7 requirements in epics.md
 - Technical implementation details based on existing codebase patterns
 - 7 tasks with subtasks mapped to 8 acceptance criteria

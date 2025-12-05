@@ -2,9 +2,12 @@
 
 ## Vue d'ensemble
 
-AgentCards est un MCP gateway intelligent conçu pour les agents de codage (Claude Code, Cursor, etc.). Il agit comme un point d'entrée unique vers tous vos serveurs MCP, optimisant l'utilisation du contexte LLM et parallélisant l'exécution des workflows.
+AgentCards est un MCP gateway intelligent conçu pour les agents de codage (Claude Code, Cursor,
+etc.). Il agit comme un point d'entrée unique vers tous vos serveurs MCP, optimisant l'utilisation
+du contexte LLM et parallélisant l'exécution des workflows.
 
 **Bénéfices principaux:**
+
 - **Contexte optimisé:** Réduction de 30-50% → <5% grâce au chargement on-demand
 - **Exécution parallèle:** Workflows 5x plus rapides via DAG
 - **Découverte intelligente:** Recherche sémantique + recommandations basées sur le graphe
@@ -12,15 +15,15 @@ AgentCards est un MCP gateway intelligent conçu pour les agents de codage (Clau
 
 ### Concepts clés
 
-| Terme | Définition |
-|-------|------------|
+| Terme                            | Définition                                                               |
+| -------------------------------- | ------------------------------------------------------------------------ |
 | **MCP (Model Context Protocol)** | Protocole standard d'Anthropic pour connecter LLMs à des outils externes |
-| **Gateway** | Point d'entrée unique qui agrège et proxie tous vos serveurs MCP |
+| **Gateway**                      | Point d'entrée unique qui agrège et proxie tous vos serveurs MCP         |
 | **DAG (Directed Acyclic Graph)** | Structure représentant les dépendances entre tâches pour parallélisation |
-| **GraphRAG** | Base de connaissances apprenante qui améliore les suggestions d'outils |
-| **Sandbox** | Environnement isolé pour exécuter du code TypeScript en sécurité |
-| **AIL (Agent-in-the-Loop)** | Décisions automatiques de l'agent pendant l'exécution |
-| **HIL (Human-in-the-Loop)** | Points d'approbation humaine pour opérations critiques |
+| **GraphRAG**                     | Base de connaissances apprenante qui améliore les suggestions d'outils   |
+| **Sandbox**                      | Environnement isolé pour exécuter du code TypeScript en sécurité         |
+| **AIL (Agent-in-the-Loop)**      | Décisions automatiques de l'agent pendant l'exécution                    |
+| **HIL (Human-in-the-Loop)**      | Points d'approbation humaine pour opérations critiques                   |
 
 ---
 
@@ -57,6 +60,7 @@ await callTool("agentcards:search_tools", {
 ```
 
 **Tips:**
+
 - Utilisez `include_related: true` pour découvrir des outils connexes via le graphe
 - Plus le graphe apprend, meilleures sont les recommandations
 
@@ -76,7 +80,7 @@ Orchestrez des workflows multi-outils avec parallélisation automatique.
 
 ```typescript
 await callTool("agentcards:execute_dag", {
-  intent: "Lire les 3 fichiers config.json, package.json, README.md et résumer leur contenu"
+  intent: "Lire les 3 fichiers config.json, package.json, README.md et résumer leur contenu",
 });
 
 // AgentCards:
@@ -92,19 +96,21 @@ await callTool("agentcards:execute_dag", {
 await callTool("agentcards:execute_dag", {
   workflow: {
     tasks: [
-      { id: "t1", tool: "filesystem:read_file",
-        arguments: { path: "config.json" } },
-      { id: "t2", tool: "filesystem:read_file",
-        arguments: { path: "schema.json" } },
-      { id: "t3", tool: "memory:create_entities",
+      { id: "t1", tool: "filesystem:read_file", arguments: { path: "config.json" } },
+      { id: "t2", tool: "filesystem:read_file", arguments: { path: "schema.json" } },
+      {
+        id: "t3",
+        tool: "memory:create_entities",
         arguments: { entities: [{ name: "config", content: "$t1.result" }] },
-        depends_on: ["t1"] }  // Attend t1, mais t1 et t2 sont parallèles
-    ]
-  }
+        depends_on: ["t1"],
+      }, // Attend t1, mais t1 et t2 sont parallèles
+    ],
+  },
 });
 ```
 
 **Tips:**
+
 - Le mode Intent est idéal pour découvrir des patterns
 - Le mode Explicit offre un contrôle total sur la structure
 - Utilisez `$taskId.result` pour référencer les résultats de tâches précédentes
@@ -145,7 +151,7 @@ await callTool("agentcards:execute_code", {
     return Object.entries(byAuthor)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
-  `
+  `,
 });
 
 // Résultat: [["alice", 42], ["bob", 28], ...] (500 bytes)
@@ -154,10 +160,12 @@ await callTool("agentcards:execute_code", {
 ```
 
 **Style REPL:**
+
 - Expressions simples: auto-return (`2 + 2` → `4`)
 - Multi-statements: `return` explicite requis
 
 **Tips:**
+
 - Idéal pour filtrer/agréger de gros datasets avant injection dans le contexte LLM
 - Le cache évite de ré-exécuter du code identique
 - La protection PII tokenise automatiquement les données sensibles
@@ -169,10 +177,12 @@ await callTool("agentcards:execute_code", {
 Gérez l'exécution avec des points de décision agent et humain.
 
 **Agent-in-the-Loop (AIL):**
+
 - Décisions automatiques basées sur la confiance
 - Re-planification dynamique si découverte de nouveaux besoins
 
 **Human-in-the-Loop (HIL):**
+
 - Checkpoints d'approbation pour opérations critiques
 - Possibilité de modifier le plan avant continuation
 
@@ -182,7 +192,7 @@ Gérez l'exécution avec des points de décision agent et humain.
 // Exécution avec validation par couche
 const result = await callTool("agentcards:execute_dag", {
   intent: "Déployer la nouvelle version",
-  per_layer_validation: true  // Pause entre chaque couche
+  per_layer_validation: true, // Pause entre chaque couche
 });
 
 // Si le workflow pause pour approbation:
@@ -190,18 +200,18 @@ await callTool("agentcards:approval_response", {
   workflow_id: result.workflow_id,
   checkpoint_id: result.checkpoint_id,
   approved: true,
-  feedback: "Continuer avec le déploiement"
+  feedback: "Continuer avec le déploiement",
 });
 ```
 
 **Commandes de contrôle:**
 
-| Outil | Usage |
-|-------|-------|
-| `agentcards:continue` | Reprendre un workflow pausé |
-| `agentcards:abort` | Arrêter un workflow en cours |
-| `agentcards:replan` | Modifier le DAG avec de nouvelles exigences |
-| `agentcards:approval_response` | Répondre à un checkpoint HIL |
+| Outil                          | Usage                                       |
+| ------------------------------ | ------------------------------------------- |
+| `agentcards:continue`          | Reprendre un workflow pausé                 |
+| `agentcards:abort`             | Arrêter un workflow en cours                |
+| `agentcards:replan`            | Modifier le DAG avec de nouvelles exigences |
+| `agentcards:approval_response` | Répondre à un checkpoint HIL                |
 
 ---
 
@@ -209,24 +219,24 @@ await callTool("agentcards:approval_response", {
 
 ### Options de ligne de commande
 
-| Option | Type | Défaut | Description |
-|--------|------|--------|-------------|
-| `--config <path>` | string | (requis) | Chemin vers le fichier de config MCP |
-| `--port <number>` | number | stdio | Port HTTP pour transport SSE (optionnel) |
-| `--no-speculative` | flag | false | Désactiver l'exécution spéculative |
-| `--no-pii-protection` | flag | false | Désactiver la protection des données sensibles |
-| `--no-cache` | flag | false | Désactiver le cache d'exécution de code |
+| Option                | Type   | Défaut   | Description                                    |
+| --------------------- | ------ | -------- | ---------------------------------------------- |
+| `--config <path>`     | string | (requis) | Chemin vers le fichier de config MCP           |
+| `--port <number>`     | number | stdio    | Port HTTP pour transport SSE (optionnel)       |
+| `--no-speculative`    | flag   | false    | Désactiver l'exécution spéculative             |
+| `--no-pii-protection` | flag   | false    | Désactiver la protection des données sensibles |
+| `--no-cache`          | flag   | false    | Désactiver le cache d'exécution de code        |
 
 ### Variables d'environnement
 
-| Variable | Description |
-|----------|-------------|
-| `AGENTCARDS_DB_PATH` | Chemin personnalisé pour la base de données PGlite |
-| `AGENTCARDS_WORKFLOW_PATH` | Chemin vers les templates de workflow |
-| `AGENTCARDS_NO_PII_PROTECTION` | `1` pour désactiver la protection PII |
-| `AGENTCARDS_NO_CACHE` | `1` pour désactiver le cache |
-| `SENTRY_DSN` | DSN Sentry pour le tracking d'erreurs (optionnel) |
-| `LOG_LEVEL` | Niveau de log: `debug`, `info`, `warn`, `error` |
+| Variable                       | Description                                        |
+| ------------------------------ | -------------------------------------------------- |
+| `AGENTCARDS_DB_PATH`           | Chemin personnalisé pour la base de données PGlite |
+| `AGENTCARDS_WORKFLOW_PATH`     | Chemin vers les templates de workflow              |
+| `AGENTCARDS_NO_PII_PROTECTION` | `1` pour désactiver la protection PII              |
+| `AGENTCARDS_NO_CACHE`          | `1` pour désactiver le cache                       |
+| `SENTRY_DSN`                   | DSN Sentry pour le tracking d'erreurs (optionnel)  |
+| `LOG_LEVEL`                    | Niveau de log: `debug`, `info`, `warn`, `error`    |
 
 ### Exemple de configuration MCP
 
@@ -266,7 +276,7 @@ await callTool("agentcards:approval_response", {
 
    ```typescript
    await callTool("agentcards:search_tools", {
-     query: "lister et lire les fichiers source"
+     query: "lister et lire les fichiers source",
    });
    ```
 
@@ -276,7 +286,7 @@ await callTool("agentcards:approval_response", {
 
    ```typescript
    await callTool("agentcards:execute_dag", {
-     intent: "Lire tous les fichiers TypeScript dans src/ et générer un résumé"
+     intent: "Lire tous les fichiers TypeScript dans src/ et générer un résumé",
    });
    ```
 
@@ -294,11 +304,12 @@ await callTool("agentcards:approval_response", {
          linesOfCode: sum(files.map(f => f.lines))
        };
      `,
-     context: { files: previousResults }
+     context: { files: previousResults },
    });
    ```
 
-**Résultat:** Documentation générée avec statistiques, le tout en quelques secondes grâce à la parallélisation.
+**Résultat:** Documentation générée avec statistiques, le tout en quelques secondes grâce à la
+parallélisation.
 
 ---
 
@@ -318,15 +329,21 @@ await callTool("agentcards:execute_dag", {
       { id: "read1", tool: "filesystem:read_file", arguments: { path: "data1.json" } },
       { id: "read2", tool: "filesystem:read_file", arguments: { path: "data2.json" } },
       // Transformation (attend les lectures)
-      { id: "transform", type: "code_execution",
+      {
+        id: "transform",
+        type: "code_execution",
         code: `return [...deps.read1, ...deps.read2].filter(x => x.active)`,
-        depends_on: ["read1", "read2"] },
+        depends_on: ["read1", "read2"],
+      },
       // Écriture
-      { id: "write", tool: "filesystem:write_file",
+      {
+        id: "write",
+        tool: "filesystem:write_file",
         arguments: { path: "output.json", content: "$transform.result" },
-        depends_on: ["transform"] }
-    ]
-  }
+        depends_on: ["transform"],
+      },
+    ],
+  },
 });
 ```
 
@@ -336,7 +353,8 @@ await callTool("agentcards:execute_dag", {
 
 ### Performance
 
-- **Utilisez le mode Intent** pour les nouveaux workflows - le GraphRAG apprend des patterns optimaux
+- **Utilisez le mode Intent** pour les nouveaux workflows - le GraphRAG apprend des patterns
+  optimaux
 - **Parallélisez les lectures** - les opérations de lecture sont généralement indépendantes
 - **Traitez localement** - le sandbox évite d'injecter des données volumineuses dans le contexte
 - **Activez le cache** - évite de ré-exécuter du code identique
@@ -360,16 +378,17 @@ await callTool("agentcards:execute_dag", {
 
 AgentCards offre plusieurs options de monitoring:
 
-| Outil | stdio | Streamable HTTP | Description |
-|-------|:-----:|:---------------:|-------------|
-| **Grafana/Loki** | ✅ | ✅ | Logs via Promtail (lit les fichiers) |
-| **Sentry** | ✅ | ✅ | Error tracking (connexion HTTP propre) |
-| **Dashboard Fresh** | ❌ | ✅ | UI temps réel sur port 8080 |
-| **Console (stderr)** | ✅ | ✅ | Logs console via stderr |
+| Outil                | stdio | Streamable HTTP | Description                            |
+| -------------------- | :---: | :-------------: | -------------------------------------- |
+| **Grafana/Loki**     |  ✅   |       ✅        | Logs via Promtail (lit les fichiers)   |
+| **Sentry**           |  ✅   |       ✅        | Error tracking (connexion HTTP propre) |
+| **Dashboard Fresh**  |  ❌   |       ✅        | UI temps réel sur port 8080            |
+| **Console (stderr)** |  ✅   |       ✅        | Logs console via stderr                |
 
 ### Stack Grafana/Loki/Promtail
 
-Le monitoring fonctionne **indépendamment du mode de transport** car Promtail lit les fichiers de log:
+Le monitoring fonctionne **indépendamment du mode de transport** car Promtail lit les fichiers de
+log:
 
 ```bash
 # Démarrer le stack monitoring
@@ -380,6 +399,7 @@ open http://localhost:3000  # admin/admin
 ```
 
 **Logs agrégés:**
+
 - `~/.agentcards/logs/agentcards.log` (JSON structuré)
 - Requêtes LogQL: `{job="agentcards"}`, `{job="agentcards", level="ERROR"}`
 
@@ -399,32 +419,36 @@ SENTRY_ENVIRONMENT=production
 
 AgentCards supporte deux modes de transport MCP:
 
-| Mode | Commande | Dashboard | Cas d'usage |
-|------|----------|-----------|-------------|
-| **stdio** | `agentcards serve --config ...` | Non | Claude Code, intégration directe |
-| **Streamable HTTP** | `agentcards serve --config ... --port 3001` | Oui | Développement, debugging, dashboard |
+| Mode                | Commande                                    | Dashboard | Cas d'usage                         |
+| ------------------- | ------------------------------------------- | --------- | ----------------------------------- |
+| **stdio**           | `agentcards serve --config ...`             | Non       | Claude Code, intégration directe    |
+| **Streamable HTTP** | `agentcards serve --config ... --port 3001` | Oui       | Développement, debugging, dashboard |
 
 **stdio (défaut):**
+
 - Communication via stdin/stdout
 - Optimal pour intégration Claude Code
 - Pas de dashboard Fresh disponible
 - Pas d'API HTTP
 
 **Streamable HTTP:**
+
 - Transport MCP sur `/mcp` (spec MCP 2025-03-26)
 - Dashboard Fresh accessible (`deno task dev:fresh` sur port 8080)
 - Events graph temps réel via SSE sur `/events/stream`
 - APIs REST pour snapshots et métriques
 - Idéal pour développement et monitoring
 
-> **Recommandation:** Utilisez stdio pour la production avec Claude Code, Streamable HTTP pour le développement et debugging.
+> **Recommandation:** Utilisez stdio pour la production avec Claude Code, Streamable HTTP pour le
+> développement et debugging.
 
 ---
 
 ## Limites connues
 
 - **Pas de support multi-tenant** - Conçu pour usage développeur individuel
-- **Embeddings locaux uniquement** - Pas d'option cloud pour les embeddings (par design, pour la vie privée)
+- **Embeddings locaux uniquement** - Pas d'option cloud pour les embeddings (par design, pour la vie
+  privée)
 - **Sandbox read-only par défaut** - Écriture fichier nécessite permissions explicites
 - **Dashboard Fresh** - Nécessite le mode Streamable HTTP (`--port`), indisponible en stdio
 
@@ -439,4 +463,4 @@ AgentCards supporte deux modes de transport MCP:
 
 ---
 
-*Généré le 2025-12-03 par le workflow user-docs BMAD*
+_Généré le 2025-12-03 par le workflow user-docs BMAD_

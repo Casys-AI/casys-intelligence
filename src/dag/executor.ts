@@ -91,7 +91,9 @@ export class ParallelExecutor {
 
       if (this.config.verbose) {
         log.info(
-          `Executing layer ${layerIdx + 1}/${layers.length} with ${layer.length} task(s) in parallel`,
+          `Executing layer ${
+            layerIdx + 1
+          }/${layers.length} with ${layer.length} task(s) in parallel`,
         );
       }
 
@@ -156,7 +158,9 @@ export class ParallelExecutor {
 
     if (this.config.verbose) {
       log.info(
-        `DAG execution complete: ${executionResult.successfulTasks}/${executionResult.totalTasks} tasks succeeded in ${totalTime.toFixed(1)}ms (${layers.length} layers)`,
+        `DAG execution complete: ${executionResult.successfulTasks}/${executionResult.totalTasks} tasks succeeded in ${
+          totalTime.toFixed(1)
+        }ms (${layers.length} layers)`,
       );
     }
 
@@ -182,9 +186,7 @@ export class ParallelExecutor {
 
       for (const [taskId, task] of remaining) {
         // Check if all dependencies are completed
-        const allDepsSatisfied = task.depends_on.every((depId) =>
-          completed.has(depId)
-        );
+        const allDepsSatisfied = task.depends_on.every((depId) => completed.has(depId));
 
         if (allDepsSatisfied && !inProgress.has(taskId)) {
           ready.push(task);
@@ -198,7 +200,7 @@ export class ParallelExecutor {
         throw new DAGExecutionError(
           `Circular dependency detected in DAG. Remaining tasks: ${remainingIds.join(", ")}`,
           undefined,
-          false // Not recoverable
+          false, // Not recoverable
         );
       }
 
@@ -240,14 +242,14 @@ export class ParallelExecutor {
           throw new DAGExecutionError(
             `Dependency task ${depId} failed: ${depResult.error}`,
             task.id,
-            true // Recoverable - partial success allowed
+            true, // Recoverable - partial success allowed
           );
         }
         if (!depResult) {
           throw new DAGExecutionError(
             `Dependency task ${depId} not found in results`,
             task.id,
-            false
+            false,
           );
         }
       }
@@ -285,7 +287,7 @@ export class ParallelExecutor {
           error instanceof Error ? error.message : String(error)
         }`,
         task.id,
-        true // Default to recoverable for task failures
+        true, // Default to recoverable for task failures
       );
     }
   }

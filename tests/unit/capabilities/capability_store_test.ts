@@ -15,7 +15,7 @@
 
 import { assertEquals, assertExists, assertNotEquals } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 import { CapabilityStore } from "../../../src/capabilities/capability-store.ts";
 import { hashCode } from "../../../src/capabilities/hash.ts";
 
@@ -436,6 +436,144 @@ Deno.test("Migration 011 - code_hash index exists", async () => {
   `);
 
   assertEquals(indexes.length >= 1, true);
+
+  await db.close();
+});
+
+// ============================================
+// MEDIUM-1: searchByIntent tests (Code Review Fix)
+// ============================================
+
+Deno.test("CapabilityStore - searchByIntent returns matching capabilities", async () => {
+  const db = await setupTestDb();
+  const model = new MockEmbeddingModel();
+  const store = new CapabilityStore(db, model as any);
+
+  // Save capabilities with different intents
+  await store.saveCapability({
+    code: 'await tools.search({q: "weather"});',
+    intent: "Search for weather data",
+    durationMs: 100,
+  });
+  await store.saveCapability({
+    code: 'await tools.fetch({url: "api.example.com"});',
+    intent: "Fetch data from API",
+    durationMs: 150,
+  });
+
+  // Search for similar intent
+  const results = await store.searchByIntent("Get weather information", 5, 0.0);
+
+  // Should return results (mock embedding creates deterministic values)
+  assertEquals(results.length >= 1, true);
+  assertEquals(results[0].similarity >= 0, true);
+  assertExists(results[0].capability.id);
+
+  await db.close();
+});
+
+Deno.test("CapabilityStore - searchByIntent respects limit", async () => {
+  const db = await setupTestDb();
+  const model = new MockEmbeddingModel();
+  const store = new CapabilityStore(db, model as any);
+
+  // Save multiple capabilities
+  for (let i = 0; i < 5; i++) {
+    await store.saveCapability({
+      code: `const x${i} = ${i};`,
+      intent: `Define variable x${i}`,
+      durationMs: 10,
+    });
+  }
+
+  // Search with limit
+  const results = await store.searchByIntent("Define variable", 2, 0.0);
+
+  assertEquals(results.length <= 2, true);
+
+  await db.close();
+});
+
+Deno.test("CapabilityStore - searchByIntent returns empty for no matches", async () => {
+  const db = await setupTestDb();
+  const model = new MockEmbeddingModel();
+  const store = new CapabilityStore(db, model as any);
+
+  // Search without any capabilities stored
+  const results = await store.searchByIntent("Completely unrelated query", 5, 0.99);
+
+  assertEquals(results.length, 0);
+
+  await db.close();
+});
+
+// ============================================
+// MEDIUM-3: Concurrent operations test (Code Review Fix)
+// ============================================
+
+Deno.test("CapabilityStore - concurrent saves handle ON CONFLICT correctly", async () => {
+  const db = await setupTestDb();
+  const model = new MockEmbeddingModel();
+  const store = new CapabilityStore(db, model as any);
+
+  const code = 'const concurrent = "test";';
+  const intent = "Concurrent test capability";
+
+  // Simulate concurrent saves (same code, same time)
+  const [cap1, cap2, cap3] = await Promise.all([
+    store.saveCapability({ code, intent, durationMs: 100 }),
+    store.saveCapability({ code, intent, durationMs: 150 }),
+    store.saveCapability({ code, intent, durationMs: 200 }),
+  ]);
+
+  // All should have same id (same capability)
+  assertEquals(cap1.id, cap2.id);
+  assertEquals(cap2.id, cap3.id);
+
+  // Usage count should reflect all 3 executions
+  // Due to concurrent execution, the final count may vary based on timing
+  // but should be at least 1 and at most 3
+  const finalCap = await store.findByCodeHash(cap1.codeHash);
+  assertExists(finalCap);
+  assertEquals(finalCap.usageCount >= 1, true);
+  assertEquals(finalCap.usageCount <= 3, true);
+
+  await db.close();
+});
+
+// ============================================
+// MEDIUM-4: Embedding error handling test (Code Review Fix)
+// ============================================
+
+Deno.test("CapabilityStore - saveCapability throws on embedding failure", async () => {
+  const db = await setupTestDb();
+
+  // Mock model that throws
+  const failingModel = {
+    async encode(_text: string): Promise<number[]> {
+      throw new Error("Model not loaded");
+    },
+    isLoaded: () => false,
+  };
+
+  const store = new CapabilityStore(db, failingModel as any);
+
+  let errorThrown = false;
+  try {
+    await store.saveCapability({
+      code: "const x = 1;",
+      intent: "Test intent",
+      durationMs: 100,
+    });
+  } catch (error) {
+    errorThrown = true;
+    assertEquals(
+      (error as Error).message.includes("Embedding generation failed"),
+      true,
+    );
+  }
+
+  assertEquals(errorThrown, true, "Should throw on embedding failure");
 
   await db.close();
 });

@@ -1,18 +1,15 @@
 # Story 2.5-2: Checkpoint & Resume
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops
-**Story ID:** 2.5-2
-**Status:** drafted
-**Estimated Effort:** 2-3 heures
-**Priority:** P1 (Depends on 2.5-1)
+**Epic:** 2.5 - Adaptive DAG Feedback Loops **Story ID:** 2.5-2 **Status:** drafted **Estimated
+Effort:** 2-3 heures **Priority:** P1 (Depends on 2.5-1)
 
 ---
 
 ## User Story
 
-**As a** developer running long-running agent workflows,
-**I want** the ability to checkpoint execution state and resume from failures,
-**So that** workflows can recover gracefully from crashes without losing progress.
+**As a** developer running long-running agent workflows, **I want** the ability to checkpoint
+execution state and resume from failures, **So that** workflows can recover gracefully from crashes
+without losing progress.
 
 ---
 
@@ -109,6 +106,7 @@
 ### Database Schema Details
 
 **Checkpoint Table:**
+
 ```sql
 CREATE TABLE workflow_checkpoints (
   id TEXT PRIMARY KEY,              -- UUID v4
@@ -122,18 +120,19 @@ CREATE TABLE workflow_checkpoints (
 ```
 
 **State Serialization:**
+
 ```typescript
 const serialized = {
   messages: state.messages,
-  tasks: state.tasks.map(t => ({
+  tasks: state.tasks.map((t) => ({
     taskId: t.taskId,
     result: t.result,
     timestamp: t.timestamp,
-    duration: t.duration
+    duration: t.duration,
   })),
   decisions: state.decisions,
   context: state.context,
-  checkpoint_id: checkpoint_id
+  checkpoint_id: checkpoint_id,
 };
 ```
 
@@ -169,11 +168,13 @@ async resumeFromCheckpoint(checkpointId: string): Promise<DAGExecutionResult> {
 ### Pruning Strategy
 
 **Conservative approach:**
+
 - Keep last 5 checkpoints per workflow
 - Delete older checkpoints on new save
 - Async pruning (doesn't block execution)
 
 **Rationale:**
+
 - 5 checkpoints = ~5 layers of history
 - Enough for debugging and recovery
 - Prevents unbounded growth
@@ -181,6 +182,7 @@ async resumeFromCheckpoint(checkpointId: string): Promise<DAGExecutionResult> {
 ### Project Structure
 
 **New Files:**
+
 ```
 src/dag/
 ├── checkpoint-manager.ts    # Checkpoint save/load/prune logic
@@ -190,6 +192,7 @@ src/db/migrations/
 ```
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts   # Add resumeFromCheckpoint()
 src/db/queries.ts                # Checkpoint queries
@@ -204,11 +207,13 @@ src/db/queries.ts                # Checkpoint queries
 ### Error Handling
 
 **Checkpoint Save Failures:**
+
 - Log error (don't crash)
 - Continue execution without checkpoint
 - Emit event: `{ type: "checkpoint_failed", error }`
 
 **Resume Failures:**
+
 - Invalid checkpoint_id → Throw error
 - Corrupted state → Throw error (can't recover)
 - DAG structure mismatch → Warn, attempt best-effort resume
@@ -216,11 +221,13 @@ src/db/queries.ts                # Checkpoint queries
 ### Performance Considerations
 
 **Checkpoint Frequency:**
+
 - After each layer (not after each task)
 - Trade-off: Granularity vs overhead
 - 10 layers = 10 checkpoints (~500ms total overhead)
 
 **Optimization:**
+
 - Use JSONB for efficient storage/retrieval
 - Index on (workflow_id, timestamp DESC) for fast pruning
 - Async pruning to avoid blocking

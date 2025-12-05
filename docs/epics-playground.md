@@ -1,17 +1,16 @@
 # Casys MCP Gateway Playground - Epic Breakdown
 
-**Auteur:** BMad
-**Date:** 2025-11-28
-**Niveau Projet:** 2
-**Échelle Cible:** Playground éducatif
+**Auteur:** BMad **Date:** 2025-11-28 **Niveau Projet:** 2 **Échelle Cible:** Playground éducatif
 
 ---
 
 ## Overview
 
-Ce document détaille les epics et stories pour le playground pédagogique Casys MCP Gateway, tel que défini dans le [PRD-playground.md](./PRD-playground.md).
+Ce document détaille les epics et stories pour le playground pédagogique Casys MCP Gateway, tel que
+défini dans le [PRD-playground.md](./PRD-playground.md).
 
 **Epic Sequencing Principles:**
+
 - Epic 1 établit l'infrastructure (doit être complété avant Epic 2)
 - Les stories dans chaque epic sont séquentielles et construisent sur les précédentes
 - Chaque story est dimensionnée pour une session de 2-4h
@@ -20,9 +19,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ## Epic 1: Infrastructure Playground
 
-**Goal:** Configurer l'environnement Codespace prêt à l'emploi avec devcontainer, MCP servers, workflow templates, et helpers.
+**Goal:** Configurer l'environnement Codespace prêt à l'emploi avec devcontainer, MCP servers,
+workflow templates, et helpers.
 
-**Value:** Un développeur peut lancer le Codespace et avoir un environnement fonctionnel en < 5 minutes.
+**Value:** Un développeur peut lancer le Codespace et avoir un environnement fonctionnel en < 5
+minutes.
 
 ---
 
@@ -30,11 +31,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 **Status:** ✅ **DONE**
 
-**As a** developer,
-**I want** to open the repo in GitHub Codespaces,
-**So that** I have a fully configured environment without manual setup.
+**As a** developer, **I want** to open the repo in GitHub Codespaces, **So that** I have a fully
+configured environment without manual setup.
 
 **Acceptance Criteria:**
+
 1. ✅ `.devcontainer/playground/devcontainer.json` configure Deno 2.1.4
 2. ✅ Extension Jupyter (ms-toolsai.jupyter) pré-installée
 3. ✅ Extension Deno (denoland.vscode-deno) pré-installée
@@ -50,11 +51,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 1.2: MCP Servers Configuration
 
-**As a** playground user,
-**I want** MCP servers pre-configured,
-**So that** I can run demos without manual server setup.
+**As a** playground user, **I want** MCP servers pre-configured, **So that** I can run demos without
+manual server setup.
 
 **Acceptance Criteria:**
+
 1. `playground/config/mcp-servers.json` contient 3 servers Tier 1:
    - `@modelcontextprotocol/server-filesystem`
    - `@modelcontextprotocol/server-memory`
@@ -68,11 +69,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 1.3: Workflow Templates Configuration
 
-**As a** playground user,
-**I want** workflow templates pre-configured,
-**So that** I can see GraphRAG patterns in action immediately.
+**As a** playground user, **I want** workflow templates pre-configured, **So that** I can see
+GraphRAG patterns in action immediately.
 
 **Acceptance Criteria:**
+
 1. `playground/config/workflow-templates.yaml` contient 3+ workflows:
    - Parallélisation pure (3 outils indépendants)
    - Pattern récurrent (séquence filesystem → memory)
@@ -88,19 +89,21 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 **Status:** ⚠️ **PARTIAL**
 
-**As a** playground user,
-**I want** a simple way to configure my LLM API key,
-**So that** I don't have to figure out the configuration myself.
+**As a** playground user, **I want** a simple way to configure my LLM API key, **So that** I don't
+have to figure out the configuration myself.
 
 **Ce qui existe:**
+
 - ✅ `playground/.env.example` avec template des clés API
 - ✅ `playground/lib/llm-provider.ts` avec auto-détection du provider (500+ lignes)
 - ✅ Support OpenAI, Anthropic, Google via Vercel AI SDK
 
 **Ce qui manque:**
+
 - ❌ Script interactif `setup-api-key.ts` pour guider l'utilisateur
 
 **Acceptance Criteria:**
+
 1. ⚠️ `playground/scripts/setup-api-key.ts` script interactif (optionnel - .env.example suffit)
 2. ✅ Détecte automatiquement le provider depuis le format de clé (`lib/llm-provider.ts`)
 3. ⚠️ Crée/met à jour `.env` avec la bonne variable
@@ -115,11 +118,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 1.5: Idempotent Init Helper
 
-**As a** notebook author,
-**I want** a helper that ensures the playground is ready,
-**So that** each notebook can be run independently.
+**As a** notebook author, **I want** a helper that ensures the playground is ready, **So that** each
+notebook can be run independently.
 
 **Acceptance Criteria:**
+
 1. `playground/lib/init.ts` exporte `ensurePlaygroundReady(options?)`
 2. Vérifie si déjà initialisé (PGlite DB, embeddings)
 3. Si non initialisé → run full init (MCP connect, workflows sync)
@@ -135,16 +138,18 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 **Status:** ✅ **DONE**
 
-**As a** notebook author,
-**I want** to render Mermaid diagrams in notebooks,
-**So that** I can visualize DAGs and architectures.
+**As a** notebook author, **I want** to render Mermaid diagrams in notebooks, **So that** I can
+visualize DAGs and architectures.
 
 **Acceptance Criteria:**
+
 1. ✅ `playground/lib/viz.ts` exporte `displayMermaid(diagram: string)`
 2. ✅ Rendu via Kroki API (encodage pako + base64url)
 3. ✅ Support Deno.jupyter pour output SVG natif
-4. ✅ Fonctions spécialisées : `displayDag()`, `displayLayers()`, `displayGraphrag()`, `displayTimeline()`, `displayEvolution()`, `displayWorkflowEdges()`
-5. ✅ Générateurs Mermaid : `dagToMermaid()`, `layersToMermaid()`, `graphragToMermaid()`, `executionTimelineToMermaid()`, `workflowEdgesToMermaid()`
+4. ✅ Fonctions spécialisées : `displayDag()`, `displayLayers()`, `displayGraphrag()`,
+   `displayTimeline()`, `displayEvolution()`, `displayWorkflowEdges()`
+5. ✅ Générateurs Mermaid : `dagToMermaid()`, `layersToMermaid()`, `graphragToMermaid()`,
+   `executionTimelineToMermaid()`, `workflowEdgesToMermaid()`
 
 **Prerequisites:** Story 1.1
 
@@ -154,11 +159,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 1.7: Metrics Visualization Helper
 
-**As a** notebook author,
-**I want** to display metrics visually,
-**So that** users can see performance gains clearly.
+**As a** notebook author, **I want** to display metrics visually, **So that** users can see
+performance gains clearly.
 
 **Acceptance Criteria:**
+
 1. `playground/lib/metrics.ts` exporte helpers:
    - `progressBar(current, total, label)` - ASCII progress bar
    - `compareMetrics(before, after, labels)` - Side-by-side comparison
@@ -174,22 +179,24 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 **Status:** ⚠️ **PARTIAL** (à mettre à jour)
 
-**As a** potential user,
-**I want** a clear README explaining the playground,
-**So that** I understand what it does and how to start.
+**As a** potential user, **I want** a clear README explaining the playground, **So that** I
+understand what it does and how to start.
 
 **Ce qui existe:**
+
 - ✅ `playground/README.md` avec Quick Start et badge Codespaces
 - ✅ Badge "Open in GitHub Codespaces" fonctionnel
 - ✅ Liste des outils MCP disponibles
 - ✅ Requirements et Environment Variables
 
 **Ce qui manque:**
+
 - ❌ Table des notebooks mise à jour (actuellement anciens notebooks 01-08)
 - ❌ Section "What is this?" expliquant le problème MCP
 - ❌ Nouvelle séquence 00-06
 
 **Acceptance Criteria:**
+
 1. ⚠️ `playground/README.md` avec sections:
    - ❌ What is this? (1 paragraphe sur le problème MCP)
    - ✅ Quick Start (Open in Codespace badge + 3 étapes)
@@ -214,11 +221,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.1: Notebook 00 - Introduction
 
-**As a** new user,
-**I want** an introduction notebook,
-**So that** I understand what I'm about to learn and verify my environment.
+**As a** new user, **I want** an introduction notebook, **So that** I understand what I'm about to
+learn and verify my environment.
 
 **Acceptance Criteria:**
+
 1. Learning Objectives (5 bullet points)
 2. Architecture Overview (diagramme Mermaid)
 3. Environment Check (exécute `ensurePlaygroundReady({ verbose: true })`)
@@ -231,11 +238,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.2: Notebook 01 - The Problem
 
-**As a** user,
-**I want** to see the MCP problems demonstrated,
-**So that** I understand why the gateway exists.
+**As a** user, **I want** to see the MCP problems demonstrated, **So that** I understand why the
+gateway exists.
 
 **Acceptance Criteria:**
+
 1. Context Explosion Demo:
    - Simule 8 MCP servers avec token counts réalistes
    - Affiche "45.4% consumed before you start"
@@ -252,11 +259,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.3: Notebook 02 - Context Optimization
 
-**As a** user,
-**I want** to see how vector search reduces context,
-**So that** I understand the first solution mechanism.
+**As a** user, **I want** to see how vector search reduces context, **So that** I understand the
+first solution mechanism.
 
 **Acceptance Criteria:**
+
 1. Explication: Comment fonctionne l'embedding et la recherche vectorielle
 2. Demo Live:
    - Charge les 3 MCP servers (filesystem, memory, sequential-thinking)
@@ -272,11 +279,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.4: Notebook 03 - DAG Execution
 
-**As a** user,
-**I want** to see DAG parallelization in action,
-**So that** I understand how workflows are optimized.
+**As a** user, **I want** to see DAG parallelization in action, **So that** I understand how
+workflows are optimized.
 
 **Acceptance Criteria:**
+
 1. Explication: DAG, dépendances, niveaux d'exécution
 2. Demo Live:
    - Workflow avec branches parallèles (filesystem + memory + time simulé)
@@ -293,11 +300,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.5: Notebook 04 - Sandbox Security
 
-**As a** user,
-**I want** to see the sandbox execution,
-**So that** I understand how code runs safely.
+**As a** user, **I want** to see the sandbox execution, **So that** I understand how code runs
+safely.
 
 **Acceptance Criteria:**
+
 1. Explication: Pourquoi sandbox (sécurité, isolation)
 2. Demo Live:
    - Exécute code TypeScript simple dans sandbox
@@ -312,11 +319,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.6: Notebook 05 - GraphRAG Learning
 
-**As a** user,
-**I want** to see how the system learns patterns,
-**So that** I understand the adaptive behavior.
+**As a** user, **I want** to see how the system learns patterns, **So that** I understand the
+adaptive behavior.
 
 **Acceptance Criteria:**
+
 1. Explication: GraphRAG, patterns, confidence scores
 2. Demo Live:
    - Affiche le graphe initial (vide ou bootstrap)
@@ -332,11 +339,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.7: Notebook 06 - Workflow Templates
 
-**As a** user,
-**I want** to define my own workflow patterns,
-**So that** I can customize the system for my use cases.
+**As a** user, **I want** to define my own workflow patterns, **So that** I can customize the system
+for my use cases.
 
 **Acceptance Criteria:**
+
 1. Explication: Format YAML, CLI sync, bootstrap
 2. Demo Live:
    - Affiche `workflow-templates.yaml` existant
@@ -353,11 +360,11 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 
 ### Story 2.8: Cleanup Old Notebooks
 
-**As a** maintainer,
-**I want** to clean up the old notebooks,
-**So that** the playground is organized and not confusing.
+**As a** maintainer, **I want** to clean up the old notebooks, **So that** the playground is
+organized and not confusing.
 
 **Acceptance Criteria:**
+
 1. Archive les anciens notebooks dans `playground/notebooks/archive/`
 2. Supprime les doublons (01-sandbox-basics vs 01-the-problem, etc.)
 3. Renomme les fichiers si nécessaire pour la séquence 00-06
@@ -371,6 +378,7 @@ Ce document détaille les epics et stories pour le playground pédagogique Casys
 ## Story Guidelines Reference
 
 **Story Format:**
+
 ```
 **Story [EPIC.N]: [Story Title]**
 
@@ -387,6 +395,7 @@ So that [benefit/value].
 ```
 
 **Story Requirements:**
+
 - **Vertical slices** - Complete, testable functionality delivery
 - **Sequential ordering** - Logical progression within epic
 - **No forward dependencies** - Only depend on previous work
@@ -397,24 +406,24 @@ So that [benefit/value].
 
 ## Summary
 
-| Epic | Stories | Status | Estimated Remaining |
-|------|---------|--------|---------------------|
-| Epic 1: Infrastructure | 8 stories | 2 DONE, 2 PARTIAL, 4 TODO | ~8-12h |
-| Epic 2: Notebooks | 8 stories | 0 DONE (notebooks exist but need rework) | ~16-24h |
-| **Total** | **16 stories** | | **~24-36h** |
+| Epic                   | Stories        | Status                                   | Estimated Remaining |
+| ---------------------- | -------------- | ---------------------------------------- | ------------------- |
+| Epic 1: Infrastructure | 8 stories      | 2 DONE, 2 PARTIAL, 4 TODO                | ~8-12h              |
+| Epic 2: Notebooks      | 8 stories      | 0 DONE (notebooks exist but need rework) | ~16-24h             |
+| **Total**              | **16 stories** |                                          | **~24-36h**         |
 
 ### Epic 1 Status Detail
 
-| Story | Status | Notes |
-|-------|--------|-------|
-| 1.1 Devcontainer | ✅ DONE | Complet avec Dockerfile, post-create.sh |
-| 1.2 MCP Config | ❌ TODO | Manque `playground/config/mcp-servers.json` |
-| 1.3 Workflow Templates | ❌ TODO | Manque `playground/config/workflow-templates.yaml` |
-| 1.4 API Key Setup | ⚠️ PARTIAL | .env.example + llm-provider.ts existent |
-| 1.5 Init Helper | ❌ TODO | Manque `ensurePlaygroundReady()` |
-| 1.6 Mermaid Helper | ✅ DONE | `lib/viz.ts` très complet (539 lignes) |
-| 1.7 Metrics Helper | ❌ TODO | Manque progressBar, speedupChart |
-| 1.8 README | ⚠️ PARTIAL | Existe mais liste anciens notebooks |
+| Story                  | Status     | Notes                                              |
+| ---------------------- | ---------- | -------------------------------------------------- |
+| 1.1 Devcontainer       | ✅ DONE    | Complet avec Dockerfile, post-create.sh            |
+| 1.2 MCP Config         | ❌ TODO    | Manque `playground/config/mcp-servers.json`        |
+| 1.3 Workflow Templates | ❌ TODO    | Manque `playground/config/workflow-templates.yaml` |
+| 1.4 API Key Setup      | ⚠️ PARTIAL | .env.example + llm-provider.ts existent            |
+| 1.5 Init Helper        | ❌ TODO    | Manque `ensurePlaygroundReady()`                   |
+| 1.6 Mermaid Helper     | ✅ DONE    | `lib/viz.ts` très complet (539 lignes)             |
+| 1.7 Metrics Helper     | ❌ TODO    | Manque progressBar, speedupChart                   |
+| 1.8 README             | ⚠️ PARTIAL | Existe mais liste anciens notebooks                |
 
 ### Bonus Already Implemented
 
@@ -422,7 +431,9 @@ So that [benefit/value].
 - `playground/server.ts` - Serveur MCP HTTP complet
 
 **Implementation Order:**
+
 1. Epic 1 (1.2 → 1.3 → 1.5 → 1.7 → 1.8) - Compléter infrastructure
 2. Epic 2 (2.1 → 2.8) - Notebooks build on infrastructure
 
-**For implementation:** Use the `create-story` workflow to generate individual story implementation plans from this epic breakdown.
+**For implementation:** Use the `create-story` workflow to generate individual story implementation
+plans from this epic breakdown.

@@ -7,7 +7,7 @@ import { MCPClient } from "../../src/mcp/client.ts";
 import { MCPServerError } from "../../src/errors/error-types.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 
 Deno.test("Integration: MCP server unreachable throws MCPServerError", async () => {
   const server = {
@@ -78,7 +78,7 @@ Deno.test({
       );
 
       // Then insert embedding with correct vector dimension (1024 for BGE-Large-EN-v1.5)
-      const dummyEmbedding = new Array(1024).fill(0.1).join(',');
+      const dummyEmbedding = new Array(1024).fill(0.1).join(",");
       await db.exec(
         `INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding)
          VALUES ('${uniqueToolId}', 'test-server', 'test-tool', '[${dummyEmbedding}]'::vector(1024))`,
@@ -103,7 +103,7 @@ Deno.test({
       assert(results.length >= 1, `Expected at least 1 result, got ${results.length}`);
 
       // Verify our test tool is in the results
-      const ourTool = results.find(r => r.toolName === "test-tool");
+      const ourTool = results.find((r) => r.toolName === "test-tool");
       assert(ourTool !== undefined, "Should find our test-tool in results");
       assertEquals(ourTool.score, 0.5); // Keyword search fixed score
     } finally {
@@ -173,7 +173,7 @@ Deno.test({
       assertEquals(results[0].message, "Test error for logging");
 
       // PGlite may return JSONB as object or string depending on configuration
-      const storedContext = typeof results[0].context === 'string'
+      const storedContext = typeof results[0].context === "string"
         ? JSON.parse(results[0].context as string)
         : results[0].context;
       assertEquals(storedContext.userId, "test-user");

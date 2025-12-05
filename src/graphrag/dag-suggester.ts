@@ -12,13 +12,13 @@ import type { VectorSearch } from "../vector/search.ts";
 import type { GraphRAGEngine } from "./graph-engine.ts";
 import type { EpisodicMemoryStore } from "../learning/episodic-memory-store.ts";
 import type {
-  WorkflowIntent,
-  SuggestedDAG,
-  DependencyPath,
-  DAGStructure,
-  PredictedNode,
-  WorkflowPredictionState,
   CompletedTask,
+  DAGStructure,
+  DependencyPath,
+  PredictedNode,
+  SuggestedDAG,
+  WorkflowIntent,
+  WorkflowPredictionState,
 } from "./types.ts";
 
 /**
@@ -115,7 +115,11 @@ export class DAGSuggester {
         .slice(0, 5);
 
       log.debug(
-        `Ranked candidates (hybrid+PageRank): ${rankedCandidates.map((c) => `${c.toolId} (final=${c.score.toFixed(2)}, PR=${c.pageRank.toFixed(3)})`).join(", ")}`,
+        `Ranked candidates (hybrid+PageRank): ${
+          rankedCandidates.map((c) =>
+            `${c.toolId} (final=${c.score.toFixed(2)}, PR=${c.pageRank.toFixed(3)})`
+          ).join(", ")
+        }`,
       );
 
       // 3. Build DAG using graph topology (Graphology)
@@ -127,13 +131,16 @@ export class DAGSuggester {
       const dependencyPaths = this.extractDependencyPaths(rankedCandidates.map((c) => c.toolId));
 
       // 5. Calculate confidence (adjusted for hybrid search)
-      const { confidence, semanticScore, pageRankScore, pathStrength } = this.calculateConfidenceHybrid(
-        rankedCandidates,
-        dependencyPaths,
-      );
+      const { confidence, semanticScore, pageRankScore, pathStrength } = this
+        .calculateConfidenceHybrid(
+          rankedCandidates,
+          dependencyPaths,
+        );
 
       log.info(
-        `Confidence: ${confidence.toFixed(2)} (semantic: ${semanticScore.toFixed(2)}, pageRank: ${pageRankScore.toFixed(2)}, pathStrength: ${pathStrength.toFixed(2)}) for intent: "${intent.text}"`,
+        `Confidence: ${confidence.toFixed(2)} (semantic: ${semanticScore.toFixed(2)}, pageRank: ${
+          pageRankScore.toFixed(2)
+        }, pathStrength: ${pathStrength.toFixed(2)}) for intent: "${intent.text}"`,
       );
 
       // 6. Find alternatives from same community (Graphology)
@@ -147,14 +154,19 @@ export class DAGSuggester {
       // ADR-026: Never return null if we have valid candidates
       // Instead, return suggestion with warning for low confidence
       if (confidence < 0.50) {
-        log.info(`Confidence below threshold (${confidence.toFixed(2)}), returning suggestion with warning`);
+        log.info(
+          `Confidence below threshold (${
+            confidence.toFixed(2)
+          }), returning suggestion with warning`,
+        );
         return {
           dagStructure,
           confidence,
           rationale,
           dependencyPaths,
           alternatives,
-          warning: "Low confidence suggestion - graph is in cold start mode. Confidence may improve with usage.",
+          warning:
+            "Low confidence suggestion - graph is in cold start mode. Confidence may improve with usage.",
         };
       }
 
@@ -313,7 +325,8 @@ export class DAGSuggester {
 
     // ADR-026: Use adaptive weights based on graph density
     const weights = this.getAdaptiveWeights();
-    const confidence = hybridScore * weights.hybrid + pageRankScore * weights.pageRank + pathStrength * weights.path;
+    const confidence = hybridScore * weights.hybrid + pageRankScore * weights.pageRank +
+      pathStrength * weights.path;
 
     return { confidence, semanticScore, pageRankScore, pathStrength };
   }
@@ -600,13 +613,19 @@ export class DAGSuggester {
         const baseConfidence = this.calculateCooccurrenceConfidence(edgeData);
 
         // Story 4.1e: Apply episodic learning adjustments
-        const adjusted = this.adjustConfidenceFromEpisodes(baseConfidence, neighborId, episodeStats);
+        const adjusted = this.adjustConfidenceFromEpisodes(
+          baseConfidence,
+          neighborId,
+          episodeStats,
+        );
         if (!adjusted) continue; // Excluded due to high failure rate
 
         predictions.push({
           toolId: neighborId,
           confidence: adjusted.confidence,
-          reasoning: `Historical co-occurrence with ${lastToolId} (${edgeData?.count ?? 0} observations, ${((edgeData?.weight ?? 0) * 100).toFixed(0)}% confidence)`,
+          reasoning: `Historical co-occurrence with ${lastToolId} (${
+            edgeData?.count ?? 0
+          } observations, ${((edgeData?.weight ?? 0) * 100).toFixed(0)}% confidence)`,
           source: "co-occurrence",
         });
         seenTools.add(neighborId);
@@ -639,7 +658,9 @@ export class DAGSuggester {
 
       const elapsedMs = performance.now() - startTime;
       log.info(
-        `[predictNextNodes] Generated ${predictions.length} predictions for ${lastToolId} (${elapsedMs.toFixed(1)}ms)`,
+        `[predictNextNodes] Generated ${predictions.length} predictions for ${lastToolId} (${
+          elapsedMs.toFixed(1)
+        }ms)`,
       );
 
       // Log top predictions
@@ -698,14 +719,16 @@ export class DAGSuggester {
    */
   private async retrieveRelevantEpisodes(
     workflowState: WorkflowPredictionState | null,
-  ): Promise<Array<{
-    id: string;
-    event_type: string;
-    data: {
-      prediction?: { toolId: string; confidence: number; wasCorrect?: boolean };
-      result?: { status: string };
-    };
-  }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      event_type: string;
+      data: {
+        prediction?: { toolId: string; confidence: number; wasCorrect?: boolean };
+        result?: { status: string };
+      };
+    }>
+  > {
     if (!this.episodicMemory || !workflowState) return [];
 
     const startTime = performance.now();
@@ -726,7 +749,9 @@ export class DAGSuggester {
 
       const retrievalTime = performance.now() - startTime;
       log.debug(
-        `[DAGSuggester] Retrieved ${episodes.length} episodes for context ${contextHash} (${retrievalTime.toFixed(1)}ms)`,
+        `[DAGSuggester] Retrieved ${episodes.length} episodes for context ${contextHash} (${
+          retrievalTime.toFixed(1)
+        }ms)`,
       );
 
       return episodes;
@@ -854,7 +879,9 @@ export class DAGSuggester {
     // Task 4.4: Exclude if failure rate > 50%
     if (stats.failureRate > 0.50) {
       log.debug(
-        `[DAGSuggester] Excluding ${toolId} due to high failure rate: ${(stats.failureRate * 100).toFixed(0)}% (${stats.failures}/${stats.total})`,
+        `[DAGSuggester] Excluding ${toolId} due to high failure rate: ${
+          (stats.failureRate * 100).toFixed(0)
+        }% (${stats.failures}/${stats.total})`,
       );
       return null; // Exclude entirely
     }
@@ -874,7 +901,11 @@ export class DAGSuggester {
     // Task 3.4: Log adjustments for observability
     if (Math.abs(adjustment) > 0.01) {
       log.debug(
-        `[DAGSuggester] Confidence adjusted for ${toolId}: ${baseConfidence.toFixed(2)} → ${adjustedConfidence.toFixed(2)} (boost: +${boost.toFixed(2)}, penalty: -${penalty.toFixed(2)}, stats: ${stats.successes}/${stats.total} success)`,
+        `[DAGSuggester] Confidence adjusted for ${toolId}: ${baseConfidence.toFixed(2)} → ${
+          adjustedConfidence.toFixed(2)
+        } (boost: +${boost.toFixed(2)}, penalty: -${
+          penalty.toFixed(2)
+        }, stats: ${stats.successes}/${stats.total} success)`,
       );
     }
 
@@ -960,7 +991,9 @@ export class DAGSuggester {
     confidence: number = 0.60,
   ): Promise<void> {
     try {
-      log.info(`[DAGSuggester] Registering agent hint: ${fromToolId} -> ${toToolId} (confidence: ${confidence})`);
+      log.info(
+        `[DAGSuggester] Registering agent hint: ${fromToolId} -> ${toToolId} (confidence: ${confidence})`,
+      );
 
       // Add or update edge in graph
       await this.graphEngine.addEdge(fromToolId, toToolId, {
@@ -1070,7 +1103,9 @@ export class DAGSuggester {
 
         imported++;
       } catch (error) {
-        log.error(`[DAGSuggester] Failed to import pattern ${pattern.from} -> ${pattern.to}: ${error}`);
+        log.error(
+          `[DAGSuggester] Failed to import pattern ${pattern.from} -> ${pattern.to}: ${error}`,
+        );
       }
     }
 

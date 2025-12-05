@@ -133,7 +133,7 @@ Deno.test({
 
     // Verify aggregation worked (at least fast and stats should succeed)
     const aggregateComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "aggregate"
+      (e) => e.type === "task_complete" && e.task_id === "aggregate",
     );
     assertExists(aggregateComplete);
 
@@ -216,19 +216,19 @@ Deno.test({
 
     // Verify ML task failed safely
     const mlWarning = events.find(
-      (e) => e.type === "task_warning" && e.task_id === "ml_analysis"
+      (e) => e.type === "task_warning" && e.task_id === "ml_analysis",
     );
     assertExists(mlWarning, "ML task should emit warning");
 
     // Verify stats fallback succeeded
     const statsComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "stats_fallback"
+      (e) => e.type === "task_complete" && e.task_id === "stats_fallback",
     );
     assertExists(statsComplete, "Stats fallback should complete");
 
     // Verify final aggregator succeeded with fallback
     const finalComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "final"
+      (e) => e.type === "task_complete" && e.task_id === "final",
     );
     assertExists(finalComplete, "Final aggregator should complete");
 
@@ -240,7 +240,7 @@ Deno.test({
     assertEquals(
       workflowComplete.successful_tasks,
       3,
-      "Should have 3 successful tasks (fetch, stats, final)"
+      "Should have 3 successful tasks (fetch, stats, final)",
     );
 
     console.log("✅ AC #6: Graceful degradation pattern validated");
@@ -334,19 +334,19 @@ Deno.test({
 
     // Verify algo_a succeeded
     const algoAComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "algo_a"
+      (e) => e.type === "task_complete" && e.task_id === "algo_a",
     );
     assertExists(algoAComplete, "Algorithm A should complete");
 
     // Verify algo_b failed safely
     const algoBWarning = events.find(
-      (e) => e.type === "task_warning" && e.task_id === "algo_b"
+      (e) => e.type === "task_warning" && e.task_id === "algo_b",
     );
     assertExists(algoBWarning, "Algorithm B should fail safely");
 
     // Verify comparison succeeded with partial results
     const compareComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "compare"
+      (e) => e.type === "task_complete" && e.task_id === "compare",
     );
     assertExists(compareComplete, "Comparison should complete");
 
@@ -406,7 +406,7 @@ Deno.test({
 
     // Verify task succeeded
     const retryComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "retry_task"
+      (e) => e.type === "task_complete" && e.task_id === "retry_task",
     );
     assertExists(retryComplete, "Task with retry capability should complete");
 
@@ -414,7 +414,9 @@ Deno.test({
     const workflowComplete = events.find((e) => e.type === "workflow_complete");
     assertExists(workflowComplete);
 
-    console.log("✅ AC #5: Retry mechanism validated (retry logic in place for safe-to-fail tasks)");
+    console.log(
+      "✅ AC #5: Retry mechanism validated (retry logic in place for safe-to-fail tasks)",
+    );
   },
   sanitizeOps: false,
   sanitizeResources: false,
@@ -475,19 +477,19 @@ Deno.test({
 
     // Verify sandbox_fail emitted warning
     const sandboxWarning = events.find(
-      (e) => e.type === "task_warning" && e.task_id === "sandbox_fail"
+      (e) => e.type === "task_warning" && e.task_id === "sandbox_fail",
     );
     assertExists(sandboxWarning, "Sandbox failure should emit warning");
 
     // Verify safe_branch succeeded
     const safeBranchComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "safe_branch"
+      (e) => e.type === "task_complete" && e.task_id === "safe_branch",
     );
     assertExists(safeBranchComplete, "Safe branch should complete");
 
     // Verify MCP downstream task succeeded (error isolation)
     const mcpComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "mcp_downstream"
+      (e) => e.type === "task_complete" && e.task_id === "mcp_downstream",
     );
     assertExists(mcpComplete, "MCP downstream should complete (error isolated)");
 
@@ -575,23 +577,23 @@ Deno.test({
 
     // Verify 1 branch failed safely
     const branch2Warning = events.find(
-      (e) => e.type === "task_warning" && e.task_id === "branch_2"
+      (e) => e.type === "task_warning" && e.task_id === "branch_2",
     );
     assertExists(branch2Warning, "Branch 2 should fail safely");
 
     // Verify 2 branches succeeded
     const branch1Complete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "branch_1"
+      (e) => e.type === "task_complete" && e.task_id === "branch_1",
     );
     const branch3Complete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "branch_3"
+      (e) => e.type === "task_complete" && e.task_id === "branch_3",
     );
     assertExists(branch1Complete, "Branch 1 should complete");
     assertExists(branch3Complete, "Branch 3 should complete");
 
     // Verify final aggregation succeeded with 2/3 results
     const finalComplete = events.find(
-      (e) => e.type === "task_complete" && e.task_id === "final"
+      (e) => e.type === "task_complete" && e.task_id === "final",
     );
     assertExists(finalComplete, "Final aggregation should complete");
 

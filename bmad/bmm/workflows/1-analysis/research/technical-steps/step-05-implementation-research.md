@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current implementation data
 - 📋 YOU ARE AN IMPLEMENTATION ENGINEER, not content generator
 - 💬 FOCUS on implementation approaches and technology adoption
@@ -28,14 +30,15 @@
 
 ## YOUR TASK:
 
-Conduct comprehensive implementation research using current {{current_year}} web data with emphasis on practical implementation approaches and technology adoption.
+Conduct comprehensive implementation research using current {{current_year}} web data with emphasis
+on practical implementation approaches and technology adoption.
 
 ## IMPLEMENTATION RESEARCH SEQUENCE:
 
 ### 1. Begin Implementation Research
 
-Start with implementation research approach:
-"Now I'll complete our technical research with **implementation approaches and technology adoption** analysis using current {{current_year}} data.
+Start with implementation research approach: "Now I'll complete our technical research with
+**implementation approaches and technology adoption** analysis using current {{current_year}} data.
 
 **Implementation Research Focus:**
 
@@ -96,38 +99,36 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### Technology Adoption Strategies
 
-[Technology adoption analysis with source citations]
-_Source: [URL with {{current_year}} adoption data]_
+[Technology adoption analysis with source citations] _Source: [URL with {{current_year}} adoption
+data]_
 
 ### Development Workflows and Tooling
 
-[Development workflows analysis with source citations]
-_Source: [URL with {{current_year}} development data]_
+[Development workflows analysis with source citations] _Source: [URL with {{current_year}}
+development data]_
 
 ### Testing and Quality Assurance
 
-[Testing approaches analysis with source citations]
-_Source: [URL with {{current_year}} testing data]_
+[Testing approaches analysis with source citations] _Source: [URL with {{current_year}} testing
+data]_
 
 ### Deployment and Operations Practices
 
-[Deployment practices analysis with source citations]
-_Source: [URL with {{current_year}} deployment data]_
+[Deployment practices analysis with source citations] _Source: [URL with {{current_year}} deployment
+data]_
 
 ### Team Organization and Skills
 
-[Team organization analysis with source citations]
-_Source: [URL with {{current_year}} team data]_
+[Team organization analysis with source citations] _Source: [URL with {{current_year}} team data]_
 
 ### Cost Optimization and Resource Management
 
-[Cost optimization analysis with source citations]
-_Source: [URL with {{current_year}} optimization data]_
+[Cost optimization analysis with source citations] _Source: [URL with {{current_year}} optimization
+data]_
 
 ### Risk Assessment and Mitigation
 
-[Risk mitigation analysis with source citations]
-_Source: [URL with {{current_year}} risk data]_
+[Risk mitigation analysis with source citations] _Source: [URL with {{current_year}} risk data]_
 
 ## Technical Research Recommendations
 
@@ -150,8 +151,9 @@ _Source: [URL with {{current_year}} risk data]_
 
 ### 6. Present Analysis and Complete Option
 
-Show the generated implementation research and present complete option:
-"I've completed the **implementation research and technology adoption** analysis using current {{current_year}} data, finalizing our comprehensive technical research.
+Show the generated implementation research and present complete option: "I've completed the
+**implementation research and technology adoption** analysis using current {{current_year}} data,
+finalizing our comprehensive technical research.
 
 **Implementation Highlights:**
 
@@ -168,8 +170,8 @@ Show the generated implementation research and present complete option:
 - Implementation approaches and technology adoption
 - Practical recommendations and implementation roadmap
 
-**Ready to complete the technical research report?**
-[C] Complete Research - Save final document and conclude
+**Ready to complete the technical research report?** [C] Complete Research - Save final document and
+conclude
 
 ### 7. Handle Complete Selection
 
@@ -181,31 +183,28 @@ Show the generated implementation research and present complete option:
 
 ## APPEND TO DOCUMENT:
 
-When user selects 'C', append the content directly to the research document using the structure from step 5.
+When user selects 'C', append the content directly to the research document using the structure from
+step 5.
 
 ## SUCCESS METRICS:
 
-✅ Technology adoption strategies identified with current {{current_year}} citations
-✅ Development workflows and tooling thoroughly analyzed
-✅ Testing and deployment practices clearly documented
-✅ Team organization and skill requirements mapped
-✅ Cost optimization and risk mitigation strategies provided
-✅ [C] complete option presented and handled correctly
-✅ Content properly appended to document when C selected
-✅ Technical research workflow completed successfully
+✅ Technology adoption strategies identified with current {{current_year}} citations ✅ Development
+workflows and tooling thoroughly analyzed ✅ Testing and deployment practices clearly documented ✅
+Team organization and skill requirements mapped ✅ Cost optimization and risk mitigation strategies
+provided ✅ [C] complete option presented and handled correctly ✅ Content properly appended to
+document when C selected ✅ Technical research workflow completed successfully
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in implementation web searches
-❌ Missing critical technology adoption strategies
-❌ Not providing practical implementation guidance
-❌ Incomplete development workflows or operational practices analysis
-❌ Not presenting completion option for research workflow
-❌ Appending content without user selecting 'C'
+❌ Not using {{current_year}} in implementation web searches ❌ Missing critical technology adoption
+strategies ❌ Not providing practical implementation guidance ❌ Incomplete development workflows or
+operational practices analysis ❌ Not presenting completion option for research workflow ❌
+Appending content without user selecting 'C'
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## IMPLEMENTATION RESEARCH PROTOCOLS:
 
@@ -234,4 +233,5 @@ Technical research workflow complete. User may:
 - Combine technical research with other research types for comprehensive insights
 - Move forward with implementation based on technical insights
 
-Congratulations on completing comprehensive technical research with current {{current_year}} data! 🎉
+Congratulations on completing comprehensive technical research with current {{current_year}} data!
+🎉

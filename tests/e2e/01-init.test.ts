@@ -4,11 +4,8 @@
  * Tests database initialization, migrations, and schema setup.
  */
 
-import { assertEquals, assert } from "jsr:@std/assert@1";
-import {
-  cleanupTestDatabase,
-  initializeTestDatabase,
-} from "../fixtures/test-helpers.ts";
+import { assert, assertEquals } from "jsr:@std/assert@1";
+import { cleanupTestDatabase, initializeTestDatabase } from "../fixtures/test-helpers.ts";
 
 Deno.test("E2E 01: Database initialization and migrations", async (t) => {
   let testDir: string | undefined;
@@ -76,10 +73,13 @@ Deno.test("E2E 01: Database initialization and migrations", async (t) => {
     });
 
     await t.step("8. Test basic insert into mcp_server", async () => {
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO mcp_server (server_id, server_name, connection_info)
         VALUES ($1, $2, $3)
-      `, ["test-server", "Test Server", JSON.stringify({ test: true })]);
+      `,
+        ["test-server", "Test Server", JSON.stringify({ test: true })],
+      );
 
       const result = await db.query(
         `SELECT * FROM mcp_server WHERE server_id = $1`,
@@ -91,17 +91,20 @@ Deno.test("E2E 01: Database initialization and migrations", async (t) => {
     });
 
     await t.step("9. Test basic insert into mcp_tool", async () => {
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO mcp_tool (server_id, tool_name, tool_schema)
         VALUES ($1, $2, $3)
-      `, [
-        "test-server",
-        "test_tool",
-        JSON.stringify({
-          name: "test_tool",
-          description: "A test tool",
-        }),
-      ]);
+      `,
+        [
+          "test-server",
+          "test_tool",
+          JSON.stringify({
+            name: "test_tool",
+            description: "A test tool",
+          }),
+        ],
+      );
 
       const result = await db.query(
         `SELECT * FROM mcp_tool WHERE tool_name = $1`,
@@ -123,10 +126,13 @@ Deno.test("E2E 01: Database initialization and migrations", async (t) => {
       // Create a test vector (1024 dimensions for BGE-M3)
       const testVector = Array(1024).fill(0).map((_, i) => i / 1024);
 
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding)
         VALUES ($1, $2, $3, $4::vector)
-      `, [toolId, "test-server", "test_tool", `[${testVector.join(",")}]`]);
+      `,
+        [toolId, "test-server", "test_tool", `[${testVector.join(",")}]`],
+      );
 
       const result = await db.query(
         `SELECT * FROM tool_embedding WHERE tool_id = $1`,

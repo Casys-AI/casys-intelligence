@@ -91,12 +91,12 @@ Deno.test("generateCacheKey - nested context objects are normalized", () => {
   const key1 = generateCacheKey(
     code,
     { nested: { b: 2, a: 1 } },
-    toolVersions
+    toolVersions,
   );
   const key2 = generateCacheKey(
     code,
     { nested: { a: 1, b: 2 } },
-    toolVersions
+    toolVersions,
   );
 
   // Nested object keys should also be sorted
@@ -171,10 +171,10 @@ Deno.test("generateCacheKey - key format (three hashes separated by underscores)
 Deno.test("generateCacheKey - performance (should be fast)", () => {
   const code = "return " + "x + ".repeat(100) + "42";
   const context = Object.fromEntries(
-    Array.from({ length: 50 }, (_, i) => [`key${i}`, i])
+    Array.from({ length: 50 }, (_, i) => [`key${i}`, i]),
   );
   const toolVersions = Object.fromEntries(
-    Array.from({ length: 10 }, (_, i) => [`tool${i}`, `v${i}.0.0`])
+    Array.from({ length: 10 }, (_, i) => [`tool${i}`, `v${i}.0.0`]),
   );
 
   const startTime = performance.now();

@@ -1,23 +1,24 @@
 # Deno Permissions System - Deep Dive
 
-**Date:** 2025-11-11
-**Owner:** Amelia (Dev)
-**Status:** ✅ COMPLETE
-**Purpose:** Comprehensive guide to Deno's permission model for Epic 3 sandbox implementation
+**Date:** 2025-11-11 **Owner:** Amelia (Dev) **Status:** ✅ COMPLETE **Purpose:** Comprehensive
+guide to Deno's permission model for Epic 3 sandbox implementation
 
 ---
 
 ## Executive Summary
 
-Deno's permission system is a **whitelist-based security model** that requires explicit opt-in for all sensitive operations. This is fundamentally different from Node.js's implicit trust model.
+Deno's permission system is a **whitelist-based security model** that requires explicit opt-in for
+all sensitive operations. This is fundamentally different from Node.js's implicit trust model.
 
 **Key Principles:**
+
 1. **Secure by default** - Zero permissions granted unless explicitly allowed
 2. **Granular control** - Permissions can be scoped to specific resources
 3. **Explicit > Implicit** - No "ambient authority" inherited from environment
 4. **Runtime enforcement** - Permissions checked at runtime, not compile time
 
 **Relevance to AgentCards:**
+
 - Story 3.1: Sandbox executor must enforce strict permissions
 - Story 3.2: MCP tools injection requires understanding permission boundaries
 - Story 3.3: Result serialization needs I/O permission clarity
@@ -46,9 +47,11 @@ Deno's permission system is a **whitelist-based security model** that requires e
 Deno provides 7 core permission types:
 
 ### 1. `--allow-read` / `--deny-read`
+
 **Controls:** File system read access
 
 **Operations gated:**
+
 - `Deno.readTextFile()`
 - `Deno.readFile()`
 - `Deno.open()` with read mode
@@ -57,6 +60,7 @@ Deno provides 7 core permission types:
 - `import` statements (reading module files)
 
 **Scoping:**
+
 ```bash
 # Allow all reads
 deno run --allow-read script.ts
@@ -71,16 +75,20 @@ deno run --allow-read=/tmp,/home/user/data script.ts
 deno run --deny-read script.ts
 ```
 
-**Important:** Read permission is required even for `import` statements. Without it, Deno cannot load modules.
+**Important:** Read permission is required even for `import` statements. Without it, Deno cannot
+load modules.
 
-**AgentCards usage:** Sandbox needs read access to temp files containing user code, but nothing else.
+**AgentCards usage:** Sandbox needs read access to temp files containing user code, but nothing
+else.
 
 ---
 
 ### 2. `--allow-write` / `--deny-write`
+
 **Controls:** File system write access
 
 **Operations gated:**
+
 - `Deno.writeTextFile()`
 - `Deno.writeFile()`
 - `Deno.open()` with write mode
@@ -90,6 +98,7 @@ deno run --deny-read script.ts
 - `Deno.create()`
 
 **Scoping:**
+
 ```bash
 # Allow all writes
 deno run --allow-write script.ts
@@ -106,9 +115,11 @@ deno run --deny-write script.ts
 ---
 
 ### 3. `--allow-net` / `--deny-net`
+
 **Controls:** Network access (HTTP, WebSocket, TCP, UDP)
 
 **Operations gated:**
+
 - `fetch()`
 - `WebSocket`
 - `Deno.connect()`
@@ -116,6 +127,7 @@ deno run --deny-write script.ts
 - `Deno.resolveDns()`
 
 **Scoping:**
+
 ```bash
 # Allow all network access
 deno run --allow-net script.ts
@@ -135,20 +147,24 @@ deno run --deny-net script.ts
 
 **Important:** Port specifications apply to both inbound (listen) and outbound (connect) operations.
 
-**AgentCards usage:** Sandbox has NO network access. MCP tool calls (which may involve network) happen via message passing to host.
+**AgentCards usage:** Sandbox has NO network access. MCP tool calls (which may involve network)
+happen via message passing to host.
 
 ---
 
 ### 4. `--allow-env` / `--deny-env`
+
 **Controls:** Environment variable access
 
 **Operations gated:**
+
 - `Deno.env.get()`
 - `Deno.env.set()`
 - `Deno.env.toObject()`
 - Access to `Deno.env`
 
 **Scoping:**
+
 ```bash
 # Allow all env vars
 deno run --allow-env script.ts
@@ -160,20 +176,24 @@ deno run --allow-env=API_KEY,DATABASE_URL script.ts
 deno run --deny-env script.ts
 ```
 
-**Security note:** Environment variables often contain secrets (API keys, passwords). Denying env access prevents credential leakage.
+**Security note:** Environment variables often contain secrets (API keys, passwords). Denying env
+access prevents credential leakage.
 
 **AgentCards usage:** Sandbox has NO env access to prevent credential exposure.
 
 ---
 
 ### 5. `--allow-run` / `--deny-run`
+
 **Controls:** Subprocess spawning
 
 **Operations gated:**
+
 - `Deno.Command`
 - `Deno.run()` (deprecated)
 
 **Scoping:**
+
 ```bash
 # Allow all subprocess spawning
 deno run --allow-run script.ts
@@ -185,20 +205,24 @@ deno run --allow-run=git,npm script.ts
 deno run --deny-run script.ts
 ```
 
-**Security note:** Subprocess spawning is extremely dangerous in sandboxes. User code could spawn `rm -rf /` or other destructive commands.
+**Security note:** Subprocess spawning is extremely dangerous in sandboxes. User code could spawn
+`rm -rf /` or other destructive commands.
 
 **AgentCards usage:** Sandbox has NO subprocess access. This is critical for security.
 
 ---
 
 ### 6. `--allow-ffi` / `--deny-ffi`
+
 **Controls:** Foreign Function Interface (loading native libraries)
 
 **Operations gated:**
+
 - `Deno.dlopen()`
 - Loading `.so`, `.dylib`, `.dll` files
 
 **Scoping:**
+
 ```bash
 # Allow all FFI
 deno run --allow-ffi script.ts
@@ -217,13 +241,16 @@ deno run --deny-ffi script.ts
 ---
 
 ### 7. `--allow-hrtime` / `--deny-hrtime`
+
 **Controls:** High-resolution time measurement
 
 **Operations gated:**
+
 - `performance.now()` with microsecond precision
 - High-resolution timestamps
 
 **Scoping:**
+
 ```bash
 # Allow high-resolution time
 deno run --allow-hrtime script.ts
@@ -232,9 +259,11 @@ deno run --allow-hrtime script.ts
 deno run --deny-hrtime script.ts
 ```
 
-**Security note:** High-resolution timers can be used for timing attacks (e.g., Spectre-style exploits).
+**Security note:** High-resolution timers can be used for timing attacks (e.g., Spectre-style
+exploits).
 
-**AgentCards usage:** We currently allow hrtime for performance measurement. This is low-risk for our use case but should be reconsidered if processing sensitive data.
+**AgentCards usage:** We currently allow hrtime for performance measurement. This is low-risk for
+our use case but should be reconsidered if processing sensitive data.
 
 ---
 
@@ -243,6 +272,7 @@ deno run --deny-hrtime script.ts
 ### Allow Flags
 
 **Explicit permission granting:**
+
 ```bash
 --allow-read[=<PATH>]      # File system read access
 --allow-write[=<PATH>]     # File system write access
@@ -254,6 +284,7 @@ deno run --deny-hrtime script.ts
 ```
 
 **Special flags:**
+
 ```bash
 --allow-all                # Grant ALL permissions (dangerous, avoid in production)
 -A                         # Alias for --allow-all
@@ -265,7 +296,8 @@ deno run --deny-hrtime script.ts
 
 **Introduced in Deno 1.19+**
 
-Deny flags explicitly reject permissions, even if allow flags are present. **Deny takes precedence over allow.**
+Deny flags explicitly reject permissions, even if allow flags are present. **Deny takes precedence
+over allow.**
 
 ```bash
 --deny-read[=<PATH>]       # Explicitly deny read access
@@ -278,6 +310,7 @@ Deny flags explicitly reject permissions, even if allow flags are present. **Den
 ```
 
 **Precedence rules:**
+
 ```bash
 # Example 1: Allow all reads, but deny /etc
 deno run --allow-read --deny-read=/etc script.ts
@@ -292,7 +325,8 @@ deno run --allow-read=/tmp --deny-read=/tmp/secrets script.ts
 # Result: Can read /tmp but NOT /tmp/secrets
 ```
 
-**Best practice for sandboxes:** Use deny flags to explicitly block sensitive operations, even when allow flags might be overly permissive.
+**Best practice for sandboxes:** Use deny flags to explicitly block sensitive operations, even when
+allow flags might be overly permissive.
 
 ---
 
@@ -301,6 +335,7 @@ deno run --allow-read=/tmp --deny-read=/tmp/secrets script.ts
 ### File System Scoping
 
 **Absolute paths:**
+
 ```bash
 # Unix
 deno run --allow-read=/home/user/data script.ts
@@ -310,12 +345,14 @@ deno run --allow-read=C:\Users\data script.ts
 ```
 
 **Relative paths (resolved from CWD):**
+
 ```bash
 deno run --allow-read=./data script.ts
 # Resolved to absolute path at startup
 ```
 
 **Parent directory access:**
+
 ```bash
 # Allow /home/user/data grants access to:
 # - /home/user/data
@@ -328,6 +365,7 @@ deno run --allow-read=./data script.ts
 ```
 
 **Multiple paths:**
+
 ```bash
 deno run --allow-read=/tmp,/var/log,/home/user/data script.ts
 ```
@@ -337,12 +375,14 @@ deno run --allow-read=/tmp,/var/log,/home/user/data script.ts
 ### Network Scoping
 
 **Domain-only:**
+
 ```bash
 deno run --allow-net=example.com script.ts
 # Allows: example.com:80, example.com:443, example.com:8080
 ```
 
 **Domain and port:**
+
 ```bash
 deno run --allow-net=example.com:443 script.ts
 # Allows: example.com:443 ONLY
@@ -350,12 +390,14 @@ deno run --allow-net=example.com:443 script.ts
 ```
 
 **IP addresses:**
+
 ```bash
 deno run --allow-net=192.168.1.100 script.ts
 deno run --allow-net=192.168.1.100:8080 script.ts
 ```
 
 **Localhost:**
+
 ```bash
 deno run --allow-net=localhost:3000 script.ts
 deno run --allow-net=127.0.0.1:3000 script.ts
@@ -368,6 +410,7 @@ deno run --allow-net=127.0.0.1:3000 script.ts
 ### Environment Variable Scoping
 
 **Specific variables:**
+
 ```bash
 deno run --allow-env=HOME,USER,PATH script.ts
 # Allows access to HOME, USER, PATH only
@@ -375,6 +418,7 @@ deno run --allow-env=HOME,USER,PATH script.ts
 ```
 
 **All variables:**
+
 ```bash
 deno run --allow-env script.ts
 ```
@@ -384,6 +428,7 @@ deno run --allow-env script.ts
 ### Subprocess Scoping
 
 **Specific commands:**
+
 ```bash
 deno run --allow-run=git,npm,deno script.ts
 # Allows spawning: git, npm, deno
@@ -391,6 +436,7 @@ deno run --allow-run=git,npm,deno script.ts
 ```
 
 **Important:** Command names are matched by basename, not full path.
+
 ```bash
 # --allow-run=git allows:
 # - /usr/bin/git
@@ -415,17 +461,19 @@ const command = new Deno.Command("deno", {
 ```
 
 **Explicit permission passing:**
+
 ```typescript
 const command = new Deno.Command("deno", {
   args: [
     "run",
-    "--allow-read=/tmp",  // Explicitly grant to child
-    "child.ts"
+    "--allow-read=/tmp", // Explicitly grant to child
+    "child.ts",
   ],
 });
 ```
 
-**AgentCards pattern:** Host process has full permissions. Sandbox subprocess has ZERO permissions except temp file read.
+**AgentCards pattern:** Host process has full permissions. Sandbox subprocess has ZERO permissions
+except temp file read.
 
 ---
 
@@ -437,11 +485,12 @@ const command = new Deno.Command("deno", {
 // Parent has --allow-all
 new Worker(
   new URL("./worker.ts", import.meta.url).href,
-  { type: "module", deno: { permissions: "none" } }  // Explicit permission control
+  { type: "module", deno: { permissions: "none" } }, // Explicit permission control
 );
 ```
 
 **Permission options for workers:**
+
 ```typescript
 deno: {
   permissions: "none",           // Zero permissions
@@ -469,10 +518,11 @@ deno: {
 ```typescript
 // Check if permission is granted
 const status = await Deno.permissions.query({ name: "read", path: "/etc/passwd" });
-console.log(status.state);  // "granted" | "denied" | "prompt"
+console.log(status.state); // "granted" | "denied" | "prompt"
 ```
 
 **Permission descriptors:**
+
 ```typescript
 // Read
 { name: "read", path: "/tmp" }
@@ -518,7 +568,7 @@ if (status.state === "granted") {
 ```typescript
 // Revoke permission (useful for least-privilege pattern)
 const status = await Deno.permissions.revoke({ name: "write" });
-console.log(status.state);  // "denied"
+console.log(status.state); // "denied"
 ```
 
 **Use case:** Grant permission temporarily, then revoke after operation.
@@ -528,7 +578,7 @@ console.log(status.state);  // "denied"
 const status = await Deno.permissions.request({ name: "write", path: "/tmp" });
 if (status.state === "granted") {
   await Deno.writeTextFile("/tmp/output.txt", "data");
-  await Deno.permissions.revoke({ name: "write" });  // Revoke after use
+  await Deno.permissions.revoke({ name: "write" }); // Revoke after use
 }
 ```
 
@@ -548,6 +598,7 @@ When permission is not granted, Deno prompts the user:
 ```
 
 **Prompt responses:**
+
 - `y` - Allow this operation
 - `n` - Deny this operation
 - `A` - Allow all operations of this type (for this run)
@@ -563,7 +614,8 @@ deno run --no-prompt script.ts
 # Any permission violation throws PermissionDenied error immediately
 ```
 
-**AgentCards usage:** Sandbox always uses `--no-prompt` to prevent hanging on permission prompts. Violations should fail fast, not wait for user input.
+**AgentCards usage:** Sandbox always uses `--no-prompt` to prevent hanging on permission prompts.
+Violations should fail fast, not wait for user input.
 
 ---
 
@@ -583,13 +635,13 @@ new Deno.Command("deno", {
 new Deno.Command("deno", {
   args: [
     "run",
-    `--allow-read=${tempFile}`,  // Only temp file
+    `--allow-read=${tempFile}`, // Only temp file
     "--deny-write",
     "--deny-net",
     "--deny-run",
     "--deny-ffi",
     "--deny-env",
-    "sandbox.ts"
+    "sandbox.ts",
   ],
 });
 ```
@@ -604,11 +656,11 @@ new Deno.Command("deno", {
 // ✅ BEST: Defense-in-depth approach
 const permissions = [
   `--allow-read=${tempFile}`,
-  "--deny-write",      // Explicit: no writes ever
-  "--deny-net",        // Explicit: no network ever
-  "--deny-run",        // Explicit: no subprocess spawning ever
-  "--deny-ffi",        // Explicit: no FFI ever
-  "--deny-env",        // Explicit: no env vars ever
+  "--deny-write", // Explicit: no writes ever
+  "--deny-net", // Explicit: no network ever
+  "--deny-run", // Explicit: no subprocess spawning ever
+  "--deny-ffi", // Explicit: no FFI ever
+  "--deny-env", // Explicit: no env vars ever
 ];
 ```
 
@@ -638,9 +690,9 @@ const permissions = [
 new Deno.Command("deno", {
   args: [
     "run",
-    "--no-prompt",     // ✅ Fail fast, don't prompt
+    "--no-prompt", // ✅ Fail fast, don't prompt
     ...permissions,
-    tempFile
+    tempFile,
   ],
 });
 ```
@@ -727,8 +779,8 @@ const worker = new Worker(
   new URL("./sandbox.ts", import.meta.url).href,
   {
     type: "module",
-    deno: { permissions: "none" }  // Zero permissions
-  }
+    deno: { permissions: "none" }, // Zero permissions
+  },
 );
 
 worker.onmessage = async (event) => {
@@ -754,7 +806,7 @@ postMessage({ type: "call_mcp_tool", name: "github.searchRepos", args: {} });
 
 ```typescript
 const permissions = [
-  `--allow-read=${tempFile},/usr/lib/deno`,  // Code + stdlib
+  `--allow-read=${tempFile},/usr/lib/deno`, // Code + stdlib
   "--deny-write",
   "--deny-net",
   "--deny-run",
@@ -783,7 +835,8 @@ if (status.state === "granted") {
 }
 ```
 
-**Use case:** Useful when host process needs to temporarily write, then continue with restricted permissions.
+**Use case:** Useful when host process needs to temporarily write, then continue with restricted
+permissions.
 
 ---
 
@@ -805,7 +858,7 @@ async function verifySandboxPermissions() {
     const status = await Deno.permissions.query({ name: check.name });
     if (status.state !== check.shouldBe) {
       throw new Error(
-        `Security violation: Expected ${check.name} to be ${check.shouldBe}, got ${status.state}`
+        `Security violation: Expected ${check.name} to be ${check.shouldBe}, got ${status.state}`,
       );
     }
   }
@@ -879,7 +932,8 @@ deno run --allow-read=/tmp script.ts
 await Deno.readTextFile("/tmp/../etc/passwd");  # PermissionDenied
 ```
 
-**Deno's behavior:** Path normalization happens before permission check. `/tmp/../etc/passwd` → `/etc/passwd`, which is not under `/tmp`.
+**Deno's behavior:** Path normalization happens before permission check. `/tmp/../etc/passwd` →
+`/etc/passwd`, which is not under `/tmp`.
 
 ---
 
@@ -889,7 +943,7 @@ await Deno.readTextFile("/tmp/../etc/passwd");  # PermissionDenied
 
 ```typescript
 // script.ts
-import { foo } from "./lib.ts";  // Requires --allow-read for ./lib.ts
+import { foo } from "./lib.ts"; // Requires --allow-read for ./lib.ts
 ```
 
 ```bash
@@ -933,6 +987,7 @@ const duration = performance.now() - start;
 ```
 
 **Mitigation:**
+
 - AgentCards sandbox target: <150ms total (well within budget)
 - Consider process pooling for high-frequency execution (future optimization)
 
@@ -955,16 +1010,19 @@ const status = await Deno.permissions.query({ name: "read", path: "/tmp" });
 ### New in Deno 2.0
 
 **1. Improved deny flag behavior:**
+
 - Deny flags now correctly override allow flags in all cases
 - More predictable precedence
 
 **2. npm: support inherits permissions:**
+
 ```typescript
 import validator from "npm:validator@13.15.22";
 // Inherits permissions from parent Deno process
 ```
 
 **3. Worker permissions API improvements:**
+
 - More granular permission control for workers
 - Better error messages
 
@@ -1009,7 +1067,7 @@ Deno.test("Sandbox denies network access", async () => {
   assertEquals(
     result.error?.message.includes("net"),
     true,
-    "Error should mention network permission"
+    "Error should mention network permission",
   );
 });
 ```
@@ -1019,11 +1077,13 @@ Deno.test("Sandbox denies network access", async () => {
 ## References
 
 **Official Documentation:**
+
 - [Deno Permissions](https://deno.land/manual/basics/permissions)
 - [Deno Security](https://deno.land/manual/runtime/security)
 - [Deno Workers](https://deno.land/manual/runtime/workers)
 
 **AgentCards Documentation:**
+
 - [Deno Sandbox POC Summary](./deno-sandbox-poc-summary.md)
 - [Architecture Spike - MCP Tools Injection](./architecture-spike-mcp-tools-injection.md)
 
@@ -1031,7 +1091,8 @@ Deno.test("Sandbox denies network access", async () => {
 
 ## Conclusion
 
-Deno's permission system provides robust, granular security control perfect for AgentCards' sandbox requirements. Key takeaways:
+Deno's permission system provides robust, granular security control perfect for AgentCards' sandbox
+requirements. Key takeaways:
 
 1. **Whitelist-based** - Explicit opt-in for all sensitive operations
 2. **Granular** - Scope permissions to specific resources
@@ -1040,12 +1101,11 @@ Deno's permission system provides robust, granular security control perfect for 
 5. **Performance** - Negligible overhead (<1ms per execution)
 
 **Next steps for Epic 3:**
+
 - Story 3.1: Implement sandbox executor with permission model documented here
 - Story 3.2: Leverage worker permissions for MCP tools injection
 - Story 3.7: Use permission knowledge for integration tests
 
 ---
 
-**Document Status:** ✅ COMPLETE
-**Date:** 2025-11-11
-**Owner:** Amelia (Dev)
+**Document Status:** ✅ COMPLETE **Date:** 2025-11-11 **Owner:** Amelia (Dev)

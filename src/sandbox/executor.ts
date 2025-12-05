@@ -22,23 +22,20 @@
  */
 
 import type {
-  SandboxConfig,
-  ExecutionResult,
-  StructuredError,
   ExecutionMode,
+  ExecutionResult,
+  SandboxConfig,
+  StructuredError,
   ToolDefinition,
   TraceEvent,
 } from "./types.ts";
 import { getLogger } from "../telemetry/logger.ts";
-import { CodeExecutionCache, generateCacheKey, type CacheStats } from "./cache.ts";
+import { type CacheStats, CodeExecutionCache, generateCacheKey } from "./cache.ts";
+import { SecurityValidationError, SecurityValidator } from "./security-validator.ts";
 import {
-  SecurityValidator,
-  SecurityValidationError,
-} from "./security-validator.ts";
-import {
+  type ExecutionToken,
   ResourceLimiter,
   ResourceLimitError,
-  type ExecutionToken,
   type ResourceStats,
 } from "./resource-limiter.ts";
 import { WorkerBridge } from "./worker-bridge.ts";
@@ -236,7 +233,7 @@ export class DenoSandboxExecutor {
         const cacheKey = generateCacheKey(
           code,
           context ?? {},
-          this.toolVersions
+          this.toolVersions,
         );
 
         const cached = this.cache.get(cacheKey);
@@ -288,7 +285,7 @@ export class DenoSandboxExecutor {
         const cacheKey = generateCacheKey(
           code,
           context ?? {},
-          this.toolVersions
+          this.toolVersions,
         );
 
         const now = Date.now();
@@ -375,33 +372,33 @@ export class DenoSandboxExecutor {
     // Build context injection code
     const contextInjection = context
       ? Object.entries(context)
-          .map(([key, value]) => {
-            // Validate variable name is safe (alphanumeric + underscore only)
-            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
-              throw new Error(`Invalid context variable name: ${key}`);
-            }
-            // Serialize value to JSON and inject as const
-            return `const ${key} = ${JSON.stringify(value)};`;
-          })
-          .join('\n    ')
-      : '';
+        .map(([key, value]) => {
+          // Validate variable name is safe (alphanumeric + underscore only)
+          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
+            throw new Error(`Invalid context variable name: ${key}`);
+          }
+          // Serialize value to JSON and inject as const
+          return `const ${key} = ${JSON.stringify(value)};`;
+        })
+        .join("\n    ")
+      : "";
 
     // ADR-016: REPL-style auto-return with heuristic detection
     // Check if code contains statement keywords (const, let, var, function, return, throw, etc.)
-    const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return|throw|break|continue)\s/.test(code.trim());
+    const hasStatements =
+      /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return|throw|break|continue)\s/
+        .test(code.trim());
 
     // If code has statements, execute as-is (requires explicit return)
     // If code is pure expression, wrap in return for auto-return
-    const wrappedUserCode = hasStatements
-      ? code
-      : `return (${code});`;
+    const wrappedUserCode = hasStatements ? code : `return (${code});`;
 
     return `
 (async () => {
   try {
     // Execute user code in async context with injected context (ADR-016: REPL-style auto-return)
     const __result = await (async () => {
-      ${contextInjection ? contextInjection + '\n      ' : ''}${wrappedUserCode}
+      ${contextInjection ? contextInjection + "\n      " : ""}${wrappedUserCode}
     })();
 
     // Serialize result (must be JSON-compatible)

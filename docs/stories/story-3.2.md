@@ -1,17 +1,14 @@
 # Story 3.2: MCP Tools Injection into Code Context
 
-**Epic:** 3 - Agent Code Execution & Local Processing
-**Story ID:** 3.2
-**Status:** review
+**Epic:** 3 - Agent Code Execution & Local Processing **Story ID:** 3.2 **Status:** review
 **Estimated Effort:** 6-8 heures
 
 ---
 
 ## User Story
 
-**As an** agent,
-**I want** access to MCP tools within my code execution environment,
-**So that** I can call tools directly from my TypeScript code instead of via JSON-RPC.
+**As an** agent, **I want** access to MCP tools within my code execution environment, **So that** I
+can call tools directly from my TypeScript code instead of via JSON-RPC.
 
 ---
 
@@ -42,7 +39,8 @@
 - [x] **Task 2: MCP client wrapper generation** (AC: #2, #3)
   - [x] Créer fonction `wrapMCPClient(client: MCPClient): ToolFunctions`
   - [x] Générer wrappers TypeScript pour chaque tool du client
-  - [x] Format: `const github = { listCommits: async (args) => client.callTool("list_commits", args) }`
+  - [x] Format:
+        `const github = { listCommits: async (args) => client.callTool("list_commits", args) }`
   - [x] Gérer conversion arguments (camelCase ↔ snake_case si nécessaire)
   - [x] Retourner objet avec méthodes typées
 
@@ -100,16 +98,19 @@
 ### Architecture Integration
 
 **Dependency on Story 3.1:**
+
 - Uses `CodeSandbox` from Story 3.1 for execution environment
 - Injects tools via sandbox initialization context
 - Tool wrappers execute within sandbox subprocess
 
 **Vector Search Integration (Epic 1):**
+
 - Reuses `VectorSearch` from `src/vector/search.ts`
 - Intent-based tool discovery: `vectorSearch.searchTools(intent, topK=5)`
 - Only inject top-K relevant tools to minimize context
 
 **MCP Gateway Integration (Epic 2):**
+
 - Tool calls routed through `src/mcp/gateway-server.ts`
 - Reuses existing `MCPClient` instances (no new connections)
 - Respects health checks and rate limiting from Story 2.5 & 2.6
@@ -133,7 +134,7 @@ const github = {
   },
   getRepo: async (args: { repo: string }) => {
     return await githubClient.callTool("get_repo", args);
-  }
+  },
 };
 
 // Inject into sandbox context
@@ -147,6 +148,7 @@ const sandboxCode = `
 ```
 
 **Actual Implementation (Secure):**
+
 - Don't serialize functions (not JSON-safe)
 - Instead: Inject tool proxy that communicates with parent process
 - Use message passing: sandbox → parent → MCP client → response → sandbox
@@ -154,6 +156,7 @@ const sandboxCode = `
 ### Type Generation Example
 
 **Input: MCP Tool Schema**
+
 ```json
 {
   "name": "list_commits",
@@ -169,6 +172,7 @@ const sandboxCode = `
 ```
 
 **Output: TypeScript Type**
+
 ```typescript
 interface ListCommitsArgs {
   repo: string;
@@ -183,6 +187,7 @@ const github = {
 ### Project Structure Alignment
 
 **New Module: `src/sandbox/context-builder.ts`**
+
 ```
 src/sandbox/
 ├── executor.ts           # Story 3.1 - Sandbox execution
@@ -192,6 +197,7 @@ src/sandbox/
 ```
 
 **Integration Points:**
+
 - `src/sandbox/executor.ts`: Modified to accept `toolContext` parameter
 - `src/vector/search.ts`: Reused for tool discovery
 - `src/mcp/client.ts`: Reused for tool execution
@@ -200,6 +206,7 @@ src/sandbox/
 ### Testing Strategy
 
 **Test Organization:**
+
 ```
 tests/unit/sandbox/
 ├── context_builder_test.ts      # Context builder unit tests
@@ -213,6 +220,7 @@ tests/fixtures/
 ```
 
 **Mock Strategy:**
+
 - Reuse `MockMCPServer` from Story 2.7 (`tests/fixtures/mock-mcp-server.ts`)
 - Create minimal GitHub client mock with 2-3 methods
 - Validate wrapper calls match expected MCP protocol
@@ -222,22 +230,26 @@ tests/fixtures/
 **From Story 3-1-deno-sandbox-executor-foundation (Status: drafted)**
 
 **Sandbox Infrastructure:**
+
 - `CodeSandbox` class disponible dans `src/sandbox/executor.ts`
 - Subprocess isolation avec permissions explicites
 - Timeout (30s) et memory limits (512MB) déjà implémentés
 - Return value serialization (JSON-only) validée
 
 **Integration Points:**
+
 - Modifier `CodeSandbox.execute()` pour accepter `context` parameter
 - Context contient les tool wrappers injectés
 - Sandbox peut référencer tools via `const { github } = context;`
 
 **Security Model:**
+
 - No eval/Function constructor (déjà validé en 3.1)
 - Tools wrappers doivent respecter mêmes contraintes
 - Message passing préféré vs function serialization
 
 **Testing Patterns:**
+
 - Reuse test helpers from Story 2.7 & 3.1
 - Isolation tests avec DB temporaire
 - Performance benchmarks si overhead significatif
@@ -247,12 +259,14 @@ tests/fixtures/
 ### Performance Considerations
 
 **Overhead Sources:**
+
 1. Vector search for tool discovery (~50ms)
 2. Type generation from schemas (~10ms per tool)
 3. Wrapper creation (~5ms per tool)
 4. **Total overhead: ~100ms for 5 tools** (acceptable)
 
 **Optimization Strategies:**
+
 - Cache generated wrappers per tool schema version
 - Lazy type generation (only when needed)
 - Batch vector search calls
@@ -260,11 +274,13 @@ tests/fixtures/
 ### Security Considerations
 
 **Threat Model:**
+
 1. **Malicious tool injection**: Vector search must validate tool names
 2. **Prototype pollution**: Reject `__proto__`, `constructor` tool names
 3. **Code injection**: No eval/Function in wrapper generation
 
 **Mitigation:**
+
 - Whitelist tool name patterns: `[a-z0-9_-]+:[a-z0-9_-]+`
 - Sanitize all tool names before injection
 - Use message passing (not function serialization)
@@ -298,19 +314,24 @@ Claude Haiku 4.5
 ### Debug Log References
 
 **Implementation Summary:**
+
 - Phase 1-4 fully implemented in single context builder module (`src/sandbox/context-builder.ts`)
-- Core components: ContextBuilder class, wrapMCPClient function, MCPToolError class, type generation utilities
+- Core components: ContextBuilder class, wrapMCPClient function, MCPToolError class, type generation
+  utilities
 - Vector search integration via buildContext(intent, topK) method with logging
 - Tool name conversion (snake_case → camelCase) for JavaScript API
 - Message passing architecture (Option 2 from spike) via client.callTool()
 - Type generation from JSON Schema with full TypeScript support
 
 **Test Results:**
+
 - 13 unit tests created and passing (context_builder_test.ts)
-- Coverage: ContextBuilder initialization, tool wrapping, type generation, error handling, security validation
+- Coverage: ContextBuilder initialization, tool wrapping, type generation, error handling, security
+  validation
 - All acceptance criteria validated through comprehensive test cases
 
 **Key Decisions:**
+
 1. Single unified context-builder.ts module (no separate wrapper-template.ts needed)
 2. Message passing via client.callTool() ensures security and respects existing infrastructure
 3. Type cache optimization for repeated tool definition generation
@@ -319,12 +340,15 @@ Claude Haiku 4.5
 ### Completion Notes List
 
 **For Next Stories (3.3+):**
-1. ContextBuilder integrates seamlessly with DenoSandboxExecutor (Story 3.1) - pass built context to execute() method
+
+1. ContextBuilder integrates seamlessly with DenoSandboxExecutor (Story 3.1) - pass built context to
+   execute() method
 2. VectorSearch integration ready - just set via setVectorSearch() before buildContext()
 3. Error handling pattern (MCPToolError) can be reused for other tool integration scenarios
 4. Type definitions generation useful for any tool schema documentation
 
 **Architecture Patterns Used:**
+
 - Message passing for tool invocation (sandbox security boundary)
 - Type cache for performance optimization
 - Logging throughout for debugging and telemetry
@@ -333,84 +357,95 @@ Claude Haiku 4.5
 ### File List
 
 **Files to be Created (NEW):**
+
 - `src/sandbox/context-builder.ts` ✅ Created
 - `tests/unit/sandbox/context_builder_test.ts` ✅ Created (13 comprehensive tests)
 
 **Files to be Modified (MODIFIED):**
+
 - `mod.ts` ✅ Added context builder exports
 - `docs/sprint-status.yaml` ✅ Updated story status tracking
 
 **Files to be Deleted (DELETED):**
+
 - None
 
 **Notes:**
+
 - No separate wrapper-template.ts needed - all functionality in context-builder.ts
 - No separate test files needed - all tests consolidated in context_builder_test.ts
-- Sandbox executor integration will be handled in Story 3.4 (when MCP tool is registered as gateway tool)
+- Sandbox executor integration will be handled in Story 3.4 (when MCP tool is registered as gateway
+  tool)
 
 ---
 
 ## Senior Developer Review (AI) - Revue Finale
 
-**Reviewer:** BMad
-**Date:** 2025-11-20
-**Outcome:** ✅ **APPROUVÉ**
+**Reviewer:** BMad **Date:** 2025-11-20 **Outcome:** ✅ **APPROUVÉ**
 
 ### Résumé Exécutif
 
-Story 3.2 livre un système d'injection d'outils MCP de **qualité production** avec architecture solide, sécurité robuste, et couverture de tests complète. **Les corrections de sécurité précédemment demandées (revue du 2025-11-13) ont été pleinement implémentées et validées**. Tous les critères d'acceptation sont satisfaits, toutes les tâches complétées, et les 20 tests passent à 100%.
+Story 3.2 livre un système d'injection d'outils MCP de **qualité production** avec architecture
+solide, sécurité robuste, et couverture de tests complète. **Les corrections de sécurité
+précédemment demandées (revue du 2025-11-13) ont été pleinement implémentées et validées**. Tous les
+critères d'acceptation sont satisfaits, toutes les tâches complétées, et les 20 tests passent à
+100%.
 
 ### Résolution des Action Items de la Revue Précédente
 
 **✅ Action Item #1 - Validation des noms d'outils : RÉSOLU**
+
 - ✅ Fonction `validateToolName()` implémentée [file: src/sandbox/context-builder.ts:231-272]
 - ✅ Classe `InvalidToolNameError` ajoutée [file: src/sandbox/context-builder.ts:211-220]
 - ✅ Rejette `__proto__`, `constructor`, `prototype`, et noms dangereux
 - ✅ Pattern whitelist : `/^[a-z0-9_-]+$/i`, limites 0-100 caractères
 
 **✅ Action Item #2 - Tests de sécurité : RÉSOLU**
+
 - ✅ 7 tests de sécurité ajoutés (tests 14-20)
 - ✅ Tous les 20 tests passent (100% de réussite)
 
 ### Critères d'Acceptation - Validation Complète
 
-| AC # | Description | Statut | Évidence |
-|------|-------------|--------|----------|
-| AC #1 | Tool injection system créé | ✅ IMPLÉMENTÉ | [src/sandbox/context-builder.ts:1-479](src/sandbox/context-builder.ts:1-479) |
-| AC #2 | MCP clients wrapped | ✅ IMPLÉMENTÉ | wrapMCPClient [src/sandbox/context-builder.ts:291-344](src/sandbox/context-builder.ts:291-344) |
-| AC #3 | Format contexte correct | ✅ IMPLÉMENTÉ | ToolContext [src/sandbox/context-builder.ts:34-38](src/sandbox/context-builder.ts:34-38) |
-| AC #4 | Vector search (top-k) | ✅ IMPLÉMENTÉ | buildContext topK [src/sandbox/context-builder.ts:117](src/sandbox/context-builder.ts:117) |
-| AC #5 | Types générées | ✅ IMPLÉMENTÉ | generateTypeDefinitions [src/sandbox/context-builder.ts:175-198](src/sandbox/context-builder.ts:175-198) |
-| AC #6 | Routing MCP gateway | ✅ IMPLÉMENTÉ | client.callTool [src/sandbox/context-builder.ts:325](src/sandbox/context-builder.ts:325) |
-| AC #7 | Propagation erreurs | ✅ IMPLÉMENTÉ | MCPToolError [src/sandbox/context-builder.ts:350-379](src/sandbox/context-builder.ts:350-379) |
-| AC #8 | Tests intégration | ✅ IMPLÉMENTÉ | 20 tests passent [tests/unit/sandbox/context_builder_test.ts](tests/unit/sandbox/context_builder_test.ts:1-428) |
-| AC #9 | Sécurité complète | ✅ IMPLÉMENTÉ | No eval/Function + validation noms (CORRIGÉ) |
+| AC #  | Description                | Statut        | Évidence                                                                                                        |
+| ----- | -------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
+| AC #1 | Tool injection system créé | ✅ IMPLÉMENTÉ | [src/sandbox/context-builder.ts:1-479](src/sandbox/context-builder.ts:1-479)                                    |
+| AC #2 | MCP clients wrapped        | ✅ IMPLÉMENTÉ | wrapMCPClient [src/sandbox/context-builder.ts:291-344](src/sandbox/context-builder.ts:291-344)                  |
+| AC #3 | Format contexte correct    | ✅ IMPLÉMENTÉ | ToolContext [src/sandbox/context-builder.ts:34-38](src/sandbox/context-builder.ts:34-38)                        |
+| AC #4 | Vector search (top-k)      | ✅ IMPLÉMENTÉ | buildContext topK [src/sandbox/context-builder.ts:117](src/sandbox/context-builder.ts:117)                      |
+| AC #5 | Types générées             | ✅ IMPLÉMENTÉ | generateTypeDefinitions [src/sandbox/context-builder.ts:175-198](src/sandbox/context-builder.ts:175-198)        |
+| AC #6 | Routing MCP gateway        | ✅ IMPLÉMENTÉ | client.callTool [src/sandbox/context-builder.ts:325](src/sandbox/context-builder.ts:325)                        |
+| AC #7 | Propagation erreurs        | ✅ IMPLÉMENTÉ | MCPToolError [src/sandbox/context-builder.ts:350-379](src/sandbox/context-builder.ts:350-379)                   |
+| AC #8 | Tests intégration          | ✅ IMPLÉMENTÉ | 20 tests passent [tests/unit/sandbox/context_builder_test.ts](tests/unit/sandbox/context_builder_test.ts:1-428) |
+| AC #9 | Sécurité complète          | ✅ IMPLÉMENTÉ | No eval/Function + validation noms (CORRIGÉ)                                                                    |
 
 **Résumé :** **9/9 critères pleinement implémentés**
 
 ### Validation Tâches
 
-| Tâche | Marquée | Vérifiée | Évidence |
-|-------|---------|----------|----------|
-| Task 1: Module builder | ✅ | ✅ VÉRIFIÉ | Tous sous-tâches confirmés |
-| Task 2: Wrappers MCP | ✅ | ✅ VÉRIFIÉ | wrapMCPClient + conversion snake_case |
-| Task 3: Vector search | ✅ | ✅ VÉRIFIÉ | buildContext avec topK=5 |
-| Task 4: Génération types | ✅ | ✅ VÉRIFIÉ | JSON Schema → TypeScript + cache |
-| Task 5: Routing gateway | ✅ | ✅ VÉRIFIÉ | MCPClient.callTool() |
-| Task 6: Erreurs | ✅ | ✅ VÉRIFIÉ | MCPToolError complet |
-| Task 7: Tests | ✅ | ✅ VÉRIFIÉ | 20 tests, 100% réussite |
-| Task 8: Sécurité | ✅ | ✅ **COMPLET** | 5/5 incluant validation noms (CORRIGÉ) |
+| Tâche                    | Marquée | Vérifiée       | Évidence                               |
+| ------------------------ | ------- | -------------- | -------------------------------------- |
+| Task 1: Module builder   | ✅      | ✅ VÉRIFIÉ     | Tous sous-tâches confirmés             |
+| Task 2: Wrappers MCP     | ✅      | ✅ VÉRIFIÉ     | wrapMCPClient + conversion snake_case  |
+| Task 3: Vector search    | ✅      | ✅ VÉRIFIÉ     | buildContext avec topK=5               |
+| Task 4: Génération types | ✅      | ✅ VÉRIFIÉ     | JSON Schema → TypeScript + cache       |
+| Task 5: Routing gateway  | ✅      | ✅ VÉRIFIÉ     | MCPClient.callTool()                   |
+| Task 6: Erreurs          | ✅      | ✅ VÉRIFIÉ     | MCPToolError complet                   |
+| Task 7: Tests            | ✅      | ✅ VÉRIFIÉ     | 20 tests, 100% réussite                |
+| Task 8: Sécurité         | ✅      | ✅ **COMPLET** | 5/5 incluant validation noms (CORRIGÉ) |
 
 **Résumé :** **8/8 tâches vérifiées** (100%)
 
 ### Couverture Tests
 
 **✅ Excellente :**
+
 - 20 tests unitaires passent (100%)
 - 7 tests sécurité pour validation noms (AJOUTÉ)
 - Tests : propagation erreurs, types, eval/Function, conversions
 
 **Résultat :**
+
 ```bash
 running 20 tests from ./tests/unit/sandbox/context_builder_test.ts
 ✓ All 20 tests PASSED (100% success)
@@ -419,6 +454,7 @@ running 20 tests from ./tests/unit/sandbox/context_builder_test.ts
 ### Alignement Architectural
 
 **✅ Conforme 100% :**
+
 - Message passing (Option 2 du spike)
 - Aucun eval/Function
 - Vector search top-k
@@ -428,6 +464,7 @@ running 20 tests from ./tests/unit/sandbox/context_builder_test.ts
 ### Sécurité
 
 **✅ Robuste :**
+
 - Message passing (anti-exploitation)
 - Aucun eval/Function
 - Sanitisation erreurs MCPToolError
@@ -438,6 +475,7 @@ running 20 tests from ./tests/unit/sandbox/context_builder_test.ts
 ### Qualité Code
 
 **✅ Excellente :**
+
 - Gestion erreurs, classes typées
 - TypeScript rigoureux, logging approprié
 - Cache performance, documentation JSDoc
@@ -448,6 +486,7 @@ running 20 tests from ./tests/unit/sandbox/context_builder_test.ts
 **✅ Aucun changement requis** - Prêt pour déploiement
 
 **Notes Consultatives (Optionnel) :**
+
 - Note : Test intégration VectorSearch réel (non-bloquant)
 - Note : Benchmarks performance <100ms (non-bloquant)
 
@@ -455,7 +494,8 @@ running 20 tests from ./tests/unit/sandbox/context_builder_test.ts
 
 ✅ **Story 3.2 APPROUVÉE → DONE**
 
-Qualité production, 20/20 tests passent, sécurité robuste validée. Corrections implémentées. Prêt pour stories 3.3+.
+Qualité production, 20/20 tests passent, sécurité robuste validée. Corrections implémentées. Prêt
+pour stories 3.3+.
 
 ---
 

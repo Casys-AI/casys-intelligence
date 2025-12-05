@@ -171,7 +171,7 @@ export class AgentCardsGatewayServer {
     this.gatewayHandler = new GatewayHandler(
       this.graphEngine,
       this.dagSuggester,
-      this.mcpClients,  // ADR-030: enable real tool execution
+      this.mcpClients, // ADR-030: enable real tool execution
       {
         enableSpeculative: this.config.enableSpeculative,
       },
@@ -227,7 +227,8 @@ export class AgentCardsGatewayServer {
   private handleListTools(
     request: unknown,
   ): Promise<
-    { tools: Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> } | {
+    | { tools: Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> }
+    | {
       error: { code: number; message: string; data?: unknown };
     }
   > {
@@ -993,7 +994,9 @@ export class AgentCardsGatewayServer {
     const alpha = Math.max(0.5, 1.0 - density * 2);
 
     log.info(
-      `search_tools: found ${results.length} results (alpha=${alpha.toFixed(2)}, edges=${edgeCount})`,
+      `search_tools: found ${results.length} results (alpha=${
+        alpha.toFixed(2)
+      }, edges=${edgeCount})`,
     );
 
     return {
@@ -2132,7 +2135,9 @@ export class AgentCardsGatewayServer {
           // Validate range parameter
           if (range !== "1h" && range !== "24h" && range !== "7d") {
             return new Response(
-              JSON.stringify({ error: `Invalid range parameter: ${range}. Must be one of: 1h, 24h, 7d` }),
+              JSON.stringify({
+                error: `Invalid range parameter: ${range}. Must be one of: 1h, 24h, 7d`,
+              }),
               { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } },
             );
           }

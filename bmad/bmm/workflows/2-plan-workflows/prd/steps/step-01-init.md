@@ -6,8 +6,10 @@
 
 - 🛑 NEVER generate content without user input
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS treat this as collaborative discovery between PM peers
 - 📋 YOU ARE A FACILITATOR, not a content generator
 - 💬 FOCUS on initialization and setup only - don't look ahead to future steps
@@ -96,8 +98,8 @@ Discover and load context documents using smart discovery:
 
 #### B. Create Initial Document
 
-Copy the template from `{installed_path}/prd-template.md` to `{output_folder}/prd.md`
-Initialize frontmatter with:
+Copy the template from `{installed_path}/prd-template.md` to `{output_folder}/prd.md` Initialize
+frontmatter with:
 
 ```yaml
 ---
@@ -120,9 +122,8 @@ Complete setup and report to user:
 - Created: `{output_folder}/prd.md` from template
 - Initialized frontmatter with workflow state
 
-**Input Documents Discovered:**
-Report what was found:
-"Welcome {{user_name}}! I've set up your PRD workspace for {{project_name}}.
+**Input Documents Discovered:** Report what was found: "Welcome {{user_name}}! I've set up your PRD
+workspace for {{project_name}}.
 
 **Documents Found:**
 
@@ -138,24 +139,23 @@ Do you have any other documents you'd like me to include, or shall we continue t
 
 ## SUCCESS METRICS:
 
-✅ Existing workflow detected and handed off to step-01b correctly
-✅ Fresh workflow initialized with template and frontmatter
-✅ Input documents discovered and loaded using sharded-first logic
-✅ All discovered files tracked in frontmatter `inputDocuments`
-✅ User confirmed document setup and can proceed
+✅ Existing workflow detected and handed off to step-01b correctly ✅ Fresh workflow initialized
+with template and frontmatter ✅ Input documents discovered and loaded using sharded-first logic ✅
+All discovered files tracked in frontmatter `inputDocuments` ✅ User confirmed document setup and
+can proceed
 
 ## FAILURE MODES:
 
-❌ Proceeding with fresh initialization when existing workflow exists
-❌ Not updating frontmatter with discovered input documents
-❌ Creating document without proper template
-❌ Not checking sharded folders first before whole files
-❌ Not reporting what documents were found to user
+❌ Proceeding with fresh initialization when existing workflow exists ❌ Not updating frontmatter
+with discovered input documents ❌ Creating document without proper template ❌ Not checking sharded
+folders first before whole files ❌ Not reporting what documents were found to user
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## NEXT STEP:
 
-After user selects [C] to continue, load `{installed_path}/step/step-02-discovery.md` to begin the project discovery phase.
+After user selects [C] to continue, load `{installed_path}/step/step-02-discovery.md` to begin the
+project discovery phase.

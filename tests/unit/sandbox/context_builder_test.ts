@@ -13,10 +13,10 @@
 import { assertEquals, assertExists, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   ContextBuilder,
-  wrapMCPClient,
-  MCPToolError,
   InvalidToolNameError,
+  MCPToolError,
   type ToolContext,
+  wrapMCPClient,
 } from "../../../src/sandbox/context-builder.ts";
 import type { MCPClient } from "../../../src/mcp/client.ts";
 
@@ -26,7 +26,10 @@ class MockMCPClient implements Partial<MCPClient> {
   readonly serverName: string;
   private tools: Map<string, (args: Record<string, unknown>) => Promise<unknown>>;
 
-  constructor(serverId: string, tools?: Record<string, (args: Record<string, unknown>) => Promise<unknown>>) {
+  constructor(
+    serverId: string,
+    tools?: Record<string, (args: Record<string, unknown>) => Promise<unknown>>,
+  ) {
     this.serverId = serverId;
     this.serverName = serverId;
     this.tools = new Map(Object.entries(tools || {}));

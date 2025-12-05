@@ -4,9 +4,8 @@ Status: done
 
 ## Story
 
-As a **playground user**,
-I want **MCP servers pre-configured**,
-so that **I can run demos without manual server setup**.
+As a **playground user**, I want **MCP servers pre-configured**, so that **I can run demos without
+manual server setup**.
 
 ## Acceptance Criteria
 
@@ -47,22 +46,28 @@ so that **I can run demos without manual server setup**.
 ### Requirements Context
 
 **From PRD (FR015):**
+
 - Playground must include 3 MCP servers Tier 1 (no API key required)
 - Servers demonstrate: parallel file reading, local knowledge graph, DAG branching
 
 **From Research Document:**
-- Comprehensive analysis of 40+ MCP servers completed ([docs/research/mcp-servers-playground-analysis.md](../research/mcp-servers-playground-analysis.md))
-- Tier 1 servers selected based on: no API key, parallelization support, GraphRAG patterns, ease of setup
+
+- Comprehensive analysis of 40+ MCP servers completed
+  ([docs/research/mcp-servers-playground-analysis.md](../research/mcp-servers-playground-analysis.md))
+- Tier 1 servers selected based on: no API key, parallelization support, GraphRAG patterns, ease of
+  setup
 - Configuration examples provided in research section 4.2
 
 ### Architecture Constraints
 
 **MCP Server Configuration Format:**
+
 - Standard JSON format with `mcpServers` object
 - Each server has: `command` (executable), `args` (array), optional `env` (object)
 - Filesystem server requires explicit allowed paths for security
 
 **Codespace Environment:**
+
 - Workspace root: `/workspaces/AgentCards` (or similar)
 - Node.js and Python available via devcontainer
 - `npx` for npm packages, `uvx` for Python packages
@@ -70,16 +75,19 @@ so that **I can run demos without manual server setup**.
 ### Project Structure Notes
 
 **Target Location:**
+
 - `playground/config/mcp-servers.json` (new file)
 - Directory: `playground/config/` (create if missing)
 
 **Related Files:**
+
 - Reference: `docs/research/mcp-servers-playground-analysis.md` (server specifications)
 - Prerequisite: Story 1.1 devcontainer must be complete
 
 ### Testing Strategy
 
 **Validation Steps:**
+
 1. JSON syntax validation (linting)
 2. Path resolution verification (filesystem server paths exist)
 3. Command availability check (npx, uvx executables)
@@ -97,6 +105,7 @@ so that **I can run demos without manual server setup**.
 **Story 1.1 Status:** done
 
 **Learnings from Story 1.1 (Devcontainer Configuration):**
+
 - ✅ Devcontainer successfully configured with Deno 2.1.4
 - ✅ Jupyter and Deno extensions pre-installed
 - ✅ Ports 3000 and 8888 exposed and accessible
@@ -104,12 +113,14 @@ so that **I can run demos without manual server setup**.
 - ✅ Dockerfile includes Deno + Jupyter + Python stack
 
 **Infrastructure Available:**
+
 - Codespace environment is fully operational
 - Node.js available for `npx` commands (filesystem, memory, sequential-thinking servers)
 - Python available for `uvx` commands (if needed for future servers)
 - Workspace root accessible at `/workspaces/AgentCards` or similar
 
 **For This Story:**
+
 - Leverage existing devcontainer infrastructure
 - MCP servers can be tested immediately in Codespace
 - No additional environment setup required
@@ -127,6 +138,7 @@ so that **I can run demos without manual server setup**.
 ### Debug Log References
 
 **Implementation Plan**:
+
 1. Create `playground/config/` directory structure
 2. Create `mcp-servers.json` with 3 Tier 1 servers (filesystem, memory, sequential-thinking)
 3. Configure Codespace workspace paths (`/workspaces/AgentCards`)
@@ -134,6 +146,7 @@ so that **I can run demos without manual server setup**.
 5. Validate JSON syntax, package availability, and command formats
 
 **Key Decisions**:
+
 - Used JSON format (not JSONC) for maximum compatibility
 - Created separate README.md for documentation instead of inline comments
 - Configured for Codespace environment (`/workspaces/AgentCards`) with note about local development
@@ -144,13 +157,14 @@ so that **I can run demos without manual server setup**.
 
 **Date**: 2025-12-01
 
-**Summary**:
-✅ Successfully configured 3 MCP servers Tier 1 for playground demonstrations:
+**Summary**: ✅ Successfully configured 3 MCP servers Tier 1 for playground demonstrations:
+
 1. Filesystem server - Demonstrates parallel file reading with DAG
 2. Memory server - Demonstrates local knowledge graph for GraphRAG
 3. Sequential-thinking server - Demonstrates DAG branching patterns
 
 **Implementation Details**:
+
 - Created `playground/config/` directory structure
 - Created `playground/config/mcp-servers.json` with standard MCP configuration format
 - Created comprehensive `playground/config/README.md` documenting:
@@ -161,17 +175,21 @@ so that **I can run demos without manual server setup**.
   - Environment-specific notes (Codespace vs local development)
 
 **Validation Results**:
+
 - ✅ JSON syntax valid (verified with `jq`)
 - ✅ All NPM packages available (@modelcontextprotocol/server-*, version 2025.11.25)
 - ✅ Commands match official MCP documentation
 - ✅ npx available in environment
-- ℹ️ Configured for Codespace path `/workspaces/AgentCards` (documentation includes local development notes)
+- ℹ️ Configured for Codespace path `/workspaces/AgentCards` (documentation includes local
+  development notes)
 
 **Files Modified**:
+
 - Added: `playground/config/mcp-servers.json`
 - Added: `playground/config/README.md`
 
 ### File List
 
-- `playground/config/mcp-servers.json` - MCP servers configuration file (downstream servers: filesystem, memory, sequential-thinking)
+- `playground/config/mcp-servers.json` - MCP servers configuration file (downstream servers:
+  filesystem, memory, sequential-thinking)
 - `playground/config/README.md` - Comprehensive documentation for MCP servers configuration

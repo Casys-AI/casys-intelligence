@@ -1,18 +1,23 @@
 # Rethinking MCP Server Architecture: Gateways, Parallel Execution, and Code Sandboxing
 
-**Author:** AgentCards Team
-**Date:** January 2025
-**Topics:** MCP Protocol, Agent Architecture, Performance Optimization
+**Author:** AgentCards Team **Date:** January 2025 **Topics:** MCP Protocol, Agent Architecture,
+Performance Optimization
 
 ---
 
 ## The MCP Scalability Challenge
 
-The Model Context Protocol (MCP) promised to become the "USB standard" for AI agents—a universal interface for connecting language models to tools and data sources. And in many ways, it has delivered. Hundreds of MCP servers now exist, from filesystem access to GitHub integration to database queries. Developers can theoretically compose these servers into powerful agent workflows.
+The Model Context Protocol (MCP) promised to become the "USB standard" for AI agents—a universal
+interface for connecting language models to tools and data sources. And in many ways, it has
+delivered. Hundreds of MCP servers now exist, from filesystem access to GitHub integration to
+database queries. Developers can theoretically compose these servers into powerful agent workflows.
 
-But there's an irony at the heart of MCP adoption: **the protocol scales, but the user experience doesn't.**
+But there's an irony at the heart of MCP adoption: **the protocol scales, but the user experience
+doesn't.**
 
-The community has largely converged on a straightforward architecture: Claude Desktop (or Claude Code) connects directly to multiple MCP servers simultaneously. Your configuration might look like this:
+The community has largely converged on a straightforward architecture: Claude Desktop (or Claude
+Code) connects directly to multiple MCP servers simultaneously. Your configuration might look like
+this:
 
 ```json
 {
@@ -20,7 +25,7 @@ The community has largely converged on a straightforward architecture: Claude De
     "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem"] },
     "github": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"] },
     "database": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-postgres"] },
-    "playwright": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-playwright"] },
+    "playwright": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-playwright"] }
     // ... 11 more servers
   }
 }
@@ -28,7 +33,8 @@ The community has largely converged on a straightforward architecture: Claude De
 
 This works beautifully for 3-5 servers. But at 15+ servers, cracks appear:
 
-1. **Context saturation:** Tool schemas consume 30-50% of Claude's context window before any actual work begins
+1. **Context saturation:** Tool schemas consume 30-50% of Claude's context window before any actual
+   work begins
 2. **Sequential execution:** Multi-tool workflows execute one tool at a time, accumulating latency
 3. **Intermediate data bloat:** Large datasets pass through the context window unnecessarily
 
@@ -73,11 +79,16 @@ The MCP protocol defines a simple method for tool discovery:
 
 Notice what's missing: **context about what the user is trying to do.**
 
-The server has no choice but to return *all* its tools. If you have 15 MCP servers with an average of 45 tools each, that's 687 tool schemas loaded into Claude's context. At roughly 80-150 tokens per schema, we're looking at 55,000-103,000 tokens consumed before the first user message.
+The server has no choice but to return _all_ its tools. If you have 15 MCP servers with an average
+of 45 tools each, that's 687 tool schemas loaded into Claude's context. At roughly 80-150 tokens per
+schema, we're looking at 55,000-103,000 tokens consumed before the first user message.
 
-For Claude's 200,000 token context window, this represents **27-51% overhead just for tool definitions.**
+For Claude's 200,000 token context window, this represents **27-51% overhead just for tool
+definitions.**
 
-This architectural decision made sense when MCP was new and servers were few. But it breaks down at scale. It's information asymmetry: the server doesn't know user intent, so it must send everything. The client must load everything to decide what's relevant.
+This architectural decision made sense when MCP was new and servers were few. But it breaks down at
+scale. It's information asymmetry: the server doesn't know user intent, so it must send everything.
+The client must load everything to decide what's relevant.
 
 ### The Gateway Architecture
 
@@ -152,7 +163,9 @@ A gateway sits between Claude and your MCP servers:
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-The gateway provides a single MCP endpoint to Claude while maintaining connections to all your actual MCP servers. But more importantly, it can make intelligent decisions about which tools to expose.
+The gateway provides a single MCP endpoint to Claude while maintaining connections to all your
+actual MCP servers. But more importantly, it can make intelligent decisions about which tools to
+expose.
 
 ### Vector Embeddings as the Discovery Mechanism
 
@@ -191,7 +204,8 @@ Semantic similarity scores:
 [0.19] slack:send_message   ← Correctly excluded
 ```
 
-The gateway generates embeddings for all tool schemas during initialization, then performs vector similarity search at runtime. Here's the implementation philosophy:
+The gateway generates embeddings for all tool schemas during initialization, then performs vector
+similarity search at runtime. Here's the implementation philosophy:
 
 ```typescript
 // Initialization (one-time cost)
@@ -210,10 +224,13 @@ async function indexTools() {
       const embedding = await embedder.embed(searchText);
 
       // Store in vector database (PGlite + pgvector)
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO tool_embeddings (server_id, tool_name, embedding, schema)
         VALUES ($1, $2, $3, $4)
-      `, [server.id, tool.name, embedding, tool]);
+      `,
+        [server.id, tool.name, embedding, tool],
+      );
     }
   }
 }
@@ -222,16 +239,19 @@ async function indexTools() {
 async function searchTools(userIntent: string, limit = 10) {
   const queryEmbedding = await embedder.embed(userIntent);
 
-  const results = await db.query(`
+  const results = await db.query(
+    `
     SELECT server_id, tool_name, schema,
            1 - (embedding <=> $1) as similarity
     FROM tool_embeddings
     WHERE 1 - (embedding <=> $1) > 0.6
     ORDER BY similarity DESC
     LIMIT $2
-  `, [queryEmbedding, limit]);
+  `,
+    [queryEmbedding, limit],
+  );
 
-  return results.map(r => r.schema);
+  return results.map((r) => r.schema);
 }
 ```
 
@@ -240,6 +260,7 @@ async function searchTools(userIntent: string, limit = 10) {
 We chose local embeddings (Transformers.js + BGE-Large-EN-v1.5) over cloud APIs. Here's why:
 
 **Local Embeddings (our choice):**
+
 - ✅ Zero latency penalty (no network round-trip)
 - ✅ Complete privacy (no data leaves the machine)
 - ✅ Zero cost (no API fees)
@@ -248,19 +269,23 @@ We chose local embeddings (Transformers.js + BGE-Large-EN-v1.5) over cloud APIs.
 - ⚠️ Embedding quality: very good, not perfect
 
 **Cloud Embeddings (OpenAI, Cohere, Voyage):**
+
 - ✅ Best-in-class embedding quality
 - ⚠️ 100-300ms latency per query
 - ⚠️ Privacy concerns (tool schemas reveal system architecture)
 - ⚠️ API costs scale with usage
 - ⚠️ Network dependency
 
-For a gateway that runs locally and handles potentially sensitive tool schemas, **privacy and latency trump marginal quality improvements.** The local model is "good enough" for tool retrieval—we rarely see relevant tools ranked below threshold.
+For a gateway that runs locally and handles potentially sensitive tool schemas, **privacy and
+latency trump marginal quality improvements.** The local model is "good enough" for tool
+retrieval—we rarely see relevant tools ranked below threshold.
 
 ### Should the MCP Protocol Support Semantic Queries?
 
 This raises an interesting question: should semantic search be part of the MCP protocol itself?
 
 **Current MCP spec:**
+
 ```typescript
 interface ListToolsRequest {
   method: "tools/list";
@@ -269,23 +294,26 @@ interface ListToolsRequest {
 ```
 
 **Hypothetical extension:**
+
 ```typescript
 interface ListToolsRequest {
   method: "tools/list";
   params?: {
-    query?: string;  // Semantic query for relevance filtering
-    limit?: number;  // Max tools to return
+    query?: string; // Semantic query for relevance filtering
+    limit?: number; // Max tools to return
   };
 }
 ```
 
 **Arguments for protocol extension:**
+
 - Standardizes semantic discovery across implementations
 - Enables smarter clients (Claude could optimize its own tool loading)
 - Backward compatible (query parameter is optional)
 - Servers can implement however they want (vector search, keywords, LLM-based, etc.)
 
 **Arguments against:**
+
 - Shifts complexity to every server implementation
 - Not all servers have embedding capabilities
 - Could fragment the ecosystem (some support it, others don't)
@@ -293,9 +321,13 @@ interface ListToolsRequest {
 
 **Our approach: Gateway as middleware layer**
 
-Instead of requiring all MCP servers to implement semantic search, the gateway provides this as a universal layer. Any existing MCP server benefits immediately without code changes. Servers remain simple. Complexity lives in one place.
+Instead of requiring all MCP servers to implement semantic search, the gateway provides this as a
+universal layer. Any existing MCP server benefits immediately without code changes. Servers remain
+simple. Complexity lives in one place.
 
-This mirrors patterns from web infrastructure: nginx handles caching and load balancing so backend services don't have to. The MCP gateway handles tool discovery optimization so MCP servers don't have to.
+This mirrors patterns from web infrastructure: nginx handles caching and load balancing so backend
+services don't have to. The MCP gateway handles tool discovery optimization so MCP servers don't
+have to.
 
 ---
 
@@ -303,9 +335,11 @@ This mirrors patterns from web infrastructure: nginx handles caching and load ba
 
 ### Architecture Clarification: GraphRAG vs DAG
 
-Before diving into parallel execution, it's critical to understand the distinction between two architectural components that work together:
+Before diving into parallel execution, it's critical to understand the distinction between two
+architectural components that work together:
 
 **GraphRAG (Knowledge Graph)** — The complete knowledge base
+
 - Stores ALL tools from ALL MCP servers (e.g., 687 tools)
 - Contains historical workflow executions and their success/failure patterns
 - Maintains relationships between tools (e.g., "filesystem:read often followed by json:parse")
@@ -313,6 +347,7 @@ Before diving into parallel execution, it's critical to understand the distincti
 - **Scope:** Global, all possibilities
 
 **DAG (Directed Acyclic Graph)** — The specific workflow instance
+
 - A concrete workflow for ONE specific task
 - Contains only the 3-5 relevant tools for this request
 - Explicitly defines dependencies (task B depends on task A)
@@ -364,15 +399,17 @@ Before diving into parallel execution, it's critical to understand the distincti
 **Why this matters for Speculative Execution:**
 
 Speculative execution is possible because:
+
 1. **GraphRAG** learns patterns from historical workflows
 2. **DAG Suggester** predicts which DAG to build for a new intent
-3. **DAG Executor** runs the predicted DAG *before* the agent explicitly requests it
+3. **DAG Executor** runs the predicted DAG _before_ the agent explicitly requests it
 4. When agent arrives, results are already cached
 
-Without GraphRAG (the knowledge), you can't predict which DAG to build.
-Without DAG (the structure), you can't execute workflows in parallel or speculatively.
+Without GraphRAG (the knowledge), you can't predict which DAG to build. Without DAG (the structure),
+you can't execute workflows in parallel or speculatively.
 
 **They're complementary:**
+
 - GraphRAG = "What workflows have worked before?"
 - DAG Suggester = "Based on this intent, which workflow should I build?"
 - DAG = "Here's the concrete plan to execute"
@@ -427,16 +464,20 @@ Total time: 1.2 seconds
 Speedup: 4.75x
 ```
 
-Why doesn't this happen automatically? **Because the MCP protocol doesn't express dependencies between tool calls.**
+Why doesn't this happen automatically? **Because the MCP protocol doesn't express dependencies
+between tool calls.**
 
 Each tool call is atomic. The LLM must:
+
 1. Make a tool call
 2. Wait for the result
 3. Incorporate result into context
 4. Decide the next tool call
 5. Repeat
 
-This is by design. MCP keeps servers stateless and simple. Orchestration is left to the client (Claude). But it creates a fundamental bottleneck: even when tasks are independent, they execute serially.
+This is by design. MCP keeps servers stateless and simple. Orchestration is left to the client
+(Claude). But it creates a fundamental bottleneck: even when tasks are independent, they execute
+serially.
 
 ### Introducing the DAG Execution Model
 
@@ -453,13 +494,13 @@ const sequentialWorkflow = {
   tasks: [
     { id: "t1", tool: "filesystem:read_file", args: { path: "/config.json" } },
     { id: "t2", tool: "json:parse", args: { input: "$OUTPUT[t1]" } },
-    { id: "t3", tool: "github:create_issue", args: { body: "$OUTPUT[t2]" } }
+    { id: "t3", tool: "github:create_issue", args: { body: "$OUTPUT[t2]" } },
   ],
   dependencies: {
-    "t1": [],      // No dependencies → can start immediately
-    "t2": ["t1"],  // Depends on t1 → waits for t1 to complete
-    "t3": ["t2"]   // Depends on t2 → waits for t2 to complete
-  }
+    "t1": [], // No dependencies → can start immediately
+    "t2": ["t1"], // Depends on t1 → waits for t1 to complete
+    "t3": ["t2"], // Depends on t2 → waits for t2 to complete
+  },
 };
 
 // Visual representation:
@@ -477,12 +518,16 @@ const parallelWorkflow = {
     { id: "t2", tool: "filesystem:read_file", args: { path: "/database.json" } },
     { id: "t3", tool: "filesystem:read_file", args: { path: "/api.json" } },
     { id: "t4", tool: "filesystem:read_file", args: { path: "/auth.json" } },
-    { id: "t5", tool: "filesystem:read_file", args: { path: "/features.json" } }
+    { id: "t5", tool: "filesystem:read_file", args: { path: "/features.json" } },
   ],
   dependencies: {
-    "t1": [], "t2": [], "t3": [], "t4": [], "t5": []
+    "t1": [],
+    "t2": [],
+    "t3": [],
+    "t4": [],
+    "t5": [],
     // No inter-dependencies → all can execute in parallel
-  }
+  },
 };
 
 // Visual representation:
@@ -495,7 +540,8 @@ const parallelWorkflow = {
 
 ### Execution via Topological Sort
 
-The DAG executor uses topological sorting to identify "layers" of tasks that can execute in parallel:
+The DAG executor uses topological sorting to identify "layers" of tasks that can execute in
+parallel:
 
 ```typescript
 class DAGExecutor {
@@ -514,7 +560,7 @@ class DAGExecutor {
     for (const layer of layers) {
       await Promise.all(
         layer.map(async (taskId) => {
-          const task = workflow.tasks.find(t => t.id === taskId);
+          const task = workflow.tasks.find((t) => t.id === taskId);
 
           // Resolve $OUTPUT[...] placeholders
           const resolvedArgs = this.resolveArguments(task.arguments, results);
@@ -522,7 +568,7 @@ class DAGExecutor {
           // Execute tool call
           const result = await this.callTool(task.tool, resolvedArgs);
           results.set(taskId, result);
-        })
+        }),
       );
     }
 
@@ -582,15 +628,16 @@ This supports complex references using JSONPath-style syntax:
 
 We benchmarked various workflow patterns:
 
-| Workflow Type | Tasks | Sequential | Parallel | Speedup |
-|--------------|-------|------------|----------|---------|
-| Independent file reads | 5 | 5.7s | 1.2s | **4.75x** |
-| Parallel API calls (I/O bound) | 8 | 12.4s | 2.1s | **5.90x** |
-| Mixed (some dependencies) | 10 | 15.2s | 4.8s | **3.17x** |
-| Purely sequential chain | 5 | 5.7s | 5.7s | **1.00x** |
-| Fan-out then fan-in | 12 | 18.9s | 4.2s | **4.50x** |
+| Workflow Type                  | Tasks | Sequential | Parallel | Speedup   |
+| ------------------------------ | ----- | ---------- | -------- | --------- |
+| Independent file reads         | 5     | 5.7s       | 1.2s     | **4.75x** |
+| Parallel API calls (I/O bound) | 8     | 12.4s      | 2.1s     | **5.90x** |
+| Mixed (some dependencies)      | 10    | 15.2s      | 4.8s     | **3.17x** |
+| Purely sequential chain        | 5     | 5.7s       | 5.7s     | **1.00x** |
+| Fan-out then fan-in            | 12    | 18.9s      | 4.2s     | **4.50x** |
 
-Key insight: **Parallelization gains are proportional to workflow "width"** (number of independent branches).
+Key insight: **Parallelization gains are proportional to workflow "width"** (number of independent
+branches).
 
 **Visual Comparison: Sequential vs. Parallel Execution**
 
@@ -671,7 +718,9 @@ Key insight: **Parallelization gains are proportional to workflow "width"** (num
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-Real-world workflows typically have 30-50% parallelizable tasks. Even modest workflows see 2-3x speedups. Highly parallel workflows (reading multiple files, calling multiple APIs) can see 5-6x improvements.
+Real-world workflows typically have 30-50% parallelizable tasks. Even modest workflows see 2-3x
+speedups. Highly parallel workflows (reading multiple files, calling multiple APIs) can see 5-6x
+improvements.
 
 ### Complex Example: Fan-Out, Fan-In Pattern
 
@@ -703,12 +752,12 @@ const fanOutFanIn = {
           "$OUTPUT[parse2]",
           "$OUTPUT[parse3]",
           "$OUTPUT[parse4]",
-          "$OUTPUT[parse5]"
-        ]
+          "$OUTPUT[parse5]",
+        ],
       },
-      depends_on: ["parse1", "parse2", "parse3", "parse4", "parse5"]
-    }
-  ]
+      depends_on: ["parse1", "parse2", "parse3", "parse4", "parse5"],
+    },
+  ],
 };
 
 // Execution timeline:
@@ -726,9 +775,12 @@ const fanOutFanIn = {
 
 ### Speculative Execution: Predicting Workflows Before They're Requested
 
-DAG execution enables parallelization, but there's still latency: the agent must **construct the DAG** before execution begins. What if we could start executing before the agent even decides what to do?
+DAG execution enables parallelization, but there's still latency: the agent must **construct the
+DAG** before execution begins. What if we could start executing before the agent even decides what
+to do?
 
-This is **speculative execution**—using the dependency graph and intent analysis to predict and pre-execute tool calls.
+This is **speculative execution**—using the dependency graph and intent analysis to predict and
+pre-execute tool calls.
 
 **The Core Idea:**
 
@@ -879,7 +931,7 @@ class SpeculativeExecutor {
         mode: "speculative_execution",
         results: results,
         confidence: confidence,
-        execution_time_ms: results.executionTimeMs
+        execution_time_ms: results.executionTimeMs,
       };
     } else if (confidence > 0.65) {
       // Medium confidence → Suggest DAG, let agent decide
@@ -887,14 +939,14 @@ class SpeculativeExecutor {
         mode: "suggestion",
         dagStructure: predictedDAG,
         confidence: confidence,
-        explanation: "Suggested workflow based on intent analysis"
+        explanation: "Suggested workflow based on intent analysis",
       };
     } else {
       // Low confidence → Require explicit workflow
       return {
         mode: "explicit_required",
         confidence: confidence,
-        explanation: "Intent too ambiguous for automatic workflow generation"
+        explanation: "Intent too ambiguous for automatic workflow generation",
       };
     }
   }
@@ -949,27 +1001,27 @@ const predictedDAG = {
     {
       id: "list",
       tool: "filesystem:list_directory",
-      args: { path: "/configs" }
+      args: { path: "/configs" },
     },
     {
       id: "read_all",
-      tool: "parallel_read",  // Meta-task: read multiple files
+      tool: "parallel_read", // Meta-task: read multiple files
       args: { files: "$OUTPUT[list].filter(f => f.endsWith('.json'))" },
-      depends_on: ["list"]
+      depends_on: ["list"],
     },
     {
       id: "parse_all",
       tool: "parallel_parse",
       args: { inputs: "$OUTPUT[read_all]" },
-      depends_on: ["read_all"]
+      depends_on: ["read_all"],
     },
     {
       id: "summarize",
       tool: "aggregate_versions",
       args: { configs: "$OUTPUT[parse_all]" },
-      depends_on: ["parse_all"]
-    }
-  ]
+      depends_on: ["parse_all"],
+    },
+  ],
 };
 
 // Step 4: Confidence calculation
@@ -983,12 +1035,12 @@ const predictedDAG = {
 const results = await executor.execute(predictedDAG);
 
 // Agent arrives at the conversation with results already available
-Agent: "Let me read the config files..."
-Gateway: "Already done! Here are the 15 configs."
-Agent: "Parse them..."
-Gateway: "Already parsed! Here's the data."
-Agent: "Summarize versions..."
-Gateway: "Here's the summary: [results]"
+Agent: "Let me read the config files...";
+Gateway: "Already done! Here are the 15 configs.";
+Agent: "Parse them...";
+Gateway: "Already parsed! Here's the data.";
+Agent: "Summarize versions...";
+Gateway: "Here's the summary: [results]";
 
 // Total latency: 1.2s (speculative execution)
 // vs. 6.8s (traditional sequential: agent thinks → execute → repeat)
@@ -1000,11 +1052,13 @@ Gateway: "Here's the summary: [results]"
 Speculative execution is a bet:
 
 ✅ **When prediction is correct (>85% confidence):**
+
 - Massive latency reduction (5-10x faster)
 - Better user experience (instant responses)
 - More efficient use of idle time (execute while agent thinks)
 
 ❌ **When prediction is wrong (<85% confidence):**
+
 - Wasted computation (executed unnecessary tools)
 - Potential side effects (if tools aren't idempotent)
 - Context pollution (wrong results in cache)
@@ -1015,18 +1069,18 @@ Speculative execution is a bet:
 class SpeculativeExecutor {
   // Only execute idempotent tools speculatively
   private readonly SAFE_TOOLS = [
-    "filesystem:read_file",      // ✅ Read-only
+    "filesystem:read_file", // ✅ Read-only
     "filesystem:list_directory", // ✅ Read-only
-    "json:parse",                // ✅ Pure function
-    "yaml:load",                 // ✅ Pure function
-    "github:get_issue",          // ✅ Read-only API
+    "json:parse", // ✅ Pure function
+    "yaml:load", // ✅ Pure function
+    "github:get_issue", // ✅ Read-only API
   ];
 
   private readonly UNSAFE_TOOLS = [
-    "filesystem:write_file",     // ❌ Side effects
-    "github:create_issue",       // ❌ Creates resources
-    "database:execute",          // ❌ Mutates state
-    "slack:send_message",        // ❌ External actions
+    "filesystem:write_file", // ❌ Side effects
+    "github:create_issue", // ❌ Creates resources
+    "database:execute", // ❌ Mutates state
+    "slack:send_message", // ❌ External actions
   ];
 
   canExecuteSpeculatively(task: Task): boolean {
@@ -1050,8 +1104,8 @@ class SpeculativeExecutor {
   }
 
   async execute(dag: DAGStructure): Promise<ExecutionResult> {
-    const safeTasks = dag.tasks.filter(t => this.canExecuteSpeculatively(t));
-    const unsafeTasks = dag.tasks.filter(t => !this.canExecuteSpeculatively(t));
+    const safeTasks = dag.tasks.filter((t) => this.canExecuteSpeculatively(t));
+    const unsafeTasks = dag.tasks.filter((t) => !this.canExecuteSpeculatively(t));
 
     // Execute safe tasks speculatively
     const speculativeResults = await this.executeSafe(safeTasks);
@@ -1063,7 +1117,7 @@ class SpeculativeExecutor {
     return {
       speculative: speculativeResults,
       pending: unsafeTasks,
-      requiresConfirmation: unsafeTasks.length > 0
+      requiresConfirmation: unsafeTasks.length > 0,
     };
   }
 }
@@ -1079,10 +1133,11 @@ class PredictionLearner {
     intent: string,
     predictedDAG: DAGStructure,
     actualDAG: DAGStructure,
-    wasCorrect: boolean
+    wasCorrect: boolean,
   ): Promise<void> {
     // Store in database for future reference
-    await db.query(`
+    await db.query(
+      `
       INSERT INTO prediction_history (
         intent_embedding,
         predicted_dag,
@@ -1091,33 +1146,38 @@ class PredictionLearner {
         confidence_score,
         execution_time_saved
       ) VALUES ($1, $2, $3, $4, $5, $6)
-    `, [
-      await embedder.embed(intent),
-      predictedDAG,
-      actualDAG,
-      wasCorrect,
-      this.lastConfidence,
-      this.timeSaved
-    ]);
+    `,
+      [
+        await embedder.embed(intent),
+        predictedDAG,
+        actualDAG,
+        wasCorrect,
+        this.lastConfidence,
+        this.timeSaved,
+      ],
+    );
   }
 
   async getHistoricalAccuracy(intent: string): Promise<number> {
     const embedding = await embedder.embed(intent);
 
     // Find similar past intents
-    const similar = await db.query(`
+    const similar = await db.query(
+      `
       SELECT was_correct
       FROM prediction_history
       WHERE 1 - (intent_embedding <=> $1) > 0.7
       ORDER BY created_at DESC
       LIMIT 20
-    `, [embedding]);
+    `,
+      [embedding],
+    );
 
     if (similar.length === 0) {
       return 0.5; // No history → neutral confidence
     }
 
-    const accuracy = similar.filter(r => r.was_correct).length / similar.length;
+    const accuracy = similar.filter((r) => r.was_correct).length / similar.length;
     return accuracy;
   }
 }
@@ -1184,7 +1244,8 @@ Agent requests: custom_summarize (not in predicted DAG)
 
 **Adaptive Threshold Learning:**
 
-A sophisticated implementation would learn optimal confidence thresholds from historical execution data:
+A sophisticated implementation would learn optimal confidence thresholds from historical execution
+data:
 
 ```typescript
 class AdaptiveThresholdManager {
@@ -1193,7 +1254,7 @@ class AdaptiveThresholdManager {
 
   adjustThresholds(): void {
     // Calculate false positive rate (speculative executions that failed)
-    const falsePositives = speculativeExecs.filter(e => !e.success).length;
+    const falsePositives = speculativeExecs.filter((e) => !e.success).length;
     const fpRate = falsePositives / speculativeExecs.length;
 
     if (fpRate > 0.2) {
@@ -1203,7 +1264,7 @@ class AdaptiveThresholdManager {
 
     // Calculate false negative rate (unnecessary manual confirmations)
     const falseNegatives = suggestions.filter(
-      e => e.userAccepted && e.confidence >= (threshold - 0.1)
+      (e) => e.userAccepted && e.confidence >= (threshold - 0.1),
     ).length;
     const fnRate = falseNegatives / suggestions.length;
 
@@ -1238,7 +1299,8 @@ async processIntent(intent: string): Promise<ExecutionMode> {
 }
 ```
 
-This approach balances automation (high confidence) with safety (low confidence requires human confirmation).
+This approach balances automation (high confidence) with safety (low confidence requires human
+confirmation).
 
 ---
 
@@ -1285,6 +1347,7 @@ The key difference: **computation happens locally.** Only the final result enter
 Not always. Here's a decision matrix:
 
 **✅ Sandbox execution wins:**
+
 - **Large datasets:** 1MB+ raw data → filter/aggregate to <1KB summary
 - **Multi-step transformations:** 5+ operations on the same data
 - **Complex filtering logic:** Conditions that would require multiple tool calls
@@ -1292,6 +1355,7 @@ Not always. Here's a decision matrix:
 - **Iterative algorithms:** Loops, recursion, stateful processing
 
 **❌ Tool calls win:**
+
 - **Simple operations:** Read one file, call one API
 - **External APIs:** GitHub, Slack, databases (can't run in sandbox)
 - **Stateful operations:** Database transactions, file writes with locks
@@ -1336,13 +1400,13 @@ We need isolation. But how much, and at what cost?
 
 **Isolation Options:**
 
-| Approach | Security | Startup Latency | Runtime Overhead | Complexity |
-|----------|----------|-----------------|------------------|------------|
-| **VM** (Firecracker) | ★★★★★ Excellent | ⚠️ 1-2 seconds | ★★★★ Low | ⚠️ High |
-| **Container** (Docker) | ★★★★ Very good | ⚠️ 100-500ms | ★★★★ Low | ⚠️ High |
-| **WASM** (Wasmer/Wasmtime) | ★★★★ Very good | ★★★★★ <10ms | ★★★★★ None | ★★★ Medium |
-| **Deno sandbox** | ★★★★ Very good | ★★★★★ <10ms | ★★★★★ None | ★★ Low |
-| Node.js vm2 | ⚠️ Poor (escape vectors) | ★★★★★ <1ms | ★★★★★ None | ★★ Low |
+| Approach                   | Security                 | Startup Latency | Runtime Overhead | Complexity |
+| -------------------------- | ------------------------ | --------------- | ---------------- | ---------- |
+| **VM** (Firecracker)       | ★★★★★ Excellent          | ⚠️ 1-2 seconds  | ★★★★ Low         | ⚠️ High    |
+| **Container** (Docker)     | ★★★★ Very good           | ⚠️ 100-500ms    | ★★★★ Low         | ⚠️ High    |
+| **WASM** (Wasmer/Wasmtime) | ★★★★ Very good           | ★★★★★ <10ms     | ★★★★★ None       | ★★★ Medium |
+| **Deno sandbox**           | ★★★★ Very good           | ★★★★★ <10ms     | ★★★★★ None       | ★★ Low     |
+| Node.js vm2                | ⚠️ Poor (escape vectors) | ★★★★★ <1ms      | ★★★★★ None       | ★★ Low     |
 
 **Why Deno?**
 
@@ -1463,18 +1527,21 @@ Security Boundaries:
 ```typescript
 // Deno subprocess with explicit permissions
 const sandbox = await Deno.run({
-  cmd: ["deno", "run",
-    "--allow-read=/configs",      // Can ONLY read /configs
-    "--allow-write=/tmp/output",  // Can ONLY write to /tmp/output
+  cmd: [
+    "deno",
+    "run",
+    "--allow-read=/configs", // Can ONLY read /configs
+    "--allow-write=/tmp/output", // Can ONLY write to /tmp/output
     // NO --allow-net (network completely blocked)
     // NO --allow-run (can't spawn subprocesses)
     // NO --allow-env (can't read environment variables)
-    "agent_code.ts"
-  ]
+    "agent_code.ts",
+  ],
 });
 ```
 
 This gives us:
+
 - **Granular control:** Per-directory, per-domain, per-capability
 - **Deny-by-default:** Everything is forbidden unless explicitly allowed
 - **Runtime enforcement:** Not just process isolation, but OS-level capability restrictions
@@ -1490,7 +1557,7 @@ class CodeSandbox {
       code,
       permissions = {},
       timeout = 5000,
-      memoryLimit = 100_000_000  // 100MB
+      memoryLimit = 100_000_000, // 100MB
     } = options;
 
     // Write code to temporary file
@@ -1504,7 +1571,7 @@ class CodeSandbox {
     const process = Deno.run({
       cmd: ["deno", "run", ...permissionFlags, tempFile],
       stdout: "piped",
-      stderr: "piped"
+      stderr: "piped",
     });
 
     // Timeout enforcement
@@ -1516,7 +1583,7 @@ class CodeSandbox {
       const [status, stdout, stderr] = await Promise.all([
         process.status(),
         process.output(),
-        process.stderrOutput()
+        process.stderrOutput(),
       ]);
 
       clearTimeout(timeoutId);
@@ -1527,7 +1594,7 @@ class CodeSandbox {
 
       return {
         output: new TextDecoder().decode(stdout),
-        executionTimeMs: performance.now() - startTime
+        executionTimeMs: performance.now() - startTime,
       };
     } finally {
       await Deno.remove(tempFile);
@@ -1616,8 +1683,8 @@ const fullCode = mcpClientCode + "\n\n" + agentCode;
 await sandbox.execute({
   code: fullCode,
   permissions: {
-    net: ["localhost:${MCP_PORT}"]  // Can only talk to gateway
-  }
+    net: ["localhost:${MCP_PORT}"], // Can only talk to gateway
+  },
 });
 ```
 
@@ -1625,7 +1692,8 @@ The gateway runs a local HTTP server that proxies tool calls back to MCP servers
 
 **Optimization: Semantic tool injection**
 
-Don't inject all 687 tools—that defeats the purpose of sandboxing. Use vector search to identify which tools the code likely needs:
+Don't inject all 687 tools—that defeats the purpose of sandboxing. Use vector search to identify
+which tools the code likely needs:
 
 ```typescript
 async function injectRelevantTools(agentCode: string): string {
@@ -1634,8 +1702,8 @@ async function injectRelevantTools(agentCode: string): string {
 
   const relevantTools = await vectorSearch.searchTools(
     codeEmbedding,
-    limit = 20,      // At most 20 tools
-    threshold = 0.7  // High confidence only
+    limit = 20, // At most 20 tools
+    threshold = 0.7, // High confidence only
   );
 
   // Generate wrappers only for relevant tools
@@ -1669,7 +1737,7 @@ class PIIDetector {
           findings.push({
             type: pattern.name,
             value: match[0],
-            position: match.index
+            position: match.index,
           });
         }
       } else if (pattern.fn) {
@@ -1688,8 +1756,7 @@ class PIIDetector {
 
     for (const finding of findings) {
       const replacement = `[REDACTED_${finding.type.toUpperCase()}]`;
-      redacted =
-        redacted.slice(0, finding.position) +
+      redacted = redacted.slice(0, finding.position) +
         replacement +
         redacted.slice(finding.position + finding.value.length);
     }
@@ -1707,7 +1774,7 @@ class PIIDetector {
         findings.push({
           type: "api_key",
           value: word,
-          position: text.indexOf(word)
+          position: text.indexOf(word),
         });
       }
     }
@@ -1746,7 +1813,7 @@ async function executeSafely(code: string): Promise<string> {
 
     // Option 2: Ask user
     const userChoice = await askUser(
-      `Found ${findings.length} potential PII instances. Redact automatically?`
+      `Found ${findings.length} potential PII instances. Redact automatically?`,
     );
     if (userChoice === "yes") {
       return piiDetector.redact(result.output, findings);
@@ -1761,7 +1828,8 @@ async function executeSafely(code: string): Promise<string> {
 
 ## Combining the Four Concepts
 
-These concepts aren't mutually exclusive—they're complementary layers of optimization that work together.
+These concepts aren't mutually exclusive—they're complementary layers of optimization that work
+together.
 
 ### Unified Architecture
 
@@ -1955,14 +2023,14 @@ const workflow: DAGStructure = {
       id: "t1",
       tool: "filesystem:list_directory",
       arguments: { path: "/configs" },
-      depends_on: []
+      depends_on: [],
     },
 
     // Task 2: SANDBOX EXECUTION (process data locally)
     // Le sandbox est juste un type de task dans le DAG !
     {
       id: "t2",
-      tool: "agentcards:execute_code",  // Special tool = sandbox
+      tool: "agentcards:execute_code", // Special tool = sandbox
       arguments: {
         code: `
           // Ce code s'exécute dans le sandbox Deno
@@ -1988,10 +2056,10 @@ const workflow: DAGStructure = {
         `,
         permissions: {
           read: ["/configs"],
-          net: ["localhost:9000"]  // Pour appeler le MCP proxy
-        }
+          net: ["localhost:9000"], // Pour appeler le MCP proxy
+        },
       },
-      depends_on: ["t1"]  // Dépend du listing de fichiers
+      depends_on: ["t1"], // Dépend du listing de fichiers
     },
 
     // Task 3: MCP tool call (create GitHub issue)
@@ -2000,11 +2068,11 @@ const workflow: DAGStructure = {
       tool: "github:create_issue",
       arguments: {
         title: "Config Summary",
-        body: "$OUTPUT[t2]"  // Utilise le summary du sandbox
+        body: "$OUTPUT[t2]", // Utilise le summary du sandbox
       },
-      depends_on: ["t2"]
-    }
-  ]
+      depends_on: ["t2"],
+    },
+  ],
 };
 
 // Step 3: DAG Executor exécute les layers
@@ -2012,9 +2080,9 @@ class DAGExecutor {
   async execute(workflow: DAGStructure): Promise<ExecutionResult> {
     // Topological sort → layers
     const layers = [
-      ["t1"],           // Layer 0: list_directory (MCP)
-      ["t2"],           // Layer 1: sandbox execution (attend t1)
-      ["t3"]            // Layer 2: create_issue (attend t2)
+      ["t1"], // Layer 0: list_directory (MCP)
+      ["t2"], // Layer 1: sandbox execution (attend t1)
+      ["t3"], // Layer 2: create_issue (attend t2)
     ];
 
     const results = new Map();
@@ -2023,7 +2091,7 @@ class DAGExecutor {
       // Exécute toutes les tasks du layer en parallèle
       await Promise.all(
         layer.map(async (taskId) => {
-          const task = workflow.tasks.find(t => t.id === taskId);
+          const task = workflow.tasks.find((t) => t.id === taskId);
 
           // Route selon le type de task
           if (task.tool === "agentcards:execute_code") {
@@ -2035,7 +2103,7 @@ class DAGExecutor {
             const result = await this.executeMCPTool(task);
             results.set(taskId, result);
           }
-        })
+        }),
       );
     }
 
@@ -2049,7 +2117,7 @@ class DAGExecutor {
     // Exécute dans Deno subprocess isolé
     return await this.denoSandbox.execute({
       code: wrappedCode,
-      permissions: task.arguments.permissions
+      permissions: task.arguments.permissions,
     });
   }
 
@@ -2066,7 +2134,8 @@ class DAGExecutor {
 
 ### Safe-to-Fail Branches: Sandbox Tasks Enable Resilient Workflows
 
-One critical architectural advantage: **sandbox tasks can fail without consequences**, enabling more aggressive parallelization and fault-tolerant workflows.
+One critical architectural advantage: **sandbox tasks can fail without consequences**, enabling more
+aggressive parallelization and fault-tolerant workflows.
 
 **The Problem with Destructive MCP Tasks:**
 
@@ -2179,15 +2248,15 @@ const resilientWorkflow = {
    }
 
    // MCP tasks might NOT be idempotent → dangerous to retry
-   await executeMCPTool(task);  // What if this creates duplicate resources?
+   await executeMCPTool(task); // What if this creates duplicate resources?
    ```
 
 2. **Failure Isolation**
-   | Task Type | Failure Impact | Retry Safe | Can Run Speculatively |
-   |-----------|---------------|------------|----------------------|
-   | MCP (destructive) | ❌ System state changed | ❌ Risky | ❌ No |
-   | MCP (read-only) | ✅ No impact | ✅ Safe | ✅ Yes |
-   | **Sandbox** | ✅ No impact | ✅ Safe | ✅ Yes |
+   | Task Type         | Failure Impact          | Retry Safe | Can Run Speculatively |
+   | ----------------- | ----------------------- | ---------- | --------------------- |
+   | MCP (destructive) | ❌ System state changed | ❌ Risky   | ❌ No                 |
+   | MCP (read-only)   | ✅ No impact            | ✅ Safe    | ✅ Yes                |
+   | **Sandbox**       | ✅ No impact            | ✅ Safe    | ✅ Yes                |
 
 3. **A/B Testing in Production**
    ```typescript
@@ -2209,7 +2278,8 @@ const resilientWorkflow = {
    // Can safely experiment without affecting system state
    ```
 
-This pattern transforms the DAG from a rigid execution plan into a **resilient computation graph** where branches can fail independently without cascading failures.
+This pattern transforms the DAG from a rigid execution plan into a **resilient computation graph**
+where branches can fail independently without cascading failures.
 
 ```typescript
 // Step 2: Semantic search identifies relevant tools
@@ -2248,7 +2318,7 @@ async function optionA_sequential() {
   const summary = JSON.stringify(parsed);
   await callTool("github:create_issue", {
     title: "Config Summary",
-    body: summary
+    body: summary,
   });
 
   // Total context: 182,400 tokens
@@ -2263,16 +2333,20 @@ async function optionB_dag() {
       { id: "list", tool: "filesystem:list_directory", args: { path: "/configs" } },
 
       // Layer 1: Read all JSON files in parallel (auto-detected from list result)
-      ...generatedReadTasks,  // 15 tasks, all depend on "list"
+      ...generatedReadTasks, // 15 tasks, all depend on "list"
 
       // Layer 2: Parse all in parallel
-      ...generatedParseTasks,  // 15 tasks, each depends on corresponding read
+      ...generatedParseTasks, // 15 tasks, each depends on corresponding read
 
       // Layer 3: Aggregate and create issue
-      { id: "create", tool: "github:create_issue", args: {
-        body: "$OUTPUT[parse1], $OUTPUT[parse2], ..."
-      }}
-    ]
+      {
+        id: "create",
+        tool: "github:create_issue",
+        args: {
+          body: "$OUTPUT[parse1], $OUTPUT[parse2], ...",
+        },
+      },
+    ],
   };
 
   await dagExecutor.execute(workflow);
@@ -2319,9 +2393,9 @@ async function optionC_sandbox() {
     code: agentCode,
     permissions: {
       read: ["/configs"],
-      net: ["localhost:${MCP_PORT}"]  // For MCP tool calls
+      net: ["localhost:${MCP_PORT}"], // For MCP tool calls
     },
-    timeout: 10000
+    timeout: 10000,
   });
 
   // Total context: ~1,200 tokens (just the code + small result)
@@ -2332,16 +2406,16 @@ async function optionC_sandbox() {
 
 ### Decision Matrix: Which Approach When?
 
-| Scenario | Best Approach | Rationale |
-|----------|---------------|-----------|
-| 15+ MCP servers configured | **Gateway** | Context optimization (15x reduction) |
-| 5+ independent I/O tasks | **DAG Execution** | Latency reduction (4-6x speedup) |
-| Large dataset processing (>10K tokens intermediate data) | **Sandbox** | Context + compute efficiency (100x+ reduction) |
-| Simple 1-3 tool workflow | Standard MCP | No overhead needed |
-| External API-heavy workflow | **DAG > Sandbox** | APIs often can't run in sandbox |
-| Sensitive data processing | **Sandbox** | Local processing, return only aggregates |
-| Cross-server workflows (5+ servers) | **Gateway + DAG** | Tool discovery + parallelization |
-| Iterative data processing | **Sandbox** | Loops/recursion difficult in DAG |
+| Scenario                                                 | Best Approach     | Rationale                                      |
+| -------------------------------------------------------- | ----------------- | ---------------------------------------------- |
+| 15+ MCP servers configured                               | **Gateway**       | Context optimization (15x reduction)           |
+| 5+ independent I/O tasks                                 | **DAG Execution** | Latency reduction (4-6x speedup)               |
+| Large dataset processing (>10K tokens intermediate data) | **Sandbox**       | Context + compute efficiency (100x+ reduction) |
+| Simple 1-3 tool workflow                                 | Standard MCP      | No overhead needed                             |
+| External API-heavy workflow                              | **DAG > Sandbox** | APIs often can't run in sandbox                |
+| Sensitive data processing                                | **Sandbox**       | Local processing, return only aggregates       |
+| Cross-server workflows (5+ servers)                      | **Gateway + DAG** | Tool discovery + parallelization               |
+| Iterative data processing                                | **Sandbox**       | Loops/recursion difficult in DAG               |
 
 ### Performance Characteristics: Combined Optimizations
 
@@ -2390,27 +2464,32 @@ The gateway pattern is **middleware**, not a protocol replacement:
 
 **Analogy: HTTP Proxies**
 
-Just as nginx provides caching, load balancing, and SSL termination without changing HTTP, MCP gateways provide context optimization, orchestration, and sandboxing without changing MCP.
+Just as nginx provides caching, load balancing, and SSL termination without changing HTTP, MCP
+gateways provide context optimization, orchestration, and sandboxing without changing MCP.
 
-The protocol remains simple. Complexity lives in one place (the gateway). Servers stay stateless and focused.
+The protocol remains simple. Complexity lives in one place (the gateway). Servers stay stateless and
+focused.
 
 ### Should These Concepts Be in the MCP Spec?
 
 This raises interesting questions about where functionality belongs:
 
 **Semantic queries (`tools/list` with query param):**
+
 - ✅ Could be optional MCP protocol extension
 - ✅ Backward compatible (query is optional)
 - ⚠️ Requires every server to implement semantic search (complexity shift)
 - ⚠️ Or servers that don't support it return all tools anyway (fragmentation)
 
 **DAG execution (workflow-as-a-service):**
+
 - ✅ Could be a new MCP capability: `workflows`
 - ✅ Servers could expose `execute_workflow` tool
 - ⚠️ Significant complexity for server implementers
 - ⚠️ Not all servers need orchestration capability
 
 **Code sandboxing:**
+
 - ✅ Could be an MCP server type: `execution-server`
 - ✅ Servers expose `execute_code` tool with language/runtime spec
 - ⚠️ Security model varies widely (Deno, WASM, containers, VMs)
@@ -2418,9 +2497,12 @@ This raises interesting questions about where functionality belongs:
 
 **Our stance:**
 
-> "These concepts should remain in the application layer (gateways, frameworks) for now. If they prove valuable across multiple implementations, future MCP versions could standardize interfaces. But premature standardization would stifle innovation."
+> "These concepts should remain in the application layer (gateways, frameworks) for now. If they
+> prove valuable across multiple implementations, future MCP versions could standardize interfaces.
+> But premature standardization would stifle innovation."
 
-The MCP protocol is young. Let a thousand flowers bloom. Standardize the patterns that prove universally useful.
+The MCP protocol is young. Let a thousand flowers bloom. Standardize the patterns that prove
+universally useful.
 
 ### Open Questions for the Community
 
@@ -2454,13 +2536,16 @@ The MCP protocol is young. Let a thousand flowers bloom. Standardize the pattern
    - Trace IDs across multi-server calls?
    - Performance monitoring APIs?
 
-We don't have all the answers. These are areas for community experimentation and eventual standardization.
+We don't have all the answers. These are areas for community experimentation and eventual
+standardization.
 
 ---
 
 ## Speculative Execution Meets Safe-to-Fail Branches: The Perfect Marriage
 
-The combination of **Speculative Execution** (Concept 3) and **Safe-to-Fail Branches** (Concept 4) creates something greater than the sum of its parts. Here's why they're particularly powerful together:
+The combination of **Speculative Execution** (Concept 3) and **Safe-to-Fail Branches** (Concept 4)
+creates something greater than the sum of its parts. Here's why they're particularly powerful
+together:
 
 ### The Risk Problem with Speculative Execution
 
@@ -2534,7 +2619,8 @@ Agent context → Minimal ("15 commits by Alice, 3 breaking changes")
 Result: Fast + Context efficient
 ```
 
-The agent **never sees the raw data**—only the processed insights. This is the true intelligence of the gateway: delegate computation to isolated environments, return only what matters.
+The agent **never sees the raw data**—only the processed insights. This is the true intelligence of
+the gateway: delegate computation to isolated environments, return only what matters.
 
 **2. Multi-Hypothesis Execution Without Risk**
 
@@ -2551,21 +2637,21 @@ const resilientWorkflow = {
       id: "fast",
       tool: "agentcards:execute_code",
       code: "simpleAnalysis(commits)",
-      timeout: 500,  // Fast but basic
-      depends_on: ["fetch"]
+      timeout: 500, // Fast but basic
+      depends_on: ["fetch"],
     },
     {
       id: "ml",
       tool: "agentcards:execute_code",
       code: "mlAnalysis(commits)",
-      timeout: 2000,  // Slow but sophisticated
-      depends_on: ["fetch"]
+      timeout: 2000, // Slow but sophisticated
+      depends_on: ["fetch"],
     },
     {
       id: "stats",
       tool: "agentcards:execute_code",
       code: "statisticalAnalysis(commits)",
-      depends_on: ["fetch"]
+      depends_on: ["fetch"],
     },
 
     // Aggregator uses whatever succeeded
@@ -2579,14 +2665,14 @@ const resilientWorkflow = {
         if ($OUTPUT.stats) results.push($OUTPUT.stats);
         return mergeBestInsights(results);
       `,
-      depends_on: ["fast", "ml", "stats"]
-    }
-  ]
+      depends_on: ["fast", "ml", "stats"],
+    },
+  ],
 };
 ```
 
-**Traditional MCP tools:** Can't do this—each has side effects, retries cause duplicates
-**Sandbox branches:** Perfect for this—failures are free, successes are valuable
+**Traditional MCP tools:** Can't do this—each has side effects, retries cause duplicates **Sandbox
+branches:** Perfect for this—failures are free, successes are valuable
 
 **3. Graceful Degradation Under Time Pressure**
 
@@ -2611,7 +2697,8 @@ No rollback needed: Failed branches just ignored
 
 ### The Speculative Resilience System
 
-Combining these concepts creates **speculative resilience**: the gateway can aggressively predict and execute multiple hypotheses, knowing failures are safe and successes are valuable.
+Combining these concepts creates **speculative resilience**: the gateway can aggressively predict
+and execute multiple hypotheses, knowing failures are safe and successes are valuable.
 
 ```
 Traditional Sequential:        Speculative + Safe-to-Fail:
@@ -2635,31 +2722,39 @@ Results (3s total)               ↓
 
 ### Key Insight
 
-**Speculative Execution** answers: "When should we predict and execute early?"
-**Safe-to-Fail Branches** answers: "How can we make aggressive speculation risk-free?"
+**Speculative Execution** answers: "When should we predict and execute early?" **Safe-to-Fail
+Branches** answers: "How can we make aggressive speculation risk-free?"
 
-Together, they transform the gateway from a passive proxy into an **intelligent execution system** that:
+Together, they transform the gateway from a passive proxy into an **intelligent execution system**
+that:
+
 - Works ahead of the agent (speculative)
 - Tries multiple approaches (resilient)
 - Operates in isolated environments (safe)
 - Returns only essential results (context-efficient)
 - Degrades gracefully under failure (robust)
 
-This is the architectural vision of AgentCards: a gateway that doesn't just route requests, but **intelligently orchestrates computation** on behalf of constrained AI agents.
+This is the architectural vision of AgentCards: a gateway that doesn't just route requests, but
+**intelligently orchestrates computation** on behalf of constrained AI agents.
 
 ---
 
 ## Prior Art and Inspirations
 
-These architectural concepts didn't emerge in a vacuum. AgentCards builds on pioneering work from the AI agent and MCP communities:
+These architectural concepts didn't emerge in a vacuum. AgentCards builds on pioneering work from
+the AI agent and MCP communities:
 
 ### LLMCompiler: Parallel Function Calling
 
-The DAG-based parallel execution concept draws heavily from **LLMCompiler** ([SqueezeAILab/LLMCompiler](https://github.com/SqueezeAILab/LLMCompiler), [crazyyanchao/llmcompiler](https://github.com/crazyyanchao/llmcompiler)).
+The DAG-based parallel execution concept draws heavily from **LLMCompiler**
+([SqueezeAILab/LLMCompiler](https://github.com/SqueezeAILab/LLMCompiler),
+[crazyyanchao/llmcompiler](https://github.com/crazyyanchao/llmcompiler)).
 
 LLMCompiler introduced the idea of treating agent workflows as computation graphs:
 
-> "An LLM Compiler for Parallel Function Calling" demonstrates that LLMs can generate execution plans (DAGs) where independent function calls execute in parallel, dramatically reducing end-to-end latency.
+> "An LLM Compiler for Parallel Function Calling" demonstrates that LLMs can generate execution
+> plans (DAGs) where independent function calls execute in parallel, dramatically reducing
+> end-to-end latency.
 
 **Key insights we adopted:**
 
@@ -2675,11 +2770,13 @@ LLMCompiler introduced the idea of treating agent workflows as computation graph
 - **Speculative execution:** We predict DAGs from intent; LLMCompiler requires explicit planning
 - **Gateway pattern:** We operate as middleware; LLMCompiler is client-side
 
-The LLMCompiler paper validated that parallel execution is practical and achieves 3-10x speedups in real workflows—this gave us confidence to build it into AgentCards.
+The LLMCompiler paper validated that parallel execution is practical and achieves 3-10x speedups in
+real workflows—this gave us confidence to build it into AgentCards.
 
 ### AIRIS: MCP Gateway Pioneer
 
-**AIRIS** was one of the first MCP gateways to attempt context optimization and multi-server consolidation.
+**AIRIS** was one of the first MCP gateways to attempt context optimization and multi-server
+consolidation.
 
 **What AIRIS got right:**
 
@@ -2705,11 +2802,14 @@ AIRIS showed the market wanted MCP gateways. AgentCards aims to deliver what AIR
 
 ### Anthropic's Code Execution Article
 
-Anthropic's ["Improving Agent Tool Use with Code Execution"](https://www.anthropic.com/engineering/code-execution-with-mcp) article directly inspired the **Agent Code Sandboxing** concept.
+Anthropic's
+["Improving Agent Tool Use with Code Execution"](https://www.anthropic.com/engineering/code-execution-with-mcp)
+article directly inspired the **Agent Code Sandboxing** concept.
 
 **Core thesis from the article:**
 
-> "Instead of defining hundreds of tool schemas, give the agent a single `execute_code` tool. Let it write code to process data locally, then return only the summary to the context."
+> "Instead of defining hundreds of tool schemas, give the agent a single `execute_code` tool. Let it
+> write code to process data locally, then return only the summary to the context."
 
 **Key benefits they identified:**
 
@@ -2725,7 +2825,8 @@ Anthropic's ["Improving Agent Tool Use with Code Execution"](https://www.anthrop
 - **PII detection layer:** Automatic scanning before results return to LLM
 - **Deno security model:** Capability-based permissions vs. generic sandboxing
 
-Anthropic validated that code execution solves real problems. AgentCards makes it work seamlessly with the MCP ecosystem.
+Anthropic validated that code execution solves real problems. AgentCards makes it work seamlessly
+with the MCP ecosystem.
 
 ### Synthesis: Standing on the Shoulders of Giants
 
@@ -2737,7 +2838,8 @@ AgentCards doesn't claim novelty in individual techniques:
 
 **Our contribution is synthesis:**
 
-Combining semantic gateways + DAG execution + speculative prediction + code sandboxing into a **unified MCP optimization layer** that works with any existing MCP server.
+Combining semantic gateways + DAG execution + speculative prediction + code sandboxing into a
+**unified MCP optimization layer** that works with any existing MCP server.
 
 It's the integration that creates value—each concept amplifies the others.
 
@@ -2745,25 +2847,32 @@ It's the integration that creates value—each concept amplifies the others.
 
 ## Conclusion
 
-The Model Context Protocol enables composability. Hundreds of MCP servers can now connect AI agents to the world.
+The Model Context Protocol enables composability. Hundreds of MCP servers can now connect AI agents
+to the world.
 
-But composability without optimization leads to context saturation, sequential bottlenecks, and intermediate data bloat. At 15+ MCP servers, the direct-connection model breaks down.
+But composability without optimization leads to context saturation, sequential bottlenecks, and
+intermediate data bloat. At 15+ MCP servers, the direct-connection model breaks down.
 
 We've explored four architectural concepts to address these limitations:
 
-1. **Semantic Gateway Pattern** — Vector search for dynamic tool discovery, reducing context from 30-50% to <5% (15x improvement)
+1. **Semantic Gateway Pattern** — Vector search for dynamic tool discovery, reducing context from
+   30-50% to <5% (15x improvement)
 
-2. **DAG-Based Parallel Execution** — Dependency graphs enable parallel tool calls, reducing workflow latency by 4-6x
+2. **DAG-Based Parallel Execution** — Dependency graphs enable parallel tool calls, reducing
+   workflow latency by 4-6x
 
-3. **Speculative Execution** — Intent-based workflow prediction with adaptive learning, eliminating agent "thinking time" for 5-10x faster user experience
+3. **Speculative Execution** — Intent-based workflow prediction with adaptive learning, eliminating
+   agent "thinking time" for 5-10x faster user experience
 
-4. **Agent Code Sandboxing** — Local computation in secure sandbox, reducing context by 100x+ for data-heavy workloads while preserving privacy
+4. **Agent Code Sandboxing** — Local computation in secure sandbox, reducing context by 100x+ for
+   data-heavy workloads while preserving privacy
 
 These aren't protocol changes—they're optimization layers compatible with any MCP server.
 
 ### The Vision
 
 Imagine a future where:
+
 - A single MCP configuration contains 50+ servers without context saturation
 - Multi-tool workflows execute in sub-second latency via intelligent parallelization and prediction
 - Results appear instantly when agents predict correctly (90%+ accuracy with historical learning)
@@ -2788,24 +2897,29 @@ cd agentcards
 ./agentcards serve
 ```
 
-Then update Claude Desktop to use AgentCards as a single MCP server. Your existing 15 servers continue working—but with 15x less context, 5x faster workflows, and local data processing.
+Then update Claude Desktop to use AgentCards as a single MCP server. Your existing 15 servers
+continue working—but with 15x less context, 5x faster workflows, and local data processing.
 
 ### We'd Love Your Feedback
 
 These are early-stage ideas. We're experimenting, measuring, and iterating.
 
 **We're particularly interested in:**
+
 - Real-world workflow benchmarks (Does DAG execution help your use cases?)
 - Security model feedback (Is the Deno sandbox approach sound?)
 - Alternative semantic search techniques (Better than vector embeddings?)
 - Protocol extension proposals (Should any of this be in MCP spec?)
 
 Join the discussion:
+
 - **GitHub:** [github.com/YOUR_USERNAME/agentcards](https://github.com/YOUR_USERNAME/agentcards)
 - **Issues:** [Report bugs, request features](https://github.com/YOUR_USERNAME/agentcards/issues)
-- **Discussions:** [Share your workflow optimizations](https://github.com/YOUR_USERNAME/agentcards/discussions)
+- **Discussions:**
+  [Share your workflow optimizations](https://github.com/YOUR_USERNAME/agentcards/discussions)
 
-The MCP ecosystem is just getting started. Let's build the optimization layer that makes large-scale agent workflows practical.
+The MCP ecosystem is just getting started. Let's build the optimization layer that makes large-scale
+agent workflows practical.
 
 ---
 
@@ -2819,11 +2933,15 @@ The MCP ecosystem is just getting started. Let's build the optimization layer th
 
 **Inspirations & Related Work:**
 
-- [LLMCompiler (SqueezeAILab)](https://github.com/SqueezeAILab/LLMCompiler) - Parallel function calling with DAG execution
-- [LLMCompiler (crazyyanchao)](https://github.com/crazyyanchao/llmcompiler) - Alternative implementation
-- [Anthropic: Code Execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp) - Agent code sandboxing concepts
+- [LLMCompiler (SqueezeAILab)](https://github.com/SqueezeAILab/LLMCompiler) - Parallel function
+  calling with DAG execution
+- [LLMCompiler (crazyyanchao)](https://github.com/crazyyanchao/llmcompiler) - Alternative
+  implementation
+- [Anthropic: Code Execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp) -
+  Agent code sandboxing concepts
 - [AIRIS Gateway](https://github.com/airis-ai/airis) - Early MCP gateway exploration
 
 ---
 
-*This article describes concepts implemented in AgentCards, an open-source MCP gateway. All code examples are illustrative; see the actual implementation for production details.*
+_This article describes concepts implemented in AgentCards, an open-source MCP gateway. All code
+examples are illustrative; see the actual implementation for production details._

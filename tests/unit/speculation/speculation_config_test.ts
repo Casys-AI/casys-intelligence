@@ -9,10 +9,10 @@
 
 import { assertEquals, assertRejects } from "@std/assert";
 import {
-  loadSpeculationConfig,
-  saveSpeculationConfig,
   ConfigValidationError,
   DEFAULT_FILE_CONFIG,
+  loadSpeculationConfig,
+  saveSpeculationConfig,
   toSpeculationConfig,
 } from "../../../src/speculation/speculation-config-loader.ts";
 import type { SpeculationFileConfig } from "../../../src/speculation/speculation-config-loader.ts";
@@ -105,7 +105,10 @@ confidence_threshold: 0.80
     assertEquals(config.enabled, false);
     assertEquals(config.confidence_threshold, 0.80);
     // Should use defaults for missing fields
-    assertEquals(config.max_concurrent_speculations, DEFAULT_FILE_CONFIG.max_concurrent_speculations);
+    assertEquals(
+      config.max_concurrent_speculations,
+      DEFAULT_FILE_CONFIG.max_concurrent_speculations,
+    );
     assertEquals(config.speculation_timeout, DEFAULT_FILE_CONFIG.speculation_timeout);
   } finally {
     await cleanupTestFiles();

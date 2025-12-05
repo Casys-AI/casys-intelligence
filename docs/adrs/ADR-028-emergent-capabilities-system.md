@@ -6,15 +6,18 @@
 
 > **⚠️ IPC Section Superseded by ADR-032 (2025-12-05)**
 >
-> The IPC mechanism described in this ADR (`__TRACE__` stdout parsing) has been **superseded** by [ADR-032: Sandbox Worker RPC Bridge](ADR-032-sandbox-worker-rpc-bridge.md).
+> The IPC mechanism described in this ADR (`__TRACE__` stdout parsing) has been **superseded** by
+> [ADR-032: Sandbox Worker RPC Bridge](ADR-032-sandbox-worker-rpc-bridge.md).
 >
 > **What changed:**
+>
 > - `__TRACE__` stdout prefix → postMessage RPC
 > - Subprocess → Deno Worker (`permissions: "none"`)
 > - Tracing via stdout parsing → Native tracing in RPC Bridge
 > - Capability injection via `wrapCapability()` → Inline functions in Worker context (Option B)
 >
 > **What remains valid:**
+>
 > - Capability lifecycle (Eager Learning + Lazy Suggestions)
 > - CapabilityMatcher, SuggestionEngine architecture
 > - Database schema (workflow_pattern, capability_cache)
@@ -22,9 +25,12 @@
 
 ## Context
 
-Avec ADR-027 (Execute Code Graph Learning), AgentCards peut apprendre des patterns d'exécution de code. Cependant, cette connaissance reste **implicite** dans le graphe (edges entre tools).
+Avec ADR-027 (Execute Code Graph Learning), AgentCards peut apprendre des patterns d'exécution de
+code. Cependant, cette connaissance reste **implicite** dans le graphe (edges entre tools).
 
-L'objectif de cet ADR est de définir comment faire **émerger des capabilities explicites** de l'usage - créant un nouveau paradigme où Claude devient un orchestrateur de haut niveau qui délègue l'exécution à AgentCards.
+L'objectif de cet ADR est de définir comment faire **émerger des capabilities explicites** de
+l'usage - créant un nouveau paradigme où Claude devient un orchestrateur de haut niveau qui délègue
+l'exécution à AgentCards.
 
 ### État Actuel vs Vision
 
@@ -53,11 +59,11 @@ L'objectif de cet ADR est de définir comment faire **émerger des capabilities 
 
 ### Comparaison Marché
 
-| Approche | Learning | Suggestions | Code Reuse | Sécurité |
-|----------|----------|-------------|------------|----------|
-| Docker Dynamic MCP | ❌ | ❌ | ❌ | Container |
-| Anthropic PTC | ❌ | ❌ | ❌ | Sandbox |
-| **AgentCards** | ✅ GraphRAG | ✅ Louvain/AA | ✅ Capabilities | Sandbox |
+| Approche           | Learning    | Suggestions   | Code Reuse      | Sécurité  |
+| ------------------ | ----------- | ------------- | --------------- | --------- |
+| Docker Dynamic MCP | ❌          | ❌            | ❌              | Container |
+| Anthropic PTC      | ❌          | ❌            | ❌              | Sandbox   |
+| **AgentCards**     | ✅ GraphRAG | ✅ Louvain/AA | ✅ Capabilities | Sandbox   |
 
 ### Triggers
 
@@ -76,32 +82,39 @@ L'objectif de cet ADR est de définir comment faire **émerger des capabilities 
 ## Key Design Decisions (2025-12-04)
 
 ### 1. Eager Learning (pas 3+ exécutions)
+
 > **Décision:** Storage dès la 1ère exécution réussie, pas d'attente de pattern répété.
 >
 > - ON CONFLICT → UPDATE usage_count++ (deduplication par code_hash)
 > - Storage is cheap (~2KB/capability), on garde tout
-> - **Lazy Suggestions:** Le filtrage se fait au moment des suggestions (via AdaptiveThresholdManager), pas du stockage
+> - **Lazy Suggestions:** Le filtrage se fait au moment des suggestions (via
+>   AdaptiveThresholdManager), pas du stockage
 
-### 2. Inférence Schema via ts-morph + Zod
+### 2. Inférence Schema via SWC (Deno native)
+
 > **Décision:** Le schema des paramètres est inféré automatiquement depuis le code TypeScript.
 >
-> **Stack (Deno compatible ✅):**
-> - `ts-morph` (deno.land/x/ts_morph@22.0.0) - Parse AST, trouve `args.xxx`
-> - `Zod` (npm:zod ou JSR) - Construit le schema typé
-> - `zod-to-json-schema` (npm:) - Export pour stockage DB
+> **Stack (Deno native ✅):**
+>
+> - `SWC` (deno.land/x/swc@0.2.1) - Rust-based AST parser, 20x faster, Deno native
+> - JSON Schema généré directement (pas de Zod intermédiaire)
 >
 > **Flow:**
+>
 > ```
-> Code TypeScript → ts-morph parse → trouve args.filePath, args.debug
+> Code TypeScript → SWC parse → trouve args.filePath, args.debug
 >     → Inférer types depuis MCP schemas utilisés
->     → Générer Zod schema → Convertir en JSON Schema → Stocker
+>     → Générer JSON Schema directement → Stocker
 > ```
+>
+> **Note:** ts-morph abandonné (issues Deno #949, #950). SWC validé via POC.
 
 ### 3. Réutilisation du pattern wrapMCPClient
+
 > **Décision:** Les capabilities sont injectées dans le contexte exactement comme les MCP tools.
 >
-> Voir `src/sandbox/context-builder.ts:355` - même pattern pour `wrapCapability()`.
-> **Pas de nouveau mécanisme** - extension du `ContextBuilder` existant.
+> Voir `src/sandbox/context-builder.ts:355` - même pattern pour `wrapCapability()`. **Pas de nouveau
+> mécanisme** - extension du `ContextBuilder` existant.
 >
 > ```typescript
 > const context = {
@@ -114,18 +127,20 @@ L'objectif de cet ADR est de définir comment faire **émerger des capabilities 
 
 ### 4. Capability Execution: Inline Functions (Option B - ADR-032)
 
-> **Updated 2025-12-05:** With ADR-032 Worker RPC Bridge, capabilities use **Option B: Inline Functions**.
+> **Updated 2025-12-05:** With ADR-032 Worker RPC Bridge, capabilities use **Option B: Inline
+> Functions**.
 >
 > **Why Option B?**
+>
 > - No RPC overhead for capability → capability calls
 > - Simpler architecture (capabilities are just functions in the same context)
 > - MCP tool calls still go through RPC bridge (and get traced there)
 >
-> | Call Type | Mechanism | Tracing |
-> |-----------|-----------|---------|
-> | Code → MCP tool | RPC to bridge | ✅ Traced in bridge (native) |
-> | Code → Capability | Direct function call | ✅ Traced via wrapper in Worker |
-> | Capability → MCP tool | RPC to bridge | ✅ Traced in bridge (native) |
+> | Call Type               | Mechanism            | Tracing                         |
+> | ----------------------- | -------------------- | ------------------------------- |
+> | Code → MCP tool         | RPC to bridge        | ✅ Traced in bridge (native)    |
+> | Code → Capability       | Direct function call | ✅ Traced via wrapper in Worker |
+> | Capability → MCP tool   | RPC to bridge        | ✅ Traced in bridge (native)    |
 > | Capability → Capability | Direct function call | ✅ Traced via wrapper in Worker |
 >
 > ```typescript
@@ -153,45 +168,54 @@ L'objectif de cet ADR est de définir comment faire **émerger des capabilities 
 > };
 > ```
 >
-> **Trace Collection:** Worker sends all traces back to bridge at end of execution via final postMessage.
+> **Trace Collection:** Worker sends all traces back to bridge at end of execution via final
+> postMessage.
 
 ### 5. Layers de capabilities (capability → capability)
+
 > **Décision:** Une capability peut appeler une autre capability naturellement.
 >
 > Les deux sont injectées dans le même contexte sandbox :
+>
 > ```typescript
 > // Exemple: code_snippet de "deployProd"
-> await capabilities.runTests({ path: "./tests" });   // ← capability
-> await capabilities.buildDocker({ tag: "v1.0" });    // ← capability
+> await capabilities.runTests({ path: "./tests" }); // ← capability
+> await capabilities.buildDocker({ tag: "v1.0" }); // ← capability
 > await mcp.kubernetes.deploy({ image: "app:v1.0" }); // ← MCP tool
 > ```
 >
 > **Pas de nouveau mécanisme requis** - conséquence naturelle de l'injection uniforme.
 >
 > **Limites à considérer (future story si besoin):**
+>
 > - Profondeur max de récursion (3 niveaux?)
 > - Détection de cycles (A → B → A)
 > - Tracing de la stack d'appels pour debug
 
 ### 6. Capability Graph Learning (capability → capability edges)
+
 > **Décision:** Les relations capability → capability sont apprises et stockées dans GraphRAG.
 >
 > **Flow:**
+>
 > 1. Capability A appelle Capability B (dans sandbox)
 > 2. `wrapCapability()` émet `__TRACE__ capability_start/end`
 > 3. Gateway parse les traces → détecte A → B
 > 4. `graphEngine.updateFromExecution()` crée edge A → B
 >
 > **Stockage:** Même graph que les MCP tools (GraphRAG)
+>
 > - Node type: `capability` (en plus de `tool`)
 > - Edge: `capability_A → capability_B` avec weight basé sur fréquence
 >
 > **Use cases:**
+>
 > - Suggérer capabilities souvent appelées ensemble
 > - "Cette capability utilise souvent X et Y"
 > - Détecter les capability chains (A → B → C)
 >
 > **Queries GraphRAG:**
+>
 > ```typescript
 > graphEngine.getNeighbors(capability_A, "out") → [capability_B, capability_C]
 > graphEngine.getNeighbors(capability_A, "in") → [capability_parent]
@@ -200,22 +224,22 @@ L'objectif de cet ADR est de définir comment faire **émerger des capabilities 
 ## Considered Options
 
 ### Option A: Status Quo
+
 Garder le learning implicite (edges GraphRAG seulement).
 
-**Pros:** Simple, déjà implémenté
-**Cons:** Pas de réutilisation, pas de suggestions
+**Pros:** Simple, déjà implémenté **Cons:** Pas de réutilisation, pas de suggestions
 
 ### Option B: Capability Store Simple
+
 Stocker code + intent sans détection automatique.
 
-**Pros:** Plus simple que C
-**Cons:** Manuel, pas d'émergence
+**Pros:** Plus simple que C **Cons:** Manuel, pas d'émergence
 
 ### Option C: Emergent Capabilities (Recommandé)
+
 Système complet avec détection automatique, promotion, suggestions.
 
-**Pros:** Différenciateur fort, autonome
-**Cons:** Plus complexe
+**Pros:** Différenciateur fort, autonome **Cons:** Plus complexe
 
 ## Decision
 
@@ -272,9 +296,9 @@ Implémenter un système où les capabilities émergent automatiquement de l'usa
 
 > **⚠️ SUPERSEDED BY ADR-032**
 >
-> This section describes the original `__TRACE__` stdout approach.
-> See [ADR-032](ADR-032-sandbox-worker-rpc-bridge.md) for the new Worker RPC Bridge architecture.
-> The new approach uses `postMessage` RPC with native tracing in the bridge.
+> This section describes the original `__TRACE__` stdout approach. See
+> [ADR-032](ADR-032-sandbox-worker-rpc-bridge.md) for the new Worker RPC Bridge architecture. The
+> new approach uses `postMessage` RPC with native tracing in the bridge.
 
 <details>
 <summary>Original Design (Superseded)</summary>
@@ -310,13 +334,13 @@ Implémenter un système où les capabilities émergent automatiquement de l'usa
 
 #### Pourquoi stdout et pas stderr/pipe/socket?
 
-| Option | Pour | Contre |
-|--------|------|--------|
-| **stdout + prefix** | Deno-native, simple, streamable | Mélangé avec output |
-| stderr | Séparé de stdout | Convention = erreurs |
-| Named pipe | Propre | Plomberie OS, pas portable |
-| Unix socket | Bidirectionnel | Overkill, complexe |
-| File temporaire | Simple | Pas de streaming, I/O |
+| Option              | Pour                            | Contre                     |
+| ------------------- | ------------------------------- | -------------------------- |
+| **stdout + prefix** | Deno-native, simple, streamable | Mélangé avec output        |
+| stderr              | Séparé de stdout                | Convention = erreurs       |
+| Named pipe          | Propre                          | Plomberie OS, pas portable |
+| Unix socket         | Bidirectionnel                  | Overkill, complexe         |
+| File temporaire     | Simple                          | Pas de streaming, I/O      |
 
 **Verdict:** `__TRACE__` prefix sur stdout avec parsing côté Gateway.
 
@@ -324,8 +348,9 @@ Implémenter un système où les capabilities émergent automatiquement de l'usa
 
 #### Event Types (Still Valid - Transport Changed)
 
-> **Note:** These event types remain valid. Only the transport changed from `__TRACE__` stdout to postMessage RPC.
-> The WorkerBridge in ADR-032 captures these events natively without stdout parsing.
+> **Note:** These event types remain valid. Only the transport changed from `__TRACE__` stdout to
+> postMessage RPC. The WorkerBridge in ADR-032 captures these events natively without stdout
+> parsing.
 
 ```typescript
 // Fichier: src/sandbox/ipc-types.ts
@@ -336,41 +361,41 @@ Implémenter un système où les capabilities émergent automatiquement de l'usa
 export type IPCEvent =
   // Tool lifecycle
   | {
-      type: "tool_start";
-      tool: string;          // "server:tool_name"
-      trace_id: string;      // UUID for correlation
-      ts: number;            // Unix timestamp ms
-    }
+    type: "tool_start";
+    tool: string; // "server:tool_name"
+    trace_id: string; // UUID for correlation
+    ts: number; // Unix timestamp ms
+  }
   | {
-      type: "tool_end";
-      tool: string;
-      trace_id: string;
-      success: boolean;
-      duration_ms: number;
-      error?: string;        // Only if success=false
-    }
+    type: "tool_end";
+    tool: string;
+    trace_id: string;
+    success: boolean;
+    duration_ms: number;
+    error?: string; // Only if success=false
+  }
   // Progress for long tasks (Future)
   | {
-      type: "progress";
-      message: string;
-      done?: number;
-      total?: number;
-      percent?: number;
-    }
+    type: "progress";
+    message: string;
+    done?: number;
+    total?: number;
+    percent?: number;
+  }
   // Debug logging (opt-in)
   | {
-      type: "log";
-      level: "debug" | "info" | "warn";
-      message: string;
-      data?: Record<string, unknown>;
-    }
+    type: "log";
+    level: "debug" | "info" | "warn";
+    message: string;
+    data?: Record<string, unknown>;
+  }
   // Capability hint (code can suggest capabilities)
   | {
-      type: "capability_hint";
-      name: string;
-      description: string;
-      tools_used: string[];
-    };
+    type: "capability_hint";
+    name: string;
+    description: string;
+    tools_used: string[];
+  };
 
 /**
  * Serialization helper
@@ -385,8 +410,8 @@ export function emitTrace(event: IPCEvent): void {
 export function parseTraces(stdout: string): IPCEvent[] {
   const events: IPCEvent[] = [];
 
-  for (const line of stdout.split('\n')) {
-    if (line.startsWith('__TRACE__')) {
+  for (const line of stdout.split("\n")) {
+    if (line.startsWith("__TRACE__")) {
       try {
         events.push(JSON.parse(line.slice(9)));
       } catch {
@@ -420,10 +445,10 @@ export function parseTraces(stdout: string): IPCEvent[] {
 │  GraphRAG: updateFromExecution() → edges créés                  │
 │       │                                                          │
 │       ▼                                                          │
-│  ts-morph: Parse code → Extract args.xxx → Infer types          │
+│  SWC: Parse code → Extract args.xxx → Infer types               │
 │       │                                                          │
 │       ▼                                                          │
-│  Zod: Generate schema → zod-to-json-schema → parameters_schema  │
+│  JSON Schema généré directement → parameters_schema              │
 │       │                                                          │
 │       ▼                                                          │
 │  INSERT INTO workflow_pattern (Eager Learning):                  │
@@ -522,17 +547,17 @@ ON workflow_execution (code_hash);
 
 export interface Suggestion {
   type: "capability" | "tool" | "next_tool";
-  id?: string;           // Capability ID
-  toolId?: string;       // Tool ID
+  id?: string; // Capability ID
+  toolId?: string; // Tool ID
   name?: string;
   reason: string;
-  confidence: number;    // 0-1
+  confidence: number; // 0-1
 }
 
 export class SuggestionEngine {
   constructor(
     private graph: GraphRAGEngine,
-    private db: PGliteClient
+    private db: PGliteClient,
   ) {}
 
   /**
@@ -550,7 +575,7 @@ export class SuggestionEngine {
 
     // 1. Find dominant community (Louvain)
     const communities = contextTools
-      .map(t => this.graph.getCommunity(t))
+      .map((t) => this.graph.getCommunity(t))
       .filter(Boolean);
 
     const dominantCommunity = this.mode(communities);
@@ -605,7 +630,7 @@ export class SuggestionEngine {
   }
 
   private async getCapabilitiesForCommunity(
-    community: string
+    community: string,
   ): Promise<Array<{ pattern_id: string; name: string; success_rate: number }>> {
     // Query capabilities whose tools are in this community
     const result = await this.db.query(`
@@ -632,7 +657,10 @@ export class SuggestionEngine {
     let max = 0;
     let result: string | undefined;
     for (const [k, v] of counts) {
-      if (v > max) { max = v; result = k; }
+      if (v > max) {
+        max = v;
+        result = k;
+      }
     }
     return result;
   }
@@ -640,7 +668,7 @@ export class SuggestionEngine {
   private dedupeAndSort(suggestions: Suggestion[]): Suggestion[] {
     const seen = new Set<string>();
     return suggestions
-      .filter(s => {
+      .filter((s) => {
         const key = s.id || s.toolId || s.name || "";
         if (seen.has(key)) return false;
         seen.add(key);
@@ -712,37 +740,41 @@ async handleSearchCapabilities(request: {
 ## Implementation Plan
 
 ### Phase 1: IPC Tracking (ADR-027)
-**Status:** Ready to implement
-**Effort:** 1-2 jours
-**Files:** `context-builder.ts`, `gateway-server.ts`
+
+**Status:** Ready to implement **Effort:** 1-2 jours **Files:** `context-builder.ts`,
+`gateway-server.ts`
 
 ### Phase 2: Capability Storage
-**Effort:** 2-3 jours
-**Tasks:**
+
+**Effort:** 2-3 jours **Tasks:**
+
 1. Migration 011 (schema)
 2. `CapabilityMatcher` class
 3. Store code_snippet in workflow_execution
 4. Pattern detection query
 
 ### Phase 3: Capability Matching
-**Effort:** 2-3 jours
-**Tasks:**
+
+**Effort:** 2-3 jours **Tasks:**
+
 1. `search_capabilities` tool
 2. Intent → capability matching
 3. Execute capability code
 4. Stats update
 
 ### Phase 4: Suggestion Engine
-**Effort:** 2-3 jours
-**Tasks:**
+
+**Effort:** 2-3 jours **Tasks:**
+
 1. `SuggestionEngine` class
 2. Louvain-based suggestions
 3. Adamic-Adar related tools
 4. Include in execute_code response
 
 ### Phase 5: Auto-promotion (Background)
-**Effort:** 2-3 jours
-**Tasks:**
+
+**Effort:** 2-3 jours **Tasks:**
+
 1. Pattern detection job
 2. Code snippet selection
 3. Auto-naming (optional)
@@ -752,12 +784,12 @@ async handleSearchCapabilities(request: {
 
 ### État Actuel vs Cible
 
-| Feature | Actuel | Cible | Notes |
-|---------|--------|-------|-------|
-| Cache par code exact | ✅ `cache.ts` | ✅ Garder | LRU + TTL, hash(code + context) |
-| Cache par intent | ❌ | ✅ Phase 3 | Réutiliser result si même intent |
-| Cache par capability ID | ❌ | ✅ Phase 3 | Capability → cached result |
-| Invalidation triggers | ❌ | ✅ Phase 4 | Tool change → invalide capabilities |
+| Feature                 | Actuel        | Cible      | Notes                               |
+| ----------------------- | ------------- | ---------- | ----------------------------------- |
+| Cache par code exact    | ✅ `cache.ts` | ✅ Garder  | LRU + TTL, hash(code + context)     |
+| Cache par intent        | ❌            | ✅ Phase 3 | Réutiliser result si même intent    |
+| Cache par capability ID | ❌            | ✅ Phase 3 | Capability → cached result          |
+| Invalidation triggers   | ❌            | ✅ Phase 4 | Tool change → invalide capabilities |
 
 ### Architecture Cache Multi-niveaux
 
@@ -841,7 +873,7 @@ interface InvalidationTrigger {
 class CacheInvalidationService {
   constructor(
     private db: PGliteClient,
-    private executionCache: CodeExecutionCache
+    private executionCache: CodeExecutionCache,
   ) {}
 
   /**
@@ -851,19 +883,25 @@ class CacheInvalidationService {
     let invalidated = 0;
 
     // 1. Find capabilities using this tool
-    const capabilities = await this.db.query(`
+    const capabilities = await this.db.query(
+      `
       SELECT pattern_id
       FROM workflow_pattern
       WHERE dag_structure::text LIKE $1
-    `, [`%${toolId}%`]);
+    `,
+      [`%${toolId}%`],
+    );
 
     // 2. Delete their cached results
     for (const cap of capabilities) {
-      const deleted = await this.db.query(`
+      const deleted = await this.db.query(
+        `
         DELETE FROM capability_cache
         WHERE capability_id = $1
         RETURNING 1
-      `, [cap.pattern_id]);
+      `,
+        [cap.pattern_id],
+      );
       invalidated += deleted.length;
     }
 
@@ -884,10 +922,13 @@ class CacheInvalidationService {
    * Invalidate specific capability
    */
   async invalidateCapability(capabilityId: string, reason: string): Promise<void> {
-    await this.db.query(`
+    await this.db.query(
+      `
       DELETE FROM capability_cache
       WHERE capability_id = $1
-    `, [capabilityId]);
+    `,
+      [capabilityId],
+    );
 
     await this.logInvalidation({
       type: "manual",
@@ -901,14 +942,17 @@ class CacheInvalidationService {
    */
   async onCapabilityFailure(capabilityId: string): Promise<void> {
     // Update failure count
-    const result = await this.db.query(`
+    const result = await this.db.query(
+      `
       UPDATE workflow_pattern
       SET
         failure_count = COALESCE(failure_count, 0) + 1,
         success_rate = success_count::float / (success_count + COALESCE(failure_count, 0) + 1)
       WHERE pattern_id = $1
       RETURNING failure_count
-    `, [capabilityId]);
+    `,
+      [capabilityId],
+    );
 
     // If 3+ failures, invalidate cache
     if (result[0]?.failure_count >= 3) {
@@ -917,10 +961,13 @@ class CacheInvalidationService {
   }
 
   private async logInvalidation(trigger: InvalidationTrigger): Promise<void> {
-    await this.db.query(`
+    await this.db.query(
+      `
       INSERT INTO cache_invalidation_log (trigger_type, tool_id, capability_id, timestamp)
       VALUES ($1, $2, $3, $4)
-    `, [trigger.type, trigger.toolId, trigger.capabilityId, trigger.timestamp]);
+    `,
+      [trigger.type, trigger.toolId, trigger.capabilityId, trigger.timestamp],
+    );
   }
 }
 ```
@@ -968,23 +1015,23 @@ ALTER TABLE workflow_pattern
 // Dans workflow_pattern.cache_config (JSONB)
 interface CapabilityCacheConfig {
   // Whether this capability's results can be cached
-  cacheable: boolean;  // default: true
+  cacheable: boolean; // default: true
 
   // TTL in seconds (0 = no cache)
-  ttl_seconds: number;  // default: 1800 (30 min)
+  ttl_seconds: number; // default: 1800 (30 min)
 
   // Cache key strategy
   key_strategy: "params_hash" | "intent_similarity" | "none";
 
   // Invalidation triggers
   invalidate_on: Array<
-    | "tool_schema_change"  // Any tool in capability changes
-    | "daily"               // Invalidate daily (for time-sensitive data)
-    | "manual_only"         // Only manual invalidation
+    | "tool_schema_change" // Any tool in capability changes
+    | "daily" // Invalidate daily (for time-sensitive data)
+    | "manual_only" // Only manual invalidation
   >;
 
   // Max cached entries per capability
-  max_entries: number;  // default: 10
+  max_entries: number; // default: 10
 }
 
 // Example configurations:
@@ -992,7 +1039,7 @@ const CACHE_CONFIGS = {
   // Highly cacheable: static data analysis
   "analyze-codebase": {
     cacheable: true,
-    ttl_seconds: 3600,  // 1 hour
+    ttl_seconds: 3600, // 1 hour
     key_strategy: "params_hash",
     invalidate_on: ["tool_schema_change"],
     max_entries: 5,
@@ -1001,7 +1048,7 @@ const CACHE_CONFIGS = {
   // Short cache: real-time data
   "check-github-status": {
     cacheable: true,
-    ttl_seconds: 60,  // 1 minute
+    ttl_seconds: 60, // 1 minute
     key_strategy: "params_hash",
     invalidate_on: ["tool_schema_change", "daily"],
     max_entries: 3,
@@ -1090,44 +1137,49 @@ async handleExecuteCode(request: ExecuteCodeRequest): Promise<ExecuteCodeResult>
 // Métriques à tracker
 
 // Capability discovery
-capabilities_searched_total
-capabilities_matched_total
-capabilities_match_rate // matched / searched
+capabilities_searched_total;
+capabilities_matched_total;
+capabilities_match_rate; // matched / searched
 
 // Capability execution
-capabilities_executed_total
-capabilities_cache_hits
-capabilities_success_rate
+capabilities_executed_total;
+capabilities_cache_hits;
+capabilities_success_rate;
 
 // Suggestions
-suggestions_generated_total
-suggestions_accepted_total // if we track user acceptance
+suggestions_generated_total;
+suggestions_accepted_total; // if we track user acceptance
 
 // Promotion
-patterns_detected_total
-capabilities_promoted_total
-promotion_rate // promoted / detected
+patterns_detected_total;
+capabilities_promoted_total;
+promotion_rate; // promoted / detected
 ```
 
 ## Future Work
 
 ### IPC Streaming Progress
+
 Pour les longues tâches, streamer les events `progress` en temps réel via SSE.
 
 ### Manual Capability Creation
+
 Permettre à l'utilisateur de créer des capabilities manuellement:
+
 ```typescript
 await agentcards.create_capability({
   name: "weekly-report",
   intent: "Generate weekly activity report",
-  code: `const commits = await github.listCommits(...); ...`
+  code: `const commits = await github.listCommits(...); ...`,
 });
 ```
 
 ### Capability Versioning
+
 Track versions quand le code évolue, permettre rollback.
 
 ### Capability Sharing
+
 Export/import de capabilities entre instances AgentCards.
 
 ## References
@@ -1135,5 +1187,6 @@ Export/import de capabilities entre instances AgentCards.
 - ADR-027: Execute Code Graph Learning (IPC mechanism)
 - Research: `docs/research-technical-2025-12-03.md`
 - Spike: `docs/spikes/2025-12-03-dynamic-mcp-composition.md`
-- Docker: [Dynamic MCPs Blog](https://www.docker.com/blog/dynamic-mcps-stop-hardcoding-your-agents-world/)
+- Docker:
+  [Dynamic MCPs Blog](https://www.docker.com/blog/dynamic-mcps-stop-hardcoding-your-agents-world/)
 - Anthropic: [Programmatic Tool Calling](https://www.anthropic.com/engineering/advanced-tool-use)

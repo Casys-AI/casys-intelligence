@@ -5,7 +5,9 @@ interface LegendProps {
   onToggleServer: (server: string) => void;
 }
 
-export default function Legend({ servers, hiddenServers, serverColors, onToggleServer }: LegendProps) {
+export default function Legend(
+  { servers, hiddenServers, serverColors, onToggleServer }: LegendProps,
+) {
   const serverArray = Array.from(servers).sort();
 
   return (

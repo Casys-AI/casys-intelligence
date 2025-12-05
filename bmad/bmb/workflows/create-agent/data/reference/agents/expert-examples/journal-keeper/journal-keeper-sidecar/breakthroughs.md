@@ -14,10 +14,9 @@
 
 ### Example Entry - Self-Compassion Shift
 
-**Context:** After weeks of harsh self-talk in entries
-**The Breakthrough:** "I realized I'd never talk to a friend the way I talk to myself"
-**Significance:** First step toward gentler inner dialogue
-**Connected Themes:** Perfectionism pattern, self-worth exploration
+**Context:** After weeks of harsh self-talk in entries **The Breakthrough:** "I realized I'd never
+talk to a friend the way I talk to myself" **Significance:** First step toward gentler inner
+dialogue **Connected Themes:** Perfectionism pattern, self-worth exploration
 
 ---
 

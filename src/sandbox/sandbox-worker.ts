@@ -14,10 +14,10 @@
 /// <reference lib="deno.worker" />
 
 import type {
+  BridgeToWorkerMessage,
   InitMessage,
   RPCResultMessage,
   ToolDefinition,
-  BridgeToWorkerMessage,
 } from "./types.ts";
 
 // Declare Worker global scope for TypeScript
@@ -79,7 +79,8 @@ async function __rpcCall(
 function generateToolProxies(
   toolDefinitions: ToolDefinition[],
 ): Record<string, Record<string, (args: Record<string, unknown>) => Promise<unknown>>> {
-  const mcp: Record<string, Record<string, (args: Record<string, unknown>) => Promise<unknown>>> = {};
+  const mcp: Record<string, Record<string, (args: Record<string, unknown>) => Promise<unknown>>> =
+    {};
 
   for (const def of toolDefinitions) {
     if (!mcp[def.server]) {
@@ -108,19 +109,19 @@ async function executeCode(
   // Build context variables for injection
   const contextVars = context
     ? Object.entries(context)
-        .map(([key, value]) => `const ${key} = ${JSON.stringify(value)};`)
-        .join("\n")
+      .map(([key, value]) => `const ${key} = ${JSON.stringify(value)};`)
+      .join("\n")
     : "";
 
   // ADR-016: REPL-style auto-return with heuristic detection
   // Check if code contains statement keywords
-  const hasStatements = /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return|throw|break|continue)\s/.test(code.trim());
+  const hasStatements =
+    /(^|\n|\s)(const|let|var|function|class|if|for|while|do|switch|try|return|throw|break|continue)\s/
+      .test(code.trim());
 
   // If code has statements, execute as-is (requires explicit return)
   // If code is pure expression, wrap in return for auto-return
-  const wrappedUserCode = hasStatements
-    ? code
-    : `return (${code});`;
+  const wrappedUserCode = hasStatements ? code : `return (${code});`;
 
   // Create async function with mcp and context injected
   // Using Function constructor (required for dynamic code execution in Worker)

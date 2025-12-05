@@ -9,10 +9,10 @@
 import { Command } from "@cliffy/command";
 import * as log from "@std/log";
 import {
-  loadSpeculationConfig,
-  saveSpeculationConfig,
   ConfigValidationError,
   DEFAULT_SPECULATION_CONFIG_PATH,
+  loadSpeculationConfig,
+  saveSpeculationConfig,
 } from "../../speculation/speculation-config-loader.ts";
 import type { SpeculationFileConfig } from "../../speculation/speculation-config-loader.ts";
 import { SpeculationManager } from "../../speculation/speculation-manager.ts";
@@ -277,6 +277,10 @@ function displayStats(
   if (metrics.net_benefit_ms > 0) {
     console.log(`      💰 Net time saved: ${metrics.net_benefit_ms.toFixed(0)}ms`);
   } else if (metrics.net_benefit_ms < 0) {
-    console.log(`      ⚠️  Net time lost: ${Math.abs(metrics.net_benefit_ms).toFixed(0)}ms (consider raising threshold)`);
+    console.log(
+      `      ⚠️  Net time lost: ${
+        Math.abs(metrics.net_benefit_ms).toFixed(0)
+      }ms (consider raising threshold)`,
+    );
   }
 }

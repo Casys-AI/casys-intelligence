@@ -5,9 +5,9 @@
  * méthodes utilisées par le MetricsPanel dashboard.
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 
 async function createTestDb(): Promise<PGliteClient> {
@@ -180,7 +180,7 @@ Deno.test("GraphRAGEngine.getPageRankTop - respects limit", async () => {
   // Set up more than 10 PageRank values
   const graphEngine = engine as any;
   graphEngine.pageRanks = Object.fromEntries(
-    Array.from({ length: 20 }, (_, i) => [`tool${i}`, Math.random()])
+    Array.from({ length: 20 }, (_, i) => [`tool${i}`, Math.random()]),
   );
 
   const top5 = engine.getPageRankTop(5);

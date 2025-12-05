@@ -36,8 +36,8 @@
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
+| Name           | Type           | Required           | Description    |
+| -------------- | -------------- | ------------------ | -------------- |
 | {param_1_name} | {param_1_type} | {param_1_required} | {param_1_desc} |
 | {param_2_name} | {param_2_type} | {param_2_required} | {param_2_desc} |
 
@@ -55,11 +55,11 @@
 
 **Error Responses:**
 
-| Code | Description |
-|------|-------------|
-| 400 | {error_400_desc} |
-| 401 | {error_401_desc} |
-| 404 | {error_404_desc} |
+| Code | Description      |
+| ---- | ---------------- |
+| 400  | {error_400_desc} |
+| 401  | {error_401_desc} |
+| 404  | {error_404_desc} |
 
 ---
 
@@ -75,8 +75,8 @@
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
+| Name         | Type         | Required         | Description  |
+| ------------ | ------------ | ---------------- | ------------ |
 | {param_name} | {param_type} | {param_required} | {param_desc} |
 
 **Example Request:**
@@ -101,8 +101,8 @@
 {data_type_1_schema}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
+| Field     | Type           | Description    |
+| --------- | -------------- | -------------- |
 | {field_1} | {field_1_type} | {field_1_desc} |
 | {field_2} | {field_2_type} | {field_2_desc} |
 
@@ -110,8 +110,8 @@
 
 ## Error Codes
 
-| Code | Name | Description | Resolution |
-|------|------|-------------|------------|
+| Code           | Name           | Description    | Resolution           |
+| -------------- | -------------- | -------------- | -------------------- |
 | {error_code_1} | {error_name_1} | {error_desc_1} | {error_resolution_1} |
 | {error_code_2} | {error_name_2} | {error_desc_2} | {error_resolution_2} |
 
@@ -121,8 +121,8 @@
 
 {rate_limit_description}
 
-| Endpoint | Limit | Window |
-|----------|-------|--------|
+| Endpoint   | Limit   | Window   |
+| ---------- | ------- | -------- |
 | {endpoint} | {limit} | {window} |
 
 **Handling Rate Limits:**
@@ -161,8 +161,8 @@
 
 ## Changelog
 
-| Version | Date | Changes |
-|---------|------|---------|
+| Version   | Date   | Changes   |
+| --------- | ------ | --------- |
 | {version} | {date} | {changes} |
 
 ---

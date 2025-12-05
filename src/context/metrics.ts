@@ -142,10 +142,16 @@ export function displayContextComparison(comparison: ContextComparison): void {
    ┌──────────┬─────────────┬────────────┬──────────┐
    │ Phase    │ Tool Count  │ Tokens     │ Usage    │
    ├──────────┼─────────────┼────────────┼──────────┤
-   │ BEFORE   │ ${String(before.schemaCount).padEnd(11)}│ ${String(before.estimatedTokens).padEnd(10)}│ ${before.usagePercent.toFixed(2).padEnd(8)}%│
-   │ AFTER    │ ${String(after.schemaCount).padEnd(11)}│ ${String(after.estimatedTokens).padEnd(10)}│ ${after.usagePercent.toFixed(2).padEnd(8)}%│
+   │ BEFORE   │ ${String(before.schemaCount).padEnd(11)}│ ${
+    String(before.estimatedTokens).padEnd(10)
+  }│ ${before.usagePercent.toFixed(2).padEnd(8)}%│
+   │ AFTER    │ ${String(after.schemaCount).padEnd(11)}│ ${
+    String(after.estimatedTokens).padEnd(10)
+  }│ ${after.usagePercent.toFixed(2).padEnd(8)}%│
    ├──────────┼─────────────┼────────────┼──────────┤
-   │ SAVINGS  │ ${String(before.schemaCount - after.schemaCount).padEnd(11)}│ ${String(savingsTokens).padEnd(10)}│ ${savingsPercent.toFixed(2).padEnd(8)}%│
+   │ SAVINGS  │ ${String(before.schemaCount - after.schemaCount).padEnd(11)}│ ${
+    String(savingsTokens).padEnd(10)
+  }│ ${savingsPercent.toFixed(2).padEnd(8)}%│
    └──────────┴─────────────┴────────────┴──────────┘
   `);
 

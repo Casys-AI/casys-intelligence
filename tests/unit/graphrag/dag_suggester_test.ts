@@ -4,7 +4,7 @@
  * Tests integration between vector search and graph algorithms.
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { DAGSuggester } from "../../../src/graphrag/dag-suggester.ts";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { VectorSearch } from "../../../src/vector/search.ts";
@@ -35,9 +35,19 @@ async function createTestDb(): Promise<PGliteClient> {
  */
 async function insertTestData(db: PGliteClient, model: EmbeddingModel): Promise<void> {
   const tools = [
-    { id: "filesystem:read", server: "filesystem", name: "read_file", desc: "Read file contents from filesystem" },
+    {
+      id: "filesystem:read",
+      server: "filesystem",
+      name: "read_file",
+      desc: "Read file contents from filesystem",
+    },
     { id: "json:parse", server: "json", name: "parse", desc: "Parse JSON data from text" },
-    { id: "filesystem:write", server: "filesystem", name: "write_file", desc: "Write content to file" },
+    {
+      id: "filesystem:write",
+      server: "filesystem",
+      name: "write_file",
+      desc: "Write content to file",
+    },
     { id: "http:get", server: "http", name: "get", desc: "Fetch HTTP resource from URL" },
   ];
 

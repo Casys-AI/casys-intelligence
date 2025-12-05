@@ -7,5 +7,5 @@ bmad_folder: bmad
 user_name: Erwan
 communication_language: french
 document_output_language: french
-output_folder: '{project-root}/docs'
+output_folder: "{project-root}/docs"
 install_user_docs: true

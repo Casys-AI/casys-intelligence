@@ -6,7 +6,7 @@
 
 import { assertEquals } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 // Helper to create unique test database using in-memory databases
 function getTestDbPath(_testName: string): string {

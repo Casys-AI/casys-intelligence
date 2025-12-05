@@ -12,11 +12,7 @@
  */
 
 import { assertEquals, assertThrows } from "@std/assert";
-import {
-  AsyncQueue,
-  CommandQueue,
-  isValidCommand,
-} from "../../../src/dag/command-queue.ts";
+import { AsyncQueue, CommandQueue, isValidCommand } from "../../../src/dag/command-queue.ts";
 import type { Command } from "../../../src/dag/types.ts";
 
 Deno.test("AsyncQueue - Basic Operations", async (t) => {

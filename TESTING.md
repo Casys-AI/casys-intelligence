@@ -5,6 +5,7 @@ Guide complet pour tester AgentCards en développement et en production.
 ## 🧪 Tests Automatisés
 
 ### Exécuter tous les tests
+
 ```bash
 deno task test              # Tous les tests (unit + integration)
 deno task test:unit         # Tests unitaires seulement
@@ -25,6 +26,7 @@ deno task test:e2e
 ```
 
 **Mock servers disponibles:**
+
 - `filesystem-mock` - 3 tools, rapide
 - `database-mock` - 4 tools, lent (100ms) pour tester parallélisation
 - `api-mock` - 3 tools, moyen (50ms), schemas complexes
@@ -64,6 +66,7 @@ deno run --allow-all src/main.ts init --config /path/to/config.json
 ### Prérequis
 
 Pour tester la migration complète, tu as besoin de:
+
 - Un fichier `claude_desktop_config.json` (ou utilise le fixture)
 - Des MCP servers installés (optionnel pour dry-run)
 
@@ -77,6 +80,7 @@ deno task cli:init:dry
 ```
 
 **Résultat attendu:**
+
 ```
 🔍 DRY RUN - No changes will be made
 
@@ -110,6 +114,7 @@ deno run --allow-all src/main.ts init
 ```
 
 **Résultat attendu:**
+
 1. Création de `~/.agentcards/config.yaml`
 2. Découverte des MCP servers
 3. Extraction des schemas
@@ -178,24 +183,28 @@ rm -rf ~/.agentcards/
 ### Problèmes Courants
 
 **1. "MCP config file not found"**
+
 ```bash
 # Vérifier le path
 deno run --allow-all src/main.ts init --dry-run --config tests/fixtures/mcp-config-sample.json
 ```
 
 **2. "Cannot connect to database"**
+
 ```bash
 # Permissions
 chmod -R 755 ~/.agentcards/
 ```
 
 **3. "Model download failed"**
+
 ```bash
 # Première exécution télécharge ~400MB
 # Attendre et réessayer
 ```
 
 **4. "E2E tests fail with Permission denied" (Snap Deno only)**
+
 ```bash
 # Known limitation: Snap Deno cannot spawn other snap processes due to AppArmor
 # Workaround: Use native Deno installation for E2E tests

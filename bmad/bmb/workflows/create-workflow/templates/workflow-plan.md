@@ -1,9 +1,7 @@
 # Workflow Creation Plan: {{workflowName}}
 
-**Created:** {{date}}
-**Author:** {{user_name}}
-**Module:** {{targetModule}}
-**Type:** {{workflowType}}
+**Created:** {{date}} **Author:** {{user_name}} **Module:** {{targetModule}} **Type:**
+{{workflowType}}
 
 ## Executive Summary
 
@@ -33,8 +31,7 @@
 
 {{#outputFiles}}
 
-- {{type}}: {{path}}
-  {{/outputFiles}}
+- {{type}}: {{path}} {{/outputFiles}}
 
 ### Target Location
 
@@ -51,4 +48,5 @@
 
 ## Ready for Implementation
 
-When you approve this plan, I'll generate all the workflow files in the specified location with the exact structure and content outlined above.
+When you approve this plan, I'll generate all the workflow files in the specified location with the
+exact structure and content outlined above.

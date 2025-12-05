@@ -366,7 +366,9 @@ Deno.test("E2E: Performance - Tokenization overhead <10ms for 1MB dataset", asyn
   assertEquals(
     tokenizationTime < targetTimeMs,
     true,
-    `Tokenization should be reasonably fast (${tokenizationTime.toFixed(2)}ms for ${sizeKB.toFixed(1)}KB, target: <${targetTimeMs}ms)`,
+    `Tokenization should be reasonably fast (${tokenizationTime.toFixed(2)}ms for ${
+      sizeKB.toFixed(1)
+    }KB, target: <${targetTimeMs}ms)`,
   );
 
   // 4. Verify tokenization happened

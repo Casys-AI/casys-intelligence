@@ -41,7 +41,8 @@ Deno.test("POC: Sandbox with MCP tools injection via message passing", async () 
   // Mock vector search function (simplified for POC)
   async function mockVectorSearch(query: string, limit: number) {
     // For POC: just return tools with keyword matching
-    const results = await db.query(`
+    const results = await db.query(
+      `
       SELECT
         tool_id,
         server_id,
@@ -51,7 +52,9 @@ Deno.test("POC: Sandbox with MCP tools injection via message passing", async () 
       FROM tool_schema
       WHERE description ILIKE $1
       LIMIT $2
-    `, [`%${query.split(' ')[0]}%`, limit]);
+    `,
+      [`%${query.split(" ")[0]}%`, limit],
+    );
 
     return results.map((row: any) => ({
       toolId: row.tool_id,

@@ -1,31 +1,32 @@
 ---
-name: 'step-06-build'
-description: 'Generate complete YAML incorporating all discovered elements'
+name: "step-06-build"
+description: "Generate complete YAML incorporating all discovered elements"
 
 # Path Definitions
-workflow_path: '{project-root}/src/modules/bmb/workflows/create-agent'
+workflow_path: "{project-root}/src/modules/bmb/workflows/create-agent"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-06-build.md'
-nextStepFile: '{workflow_path}/steps/step-07-validate.md'
-workflowFile: '{workflow_path}/workflow.md'
-outputFile: '{output_folder}/agent-yaml-{project_name}.md'
-moduleOutputFile: '{project-root}/.bmad/{target_module}/agents/{agent_filename}.agent.yaml'
-standaloneOutputFile: '{workflow_path}/data/{agent_filename}/{agent_filename}.agent.yaml'
+thisStepFile: "{workflow_path}/steps/step-06-build.md"
+nextStepFile: "{workflow_path}/steps/step-07-validate.md"
+workflowFile: "{workflow_path}/workflow.md"
+outputFile: "{output_folder}/agent-yaml-{project_name}.md"
+moduleOutputFile: "{project-root}/.bmad/{target_module}/agents/{agent_filename}.agent.yaml"
+standaloneOutputFile: "{workflow_path}/data/{agent_filename}/{agent_filename}.agent.yaml"
 
 # Template References
-completeAgentTemplate: '{workflow_path}/templates/agent-complete-{agent_type}.md'
+completeAgentTemplate: "{workflow_path}/templates/agent-complete-{agent_type}.md"
 
 # Task References
-advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/.bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/.bmad/core/workflows/party-mode/workflow.md"
 ---
 
 # Step 6: Build Complete Agent YAML
 
 ## STEP GOAL:
 
-Generate the complete YAML agent file incorporating all discovered elements: purpose, persona, capabilities, name, and identity while maintaining the collaborative creation journey.
+Generate the complete YAML agent file incorporating all discovered elements: purpose, persona,
+capabilities, name, and identity while maintaining the collaborative creation journey.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -39,9 +40,11 @@ Generate the complete YAML agent file incorporating all discovered elements: pur
 ### Role Reinforcement:
 
 - ✅ You are a YAML architect who transforms collaborative discoveries into technical implementation
-- ✅ If you already have been given a name, communication_style and identity, continue to use those while playing this new role
+- ✅ If you already have been given a name, communication_style and identity, continue to use those
+  while playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
-- ✅ You bring technical YAML expertise, user brings their agent vision, together we create complete agent configuration
+- ✅ You bring technical YAML expertise, user brings their agent vision, together we create complete
+  agent configuration
 - ✅ Maintain collaborative technical tone throughout
 
 ### Step-Specific Rules:
@@ -71,7 +74,9 @@ Generate the complete YAML agent file incorporating all discovered elements: pur
 
 Present this to the user:
 
-"Let's take a moment to appreciate what we've created together! Your agent started as an idea, and through our discovery process, it has developed into a fully-realized personality with clear purpose, capabilities, and identity."
+"Let's take a moment to appreciate what we've created together! Your agent started as an idea, and
+through our discovery process, it has developed into a fully-realized personality with clear
+purpose, capabilities, and identity."
 
 **Journey Summary:**
 
@@ -93,7 +98,8 @@ Based on determined agent type, load appropriate template:
 
 Explain the core structure to user:
 
-"I'll now generate the complete YAML that incorporates everything we've discovered. This will include your agent's metadata, persona, capabilities, and configuration."
+"I'll now generate the complete YAML that incorporates everything we've discovered. This will
+include your agent's metadata, persona, capabilities, and configuration."
 
 ### 4. Generate Complete YAML
 
@@ -184,19 +190,23 @@ Display: "**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Cont
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
+- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file,
+  then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#7-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN [C continue option] is selected and [complete YAML generated incorporating all discovered elements], will you then load and read fully `{nextStepFile}` to execute and begin validation.
+ONLY WHEN [C continue option] is selected and [complete YAML generated incorporating all discovered
+elements], will you then load and read fully `{nextStepFile}` to execute and begin validation.
 
 ---
 
@@ -221,4 +231,5 @@ ONLY WHEN [C continue option] is selected and [complete YAML generated incorpora
 - Incorrect agent type implementation
 - Missing user confirmation on YAML completeness
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

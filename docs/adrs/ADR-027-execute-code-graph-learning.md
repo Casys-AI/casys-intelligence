@@ -6,16 +6,21 @@
 
 > **⚠️ Tracing Approach Superseded by ADR-032**
 >
-> The `__TRACE__` stdout parsing approach described in Phase 2 of this ADR has been **superseded** by [ADR-032: Sandbox Worker RPC Bridge](ADR-032-sandbox-worker-rpc-bridge.md).
+> The `__TRACE__` stdout parsing approach described in Phase 2 of this ADR has been **superseded**
+> by [ADR-032: Sandbox Worker RPC Bridge](ADR-032-sandbox-worker-rpc-bridge.md).
 >
-> **Why:** The subprocess approach cannot serialize MCP client functions. ADR-032 implements a Worker + RPC Bridge where tracing happens natively in the bridge (Main process), eliminating the need for stdout parsing.
+> **Why:** The subprocess approach cannot serialize MCP client functions. ADR-032 implements a
+> Worker + RPC Bridge where tracing happens natively in the bridge (Main process), eliminating the
+> need for stdout parsing.
 >
 > **What remains valid:**
+>
 > - The rationale for graph learning from `execute_code`
 > - The vision for Claude as high-level orchestrator
 > - The learning loop concepts
 >
 > **What is superseded:**
+>
 > - Phase 2 implementation (`__TRACE__` prefix, `parseTraces()`, etc.)
 > - IPC mechanism selection (stdout prefix → postMessage RPC)
 
@@ -25,11 +30,15 @@
 
 > **Original Decision: Option B (Accurate Tracking)** - IPC via `__TRACE__` prefix on stdout
 
-> **Rationale (2025-12-03):** Code execution is expected to become a central feature. Claude may reuse code snippets, store successful patterns, and learn from execution history. Accurate tracking is worth the implementation complexity.
+> **Rationale (2025-12-03):** Code execution is expected to become a central feature. Claude may
+> reuse code snippets, store successful patterns, and learn from execution history. Accurate
+> tracking is worth the implementation complexity.
 
 ## Context
 
-Currently, `execute_code` allows running TypeScript/JavaScript in a Deno sandbox with access to MCP tools via the `ContextBuilder`. However, tool usage within code execution is **not tracked** for GraphRAG learning.
+Currently, `execute_code` allows running TypeScript/JavaScript in a Deno sandbox with access to MCP
+tools via the `ContextBuilder`. However, tool usage within code execution is **not tracked** for
+GraphRAG learning.
 
 ### Current Flow
 
@@ -47,11 +56,11 @@ execute_code(intent, code)
 
 ### Comparison with execute_dag
 
-| Feature | `execute_dag` | `execute_code` |
-|---------|---------------|----------------|
-| Calls MCP tools | ✅ | ✅ |
-| Creates edges | ✅ `graphEngine.updateFromExecution()` | ❌ Missing |
-| Learning loop | ✅ | ❌ |
+| Feature         | `execute_dag`                          | `execute_code` |
+| --------------- | -------------------------------------- | -------------- |
+| Calls MCP tools | ✅                                     | ✅             |
+| Creates edges   | ✅ `graphEngine.updateFromExecution()` | ❌ Missing     |
+| Learning loop   | ✅                                     | ❌             |
 
 ### Problem
 
@@ -62,7 +71,8 @@ const content = await filesystem.readFile({ path: "README.md" });
 await memory.createEntities({ entities: [...] });
 ```
 
-The sequence `filesystem:read_file → memory:create_entities` is **not learned** by the GraphRAG. This means:
+The sequence `filesystem:read_file → memory:create_entities` is **not learned** by the GraphRAG.
+This means:
 
 1. No edge created between these tools
 2. No confidence boost for this pattern
@@ -87,7 +97,7 @@ if (result.success && request.intent && toolResults.length > 0) {
       tasks: toolResults.map((t, i) => ({
         id: `task_${i}`,
         tool: `${t.serverId}:${t.toolName}`,
-        depends_on: i > 0 ? [`task_${i-1}`] : [],
+        depends_on: i > 0 ? [`task_${i - 1}`] : [],
       })),
     },
     success: true,
@@ -98,11 +108,13 @@ if (result.success && request.intent && toolResults.length > 0) {
 ```
 
 **Pros:**
+
 - Simple implementation
 - No sandbox modification needed
 - Consistent with existing learning API
 
 **Cons:**
+
 - May create edges for tools that weren't actually called
 - Less accurate than actual usage tracking
 
@@ -133,11 +145,13 @@ await this.graphEngine.updateFromExecution({
 ```
 
 **Pros:**
+
 - Accurate edge creation (only actual usage)
 - Captures real tool sequences
 - Better learning signal
 
 **Cons:**
+
 - More complex implementation
 - Requires sandbox-to-parent communication for tracking
 - Need to handle async/parallel tool calls
@@ -186,18 +200,20 @@ if (result.success && request.intent && toolResults.length > 0) {
 
 ### Phase 2: Actual Usage Tracking via IPC
 
-**Decision (2025-12-03):** Use stdout-based IPC with `__TRACE__` prefix for sandbox-to-parent communication.
+**Decision (2025-12-03):** Use stdout-based IPC with `__TRACE__` prefix for sandbox-to-parent
+communication.
 
 #### IPC Mechanism: Why stdout with prefix?
 
-| Option | Pour | Contre | Verdict |
-|--------|------|--------|---------|
-| **stdout JSON lines** | Simple, Deno-native, no deps | Mélangé avec output | ✅ Avec préfixe |
-| **stderr séparé** | Séparation claire | stderr = erreurs convention | ❌ |
-| **Pipe/socket dédié** | Propre, bidirectionnel | Plomberie complexe | ❌ Overkill |
-| **Post-hoc wrapper** | Simple | Pas de streaming | ❌ |
+| Option                | Pour                         | Contre                      | Verdict         |
+| --------------------- | ---------------------------- | --------------------------- | --------------- |
+| **stdout JSON lines** | Simple, Deno-native, no deps | Mélangé avec output         | ✅ Avec préfixe |
+| **stderr séparé**     | Séparation claire            | stderr = erreurs convention | ❌              |
+| **Pipe/socket dédié** | Propre, bidirectionnel       | Plomberie complexe          | ❌ Overkill     |
+| **Post-hoc wrapper**  | Simple                       | Pas de streaming            | ❌              |
 
 **Choix:** `__TRACE__` prefix sur stdout car:
+
 1. Deno subprocess capture stdout nativement
 2. Préfixe évite collision avec `console.log` utilisateur
 3. JSON parsing simple et rapide
@@ -213,12 +229,14 @@ wrapped[methodName] = async (args: Record<string, unknown>): Promise<unknown> =>
   const startTs = Date.now();
 
   // Emit start event via stdout IPC
-  console.log(`__TRACE__${JSON.stringify({
-    type: "tool_start",
-    tool: `${client.serverId}:${toolName}`,
-    trace_id: traceId,
-    ts: startTs
-  })}`);
+  console.log(`__TRACE__${
+    JSON.stringify({
+      type: "tool_start",
+      tool: `${client.serverId}:${toolName}`,
+      trace_id: traceId,
+      ts: startTs,
+    })
+  }`);
 
   try {
     logger.debug(`Calling tool: ${client.serverId}:${toolName}`, {
@@ -228,26 +246,30 @@ wrapped[methodName] = async (args: Record<string, unknown>): Promise<unknown> =>
     const result = await client.callTool(toolName, args);
 
     // Emit success event
-    console.log(`__TRACE__${JSON.stringify({
-      type: "tool_end",
-      tool: `${client.serverId}:${toolName}`,
-      trace_id: traceId,
-      success: true,
-      duration_ms: Date.now() - startTs
-    })}`);
+    console.log(`__TRACE__${
+      JSON.stringify({
+        type: "tool_end",
+        tool: `${client.serverId}:${toolName}`,
+        trace_id: traceId,
+        success: true,
+        duration_ms: Date.now() - startTs,
+      })
+    }`);
 
     logger.debug(`Tool call succeeded: ${client.serverId}:${toolName}`);
     return result;
   } catch (error) {
     // Emit failure event
-    console.log(`__TRACE__${JSON.stringify({
-      type: "tool_end",
-      tool: `${client.serverId}:${toolName}`,
-      trace_id: traceId,
-      success: false,
-      duration_ms: Date.now() - startTs,
-      error: error instanceof Error ? error.message : String(error)
-    })}`);
+    console.log(`__TRACE__${
+      JSON.stringify({
+        type: "tool_end",
+        tool: `${client.serverId}:${toolName}`,
+        trace_id: traceId,
+        success: false,
+        duration_ms: Date.now() - startTs,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }`);
 
     logger.error(`Tool call failed: ${client.serverId}:${toolName}`, {
       error: error instanceof Error ? error.message : String(error),
@@ -267,18 +289,20 @@ wrapped[methodName] = async (args: Record<string, unknown>): Promise<unknown> =>
 
 ```typescript
 // Parse traces from sandbox stdout
-function parseTraces(stdout: string): Array<{ tool: string; success: boolean; duration_ms: number }> {
+function parseTraces(
+  stdout: string,
+): Array<{ tool: string; success: boolean; duration_ms: number }> {
   const traces: Array<{ tool: string; success: boolean; duration_ms: number }> = [];
 
-  for (const line of stdout.split('\n')) {
-    if (line.startsWith('__TRACE__')) {
+  for (const line of stdout.split("\n")) {
+    if (line.startsWith("__TRACE__")) {
       try {
         const event = JSON.parse(line.slice(9)); // Remove '__TRACE__' prefix
-        if (event.type === 'tool_end') {
+        if (event.type === "tool_end") {
           traces.push({
             tool: event.tool,
             success: event.success,
-            duration_ms: event.duration_ms
+            duration_ms: event.duration_ms,
           });
         }
       } catch {
@@ -291,8 +315,8 @@ function parseTraces(stdout: string): Array<{ tool: string; success: boolean; du
 }
 
 // In handleExecuteCode(), after successful execution:
-const toolsUsed = parseTraces(result.stdout || '');
-const successfulTools = toolsUsed.filter(t => t.success).map(t => t.tool);
+const toolsUsed = parseTraces(result.stdout || "");
+const successfulTools = toolsUsed.filter((t) => t.success).map((t) => t.tool);
 
 if (result.success && request.intent && successfulTools.length > 0) {
   try {
@@ -323,9 +347,16 @@ if (result.success && request.intent && successfulTools.length > 0) {
 ```typescript
 type TraceEvent =
   | { type: "tool_start"; tool: string; trace_id: string; ts: number }
-  | { type: "tool_end"; tool: string; trace_id: string; success: boolean; duration_ms: number; error?: string }
-  | { type: "progress"; message: string; done?: number; total?: number }  // Future: long tasks
-  | { type: "log"; level: "debug" | "info" | "warn"; message: string }    // Future: debug mode
+  | {
+    type: "tool_end";
+    tool: string;
+    trace_id: string;
+    success: boolean;
+    duration_ms: number;
+    error?: string;
+  }
+  | { type: "progress"; message: string; done?: number; total?: number } // Future: long tasks
+  | { type: "log"; level: "debug" | "info" | "warn"; message: string }; // Future: debug mode
 ```
 
 #### Why NOT track dependencies explicitly?
@@ -338,7 +369,8 @@ Le spike a conclu que **les dépendances émergent du learning statistique**:
 4. Si A précède toujours B → edge fort → dépendance
 5. Si ordre variable → pas d'edge fort → parallèle possible
 
-**Avantage:** Pas besoin de parser le code pour détecter `Promise.all()` - l'inférence statistique suffit.
+**Avantage:** Pas besoin de parser le code pour détecter `Promise.all()` - l'inférence statistique
+suffit.
 
 ## Consequences
 
@@ -369,7 +401,8 @@ Track effectiveness via:
 
 ## Future Vision: Claude as High-Level Orchestrator
 
-The ultimate goal is to transform Claude from a tool caller into a **strategic orchestrator** that delegates execution to AgentCards:
+The ultimate goal is to transform Claude from a tool caller into a **strategic orchestrator** that
+delegates execution to AgentCards:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

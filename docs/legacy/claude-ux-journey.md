@@ -1,8 +1,7 @@
 # Claude UX Journey: GraphRAG + Speculative Execution
 
-**Date:** 2025-11-03
-**Approach:** Intent-based with automatic workflow inference
-**Key Feature:** Speculative execution (THE differentiator)
+**Date:** 2025-11-03 **Approach:** Intent-based with automatic workflow inference **Key Feature:**
+Speculative execution (THE differentiator)
 
 ---
 
@@ -11,6 +10,7 @@
 **Claude n'a PAS besoin de générer des workflows explicites.**
 
 Au lieu de demander à Claude de construire des DAG structures complexes, AgentCards utilise:
+
 - **Vector search** pour semantic matching
 - **GraphRAG** pour dependency inference
 - **Speculative execution** pour 0ms latency
@@ -24,6 +24,7 @@ Au lieu de demander à Claude de construire des DAG structures complexes, AgentC
 **Quand:** Aucun pattern trouvé dans la base de données
 
 **Claude UX:**
+
 ```
 User: "Do something very unusual that's never been done before"
 ↓
@@ -33,6 +34,7 @@ Claude: "I need to provide an explicit workflow for this"
 ```
 
 **Format explicite (fallback):**
+
 ```json
 {
   "workflow": {
@@ -53,6 +55,7 @@ Claude: "I need to provide an explicit workflow for this"
 **Quand:** Bon pattern trouvé, mais pas assez confiant pour exécuter
 
 **Claude UX:**
+
 ```
 User: "Read config.json and create a GitHub issue"
 ↓
@@ -64,6 +67,7 @@ Claude: Sees suggestion + explanation
 ```
 
 **Response Format:**
+
 ```json
 {
   "mode": "suggestion",
@@ -88,6 +92,7 @@ Claude: Sees suggestion + explanation
 **Quand:** High confidence - THE FEATURE
 
 **Claude UX:**
+
 ```
 User: "Read all JSON files and summarize them"
 ↓
@@ -100,6 +105,7 @@ Claude: Sees COMPLETED results instantly
 ```
 
 **Response Format:**
+
 ```json
 {
   "mode": "speculative_execution",
@@ -117,6 +123,7 @@ Claude: Sees COMPLETED results instantly
 **Cognitive Load:** ✅✅ Minimal (0ms perceived wait)
 
 **Safety:**
+
 - Never on dangerous ops (delete, deploy, payment)
 - Cost limit: <$0.10
 - Time limit: <5s execution
@@ -129,6 +136,7 @@ Claude: Sees COMPLETED results instantly
 ### Scenario: "Read 3 files in parallel, then merge"
 
 #### OLD Approach (Explicit DAG)
+
 ```
 User → Claude
 Claude: Must construct explicit JSON:
@@ -149,6 +157,7 @@ Claude: Must construct explicit JSON:
 **Cognitive Load:** ⚠️⚠️ High (format, IDs, depends_on)
 
 #### NEW Approach (GraphRAG + Speculative)
+
 ```
 User → Claude
 Claude: "Read these files and merge them"
@@ -167,14 +176,14 @@ Claude: "Here are the merged results..."
 
 ## 🧠 Cognitive Load Analysis
 
-| Aspect | Explicit DAG | GraphRAG + Speculative |
-|--------|--------------|------------------------|
-| **Learn syntax** | Medium (workflow JSON) | None (natural language) |
-| **Express intent** | High (structure DAG) | Low (describe goal) |
-| **Debug** | Clear (see DAG) | Transparent (see explanation) |
-| **Latency** | 2-5s sequential | <300ms speculative ✨ |
-| **Trust** | Explicit = predictable | Confidence scores + paths |
-| **Effort** | Higher initial | Minimal ongoing |
+| Aspect             | Explicit DAG           | GraphRAG + Speculative        |
+| ------------------ | ---------------------- | ----------------------------- |
+| **Learn syntax**   | Medium (workflow JSON) | None (natural language)       |
+| **Express intent** | High (structure DAG)   | Low (describe goal)           |
+| **Debug**          | Clear (see DAG)        | Transparent (see explanation) |
+| **Latency**        | 2-5s sequential        | <300ms speculative ✨         |
+| **Trust**          | Explicit = predictable | Confidence scores + paths     |
+| **Effort**         | Higher initial         | Minimal ongoing               |
 
 ---
 
@@ -191,20 +200,17 @@ You have access to AgentCards, an intelligent MCP gateway that:
 4. **Requests explicit workflow** when no pattern found (<70%)
 
 When the user asks you to perform multi-step tasks:
+
 - Simply describe the intent in natural language
 - AgentCards will suggest or execute the optimal workflow
 - Review suggestions before confirming (if not already executed)
 - For dangerous operations, AgentCards always asks for confirmation
 
-Example intent format:
-{
-  "intent": {
-    "naturalLanguageQuery": "Read all JSON files and create a summary report",
-    "toolsConsidered": ["filesystem:read", "json:parse", "report:create"]
-  }
-}
+Example intent format: { "intent": { "naturalLanguageQuery": "Read all JSON files and create a
+summary report", "toolsConsidered": ["filesystem:read", "json:parse", "report:create"] } }
 
 AgentCards response modes:
+
 - ✨ speculative_execution: Results already prepared (0ms wait)
 - 💡 suggestion: Review proposed DAG before executing
 - ⚠️ explicit_required: Please provide explicit workflow structure
@@ -221,6 +227,7 @@ AgentCards response modes:
 **User:** "Read config.json, package.json, and README.md"
 
 **Claude → AgentCards:**
+
 ```json
 {
   "intent": {
@@ -230,14 +237,15 @@ AgentCards response modes:
 ```
 
 **AgentCards Response (Speculative - 0.96 confidence):**
+
 ```json
 {
   "mode": "speculative_execution",
   "confidence": 0.96,
   "results": [
-    {"task": "read_config", "output": "..."},
-    {"task": "read_package", "output": "..."},
-    {"task": "read_readme", "output": "..."}
+    { "task": "read_config", "output": "..." },
+    { "task": "read_package", "output": "..." },
+    { "task": "read_readme", "output": "..." }
   ],
   "execution_time_ms": 123,
   "parallelization_speedup": "3x"
@@ -255,6 +263,7 @@ AgentCards response modes:
 **User:** "Read config.json, parse it, then create a GitHub issue"
 
 **Claude → AgentCards:**
+
 ```json
 {
   "intent": {
@@ -264,15 +273,16 @@ AgentCards response modes:
 ```
 
 **AgentCards Response (Suggestion - 0.82 confidence):**
+
 ```json
 {
   "mode": "suggestion",
   "confidence": 0.82,
   "suggested_dag": {
     "tasks": [
-      {"id": "read", "tool": "filesystem:read", "depends_on": []},
-      {"id": "parse", "tool": "json:parse", "depends_on": ["read"]},
-      {"id": "issue", "tool": "github:create_issue", "depends_on": ["parse"]}
+      { "id": "read", "tool": "filesystem:read", "depends_on": [] },
+      { "id": "parse", "tool": "json:parse", "depends_on": ["read"] },
+      { "id": "issue", "tool": "github:create_issue", "depends_on": ["parse"] }
     ]
   },
   "rationale": "Based on 23 similar workflows",
@@ -294,6 +304,7 @@ AgentCards response modes:
 **User:** "Do something completely new that's never been done"
 
 **Claude → AgentCards:**
+
 ```json
 {
   "intent": {
@@ -303,6 +314,7 @@ AgentCards response modes:
 ```
 
 **AgentCards Response (Explicit Required - 0.42 confidence):**
+
 ```json
 {
   "mode": "explicit_required",
@@ -312,12 +324,13 @@ AgentCards response modes:
 ```
 
 **Claude → AgentCards (Explicit Workflow):**
+
 ```json
 {
   "workflow": {
     "tasks": [
-      {"id": "custom1", "tool": "...", "depends_on": []},
-      {"id": "custom2", "tool": "...", "depends_on": ["custom1"]}
+      { "id": "custom1", "tool": "...", "depends_on": [] },
+      { "id": "custom2", "tool": "...", "depends_on": ["custom1"] }
     ]
   }
 }
@@ -332,6 +345,7 @@ AgentCards response modes:
 ### Dangerous Operations Detection
 
 AgentCards **never speculates** on:
+
 - `delete`, `remove`, `destroy`
 - `deploy`, `publish`
 - `payment`, `charge`, `bill`
@@ -351,11 +365,13 @@ AgentCards **never speculates** on:
 ### Adaptive Learning
 
 **Start conservative (0.92 threshold):**
+
 - After 50-100 executions
 - If success rate >95% → lower threshold (0.87)
 - If success rate <80% → raise threshold (0.97)
 
 **Target metrics:**
+
 - Success rate: >95%
 - User acceptance: >90%
 - Waste rate: <10%
@@ -369,6 +385,7 @@ AgentCards **never speculates** on:
 **Best UX = No UX**
 
 When confidence is high:
+
 - No format to learn
 - No structure to build
 - No waiting
@@ -377,6 +394,7 @@ When confidence is high:
 ### Transparent When Uncertain
 
 When confidence is medium:
+
 - Show suggested DAG
 - Explain dependencies
 - Let Claude/user confirm
@@ -384,6 +402,7 @@ When confidence is medium:
 ### Helpful When Novel
 
 When no pattern exists:
+
 - Clear error message
 - Format documentation
 - Fall back to explicit mode
@@ -392,19 +411,17 @@ When no pattern exists:
 
 ## 📈 Evolution Path
 
-| Version | Capability | Status |
-|---------|-----------|--------|
-| **v1.0 (MVP)** | GraphRAG + Speculative | 🎯 Current |
-| **v1.1** | Hybrid (explicit + intent) | Future |
-| **v2.0** | Multi-user pattern sharing | Future |
+| Version        | Capability                 | Status     |
+| -------------- | -------------------------- | ---------- |
+| **v1.0 (MVP)** | GraphRAG + Speculative     | 🎯 Current |
+| **v1.1**       | Hybrid (explicit + intent) | Future     |
+| **v2.0**       | Multi-user pattern sharing | Future     |
 
 ---
 
-**Status:** 🟢 READY FOR IMPLEMENTATION
-**Decision:** Intent-based with speculative execution = THE approach
-**Cognitive Load:** Minimal for Claude, instant for users
+**Status:** 🟢 READY FOR IMPLEMENTATION **Decision:** Intent-based with speculative execution = THE
+approach **Cognitive Load:** Minimal for Claude, instant for users
 
 ---
 
-_Generated: 2025-11-03_
-_Replaces: claude-ux-journey-analysis-OBSOLETE.md_
+_Generated: 2025-11-03_ _Replaces: claude-ux-journey-analysis-OBSOLETE.md_

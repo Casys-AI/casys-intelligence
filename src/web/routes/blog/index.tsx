@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { page } from "fresh";
 import { Head } from "fresh/runtime";
-import { getPosts, formatDate, type Post } from "../../utils/posts.ts";
+import { formatDate, getPosts, type Post } from "../../utils/posts.ts";
 
 export const handler = {
   async GET(_ctx: any) {
@@ -33,7 +33,12 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
           href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
-        <link rel="alternate" type="application/atom+xml" title="CAI Blog Feed" href="/blog/feed.xml" />
+        <link
+          rel="alternate"
+          type="application/atom+xml"
+          title="CAI Blog Feed"
+          href="/blog/feed.xml"
+        />
       </Head>
 
       <div class="page">
@@ -49,8 +54,8 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
               <a href="/dashboard" class="nav-link">Dashboard</a>
               <a href="/blog/feed.xml" class="nav-link nav-link-rss" title="RSS Feed">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="6.18" cy="17.82" r="2.18"/>
-                  <path d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z"/>
+                  <circle cx="6.18" cy="17.82" r="2.18" />
+                  <path d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56zm0 5.66v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.47-4.43-9.9-9.9-9.9z" />
                 </svg>
               </a>
             </nav>
@@ -67,31 +72,35 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
               </p>
             </div>
 
-            <div class="posts-grid">
-              {posts.length === 0 ? (
-                <p class="no-posts">No posts yet. Check back soon!</p>
-              ) : (
-                posts.map((post: Post) => (
-                  <article class="post-card" key={post.slug}>
-                    <div class="post-meta">
-                      <span class="post-category">{post.category}</span>
-                      <time class="post-date">{formatDate(post.date)}</time>
-                    </div>
-                    <h2 class="post-title">
-                      <a href={`/blog/${post.slug}`}>{post.title}</a>
-                    </h2>
-                    <p class="post-snippet">{post.snippet}</p>
-                    <div class="post-footer">
-                      <div class="post-tags">
-                        {post.tags.slice(0, 3).map((tag) => (
-                          <span class="post-tag" key={tag}>#{tag}</span>
-                        ))}
+            <div class="posts-bento">
+              {posts.length === 0 ? <p class="no-posts">No posts yet. Check back soon!</p> : (
+                posts.map((post: Post, index: number) => (
+                  <a
+                    href={`/blog/${post.slug}`}
+                    class={`post-card post-card-${(index % 4) + 1}`}
+                    key={post.slug}
+                    style={`animation-delay: ${index * 0.1}s`}
+                  >
+                    <div class="post-card-inner">
+                      <div class="post-meta">
+                        <span class="post-category">{post.category}</span>
+                        <time class="post-date">{formatDate(post.date)}</time>
                       </div>
-                      <a href={`/blog/${post.slug}`} class="post-read-more">
-                        Read more →
-                      </a>
+                      <h2 class="post-title">{post.title}</h2>
+                      <p class="post-snippet">{post.snippet}</p>
+                      <div class="post-footer">
+                        <div class="post-tags">
+                          {post.tags.slice(0, 3).map((tag) => (
+                            <span class="post-tag" key={tag}>#{tag}</span>
+                          ))}
+                        </div>
+                        <span class="post-read-more">
+                          Read →
+                        </span>
+                      </div>
                     </div>
-                  </article>
+                    <div class="post-card-glow"></div>
+                  </a>
                 ))
               )}
             </div>
@@ -106,13 +115,20 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
             </div>
             <div class="footer-links">
               <a href="https://casys.ai" target="_blank" rel="noopener">Casys.ai</a>
-              <a href="https://github.com/Casys-AI/casys-intelligence" target="_blank" rel="noopener">GitHub</a>
+              <a
+                href="https://github.com/Casys-AI/casys-intelligence"
+                target="_blank"
+                rel="noopener"
+              >
+                GitHub
+              </a>
               <a href="/dashboard">Dashboard</a>
             </div>
           </div>
         </footer>
 
-        <style>{`
+        <style>
+          {`
           :root {
             --bg: #08080a;
             --bg-elevated: #0f0f12;
@@ -254,29 +270,108 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
             margin: 0 auto;
           }
 
-          /* Posts Grid */
-          .posts-grid {
+          /* Bento Grid */
+          .posts-bento {
             display: grid;
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            grid-auto-flow: dense;
           }
 
           .no-posts {
             text-align: center;
             color: var(--text-muted);
             padding: 4rem;
+            grid-column: 1 / -1;
           }
 
+          /* Bento card variations */
           .post-card {
+            position: relative;
+            display: block;
             padding: 2rem;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            transition: all 0.2s;
+            border-radius: 16px;
+            text-decoration: none;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+          }
+
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          .post-card-inner {
+            position: relative;
+            z-index: 2;
+          }
+
+          .post-card-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+              600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+              rgba(255, 184, 111, 0.08),
+              transparent 40%
+            );
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
           }
 
           .post-card:hover {
             border-color: var(--accent);
-            transform: translateY(-2px);
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          }
+
+          .post-card:hover .post-card-glow {
+            opacity: 1;
+          }
+
+          /* Varied sizes for bento effect */
+          .post-card-1 {
+            grid-column: span 1;
+          }
+
+          .post-card-2 {
+            grid-column: span 1;
+          }
+
+          .post-card-3 {
+            grid-column: span 1;
+          }
+
+          @media (min-width: 768px) {
+            .posts-bento {
+              grid-template-columns: repeat(3, 1fr);
+            }
+
+            .post-card-1 {
+              grid-column: span 2;
+            }
+
+            .post-card-2 {
+              grid-column: span 1;
+            }
+
+            .post-card-3 {
+              grid-column: span 1;
+            }
+
+            .post-card-4 {
+              grid-column: span 2;
+            }
           }
 
           .post-meta {
@@ -304,17 +399,15 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
 
           .post-title {
             font-family: var(--font-display);
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             font-weight: 400;
-            margin-bottom: 0.75rem;
-          }
-
-          .post-title a {
+            margin-bottom: 1rem;
             color: var(--text);
-            text-decoration: none;
+            line-height: 1.3;
+            transition: color 0.2s;
           }
 
-          .post-title a:hover {
+          .post-card:hover .post-title {
             color: var(--accent);
           }
 
@@ -345,12 +438,14 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
           .post-read-more {
             font-size: 0.875rem;
             color: var(--accent);
-            text-decoration: none;
             font-weight: 500;
+            opacity: 0.7;
+            transition: all 0.2s;
           }
 
-          .post-read-more:hover {
-            text-decoration: underline;
+          .post-card:hover .post-read-more {
+            opacity: 1;
+            transform: translateX(4px);
           }
 
           /* Footer */
@@ -405,7 +500,8 @@ export default function BlogIndex({ data }: { data: { posts: Post[] } }) {
             .post-footer { flex-direction: column; align-items: flex-start; gap: 1rem; }
             .footer-inner { flex-direction: column; gap: 1.5rem; text-align: center; }
           }
-        `}</style>
+        `}
+        </style>
       </div>
     </>
   );

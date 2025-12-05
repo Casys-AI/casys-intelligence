@@ -5,7 +5,7 @@
 
 project_name: AgentCards
 user_skill_level: expert
-sprint_artifacts: '{project-root}/docs/sprint-artifacts'
+sprint_artifacts: "{project-root}/docs/sprint-artifacts"
 tea_use_mcp_enhancements: true
 tea_use_playwright_utils: false
 
@@ -14,5 +14,5 @@ bmad_folder: bmad
 user_name: Erwan
 communication_language: french
 document_output_language: french
-output_folder: '{project-root}/docs'
+output_folder: "{project-root}/docs"
 install_user_docs: true

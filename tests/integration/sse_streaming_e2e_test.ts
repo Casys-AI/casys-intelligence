@@ -534,7 +534,11 @@ Deno.test("SSE E2E - Performance: speedup calculation accuracy", async () => {
   assertExists(execComplete);
 
   // Speedup should be ~3x (150ms sequential / ~50ms parallel)
-  assertEquals((execComplete.data as any).speedup > 2, true, `Expected speedup >2x, got ${(execComplete.data as any).speedup.toFixed(2)}x`);
+  assertEquals(
+    (execComplete.data as any).speedup > 2,
+    true,
+    `Expected speedup >2x, got ${(execComplete.data as any).speedup.toFixed(2)}x`,
+  );
 
   console.log(`\n⚡ SSE Streaming Performance:`);
   console.log(`  Total time: ${(execComplete.data as any).totalExecutionTimeMs.toFixed(1)}ms`);

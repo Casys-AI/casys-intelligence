@@ -1,17 +1,15 @@
 # Story 2.5-4: MCP Control Tools & Per-Layer Validation
 
-**Status:** done
-**Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation)
-**Estimate:** 7 hours (revised: AC3 uses existing checkpoints)
-**Created:** 2025-11-24
-**Updated:** 2025-12-01 (Code Review APPROVED, ready for merge)
-**Prerequisite:** Story 2.5-3 (AIL/HIL Integration & DAG Replanning)
+**Status:** done **Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation) **Estimate:** 7 hours
+(revised: AC3 uses existing checkpoints) **Created:** 2025-11-24 **Updated:** 2025-12-01 (Code
+Review APPROVED, ready for merge) **Prerequisite:** Story 2.5-3 (AIL/HIL Integration & DAG
+Replanning)
 
 ## User Story
 
-As an external agent (Claude Code) using AgentCards via MCP,
-I want to control workflow execution with continue/abort/replan commands,
-So that I can build adaptive workflows with per-layer validation and progressive discovery.
+As an external agent (Claude Code) using AgentCards via MCP, I want to control workflow execution
+with continue/abort/replan commands, So that I can build adaptive workflows with per-layer
+validation and progressive discovery.
 
 ## Background
 
@@ -19,11 +17,11 @@ So that I can build adaptive workflows with per-layer validation and progressive
 
 **ADR-020: AIL Control Protocol** establishes a three-level architecture:
 
-| Level | Agent Type | Communication | This Story |
-|-------|-----------|---------------|------------|
-| **Level 1** | External MCP (Claude Code) | MCP meta-tools | ✅ Implement |
-| **Level 2** | Internal Native (JS/TS) | CommandQueue | ✅ Done (Story 2.5-3) |
-| **Level 3** | Embedded MCP (haiku/sonnet) | Task output | Deferred (Epic 3.5) |
+| Level       | Agent Type                  | Communication  | This Story            |
+| ----------- | --------------------------- | -------------- | --------------------- |
+| **Level 1** | External MCP (Claude Code)  | MCP meta-tools | ✅ Implement          |
+| **Level 2** | Internal Native (JS/TS)     | CommandQueue   | ✅ Done (Story 2.5-3) |
+| **Level 3** | Embedded MCP (haiku/sonnet) | Task output    | Deferred (Epic 3.5)   |
 
 ### What's Already Done
 
@@ -37,6 +35,7 @@ So that I can build adaptive workflows with per-layer validation and progressive
 ### What This Story Adds
 
 **Level 1 Support**: Expose commands as MCP meta-tools for external agents (Claude Code):
+
 - `agentcards:continue` - Continue to next layer
 - `agentcards:abort` - Stop workflow
 - `agentcards:replan` - Replan via GraphRAG
@@ -112,6 +111,7 @@ So that I can build adaptive workflows with per-layer validation and progressive
 ```
 
 **Tests:**
+
 - Call `agentcards:continue` → workflow proceeds to next layer
 - Call `agentcards:abort` → workflow stops with reason
 - Call `agentcards:replan` → GraphRAG adds new tasks
@@ -143,11 +143,12 @@ config: {
 ```
 
 **External Agent Flow:**
+
 ```typescript
 // 1. Start DAG execution
 let response = await agentcards.execute({
   intent: "Analyze codebase",
-  config: { per_layer_validation: true }
+  config: { per_layer_validation: true },
 });
 
 // 2. Loop until complete
@@ -157,7 +158,7 @@ while (response.status === "layer_complete") {
   if (analysis.needsReplan) {
     response = await agentcards.replan({
       workflow_id: response.workflow_id,
-      new_requirement: "Add XML parser"
+      new_requirement: "Add XML parser",
     });
   } else {
     response = await agentcards.continue({ workflow_id: response.workflow_id });
@@ -175,11 +176,14 @@ console.log(response.results);
 **Purpose:** Persist DAG for MCP stateless continuation.
 
 **Architecture Decision (Spike 2025-11-25):**
-- **Problem:** Checkpoint ne contient pas le DAG, mais `resumeFromCheckpoint(dag, checkpoint_id)` le requiert
+
+- **Problem:** Checkpoint ne contient pas le DAG, mais `resumeFromCheckpoint(dag, checkpoint_id)` le
+  requiert
 - **Solution:** Table séparée `workflow_dags` (Option C du spike)
 - **Spike:** `docs/spikes/spike-mcp-workflow-state-persistence.md`
 
 **New Table:**
+
 ```sql
 -- Migration 008
 CREATE TABLE workflow_dags (
@@ -193,14 +197,24 @@ CREATE INDEX idx_workflow_dags_expires ON workflow_dags(expires_at);
 ```
 
 **New Module:** `src/mcp/workflow-dag-store.ts`
+
 ```typescript
-export async function saveWorkflowDAG(db: PGliteClient, workflowId: string, dag: DAGStructure, intent: string): Promise<void>;
-export async function getWorkflowDAG(db: PGliteClient, workflowId: string): Promise<DAGStructure | null>;
+export async function saveWorkflowDAG(
+  db: PGliteClient,
+  workflowId: string,
+  dag: DAGStructure,
+  intent: string,
+): Promise<void>;
+export async function getWorkflowDAG(
+  db: PGliteClient,
+  workflowId: string,
+): Promise<DAGStructure | null>;
 export async function deleteWorkflowDAG(db: PGliteClient, workflowId: string): Promise<void>;
 export async function cleanupExpiredDAGs(db: PGliteClient): Promise<number>;
 ```
 
 **Flow:**
+
 ```
 execute(intent, per_layer_validation: true)
   → DAGSuggester.suggest(intent) → dag
@@ -217,6 +231,7 @@ continue(workflow_id)
 ```
 
 **Response Format:**
+
 ```typescript
 {
   status: "layer_complete",
@@ -239,12 +254,12 @@ continue(workflow_id)
 Deno.test("External agent flow: execute → continue → complete", async () => {
   const response1 = await callTool("agentcards:execute", {
     intent: "List files",
-    config: { per_layer_validation: true }
+    config: { per_layer_validation: true },
   });
   assertEquals(response1.status, "layer_complete");
 
   const response2 = await callTool("agentcards:continue", {
-    workflow_id: response1.workflow_id
+    workflow_id: response1.workflow_id,
   });
   assertEquals(response2.status, "complete");
 });
@@ -252,12 +267,12 @@ Deno.test("External agent flow: execute → continue → complete", async () => 
 Deno.test("Replan mid-workflow", async () => {
   const response1 = await callTool("agentcards:execute", {
     intent: "Analyze project",
-    config: { per_layer_validation: true }
+    config: { per_layer_validation: true },
   });
 
   const response2 = await callTool("agentcards:replan", {
     workflow_id: response1.workflow_id,
-    new_requirement: "Add XML parser"
+    new_requirement: "Add XML parser",
   });
   assertExists(response2.new_tasks);
 });
@@ -265,12 +280,12 @@ Deno.test("Replan mid-workflow", async () => {
 Deno.test("Abort mid-workflow", async () => {
   const response1 = await callTool("agentcards:execute", {
     intent: "Process data",
-    config: { per_layer_validation: true }
+    config: { per_layer_validation: true },
   });
 
   const response2 = await callTool("agentcards:abort", {
     workflow_id: response1.workflow_id,
-    reason: "User cancelled"
+    reason: "User cancelled",
   });
   assertEquals(response2.status, "aborted");
 });
@@ -281,7 +296,9 @@ Deno.test("Abort mid-workflow", async () => {
 ## Implementation Notes
 
 ### MCP Tool Naming
+
 Use colons (`:`) as separator to match existing tools pattern:
+
 - `agentcards:execute` (simplified from execute_workflow)
 - `agentcards:continue`
 - `agentcards:abort`
@@ -289,12 +306,14 @@ Use colons (`:`) as separator to match existing tools pattern:
 - `agentcards:approval_response`
 
 ### Workflow State Lifecycle
+
 1. `execute` with `per_layer_validation: true` → creates workflow entry
 2. Control tools reference `workflow_id` → retrieve and update state
 3. Workflow completes or aborts → state cleaned up
 4. Stale workflows (>1h) → automatic cleanup
 
 ### Error Handling
+
 - Invalid `workflow_id` → return error with message
 - Workflow already completed → return error
 - GraphRAG fails in replan → return error, workflow paused (can retry)
@@ -304,15 +323,18 @@ Use colons (`:`) as separator to match existing tools pattern:
 ## Files Modified
 
 ### Source Code
+
 - `src/mcp/gateway-server.ts` - Rename execute_workflow → execute + Add 4 control tools + handlers
 - `src/mcp/workflow-dag-store.ts` - NEW: DAG persistence for MCP stateless workflows
 - `src/db/migrations/008_workflow_dags.sql` - NEW: workflow_dags table
 - `src/db/migrations/008_workflow_dags_migration.ts` - NEW: migration runner
 
 ### Tests (NEW)
+
 - `tests/integration/mcp/control-tools.test.ts` - NEW: External agent flows
 
 ### Documentation
+
 - `docs/adrs/ADR-020-ail-control-protocol.md` - NEW: Consolidated architecture
 - `docs/adrs/ADR-018-*.md` - SUPERSEDED
 - `docs/adrs/ADR-019-*.md` - SUPERSEDED
@@ -323,11 +345,13 @@ Use colons (`:`) as separator to match existing tools pattern:
 ## Dependencies
 
 **Prerequisites:**
+
 - Story 2.5-1: Event Stream, Command Queue (foundation) ✅
 - Story 2.5-2: Checkpoint & Resume (rollback capability) ✅
 - Story 2.5-3: AIL/HIL Integration (4 core handlers) ✅
 
 **Enables:**
+
 - Epic 3.5: Speculation (external agent can control workflows)
 - Epic 4: Adaptive Learning (external agent feedback loop)
 
@@ -359,12 +383,11 @@ Use colons (`:`) as separator to match existing tools pattern:
 
 ---
 
-**Status:** done
-**Context Reference:** docs/stories/story-2.5-4.context.xml
-**Estimated Completion:** 7.5 hours
-**Actual Completion:** 7.5 hours
+**Status:** done **Context Reference:** docs/stories/story-2.5-4.context.xml **Estimated
+Completion:** 7.5 hours **Actual Completion:** 7.5 hours
 
 **Scope Change History:**
+
 - 2025-11-24: Reduced from 16h → 4h (ADR-018: minimize to 4 commands)
 - 2025-11-25: Revised to 8h (ADR-020: add MCP control tools for Level 1)
 - 2025-11-25: Revised to 7h (AC3: use existing CheckpointManager instead of new workflow-state.ts)
@@ -374,11 +397,12 @@ Use colons (`:`) as separator to match existing tools pattern:
 
 ## Implementation Completion Notes
 
-**Completed:** 2025-11-25
-**Actual Time:** ~7.5h
+**Completed:** 2025-11-25 **Actual Time:** ~7.5h
 
 ### Summary
-Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, enabling external agents (like Claude Code) to control workflow execution via stateless MCP protocol.
+
+Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, enabling external
+agents (like Claude Code) to control workflow execution via stateless MCP protocol.
 
 ### Key Deliverables
 
@@ -390,7 +414,8 @@ Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, 
 
 2. **WorkflowDAGStore Module**
    - Location: `src/mcp/workflow-dag-store.ts`
-   - Functions: saveWorkflowDAG, getWorkflowDAG, updateWorkflowDAG, deleteWorkflowDAG, cleanupExpiredDAGs
+   - Functions: saveWorkflowDAG, getWorkflowDAG, updateWorkflowDAG, deleteWorkflowDAG,
+     cleanupExpiredDAGs
    - Status: ✅ Complete with proper error handling
 
 3. **Per-Layer Validation**
@@ -425,6 +450,7 @@ Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, 
    - Cleanup: Auto-delete on complete/abort + TTL (1h)
 
 ### Files Modified
+
 - `src/mcp/gateway-server.ts` - Added 4 control handlers + per-layer validation
 - `src/mcp/workflow-dag-store.ts` - NEW
 - `src/db/migrations/008_workflow_dags_migration.ts` - NEW
@@ -433,14 +459,17 @@ Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, 
 - `tests/integration/mcp/control_tools_test.ts` - NEW
 
 ### Test Results
+
 - ✅ 13/13 integration tests passing
 - ✅ Type checking clean
 - ⏳ Unit tests not run (user cancelled)
 
 ### Known Limitations
+
 - ActiveWorkflows Map is not persisted across restarts (by design - DB fallback exists)
 
 ### Final Validation (2025-11-25)
+
 1. ✅ Type safety fixed: `handleListTools` returns `inputSchema: Record<string, unknown>`
 2. ✅ E2E tests updated: `execute_workflow` → `execute_dag` (2 occurrences)
 3. ✅ E2E tests updated: workflow status `"completed"` → `"complete"`
@@ -449,6 +478,7 @@ Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, 
 6. ✅ Linting clean (deno lint)
 
 ### Next Steps for Review
+
 1. ✅ Full test suite passing
 2. Manual testing with Claude Code MCP client
 3. Code review focusing on error handling + state cleanup
@@ -461,13 +491,15 @@ Story 2.5-4 successfully implements MCP Control Tools and Per-Layer Validation, 
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad (Scrum Master - AI Code Review Agent)
-**Date:** 2025-12-01
-**Outcome:** ✅ **APPROVE**
+**Reviewer:** BMad (Scrum Master - AI Code Review Agent) **Date:** 2025-12-01 **Outcome:** ✅
+**APPROVE**
 
 ### Summary
 
-Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue, abort, replan, approval_response) et le **mode de validation par couche** pour permettre aux agents externes (Claude Code) de contrôler l'exécution de workflows via le protocole MCP stateless. L'implémentation inclut:
+Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue, abort, replan,
+approval_response) et le **mode de validation par couche** pour permettre aux agents externes
+(Claude Code) de contrôler l'exécution de workflows via le protocole MCP stateless. L'implémentation
+inclut:
 
 - ✅ 4 nouveaux MCP tools exposés via `gateway-server.ts`
 - ✅ Persistance DAG dans table séparée `workflow_dags` (Option C du spike)
@@ -486,14 +518,15 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 
 **Evidence:**
 
-| Tool | Schema Definition | Handler Implementation | Status |
-|------|-------------------|----------------------|---------|
-| `agentcards:continue` | `gateway-server.ts:344-360` | `handleContinue():1157-1238` | ✅ |
-| `agentcards:abort` | `gateway-server.ts:364-380` | `handleAbort():1391-1465` | ✅ |
-| `agentcards:replan` | `gateway-server.ts:384-404` | `handleReplan():1475-1584` | ✅ |
-| `agentcards:approval_response` | `gateway-server.ts:408-428` | `handleApprovalResponse():1594-1700+` | ✅ |
+| Tool                           | Schema Definition           | Handler Implementation                | Status |
+| ------------------------------ | --------------------------- | ------------------------------------- | ------ |
+| `agentcards:continue`          | `gateway-server.ts:344-360` | `handleContinue():1157-1238`          | ✅     |
+| `agentcards:abort`             | `gateway-server.ts:364-380` | `handleAbort():1391-1465`             | ✅     |
+| `agentcards:replan`            | `gateway-server.ts:384-404` | `handleReplan():1475-1584`            | ✅     |
+| `agentcards:approval_response` | `gateway-server.ts:408-428` | `handleApprovalResponse():1594-1700+` | ✅     |
 
 **Validation:**
+
 - ✅ All 4 tools expose correct input schemas with required/optional parameters
 - ✅ Handlers implement full functionality (in-memory + DB fallback, error handling)
 - ✅ Integration with CheckpointManager and WorkflowDAGStore verified
@@ -501,14 +534,17 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 #### AC2: Per-Layer Validation Mode (2h) - ✅ IMPLEMENTED
 
 **Evidence:**
+
 - ✅ `per_layer_validation: boolean` config parameter accepted
-- ✅ Response format: `layer_complete` status with `workflow_id`, `checkpoint_id`, `layer_index`, `total_layers`, `layer_results`, `options`
+- ✅ Response format: `layer_complete` status with `workflow_id`, `checkpoint_id`, `layer_index`,
+  `total_layers`, `layer_results`, `options`
 - ✅ Implementation: `processGeneratorUntilPause()` (`gateway-server.ts:1274-1381`)
 - ✅ ActiveWorkflow state maintained (`gateway-server.ts:1307-1320`)
 
 #### AC3: Workflow DAG Persistence (1.5h) - ✅ IMPLEMENTED
 
 **Evidence:**
+
 - ✅ Migration 008 created: `src/db/migrations/008_workflow_dags_migration.ts`
 - ✅ Table schema: `workflow_id` (PK), `dag` (JSONB), `intent`, `created_at`, `expires_at`
 - ✅ Index: `idx_workflow_dags_expires` on `expires_at`
@@ -518,6 +554,7 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 #### AC4: Integration Tests (1h) - ✅ IMPLEMENTED
 
 **Evidence:**
+
 - ✅ File: `tests/integration/mcp/control_tools_test.ts` (390 lines)
 - ✅ 13 test cases covering:
   - CRUD operations (save, get, update, delete)
@@ -531,20 +568,21 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 
 ### Task Completion Validation
 
-| Task | Marked | Verified | Evidence |
-|------|--------|----------|----------|
-| `execute_workflow` → `execute` renamed | [x] | ✅ | Tool names use `agentcards:` prefix |
-| 4 MCP control tools implemented | [x] | ✅ | AC1 evidence |
-| Per-layer validation mode working | [x] | ✅ | AC2 evidence |
-| Migration 008: `workflow_dags` table | [x] | ✅ | `migrations/008_workflow_dags_migration.ts:14-26` |
-| `workflow-dag-store.ts` module | [x] | ✅ | `workflow-dag-store.ts:48-228` |
-| Handlers use CheckpointManager + WorkflowDAGStore | [x] | ✅ | Multiple file:line references verified |
-| Integration tests passing (13 cases) | [x] | ✅ | `control_tools_test.ts:1-390` |
-| All existing tests passing | [x] | ✅ | 74 passed, 0 failed, 2 ignored |
-| ADR-020 approved | [x] | ✅ | Referenced in code comments |
-| Spike completed (Option C) | [x] | ✅ | `workflow-dag-store.ts:7` |
+| Task                                              | Marked | Verified | Evidence                                          |
+| ------------------------------------------------- | ------ | -------- | ------------------------------------------------- |
+| `execute_workflow` → `execute` renamed            | [x]    | ✅       | Tool names use `agentcards:` prefix               |
+| 4 MCP control tools implemented                   | [x]    | ✅       | AC1 evidence                                      |
+| Per-layer validation mode working                 | [x]    | ✅       | AC2 evidence                                      |
+| Migration 008: `workflow_dags` table              | [x]    | ✅       | `migrations/008_workflow_dags_migration.ts:14-26` |
+| `workflow-dag-store.ts` module                    | [x]    | ✅       | `workflow-dag-store.ts:48-228`                    |
+| Handlers use CheckpointManager + WorkflowDAGStore | [x]    | ✅       | Multiple file:line references verified            |
+| Integration tests passing (13 cases)              | [x]    | ✅       | `control_tools_test.ts:1-390`                     |
+| All existing tests passing                        | [x]    | ✅       | 74 passed, 0 failed, 2 ignored                    |
+| ADR-020 approved                                  | [x]    | ✅       | Referenced in code comments                       |
+| Spike completed (Option C)                        | [x]    | ✅       | `workflow-dag-store.ts:7`                         |
 
-**Summary:** **10/10 tasks VERIFIED COMPLETE** with file:line evidence. No false completions detected.
+**Summary:** **10/10 tasks VERIFIED COMPLETE** with file:line evidence. No false completions
+detected.
 
 ---
 
@@ -553,6 +591,7 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 **Test Quality:** ✅ EXCELLENT
 
 **Coverage:**
+
 - ✅ Unit tests: workflow-dag-store.ts (100% via integration tests)
 - ✅ Integration tests: 13 comprehensive scenarios
 - ✅ E2E tests: Updated for renamed tools
@@ -593,6 +632,7 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 **Tech Stack:** Deno 2.x + TypeScript + PGlite + MCP SDK 1.21.1
 
 **Best Practices Applied:**
+
 - ✅ TypeScript strict mode
 - ✅ Parameterized SQL queries (injection prevention)
 - ✅ Error handling with try-catch
@@ -612,11 +652,13 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 #### LOW Severity:
 
 **L1: Hardcoded TTL (1 hour)**
+
 - Location: `migrations/008_workflow_dags_migration.ts:21`, `workflow-dag-store.ts:62,159,223`
 - Description: TTL hardcodé à `INTERVAL '1 hour'` au lieu d'être configurable
 - Severity: LOW (acceptable pour MVP, 1h TTL raisonnable)
 
 **L2: In-Memory activeWorkflows lost on restart**
+
 - Location: `gateway-server.ts:114`
 - Description: ActiveWorkflows Map perdu au redémarrage (by design, DB fallback exists)
 - Severity: LOW (documented limitation, acceptable per story design)
@@ -641,6 +683,7 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 **✅ APPROVE** - Story 2.5-4 ready for merge to main
 
 **Strengths:**
+
 1. Implementation complète et correcte pour tous les ACs
 2. Tests complets (13/13 passants, >80% coverage)
 3. Architecture propre suivant ADR-020
@@ -654,6 +697,5 @@ Story 2.5-4 implémente avec succès les **4 outils de contrôle MCP** (continue
 
 ---
 
-**Review completed by:** BMad (Scrum Master - AI Code Review Agent)
-**Review date:** 2025-12-01
+**Review completed by:** BMad (Scrum Master - AI Code Review Agent) **Review date:** 2025-12-01
 **Status:** ✅ APPROVED - Ready for merge to main

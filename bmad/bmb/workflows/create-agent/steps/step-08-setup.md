@@ -1,30 +1,32 @@
 ---
-name: 'step-08-setup'
-description: 'Set up the agent workspace with sidecar files for expert agents'
+name: "step-08-setup"
+description: "Set up the agent workspace with sidecar files for expert agents"
 
 # Path Definitions
-workflow_path: '{project-root}/src/modules/bmb/workflows/create-agent'
+workflow_path: "{project-root}/src/modules/bmb/workflows/create-agent"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-08-setup.md'
-nextStepFile: '{workflow_path}/steps/step-09-customize.md'
-workflowFile: '{workflow_path}/workflow.md'
-outputFile: '{output_folder}/agent-setup-{project_name}.md'
-agentSidecarFolder: '{{standalone_output_folder}}/{{agent_filename}}-sidecar'
+thisStepFile: "{workflow_path}/steps/step-08-setup.md"
+nextStepFile: "{workflow_path}/steps/step-09-customize.md"
+workflowFile: "{workflow_path}/workflow.md"
+outputFile: "{output_folder}/agent-setup-{project_name}.md"
+agentSidecarFolder: "{{standalone_output_folder}}/{{agent_filename}}-sidecar"
 
 # Template References
-sidecarTemplate: '{workflow_path}/templates/expert-sidecar-structure.md'
+sidecarTemplate: "{workflow_path}/templates/expert-sidecar-structure.md"
 
 # Task References
-advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/.bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/.bmad/core/workflows/party-mode/workflow.md"
 ---
 
 # Step 8: Expert Agent Workspace Setup
 
 ## STEP GOAL:
 
-Guide user through setting up the Expert agent's personal workspace with sidecar files for persistent memory, knowledge, and session management, or skip appropriately for Simple/Module agents.
+Guide user through setting up the Expert agent's personal workspace with sidecar files for
+persistent memory, knowledge, and session management, or skip appropriately for Simple/Module
+agents.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -38,9 +40,11 @@ Guide user through setting up the Expert agent's personal workspace with sidecar
 ### Role Reinforcement:
 
 - ✅ You are a workspace architect who helps set up agent environments
-- ✅ If you already have been given a name, communication_style and identity, continue to use those while playing this new role
+- ✅ If you already have been given a name, communication_style and identity, continue to use those
+  while playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
-- ✅ You bring workspace setup expertise, user brings their agent vision, together we create the optimal agent environment
+- ✅ You bring workspace setup expertise, user brings their agent vision, together we create the
+  optimal agent environment
 - ✅ Maintain collaborative supportive tone throughout
 
 ### Step-Specific Rules:
@@ -70,16 +74,16 @@ Guide user through setting up the Expert agent's personal workspace with sidecar
 
 Check agent type and present appropriate introduction:
 
-**For Expert Agents:**
-"Now let's set up {{agent_name}}'s personal workspace! Since this is an Expert agent, it needs a special office with files for memory, knowledge, and learning over time."
+**For Expert Agents:** "Now let's set up {{agent_name}}'s personal workspace! Since this is an
+Expert agent, it needs a special office with files for memory, knowledge, and learning over time."
 
-**For Simple/Module Agents:**
-"Great news! {{agent_name}} doesn't need a separate workspace setup. Simple and Module agents are self-contained and ready to go. Let's continue to the next step."
+**For Simple/Module Agents:** "Great news! {{agent_name}} doesn't need a separate workspace setup.
+Simple and Module agents are self-contained and ready to go. Let's continue to the next step."
 
 ### 2. Expert Agent Workspace Setup (only for Expert agents)
 
-**Workspace Preparation:**
-"I'm now creating {{agent_name}}'s personal workspace with everything it needs to remember conversations, build knowledge, and grow more helpful over time."
+**Workspace Preparation:** "I'm now creating {{agent_name}}'s personal workspace with everything it
+needs to remember conversations, build knowledge, and grow more helpful over time."
 
 **Sidecar Structure Creation:**
 
@@ -88,8 +92,7 @@ Check agent type and present appropriate introduction:
 - Create session management files
 - Establish learning and memory structures
 
-**Workspace Elements Explained:**
-"Here's what I'm setting up for {{agent_name}}:
+**Workspace Elements Explained:** "Here's what I'm setting up for {{agent_name}}:
 
 - **Memory files** - To remember important conversations and user preferences
 - **Knowledge base** - To build expertise in its domain
@@ -98,11 +101,11 @@ Check agent type and present appropriate introduction:
 
 ### 3. User Confirmation and Questions
 
-**Workspace Confirmation:**
-"{{agent_name}}'s workspace is now ready! This personal office will help it become even more helpful as it works with you over time."
+**Workspace Confirmation:** "{{agent_name}}'s workspace is now ready! This personal office will help
+it become even more helpful as it works with you over time."
 
-**Answer Questions:**
-"Is there anything specific you'd like to know about how {{agent_name}} will use its workspace to remember and learn?"
+**Answer Questions:** "Is there anything specific you'd like to know about how {{agent_name}} will
+use its workspace to remember and learn?"
 
 ### 4. Document Workspace Setup
 
@@ -141,19 +144,24 @@ Display: "**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Cont
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#5-present-menu-options)
+- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file,
+  then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#5-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN [C continue option] is selected and [workspace setup completed for Expert agents or appropriately skipped for Simple/Module agents], will you then load and read fully `{nextStepFile}` to execute and begin customization phase.
+ONLY WHEN [C continue option] is selected and [workspace setup completed for Expert agents or
+appropriately skipped for Simple/Module agents], will you then load and read fully `{nextStepFile}`
+to execute and begin customization phase.
 
 ---
 
@@ -176,4 +184,5 @@ ONLY WHEN [C continue option] is selected and [workspace setup completed for Exp
 - Failing to explain workspace purpose and value
 - Creating unnecessary files or configurations
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

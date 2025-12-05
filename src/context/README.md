@@ -4,11 +4,15 @@ On-demand schema loading and context window optimization for AgentCards.
 
 ## Overview
 
-The Context Optimization module provides intelligent, on-demand loading of MCP tool schemas using semantic vector search. Instead of loading all available tool schemas into the context window (which can consume 30-50% of available tokens), this module loads only the most relevant tools based on the user's query, reducing context usage to <5%.
+The Context Optimization module provides intelligent, on-demand loading of MCP tool schemas using
+semantic vector search. Instead of loading all available tool schemas into the context window (which
+can consume 30-50% of available tokens), this module loads only the most relevant tools based on the
+user's query, reducing context usage to <5%.
 
 ## Key Features
 
-- **Semantic Search Integration**: Uses BGE-Large-EN-v1.5 embeddings and vector search to find relevant tools
+- **Semantic Search Integration**: Uses BGE-Large-EN-v1.5 embeddings and vector search to find
+  relevant tools
 - **On-Demand Loading**: Loads only matched schemas, not all-at-once
 - **LRU Caching**: Caches frequently used tool schemas to avoid redundant database queries
 - **Context Usage Tracking**: Measures and logs context window utilization
@@ -72,8 +76,8 @@ const optimizer = new ContextOptimizer(vectorSearch, db, 50);
 // Get relevant schemas for a user query
 const result = await optimizer.getRelevantSchemas(
   "read and write files",
-  5,  // topK - number of tools to return
-  0.7 // minScore - minimum similarity threshold
+  5, // topK - number of tools to return
+  0.7, // minScore - minimum similarity threshold
 );
 
 console.log(`Loaded ${result.schemas.length} relevant tools`);
@@ -92,7 +96,7 @@ for (const schema of result.schemas) {
 ```typescript
 // Get total number of tools in database
 const totalToolsResult = await db.query(
-  "SELECT COUNT(*) as count FROM tool_schema"
+  "SELECT COUNT(*) as count FROM tool_schema",
 );
 const totalTools = parseInt(totalToolsResult[0].count as string);
 
@@ -130,7 +134,7 @@ optimizer.clearCache();
 ### Metrics and Performance Monitoring
 
 ```typescript
-import { getRecentMetrics, calculateP95Latency } from "./src/context/metrics.ts";
+import { calculateP95Latency, getRecentMetrics } from "./src/context/metrics.ts";
 
 // Get recent context usage measurements
 const usageMetrics = await getRecentMetrics(db, "context_usage_pct", 100);
@@ -206,12 +210,9 @@ constructor(maxSize: number = 50)
 
 #### Methods
 
-**`get(toolId)`** - Retrieve cached schema
-**`set(toolId, schema)`** - Add schema to cache
-**`has(toolId)`** - Check if tool is cached
-**`clear()`** - Clear all entries
-**`getStats()`** - Get cache statistics
-**`getTopTools(limit?)`** - Get most accessed tools
+**`get(toolId)`** - Retrieve cached schema **`set(toolId, schema)`** - Add schema to cache
+**`has(toolId)`** - Check if tool is cached **`clear()`** - Clear all entries **`getStats()`** - Get
+cache statistics **`getTopTools(limit?)`** - Get most accessed tools
 
 ### Metrics Utilities
 
@@ -256,16 +257,19 @@ Migration file: `src/db/migrations/002_metrics.sql`
 ## Testing
 
 Run unit tests:
+
 ```bash
 deno test --allow-all tests/unit/context/
 ```
 
 Run benchmarks:
+
 ```bash
 deno bench --allow-all tests/benchmark/context_latency_bench.ts
 ```
 
 Test coverage:
+
 - ✓ AC1: Integration semantic search avec schema loading
 - ✓ AC2: Workflow: query → vector search → retrieve top-k tools → load schemas
 - ✓ AC3: Schemas retournés uniquement pour matched tools (pas all-at-once)
@@ -279,6 +283,7 @@ Test coverage:
 ### Problem: Context Window Saturation
 
 User has 100 MCP tools across 15 servers installed. Loading all tool schemas:
+
 - **Tokens**: 50,000 (100 tools × 500 tokens/tool)
 - **Context Usage**: 25% of Claude's 200k window
 - **Impact**: Limited space for actual conversation and code

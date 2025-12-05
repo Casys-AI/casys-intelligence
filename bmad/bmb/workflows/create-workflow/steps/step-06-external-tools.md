@@ -1,18 +1,18 @@
 ---
-name: 'step-06-external-tools'
-description: 'Configure MCP integrations and installation requirements'
+name: "step-06-external-tools"
+description: "Configure MCP integrations and installation requirements"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-06-external-tools.md'
-nextStepFile: '{workflow_path}/steps/step-07-installation-guidance.md'
-workflowFile: '{workflow_path}/workflow.md'
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
+thisStepFile: "{workflow_path}/steps/step-06-external-tools.md"
+nextStepFile: "{workflow_path}/steps/step-07-installation-guidance.md"
+workflowFile: "{workflow_path}/workflow.md"
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
 
 # Documentation References
-commonToolsCsv: '{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv'
+commonToolsCsv: "{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv"
 ---
 
 # Step 6: External Tools Configuration
@@ -48,7 +48,8 @@ Identify and configure MCP integrations and external tools that the workflow req
 
 "Configuring **External Tools and MCP Integrations**
 
-These tools extend workflow capabilities but typically require installation. Let's identify what your workflow actually needs."
+These tools extend workflow capabilities but typically require installation. Let's identify what
+your workflow actually needs."
 
 ### 2. Present External Tools from CSV
 
@@ -97,15 +98,12 @@ Append to {workflowPlanFile}:
 
 ### MCP Integrations
 
-**Selected Tools:** [list from CSV]
-**Purpose:** [how each MCP enhances workflow]
-**Integration Points:** [where external tools are essential]
-**Installation Required:** [yes/no, which tools]
+**Selected Tools:** [list from CSV] **Purpose:** [how each MCP enhances workflow] **Integration
+Points:** [where external tools are essential] **Installation Required:** [yes/no, which tools]
 
 ### Example Workflows/Tasks
 
-**Selected:** [list chosen workflows/tasks]
-**Purpose:** [how they enhance workflow capabilities]
+**Selected:** [list chosen workflows/tasks] **Purpose:** [how they enhance workflow capabilities]
 **Integration:** [where they fit in workflow flow]
 ```
 
@@ -129,12 +127,14 @@ Display: **Select an Option:** [C] Continue to Installation Guidance [M] Modify 
 
 #### Menu Handling Logic:
 
-- IF C: Append external tools configuration to {workflowPlanFile}, update frontmatter, then load {nextStepFile}
+- IF C: Append external tools configuration to {workflowPlanFile}, update frontmatter, then load
+  {nextStepFile}
 - IF M: Refine external tool requirements
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and external tools are documented will you load {nextStepFile} to configure installation guidance.
+ONLY WHEN C is selected and external tools are documented will you load {nextStepFile} to configure
+installation guidance.
 
 ---
 

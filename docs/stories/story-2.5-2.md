@@ -1,19 +1,16 @@
 # Story 2.5.2: Checkpoint & Resume
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation)
-**Story ID:** 2.5.2
-**Status:** review
-**Estimated Effort:** 2-3 heures
-**Priority:** P1 (Depends on 2.5-1)
-**Story Key:** 2.5-2-checkpoint-resume
+**Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation) **Story ID:** 2.5.2 **Status:** review
+**Estimated Effort:** 2-3 heures **Priority:** P1 (Depends on 2.5-1) **Story Key:**
+2.5-2-checkpoint-resume
 
 ---
 
 ## User Story
 
-**As a** developer running long-running agent workflows,
-**I want** the ability to checkpoint execution state and resume from failures,
-**So that** workflows can recover gracefully from crashes without losing progress.
+**As a** developer running long-running agent workflows, **I want** the ability to checkpoint
+execution state and resume from failures, **So that** workflows can recover gracefully from crashes
+without losing progress.
 
 ---
 
@@ -54,7 +51,8 @@
 - ✅ Example idempotent vs non-idempotent tasks provided
 
 **Source:** [Tech-Spec Epic 2.5 - AC-2.4](../tech-spec-epic-2.5.md#ac-24-idempotence-documentation)
-**Source:** [ADR-007 - Checkpoint Limitations](../adrs/ADR-007-dag-adaptive-feedback-loops.md#what-checkpoints-dont-save)
+**Source:**
+[ADR-007 - Checkpoint Limitations](../adrs/ADR-007-dag-adaptive-feedback-loops.md#what-checkpoints-dont-save)
 
 ### AC-2.5: Resume Tests ✅
 
@@ -78,14 +76,17 @@
 
 ### Architecture Pattern
 
-This story implements **Pattern 4 - 3-Loop Learning Architecture (Checkpoint & Resume Foundation)** from Architecture document:
+This story implements **Pattern 4 - 3-Loop Learning Architecture (Checkpoint & Resume Foundation)**
+from Architecture document:
 
 **Loop 1 (Execution - Checkpoint Infrastructure):**
+
 - Checkpoint persistence → PGlite JSONB storage
 - Resume capability → State restoration from checkpoints
 - Retention policy → Prevent unbounded storage growth
 
-This builds on Story 2.5-1's foundation (WorkflowState + EventStream) to enable fault tolerance and workflow recovery.
+This builds on Story 2.5-1's foundation (WorkflowState + EventStream) to enable fault tolerance and
+workflow recovery.
 
 **Source:** [Architecture - Pattern 4](../architecture.md#pattern-4-3-loop-learning-architecture)
 **Source:** [Tech-Spec Epic 2.5 - Overview](../tech-spec-epic-2.5.md#overview)
@@ -95,6 +96,7 @@ This builds on Story 2.5-1's foundation (WorkflowState + EventStream) to enable 
 **Decision: Checkpoint WorkflowState to PGlite JSONB**
 
 **Rationale:**
+
 - PGlite JSONB → Fast saves (<50ms), queryable state snapshots
 - Async saves → Non-blocking, preserves speedup 5x
 - Retention policy (5 checkpoints) → Prevents unbounded growth
@@ -102,22 +104,27 @@ This builds on Story 2.5-1's foundation (WorkflowState + EventStream) to enable 
 - File-modifying workflows → Require idempotent tasks (Epic 3 resolves)
 
 **What Checkpoints Save:**
+
 - ✅ WorkflowState (tasks, decisions, messages, context)
 - ✅ Current DAG layer index
 - ✅ Workflow_id and timestamp
 
 **What Checkpoints DON'T Save (Documented Limitation):**
+
 - ❌ Filesystem state (files modified/created/deleted)
 - ❌ External side-effects (API calls, DB writes)
 - ❌ Environment state (variables, processes)
 
 **Implications:**
+
 - ✅ **Read-only workflows** (queries, analysis) → Resume perfectly
 - ⚠️ **File-modifying workflows** → Tasks MUST be idempotent (re-run safe)
 - 🔜 **Epic 3 (Sandbox)** → Full resolution via filesystem isolation
 
-**Source:** [ADR-007 - Checkpoint Architecture](../adrs/ADR-007-dag-adaptive-feedback-loops.md#checkpoint-architecture--limitations)
-**Source:** [ADR-007 - Mitigation Strategies](../adrs/ADR-007-dag-adaptive-feedback-loops.md#stratégies-de-mitigation-pour-epic-25)
+**Source:**
+[ADR-007 - Checkpoint Architecture](../adrs/ADR-007-dag-adaptive-feedback-loops.md#checkpoint-architecture--limitations)
+**Source:**
+[ADR-007 - Mitigation Strategies](../adrs/ADR-007-dag-adaptive-feedback-loops.md#stratégies-de-mitigation-pour-epic-25)
 
 ### Component Architecture
 
@@ -167,11 +174,13 @@ CREATE INDEX idx_checkpoint_workflow_ts
 ### Zero External Dependencies
 
 This story continues the **zero new dependencies** philosophy from Story 2.5-1:
+
 - ✅ Checkpoint storage → PGlite JSONB (already available from Epic 1)
 - ✅ UUID generation → Deno built-in `crypto.randomUUID()`
 - ✅ Async operations → Native Promise/async-await
 
-**Source:** [Tech-Spec Epic 2.5 - External Dependencies](../tech-spec-epic-2.5.md#external-dependencies)
+**Source:**
+[Tech-Spec Epic 2.5 - External Dependencies](../tech-spec-epic-2.5.md#external-dependencies)
 
 ---
 
@@ -216,7 +225,8 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 
 **Acceptance Criteria:** AC-2.1
 
-**Source:** [Tech-Spec Epic 2.5 - AC-2.1 Details](../tech-spec-epic-2.5.md#ac-21-checkpoint-infrastructure)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-2.1 Details](../tech-spec-epic-2.5.md#ac-21-checkpoint-infrastructure)
 
 ### Task 2: Checkpoint Persistence Integration (1h)
 
@@ -244,14 +254,16 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 
 **Acceptance Criteria:** AC-2.2
 
-**Source:** [Tech-Spec Epic 2.5 - AC-2.2 Details](../tech-spec-epic-2.5.md#ac-22-checkpoint-persistence)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-2.2 Details](../tech-spec-epic-2.5.md#ac-22-checkpoint-persistence)
 
 ### Task 3: Resume from Checkpoint (1-1.5h)
 
 **Implementation:**
 
 - [x] **Subtask 3.1:** Implement `resumeFromCheckpoint()` method in ControlledExecutor
-  - Signature: `async *resumeFromCheckpoint(checkpoint_id: string): AsyncGenerator<ExecutionEvent, WorkflowState, void>`
+  - Signature:
+    `async *resumeFromCheckpoint(checkpoint_id: string): AsyncGenerator<ExecutionEvent, WorkflowState, void>`
   - Load checkpoint via CheckpointManager
   - Restore WorkflowState (this.state = checkpoint.state)
   - Calculate completed layers (0 to checkpoint.layer)
@@ -277,7 +289,8 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 
 **Acceptance Criteria:** AC-2.3
 
-**Source:** [Tech-Spec Epic 2.5 - AC-2.3 Details](../tech-spec-epic-2.5.md#ac-23-resume-from-checkpoint)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-2.3 Details](../tech-spec-epic-2.5.md#ac-23-resume-from-checkpoint)
 
 ### Task 4: Idempotence Documentation & Testing (0.5-1h)
 
@@ -301,7 +314,8 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 
 **Acceptance Criteria:** AC-2.4
 
-**Source:** [Tech-Spec Epic 2.5 - AC-2.4 Details](../tech-spec-epic-2.5.md#ac-24-idempotence-documentation)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-2.4 Details](../tech-spec-epic-2.5.md#ac-24-idempotence-documentation)
 
 ### Task 5: Resume Chaos Testing (0.5h)
 
@@ -335,6 +349,7 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 **From Story 2.5-1 (Event Stream + Command Queue + State Management) - Status: done**
 
 **New Components Available for Reuse:**
+
 - ✅ `WorkflowState` interface (`src/dag/state.ts`) - State structure with 4 reducer fields
 - ✅ `updateState()` method - Automatic reducer application (messages, tasks, decisions, context)
 - ✅ `ControlledExecutor` class (`src/dag/controlled-executor.ts`) - Extends ParallelExecutor
@@ -342,27 +357,32 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 - ✅ State reducers - Pure functions for state updates (tested >90% coverage)
 
 **Integration Points Established:**
+
 - ✅ `ControlledExecutor.executeStream()` - Yields events, updates state via reducers
 - ✅ Event types defined - 9 event types including `checkpoint` event (placeholder in 2.5-1)
 - ✅ State invariants validated - `validateStateInvariants()` ensures consistency
 
 **Testing Infrastructure:**
+
 - ✅ Unit tests for state reducers (22 tests, >90% coverage) - Follow same patterns
 - ✅ Integration tests for ControlledExecutor (14 tests) - Extend for checkpoints
 - ✅ Performance benchmarks established (state update 0.003ms) - Add checkpoint benchmarks
 
 **Files to Modify:**
+
 - `src/dag/controlled-executor.ts` - Add resumeFromCheckpoint() method
 - `src/dag/types.ts` - Add Checkpoint interface
 - `mod.ts` - Export CheckpointManager
 
 **Patterns to Follow:**
+
 - ✅ Async operations (non-blocking checkpoint saves)
 - ✅ Pure functions where possible (state serialization/deserialization)
 - ✅ Comprehensive TSDoc comments on all public APIs
 - ✅ Type-safe interfaces (TypeScript discriminated unions)
 
 **Performance Targets from 2.5-1:**
+
 - ✅ State update: 0.003ms (<1ms target exceeded) - Checkpoints must not degrade this
 - ✅ Event emission: <5ms overhead - Checkpoint events must fit this budget
 - ✅ Speedup 5x preserved - Async checkpoint saves critical to maintain this
@@ -372,23 +392,27 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 ### Implementation Strategy
 
 **Phase 1: Database Foundation (Task 1, ~1-1.5h)**
+
 1. Create migration script for `workflow_checkpoint` table
 2. Implement CheckpointManager class with CRUD methods
 3. Unit tests for checkpoint CRUD operations (save, load, prune)
 4. Performance validation (save <50ms target)
 
 **Phase 2: Persistence Integration (Task 2, ~1h)**
+
 1. Integrate checkpoint saves into ControlledExecutor.executeStream()
 2. Emit checkpoint events after each layer
 3. Implement pruning strategy (keep 5 most recent)
 4. Integration tests (checkpoint saves, pruning, failure handling)
 
 **Phase 3: Resume Logic (Task 3, ~1-1.5h)**
+
 1. Implement resumeFromCheckpoint() method
 2. State restoration and layer skipping logic
 3. Integration tests (resume correctness, state consistency)
 
 **Phase 4: Documentation & Chaos Testing (Task 4-5, ~0.5-1h)**
+
 1. Document idempotence requirement and limitations
 2. Chaos testing (random crashes, verify resume)
 3. Performance validation (save <50ms, resume <100ms)
@@ -398,6 +422,7 @@ This story continues the **zero new dependencies** philosophy from Story 2.5-1:
 ### File Structure
 
 **New Files Created:**
+
 ```
 src/dag/
 └── checkpoint-manager.ts       # CheckpointManager class (~150 LOC)
@@ -413,6 +438,7 @@ tests/integration/dag/
 ```
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts  # + resumeFromCheckpoint() method
 src/dag/types.ts                # + Checkpoint interface
@@ -422,6 +448,7 @@ mod.ts                          # Export CheckpointManager
 ### Checkpoint Schema Details
 
 **PGlite Table:**
+
 ```sql
 CREATE TABLE workflow_checkpoint (
   id TEXT PRIMARY KEY,              -- UUID v4
@@ -437,29 +464,31 @@ CREATE INDEX idx_checkpoint_workflow_ts
 ```
 
 **State Serialization:**
+
 ```typescript
 const serialized = {
   workflow_id: state.workflow_id,
   current_layer: state.current_layer,
   messages: state.messages,
-  tasks: state.tasks.map(t => ({
+  tasks: state.tasks.map((t) => ({
     taskId: t.taskId,
     status: t.status,
     output: t.output,
-    executionTimeMs: t.executionTimeMs
+    executionTimeMs: t.executionTimeMs,
   })),
   decisions: state.decisions,
-  context: state.context
+  context: state.context,
 };
 
 await db.query(
   `INSERT INTO workflow_checkpoint (id, workflow_id, layer, state)
    VALUES ($1, $2, $3, $4)`,
-  [crypto.randomUUID(), workflow_id, layer, JSON.stringify(serialized)]
+  [crypto.randomUUID(), workflow_id, layer, JSON.stringify(serialized)],
 );
 ```
 
-**Source:** [Tech-Spec Epic 2.5 - Checkpoint Data Model](../tech-spec-epic-2.5.md#checkpoint-pglite-persistence)
+**Source:**
+[Tech-Spec Epic 2.5 - Checkpoint Data Model](../tech-spec-epic-2.5.md#checkpoint-pglite-persistence)
 
 ### Resume Logic Flow
 
@@ -501,22 +530,26 @@ async *resumeFromCheckpoint(checkpoint_id: string): AsyncGenerator<ExecutionEven
 }
 ```
 
-**Source:** [Tech-Spec Epic 2.5 - Resume Workflow](../tech-spec-epic-2.5.md#workflow-3-resume-from-checkpoint)
+**Source:**
+[Tech-Spec Epic 2.5 - Resume Workflow](../tech-spec-epic-2.5.md#workflow-3-resume-from-checkpoint)
 
 ### Pruning Strategy
 
 **Conservative Approach:**
+
 - Keep last 5 checkpoints per workflow
 - Delete older checkpoints on new save
 - Async pruning (non-blocking execution)
 
 **Rationale:**
+
 - 5 checkpoints = ~5 layers of history (typical workflow 3-10 layers)
 - Sufficient for debugging and recovery
 - Prevents unbounded growth (~100KB per checkpoint → max 500KB per workflow)
 - Storage monitoring: Alert if total checkpoints exceed 100MB
 
 **Implementation:**
+
 ```typescript
 async pruneCheckpoints(workflow_id: string, keepCount = 5): Promise<void> {
   const checkpoints = await this.db.query(
@@ -536,19 +569,21 @@ async pruneCheckpoints(workflow_id: string, keepCount = 5): Promise<void> {
 }
 ```
 
-**Source:** [ADR-007 - Pruning Strategy](../adrs/ADR-007-dag-adaptive-feedback-loops.md#checkpoint-architecture--limitations)
+**Source:**
+[ADR-007 - Pruning Strategy](../adrs/ADR-007-dag-adaptive-feedback-loops.md#checkpoint-architecture--limitations)
 
 ### Performance Targets
 
-| Metric | Target | Test Method |
-|--------|--------|-------------|
-| Checkpoint save latency | <50ms P95 | Benchmark with 1000 saves, measure P95 |
-| Resume latency | <100ms | Load checkpoint + restore state |
-| Checkpoint size | <100KB typical | Measure serialized JSONB size |
-| Pruning latency | <50ms | Delete N checkpoints, measure time |
-| State serialization | <10ms | JSON.stringify WorkflowState |
+| Metric                  | Target         | Test Method                            |
+| ----------------------- | -------------- | -------------------------------------- |
+| Checkpoint save latency | <50ms P95      | Benchmark with 1000 saves, measure P95 |
+| Resume latency          | <100ms         | Load checkpoint + restore state        |
+| Checkpoint size         | <100KB typical | Measure serialized JSONB size          |
+| Pruning latency         | <50ms          | Delete N checkpoints, measure time     |
+| State serialization     | <10ms          | JSON.stringify WorkflowState           |
 
-**Source:** [Tech-Spec Epic 2.5 - Performance Budget](../tech-spec-epic-2.5.md#performance-budget-summary)
+**Source:**
+[Tech-Spec Epic 2.5 - Performance Budget](../tech-spec-epic-2.5.md#performance-budget-summary)
 
 ### Edge Cases to Handle
 
@@ -582,18 +617,21 @@ async pruneCheckpoints(workflow_id: string, keepCount = 5): Promise<void> {
 ### Error Handling
 
 **Checkpoint Save Failures:**
+
 - Log error with context (workflow_id, layer, error message)
 - Emit event: `{ type: "checkpoint_failed", error, timestamp }`
 - Continue execution WITHOUT checkpoint (graceful degradation)
 - User sees warning in logs: "Checkpoint failed, workflow not resumable"
 
 **Resume Failures:**
+
 - Invalid checkpoint_id → Throw `CheckpointNotFoundError`
 - Corrupted state → Throw `CheckpointCorruptedError`
 - DAG structure mismatch → Log warning, attempt best-effort resume
 - State invariants violated → Throw `StateInvariantError`
 
 **Pruning Failures:**
+
 - Async pruning fails → Log error (non-critical)
 - Don't block checkpoint save if pruning fails
 - Retry pruning on next checkpoint save
@@ -610,18 +648,21 @@ async pruneCheckpoints(workflow_id: string, keepCount = 5): Promise<void> {
 ### Testing Strategy Summary
 
 **Unit Tests (60% of effort, >80% coverage):**
+
 - CheckpointManager CRUD operations
 - State serialization/deserialization round-trip
 - Pruning logic (keep N, delete old)
 - Performance benchmarks (save <50ms)
 
 **Integration Tests (30% of effort):**
+
 - Checkpoint saves during execution
 - Resume from checkpoint (state restoration)
 - Checkpoint events emitted correctly
 - Pruning integration with saves
 
 **Chaos Tests (10% of effort):**
+
 - Random crashes at different layers
 - Resume correctness verification
 - State consistency checks post-resume
@@ -654,17 +695,21 @@ async pruneCheckpoints(workflow_id: string, keepCount = 5): Promise<void> {
 ## References
 
 **BMM Documentation:**
+
 - [PRD Epic 2.5](../PRD.md#epic-25-adaptive-dag-feedback-loops-foundation)
 - [Tech-Spec Epic 2.5](../tech-spec-epic-2.5.md)
 - [ADR-007: DAG Adaptive Feedback Loops](../adrs/ADR-007-dag-adaptive-feedback-loops.md)
 - [Architecture - Pattern 4](../architecture.md#pattern-4-3-loop-learning-architecture)
 
 **Technical References:**
+
 - [PGlite JSONB Documentation](https://electric-sql.com/docs/pglite/jsonb) - JSONB storage patterns
 - [Deno Crypto API](https://deno.land/api?s=crypto.randomUUID) - UUID generation
-- [LangGraph Checkpointing](https://langchain-ai.github.io/langgraphjs/concepts/persistence/) - Checkpoint pattern inspiration
+- [LangGraph Checkpointing](https://langchain-ai.github.io/langgraphjs/concepts/persistence/) -
+  Checkpoint pattern inspiration
 
 **Testing References:**
+
 - [Deno Testing Guide](https://deno.land/manual/testing)
 - [Deno Benchmarking](https://deno.land/manual/tools/benchmarker)
 
@@ -673,6 +718,7 @@ async pruneCheckpoints(workflow_id: string, keepCount = 5): Promise<void> {
 ## Change Log
 
 **2025-11-14 - Story Created (drafted)**
+
 - ✅ Story generated via BMM `create-story` workflow
 - ✅ Tech-Spec Epic 2.5 used as primary source
 - ✅ ADR-007 checkpoint architecture incorporated
@@ -705,12 +751,14 @@ N/A - Implementation straightforward, no blocking issues
 ✅ **All Acceptance Criteria (AC-2.1 through AC-2.5) Implemented and Validated**
 
 **Task 1: Checkpoint Infrastructure (1.5h actual)**
+
 - Created migration `006_workflow_checkpoints.sql` with JSONB state column
 - Implemented `CheckpointManager` class with full CRUD operations (save, load, getLatest, prune)
 - All unit tests passing (>80% coverage)
 - Performance: **P95 = 0.50ms** (100x better than 50ms target!)
 
 **Task 2: Checkpoint Persistence Integration (1h actual)**
+
 - Integrated checkpoint saves into `ControlledExecutor.executeStream()`
 - Checkpoint events emitted after each layer execution
 - Pruning strategy: Keep 5 most recent checkpoints per workflow
@@ -718,25 +766,31 @@ N/A - Implementation straightforward, no blocking issues
 - Graceful degradation: Checkpoint failures logged but don't stop execution
 
 **Task 3: Resume from Checkpoint (1.5h actual)**
+
 - Implemented `resumeFromCheckpoint()` async generator method
-- State restoration fully functional (workflow_id, current_layer, tasks, decisions, messages, context)
+- State restoration fully functional (workflow_id, current_layer, tasks, decisions, messages,
+  context)
 - Completed layers correctly skipped (no re-execution)
 - Execution continues from `checkpoint.layer + 1`
 - All integration tests passing (4 test scenarios)
 
 **Task 4 & 5: Documentation & Testing (0.5h actual)**
+
 - Documentation already comprehensive in ADR-007 (Checkpoint Architecture & Limitations)
 - Idempotence requirement documented with examples
 - Epic 3 (Sandbox) noted as complete resolution
 - Integration tests cover chaos testing scenarios (resume correctness, state consistency)
 
 **Key Architectural Decisions:**
-1. CheckpointManager accepts optional `autoPrune` flag (default: false for tests, true for production)
+
+1. CheckpointManager accepts optional `autoPrune` flag (default: false for tests, true for
+   production)
 2. `resumeFromCheckpoint()` resets EventStream and CommandQueue for clean resume
 3. Results Map populated from state.tasks to support task dependencies on resume
 4. Checkpoints save WorkflowState only (filesystem state NOT saved - documented limitation)
 
 **Files Created:**
+
 - `src/dag/checkpoint-manager.ts` (258 LOC)
 - `src/db/migrations/006_workflow_checkpoints.sql` (Migration script)
 - `src/db/migrations/006_workflow_checkpoints_migration.ts` (Migration helper)
@@ -745,12 +799,14 @@ N/A - Implementation straightforward, no blocking issues
 - `tests/integration/dag/resume_test.ts` (260 LOC, 4 tests)
 
 **Files Modified:**
+
 - `src/dag/types.ts` - Added Checkpoint interface
 - `src/dag/controlled-executor.ts` - Added setCheckpointManager() and resumeFromCheckpoint()
 - `src/db/migrations.ts` - Added checkpoint migration to getAllMigrations()
 - `mod.ts` - Exported CheckpointManager and Checkpoint type
 
 **Test Results:**
+
 - ✅ Unit tests: 11 tests passing (checkpoint CRUD, serialization, pruning, performance)
 - ✅ Integration tests: 8 tests passing (persistence, resume, state consistency)
 - ✅ Performance: P95 checkpoint save = 0.50ms (100x better than target!)
@@ -758,6 +814,7 @@ N/A - Implementation straightforward, no blocking issues
 - ✅ Total: 61 tests passing across all DAG modules
 
 **Zero Breaking Changes:**
+
 - `ParallelExecutor.execute()` still works unchanged
 - `ControlledExecutor.executeStream()` backward compatible
 - CheckpointManager optional (set via `setCheckpointManager()` before execution)
@@ -767,6 +824,7 @@ N/A - Implementation straightforward, no blocking issues
 ### File List
 
 **New Files:**
+
 - src/dag/checkpoint-manager.ts
 - src/db/migrations/006_workflow_checkpoints.sql
 - src/db/migrations/006_workflow_checkpoints_migration.ts
@@ -775,6 +833,7 @@ N/A - Implementation straightforward, no blocking issues
 - tests/integration/dag/resume_test.ts
 
 **Modified Files:**
+
 - src/dag/types.ts
 - src/dag/controlled-executor.ts
 - src/db/migrations.ts
@@ -784,17 +843,20 @@ N/A - Implementation straightforward, no blocking issues
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad
-**Date:** 2025-11-14
-**Outcome:** ✅ **APPROVE** (after SQL injection fix)
+**Reviewer:** BMad **Date:** 2025-11-14 **Outcome:** ✅ **APPROVE** (after SQL injection fix)
 
 ### Summary
 
-Story 2.5-2 (Checkpoint & Resume) a été implémentée avec succès et offre une performance exceptionnelle (P95 = 0.50ms vs 50ms target, soit 100x mieux!). L'implémentation suit rigoureusement l'architecture ADR-007 v2.0 et respecte tous les acceptance criteria.
+Story 2.5-2 (Checkpoint & Resume) a été implémentée avec succès et offre une performance
+exceptionnelle (P95 = 0.50ms vs 50ms target, soit 100x mieux!). L'implémentation suit rigoureusement
+l'architecture ADR-007 v2.0 et respecte tous les acceptance criteria.
 
-**Une vulnérabilité SQL injection critique** a été identifiée dans `pruneCheckpoints()` et **corrigée immédiatement** durant la revue. Après correction, tous les tests passent (19/19) et le code respecte 100% des exigences de sécurité.
+**Une vulnérabilité SQL injection critique** a été identifiée dans `pruneCheckpoints()` et
+**corrigée immédiatement** durant la revue. Après correction, tous les tests passent (19/19) et le
+code respecte 100% des exigences de sécurité.
 
 **Points forts:**
+
 - ✅ Performance exceptionnelle (100x meilleure que target)
 - ✅ Architecture propre (extends ParallelExecutor, zero breaking changes)
 - ✅ Couverture tests excellente (19 tests, 100% PASS)
@@ -802,13 +864,16 @@ Story 2.5-2 (Checkpoint & Resume) a été implémentée avec succès et offre un
 - ✅ Code bien structuré avec TSDoc comments
 
 **Issue corrigée durant revue:**
-- 🔧 SQL injection vulnerability dans `pruneCheckpoints()` (HIGH severity) → Fixed with parameterized queries
+
+- 🔧 SQL injection vulnerability dans `pruneCheckpoints()` (HIGH severity) → Fixed with
+  parameterized queries
 
 ### Outcome: APPROVE ✅
 
 **Justification:**
 
-Après correction de la vulnérabilité SQL injection, l'implémentation est **production-ready** et respecte 100% des acceptance criteria. La story peut être marquée **done**.
+Après correction de la vulnérabilité SQL injection, l'implémentation est **production-ready** et
+respecte 100% des acceptance criteria. La story peut être marquée **done**.
 
 ### Key Findings (by Severity)
 
@@ -823,16 +888,18 @@ Après correction de la vulnérabilité SQL injection, l'implémentation est **p
 - **Evidence:** All tests PASS after fix (19/19)
 
 **Code Before Fix:**
+
 ```typescript
 // ❌ VULNERABLE
 await this.db.exec(
   `DELETE FROM workflow_checkpoint
    WHERE workflow_id = '${workflow_id}'  // SQL injection!
-   ...`
+   ...`,
 );
 ```
 
 **Code After Fix:**
+
 ```typescript
 // ✅ SECURE
 await this.db.query(
@@ -844,7 +911,7 @@ await this.db.query(
      ORDER BY timestamp DESC
      LIMIT $2
    )`,
-  [workflow_id, keepCount]  // Safe parameters
+  [workflow_id, keepCount], // Safe parameters
 );
 ```
 
@@ -863,35 +930,37 @@ await this.db.query(
 
 ### Acceptance Criteria Coverage
 
-| AC | Description | Status | Evidence |
-|----|-------------|--------|----------|
-| **AC-2.1** | Checkpoint Infrastructure | ✅ IMPLEMENTED | `workflow_checkpoint` table créée, CheckpointManager avec CRUD operations, P95 = 0.50ms (100x mieux que 50ms target!) |
-| **AC-2.2** | Checkpoint Persistence | ✅ IMPLEMENTED | WorkflowState → JSONB serialization, checkpoints après chaque layer, retention policy (5 checkpoints), auto-pruning (opt-in) |
-| **AC-2.3** | Resume from Checkpoint | ✅ IMPLEMENTED | `resumeFromCheckpoint()` méthode, state fully restored, execution depuis layer+1, completed layers skipped |
-| **AC-2.4** | Idempotence Documentation | ✅ DOCUMENTED | Limitations documentées (filesystem state NOT saved), idempotence requirement expliqué, Epic 3 resolution noted, exemples fournis |
-| **AC-2.5** | Resume Tests | ✅ TESTED | Resume tests PASS (4/4), crashes simulés à différents layers, state consistency vérifiée, performance validée |
+| AC         | Description               | Status         | Evidence                                                                                                                          |
+| ---------- | ------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **AC-2.1** | Checkpoint Infrastructure | ✅ IMPLEMENTED | `workflow_checkpoint` table créée, CheckpointManager avec CRUD operations, P95 = 0.50ms (100x mieux que 50ms target!)             |
+| **AC-2.2** | Checkpoint Persistence    | ✅ IMPLEMENTED | WorkflowState → JSONB serialization, checkpoints après chaque layer, retention policy (5 checkpoints), auto-pruning (opt-in)      |
+| **AC-2.3** | Resume from Checkpoint    | ✅ IMPLEMENTED | `resumeFromCheckpoint()` méthode, state fully restored, execution depuis layer+1, completed layers skipped                        |
+| **AC-2.4** | Idempotence Documentation | ✅ DOCUMENTED  | Limitations documentées (filesystem state NOT saved), idempotence requirement expliqué, Epic 3 resolution noted, exemples fournis |
+| **AC-2.5** | Resume Tests              | ✅ TESTED      | Resume tests PASS (4/4), crashes simulés à différents layers, state consistency vérifiée, performance validée                     |
 
 **Summary:** ✅ **5 of 5 acceptance criteria fully implemented**
 
 ### Task Completion Validation
 
-| Task | Description | Marked As | Verified As | Evidence |
-|------|-------------|-----------|-------------|----------|
-| **Task 1** | Checkpoint Infrastructure (1-1.5h) | ✅ COMPLETE | ✅ VERIFIED | Migration 006 créée, CheckpointManager class (4 méthodes CRUD), 11 unit tests PASS, performance P95 = 0.50ms |
+| Task       | Description                             | Marked As   | Verified As             | Evidence                                                                                                        |
+| ---------- | --------------------------------------- | ----------- | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Task 1** | Checkpoint Infrastructure (1-1.5h)      | ✅ COMPLETE | ✅ VERIFIED             | Migration 006 créée, CheckpointManager class (4 méthodes CRUD), 11 unit tests PASS, performance P95 = 0.50ms    |
 | **Task 2** | Checkpoint Persistence Integration (1h) | ✅ COMPLETE | ✅ VERIFIED (après fix) | Checkpoints dans executeStream(), pruneCheckpoints() implémenté (SQL injection FIXED), 4 integration tests PASS |
-| **Task 3** | Resume from Checkpoint (1-1.5h) | ✅ COMPLETE | ✅ VERIFIED | resumeFromCheckpoint() méthode, skip completed layers logic, 4 resume tests PASS, state consistency validée |
-| **Task 4** | Idempotence Documentation (0.5-1h) | ✅ COMPLETE | ✅ VERIFIED | Checkpoint limitations documentées, idempotence requirement expliqué, test scenarios créés |
-| **Task 5** | Resume Chaos Testing (0.5h) | ✅ COMPLETE | ✅ VERIFIED | Random crashes injectés, resume correctness vérifiée, performance benchmarks PASS (0.50ms P95!) |
+| **Task 3** | Resume from Checkpoint (1-1.5h)         | ✅ COMPLETE | ✅ VERIFIED             | resumeFromCheckpoint() méthode, skip completed layers logic, 4 resume tests PASS, state consistency validée     |
+| **Task 4** | Idempotence Documentation (0.5-1h)      | ✅ COMPLETE | ✅ VERIFIED             | Checkpoint limitations documentées, idempotence requirement expliqué, test scenarios créés                      |
+| **Task 5** | Resume Chaos Testing (0.5h)             | ✅ COMPLETE | ✅ VERIFIED             | Random crashes injectés, resume correctness vérifiée, performance benchmarks PASS (0.50ms P95!)                 |
 
 **Summary:** ✅ **5 of 5 tasks verified complete**
 
-**Note Critique:** Task 2.2 était initialement marqué complete mais contenait une vulnérabilité SQL injection. Après correction durant la revue, ce task est maintenant **truly complete** et sécurisé.
+**Note Critique:** Task 2.2 était initialement marqué complete mais contenait une vulnérabilité SQL
+injection. Après correction durant la revue, ce task est maintenant **truly complete** et sécurisé.
 
 ### Test Coverage and Gaps
 
 **Tests Implemented:**
 
 **Unit Tests (11 tests - ALL PASS):**
+
 - ✅ saveCheckpoint succeeds with valid state
 - ✅ loadCheckpoint by ID returns correct state
 - ✅ loadCheckpoint returns null for non-existent ID
@@ -905,6 +974,7 @@ await this.db.query(
 - ✅ checkpoint save <50ms P95 (benchmark: **0.50ms achieved!**)
 
 **Integration Tests (8 tests - ALL PASS):**
+
 - ✅ checkpoints saved after each layer execution
 - ✅ checkpoint events contain valid checkpoint IDs
 - ✅ checkpoint save failure does not stop execution (graceful degradation)
@@ -922,19 +992,20 @@ await this.db.query(
 
 **✅ Pattern 4 (3-Loop Learning Architecture) Conformity:**
 
-| Aspect | Conforme | Evidence |
-|--------|----------|----------|
-| Loop 1 (Execution) Foundation | ✅ YES | CheckpointManager fournit persistence, EventStream observability |
-| Zero Breaking Changes | ✅ YES | ControlledExecutor extends ParallelExecutor, backward compatible |
-| Speedup 5x Preserved | ✅ YES | Async checkpoint saves <1ms, parallelism maintained |
-| PGlite JSONB Storage | ✅ YES | Migration uses JSONB column for WorkflowState |
-| MessagesState-inspired Reducers | ✅ YES | Story 2.5-1 provides state management foundation |
-| Performance Budget | ✅ YES | <50ms target (achieved 0.50ms - 100x better!) |
-| Retention Policy | ✅ YES | 5 checkpoints per workflow (configurable) |
+| Aspect                          | Conforme | Evidence                                                         |
+| ------------------------------- | -------- | ---------------------------------------------------------------- |
+| Loop 1 (Execution) Foundation   | ✅ YES   | CheckpointManager fournit persistence, EventStream observability |
+| Zero Breaking Changes           | ✅ YES   | ControlledExecutor extends ParallelExecutor, backward compatible |
+| Speedup 5x Preserved            | ✅ YES   | Async checkpoint saves <1ms, parallelism maintained              |
+| PGlite JSONB Storage            | ✅ YES   | Migration uses JSONB column for WorkflowState                    |
+| MessagesState-inspired Reducers | ✅ YES   | Story 2.5-1 provides state management foundation                 |
+| Performance Budget              | ✅ YES   | <50ms target (achieved 0.50ms - 100x better!)                    |
+| Retention Policy                | ✅ YES   | 5 checkpoints per workflow (configurable)                        |
 
 **Tech-Spec Epic 2.5 Compliance:**
 
 ✅ All constraints respected:
+
 - Performance: <50ms P95 (achieved 0.50ms)
 - Retention: 5 most recent checkpoints
 - Idempotence: Documented with limitations
@@ -952,7 +1023,8 @@ await this.db.query(
 
 **Security Best Practices Verified:**
 
-- ✅ **Parameterized Queries:** All 4 database methods use parameterized queries (saveCheckpoint, loadCheckpoint, getLatestCheckpoint, pruneCheckpoints)
+- ✅ **Parameterized Queries:** All 4 database methods use parameterized queries (saveCheckpoint,
+  loadCheckpoint, getLatestCheckpoint, pruneCheckpoints)
 - ✅ **State Validation:** validateStateStructure() prevents corrupted data injection
 - ✅ **UUID Generation:** crypto.randomUUID() (crypto-secure)
 - ✅ **JSONB Validation:** Deserialization validates structure before returning
@@ -964,30 +1036,35 @@ await this.db.query(
 ### Best-Practices and References
 
 **Deno & TypeScript:**
+
 - ✅ Deno 2.5 / 2.2 LTS (deno.json confirmed)
 - ✅ TypeScript strict mode enabled
 - ✅ All type checks PASS (`deno check src/**/*.ts`)
 - ✅ TSDoc comments on all public APIs
 
 **PGlite (v0.3.11):**
+
 - ✅ JSONB column for state storage
 - ✅ Indexes for performance (`idx_checkpoint_workflow_ts`)
 - ✅ Parameterized queries throughout
 - ✅ Constraints (CHECK layer >= 0)
 
 **Testing (Deno.test):**
+
 - ✅ 19 tests, 100% PASS
 - ✅ Unit + Integration coverage
 - ✅ Performance benchmarks
 - ✅ Chaos testing (random crashes)
 
 **Architecture (ADR-007 v2.0):**
+
 - ✅ MessagesState-inspired reducers (Story 2.5-1)
 - ✅ Event stream + Command queue patterns
 - ✅ Zero breaking changes (extends ParallelExecutor)
 - ✅ Checkpoint infrastructure for Loop 1
 
 **Web References:**
+
 - [PGlite JSONB Documentation](https://electric-sql.com/docs/pglite/jsonb)
 - [Deno Crypto API](https://deno.land/api?s=crypto.randomUUID)
 - [LangGraph Checkpointing Patterns](https://langchain-ai.github.io/langgraphjs/concepts/persistence/)
@@ -998,7 +1075,8 @@ await this.db.query(
 
 ✅ **ALL ACTION ITEMS COMPLETED DURING REVIEW**
 
-- ✅ [High] Fix SQL injection in pruneCheckpoints() (AC #2.2) [file: src/dag/checkpoint-manager.ts:243-252]
+- ✅ [High] Fix SQL injection in pruneCheckpoints() (AC #2.2) [file:
+  src/dag/checkpoint-manager.ts:243-252]
   - **Status:** FIXED ✅
   - **Solution:** Replaced string concatenation with parameterized query using `$1, $2`
   - **Verification:** All 19 tests PASS after fix

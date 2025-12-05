@@ -22,7 +22,12 @@
  *   --skip-test   Skip API validation test
  */
 
-import { detectProvider, generateCompletion, getDefaultModel, type LLMProvider } from "../lib/llm-provider.ts";
+import {
+  detectProvider,
+  generateCompletion,
+  getDefaultModel,
+  type LLMProvider,
+} from "../lib/llm-provider.ts";
 
 // =============================================================================
 // Constants
@@ -61,9 +66,9 @@ function maskApiKey(key: string): string {
  */
 function print(message: string, type: "info" | "success" | "error" | "warning" = "info"): void {
   const colors = {
-    info: "\x1b[36m",    // Cyan
+    info: "\x1b[36m", // Cyan
     success: "\x1b[32m", // Green
-    error: "\x1b[31m",   // Red
+    error: "\x1b[31m", // Red
     warning: "\x1b[33m", // Yellow
   };
   const reset = "\x1b[0m";
@@ -184,7 +189,7 @@ async function createBackup(): Promise<boolean> {
 export function buildEnvContent(
   existingContent: string,
   provider: LLMProvider,
-  apiKey: string
+  apiKey: string,
 ): string {
   const envVar = PROVIDER_ENV_VARS[provider];
   const lines = existingContent.split("\n");
@@ -295,7 +300,9 @@ export function parseApiError(errorMessage: string): string {
   }
 
   if (errorMessage.includes("timeout") || errorMessage.includes("AbortError")) {
-    return `Request timed out after ${API_TIMEOUT_MS / 1000}s.\n   → Check your network connection and try again.`;
+    return `Request timed out after ${
+      API_TIMEOUT_MS / 1000
+    }s.\n   → Check your network connection and try again.`;
   }
 
   if (errorMessage.includes("ECONNREFUSED") || errorMessage.includes("network")) {
@@ -310,7 +317,7 @@ export function parseApiError(errorMessage: string): string {
  */
 export async function validateApiKey(
   apiKey: string,
-  provider: LLMProvider
+  provider: LLMProvider,
 ): Promise<{ success: boolean; error?: string; response?: string }> {
   let timeoutId: number | undefined;
 
@@ -326,7 +333,7 @@ export async function validateApiKey(
     const apiPromise = generateCompletion(
       { apiKey, provider },
       "Say hello in one word",
-      { maxTokens: 10 }
+      { maxTokens: 10 },
     );
 
     const result = await Promise.race([apiPromise, timeoutPromise]);

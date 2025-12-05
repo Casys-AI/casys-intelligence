@@ -15,15 +15,15 @@
 
 <step n="1" goal="Load project context and determine execution mode">
 
-<action>Check if {project_context} exists. If yes, load it - this is your foundational reference for ALL implementation decisions (patterns, conventions, architecture).</action>
+<action>Check if {project_context} exists. If yes, load it - this is your foundational reference for
+ALL implementation decisions (patterns, conventions, architecture).</action>
 
 <action>Parse user input:
 
-**Mode A: Tech-Spec** - e.g., `quick-dev tech-spec-auth.md`
-→ Load spec, extract tasks/context/AC, goto step 3
+**Mode A: Tech-Spec** - e.g., `quick-dev tech-spec-auth.md` → Load spec, extract tasks/context/AC,
+goto step 3
 
-**Mode B: Direct Instructions** - e.g., `refactor src/foo.ts...`
-→ Offer planning choice
+**Mode B: Direct Instructions** - e.g., `refactor src/foo.ts...` → Offer planning choice
 </action>
 
 <check if="Mode A">
@@ -35,12 +35,12 @@
   <ask>**[t] Plan first** - Create tech-spec then implement
 **[e] Execute directly** - Start now</ask>
 
-  <check if="t">
+<check if="t">
     <action>Load and execute {create_tech_spec_workflow}</action>
     <action>Continue to implementation after spec complete</action>
   </check>
 
-  <check if="e">
+<check if="e">
     <ask>Any additional guidance before I begin? (patterns, files, constraints) Or "go" to start.</ask>
     <goto>step_2</goto>
   </check>
@@ -83,10 +83,8 @@
 
 <output>**Implementation Complete!**
 
-**Summary:** {{implementation_summary}}
-**Files Modified:** {{files_list}}
-**Tests:** {{test_summary}}
-**AC Status:** {{ac_status}}
+**Summary:** {{implementation_summary}} **Files Modified:** {{files_list}} **Tests:**
+{{test_summary}} **AC Status:** {{ac_status}}
 
 ---
 

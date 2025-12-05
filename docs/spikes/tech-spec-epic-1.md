@@ -1,23 +1,30 @@
 # Epic Technical Specification: Project Foundation & Context Optimization Engine
 
-Date: 2025-11-05
-Author: BMad
-Epic ID: 1
-Status: Draft
+Date: 2025-11-05 Author: BMad Epic ID: 1 Status: Draft
 
 ---
 
 ## Overview
 
-L'Epic 1 établit l'infrastructure fondamentale d'AgentCards en implémentant un système de context optimization via vector search sémantique. L'objectif principal est de réduire la consommation de contexte LLM par les tool schemas MCP de 30-50% à <5%, récupérant 90% de la fenêtre conversationnelle pour usage utile. Cette optimisation repose sur PGlite (PostgreSQL WASM) avec pgvector pour le vector search HNSW, BGE-Large-EN-v1.5 pour la génération d'embeddings 1024-dim, et un système de chargement on-demand qui ne présente au LLM que les tools pertinents (top-k=3-10) identifiés par similarité sémantique.
+L'Epic 1 établit l'infrastructure fondamentale d'AgentCards en implémentant un système de context
+optimization via vector search sémantique. L'objectif principal est de réduire la consommation de
+contexte LLM par les tool schemas MCP de 30-50% à <5%, récupérant 90% de la fenêtre
+conversationnelle pour usage utile. Cette optimisation repose sur PGlite (PostgreSQL WASM) avec
+pgvector pour le vector search HNSW, BGE-Large-EN-v1.5 pour la génération d'embeddings 1024-dim, et
+un système de chargement on-demand qui ne présente au LLM que les tools pertinents (top-k=3-10)
+identifiés par similarité sémantique.
 
-L'epic livre un système fonctionnel permettant à un développeur d'installer AgentCards, de migrer automatiquement sa configuration MCP existante, et d'observer immédiatement une réduction du contexte validant la proposition de valeur principale du projet.
+L'epic livre un système fonctionnel permettant à un développeur d'installer AgentCards, de migrer
+automatiquement sa configuration MCP existante, et d'observer immédiatement une réduction du
+contexte validant la proposition de valeur principale du projet.
 
 ## Objectives and Scope
 
 **In-Scope:**
+
 - Configuration Deno 2.5+ avec structure projet complète (CI/CD, tests, docs)
-- PGlite database avec pgvector extension et schema complet (tool_embedding, tool_schema, config tables)
+- PGlite database avec pgvector extension et schema complet (tool_embedding, tool_schema, config
+  tables)
 - MCP server discovery automatique (stdio + SSE) supportant 15+ servers simultanément
 - Extraction et stockage des tool schemas via MCP protocol
 - Génération d'embeddings vectoriels 1024-dim avec BGE-Large-EN-v1.5 local inference
@@ -27,6 +34,7 @@ L'epic livre un système fonctionnel permettant à un développeur d'installer A
 - Logging structuré et telemetry backend opt-in (context tracking, latency metrics)
 
 **Out-of-Scope (deferred to Epic 2):**
+
 - DAG execution et parallélisation des workflows
 - SSE streaming pour progressive results
 - MCP gateway HTTP server
@@ -35,6 +43,7 @@ L'epic livre un système fonctionnel permettant à un développeur d'installer A
 - Error handling advanced (retry logic, circuit breakers)
 
 **Success Criteria:**
+
 - Context window consumption <5% measured (vs 30-50% baseline sans AgentCards)
 - Vector search P95 latency <100ms pour top-10 retrieval
 - Support fonctionnel de 15+ MCP servers actifs simultanément
@@ -46,7 +55,8 @@ L'epic livre un système fonctionnel permettant à un développeur d'installer A
 **Alignment avec Architecture Decisions:**
 
 - **Runtime:** Deno 2.5/2.2 LTS (TypeScript native, secure by default, npm compat) - Story 1.1 setup
-- **Database:** PGlite 0.3.11 (embedded WASM PostgreSQL, portable single-file, 3MB footprint) - Story 1.2
+- **Database:** PGlite 0.3.11 (embedded WASM PostgreSQL, portable single-file, 3MB footprint) -
+  Story 1.2
 - **Vector Search:** pgvector HNSW (production-ready ANN search, <100ms P95) - Story 1.2, 1.5
 - **Embeddings:** @huggingface/transformers 2.17.2 (BGE-Large-EN-v1.5, Deno-compatible) - Story 1.4
 - **MCP Protocol:** @modelcontextprotocol/sdk official TypeScript SDK - Story 1.3
@@ -54,6 +64,7 @@ L'epic livre un système fonctionnel permettant à un développeur d'installer A
 - **Logging:** std/log structured logging - Story 1.8
 
 **Modules implémentés:**
+
 - `src/db/` - PGlite client, migrations, queries
 - `src/vector/` - Embeddings generation, semantic search, HNSW index
 - `src/mcp/` - Server discovery, schema extraction, protocol handling
@@ -62,6 +73,7 @@ L'epic livre un système fonctionnel permettant à un développeur d'installer A
 - `src/config/` - YAML loader, validation
 
 **Constraints respectées:**
+
 - Single-file database portability (PGlite)
 - Zero external dependencies pour vector search (pgvector built-in)
 - Local inference embeddings (aucun API call externe)
@@ -72,16 +84,17 @@ L'epic livre un système fonctionnel permettant à un développeur d'installer A
 
 ### Services and Modules
 
-| Module | Location | Responsibilities | Story | Key Components |
-|--------|----------|-----------------|-------|----------------|
-| **Database** | `src/db/` | PGlite client initialization, schema migrations, query execution | 1.2 | `client.ts` (PGlite init), `migrations/001_initial.sql` (schema), `queries.ts` (prepared statements) |
-| **Vector Search** | `src/vector/` | Embeddings generation, semantic search, HNSW index management | 1.4, 1.5 | `embeddings.ts` (BGE-Large-EN-v1.5 inference), `search.ts` (cosine similarity), `index.ts` (HNSW operations) |
-| **MCP Protocol** | `src/mcp/` | MCP server discovery, protocol handling, schema extraction | 1.3 | `discovery.ts` (stdio/SSE discovery), `client.ts` (MCP SDK wrapper), `types.ts` (protocol types) |
-| **CLI** | `src/cli/` | Command-line interface, user interactions | 1.7 | `commands/init.ts` (migration tool), `commands/status.ts` (health), `main.ts` (cliffy setup) |
-| **Telemetry** | `src/telemetry/` | Structured logging, metrics tracking, observability | 1.8 | `logger.ts` (std/log wrapper), `metrics.ts` (context/latency tracking), `types.ts` (metric definitions) |
-| **Configuration** | `src/config/` | YAML config loading, validation, schema enforcement | 1.7 | `loader.ts` (YAML parser), `validator.ts` (config schema), `types.ts` (config interfaces) |
+| Module            | Location         | Responsibilities                                                 | Story    | Key Components                                                                                               |
+| ----------------- | ---------------- | ---------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| **Database**      | `src/db/`        | PGlite client initialization, schema migrations, query execution | 1.2      | `client.ts` (PGlite init), `migrations/001_initial.sql` (schema), `queries.ts` (prepared statements)         |
+| **Vector Search** | `src/vector/`    | Embeddings generation, semantic search, HNSW index management    | 1.4, 1.5 | `embeddings.ts` (BGE-Large-EN-v1.5 inference), `search.ts` (cosine similarity), `index.ts` (HNSW operations) |
+| **MCP Protocol**  | `src/mcp/`       | MCP server discovery, protocol handling, schema extraction       | 1.3      | `discovery.ts` (stdio/SSE discovery), `client.ts` (MCP SDK wrapper), `types.ts` (protocol types)             |
+| **CLI**           | `src/cli/`       | Command-line interface, user interactions                        | 1.7      | `commands/init.ts` (migration tool), `commands/status.ts` (health), `main.ts` (cliffy setup)                 |
+| **Telemetry**     | `src/telemetry/` | Structured logging, metrics tracking, observability              | 1.8      | `logger.ts` (std/log wrapper), `metrics.ts` (context/latency tracking), `types.ts` (metric definitions)      |
+| **Configuration** | `src/config/`    | YAML config loading, validation, schema enforcement              | 1.7      | `loader.ts` (YAML parser), `validator.ts` (config schema), `types.ts` (config interfaces)                    |
 
 **Module Dependencies:**
+
 - All modules depend on `src/db/` for persistence
 - `src/vector/` depends on `src/db/` for storing embeddings
 - `src/mcp/` depends on `src/db/` for caching schemas
@@ -154,22 +167,22 @@ export interface ToolSchema {
 
 export interface ToolEmbedding {
   toolId: string;
-  embedding: Float32Array;  // 1024-dim vector
+  embedding: Float32Array; // 1024-dim vector
   createdAt: Date;
 }
 
 export interface SearchResult {
   toolId: string;
-  score: number;  // Cosine similarity [0-1]
+  score: number; // Cosine similarity [0-1]
   schema: ToolSchema;
 }
 
 export interface Config {
   mcpServers: MCPServerConfig[];
   vector: {
-    topK: number;           // Default: 5
-    threshold: number;      // Default: 0.7
-    modelName: string;      // "Xenova/bge-large-en-v1.5"
+    topK: number; // Default: 5
+    threshold: number; // Default: 0.7
+    modelName: string; // "Xenova/bge-large-en-v1.5"
   };
   telemetry: {
     enabled: boolean;
@@ -288,7 +301,10 @@ export interface DatabaseAPI {
    * @param topK - Number of results
    * @returns Tool IDs and similarity scores
    */
-  searchSimilar(queryEmbedding: Float32Array, topK: number): Promise<Array<{toolId: string, score: number}>>;
+  searchSimilar(
+    queryEmbedding: Float32Array,
+    topK: number,
+  ): Promise<Array<{ toolId: string; score: number }>>;
 }
 ```
 
@@ -391,14 +407,14 @@ export interface ConfigAPI {
 
 **Error Response Codes:**
 
-| Code | HTTP Status | Description | Recovery |
-|------|------------|-------------|----------|
-| `DB_INIT_ERROR` | 500 | Database initialization failed | Check file permissions, disk space |
-| `VECTOR_SEARCH_ERROR` | 500 | Vector search operation failed | Check index exists, retry |
-| `MCP_SERVER_ERROR` | 502 | MCP server unreachable or invalid response | Check server config, restart server |
-| `SCHEMA_INVALID` | 400 | Tool schema validation failed | Fix schema format, consult MCP spec |
-| `CONFIG_INVALID` | 400 | Configuration file invalid | Fix YAML syntax, check schema |
-| `EMBEDDING_ERROR` | 500 | Embedding generation failed | Check model loaded, sufficient memory |
+| Code                  | HTTP Status | Description                                | Recovery                              |
+| --------------------- | ----------- | ------------------------------------------ | ------------------------------------- |
+| `DB_INIT_ERROR`       | 500         | Database initialization failed             | Check file permissions, disk space    |
+| `VECTOR_SEARCH_ERROR` | 500         | Vector search operation failed             | Check index exists, retry             |
+| `MCP_SERVER_ERROR`    | 502         | MCP server unreachable or invalid response | Check server config, restart server   |
+| `SCHEMA_INVALID`      | 400         | Tool schema validation failed              | Fix schema format, consult MCP spec   |
+| `CONFIG_INVALID`      | 400         | Configuration file invalid                 | Fix YAML syntax, check schema         |
+| `EMBEDDING_ERROR`     | 500         | Embedding generation failed                | Check model loaded, sufficient memory |
 
 ### Workflows and Sequencing
 
@@ -637,14 +653,14 @@ Note: No forward dependencies - each story builds only on completed work
 
 **Measurable Performance Targets (from PRD NFR001):**
 
-| Metric | Target | Measurement Method | Story |
-|--------|--------|-------------------|-------|
-| **Context Window Consumption** | <5% | Token counting of loaded schemas vs total LLM window (200k tokens) | 1.6 |
-| **Vector Search Latency (P95)** | <100ms | Benchmark test with 1000+ vectors, measure query execution time | 1.5 |
-| **Query-to-Schema Latency (P95)** | <200ms | End-to-end: query → embed → search → retrieve schemas | 1.6 |
-| **Embedding Generation (200 tools)** | <2 minutes | Batch processing all schemas, measure total time | 1.4 |
-| **MCP Server Discovery** | Support 15+ servers | Concurrent connections, measure success rate | 1.3 |
-| **Database Initialization** | <5 seconds | Measure time from db.initialize() to ready state | 1.2 |
+| Metric                               | Target              | Measurement Method                                                 | Story |
+| ------------------------------------ | ------------------- | ------------------------------------------------------------------ | ----- |
+| **Context Window Consumption**       | <5%                 | Token counting of loaded schemas vs total LLM window (200k tokens) | 1.6   |
+| **Vector Search Latency (P95)**      | <100ms              | Benchmark test with 1000+ vectors, measure query execution time    | 1.5   |
+| **Query-to-Schema Latency (P95)**    | <200ms              | End-to-end: query → embed → search → retrieve schemas              | 1.6   |
+| **Embedding Generation (200 tools)** | <2 minutes          | Batch processing all schemas, measure total time                   | 1.4   |
+| **MCP Server Discovery**             | Support 15+ servers | Concurrent connections, measure success rate                       | 1.3   |
+| **Database Initialization**          | <5 seconds          | Measure time from db.initialize() to ready state                   | 1.2   |
 
 **Performance Implementation Details:**
 
@@ -686,20 +702,21 @@ Total query-to-schema latency: <200ms
 
 **Security Requirements (from PRD NFR002):**
 
-| Requirement | Implementation | Story |
-|------------|----------------|-------|
-| **Local-first data processing** | All embeddings generated locally, no external API calls | 1.4 |
-| **No PII leakage** | User queries and tool schemas never leave local machine | All |
-| **Sandboxed execution** | Deno permissions model enforced (`--allow-read`, `--allow-net` explicit) | 1.1 |
-| **MCP server isolation** | Each MCP server runs in separate subprocess (stdio isolation) | 1.3 |
-| **Input validation** | All CLI args validated via cliffy, MCP responses validated against JSON Schema | 1.7, 1.3 |
-| **SQL injection prevention** | Parameterized queries only (PGlite prepared statements) | 1.2 |
-| **Filesystem access control** | Limited to `~/.agentcards/` directory for database/logs/config | 1.2, 1.8 |
+| Requirement                     | Implementation                                                                 | Story    |
+| ------------------------------- | ------------------------------------------------------------------------------ | -------- |
+| **Local-first data processing** | All embeddings generated locally, no external API calls                        | 1.4      |
+| **No PII leakage**              | User queries and tool schemas never leave local machine                        | All      |
+| **Sandboxed execution**         | Deno permissions model enforced (`--allow-read`, `--allow-net` explicit)       | 1.1      |
+| **MCP server isolation**        | Each MCP server runs in separate subprocess (stdio isolation)                  | 1.3      |
+| **Input validation**            | All CLI args validated via cliffy, MCP responses validated against JSON Schema | 1.7, 1.3 |
+| **SQL injection prevention**    | Parameterized queries only (PGlite prepared statements)                        | 1.2      |
+| **Filesystem access control**   | Limited to `~/.agentcards/` directory for database/logs/config                 | 1.2, 1.8 |
 
 **Security Implementation Details:**
 
 - **Deno Security Model (Story 1.1):**
-  - Explicit permissions required: `--allow-read=~/.agentcards`, `--allow-net` (for model download only)
+  - Explicit permissions required: `--allow-read=~/.agentcards`, `--allow-net` (for model download
+    only)
   - No `eval()` or `Function()` constructor usage
   - Import map restrictions: Only trusted npm packages via Deno's npm: prefix
 
@@ -721,25 +738,25 @@ Total query-to-schema latency: <200ms
 
 **Threat Model:**
 
-| Threat | Mitigation | Priority |
-|--------|-----------|----------|
-| Malicious MCP server | Schema validation, subprocess isolation | High |
-| Path traversal attack | Restrict filesystem access to ~/.agentcards/ | Medium |
-| Memory exhaustion | Model size limits, HNSW index size monitoring | Medium |
-| Dependency vulnerabilities | Deno's built-in security audit, minimal dependencies | High |
-| SQL injection | Parameterized queries only | High |
+| Threat                     | Mitigation                                           | Priority |
+| -------------------------- | ---------------------------------------------------- | -------- |
+| Malicious MCP server       | Schema validation, subprocess isolation              | High     |
+| Path traversal attack      | Restrict filesystem access to ~/.agentcards/         | Medium   |
+| Memory exhaustion          | Model size limits, HNSW index size monitoring        | Medium   |
+| Dependency vulnerabilities | Deno's built-in security audit, minimal dependencies | High     |
+| SQL injection              | Parameterized queries only                           | High     |
 
 ### Reliability/Availability
 
 **Reliability Targets (from PRD NFR003):**
 
-| Requirement | Target | Implementation | Story |
-|------------|--------|----------------|-------|
-| **MCP server failures** | Graceful degradation | Log error, continue with other servers, return partial results | 1.3 |
-| **Database corruption** | Auto-recovery | Database file backup on first init, migration rollback capability | 1.2 |
-| **Embedding model unavailable** | Fail-fast with clear message | Check model download on init, provide installation instructions | 1.4 |
-| **Disk space exhaustion** | Pre-flight check | Check available space before init (require 1GB free) | 1.7 |
-| **Invalid configuration** | Validation with helpful errors | YAML schema validation, detailed error messages with fix suggestions | 1.7 |
+| Requirement                     | Target                         | Implementation                                                       | Story |
+| ------------------------------- | ------------------------------ | -------------------------------------------------------------------- | ----- |
+| **MCP server failures**         | Graceful degradation           | Log error, continue with other servers, return partial results       | 1.3   |
+| **Database corruption**         | Auto-recovery                  | Database file backup on first init, migration rollback capability    | 1.2   |
+| **Embedding model unavailable** | Fail-fast with clear message   | Check model download on init, provide installation instructions      | 1.4   |
+| **Disk space exhaustion**       | Pre-flight check               | Check available space before init (require 1GB free)                 | 1.7   |
+| **Invalid configuration**       | Validation with helpful errors | YAML schema validation, detailed error messages with fix suggestions | 1.7   |
 
 **Error Handling Strategy:**
 
@@ -782,13 +799,13 @@ Total query-to-schema latency: <200ms
 
 **Degradation Behavior:**
 
-| Failure Scenario | System Behavior | User Experience |
-|-----------------|-----------------|-----------------|
-| 1 MCP server down (out of 15) | Continue with 14 servers | Warning logged, partial functionality |
-| All MCP servers down | Cannot discover tools | Clear error message with troubleshooting steps |
-| Vector search slow (>500ms) | Return results with latency warning | Suggest re-indexing or reducing topK |
-| Database locked | Retry with exponential backoff (3 attempts) | Transparent to user if succeeds within 5s |
-| Model download fails | Fail initialization | Provide manual download instructions + retry option |
+| Failure Scenario              | System Behavior                             | User Experience                                     |
+| ----------------------------- | ------------------------------------------- | --------------------------------------------------- |
+| 1 MCP server down (out of 15) | Continue with 14 servers                    | Warning logged, partial functionality               |
+| All MCP servers down          | Cannot discover tools                       | Clear error message with troubleshooting steps      |
+| Vector search slow (>500ms)   | Return results with latency warning         | Suggest re-indexing or reducing topK                |
+| Database locked               | Retry with exponential backoff (3 attempts) | Transparent to user if succeeds within 5s           |
+| Model download fails          | Fail initialization                         | Provide manual download instructions + retry option |
 
 **Recovery Mechanisms:**
 
@@ -810,11 +827,11 @@ Total query-to-schema latency: <200ms
 
 **Observability Requirements (Story 1.8):**
 
-| Signal Type | Implementation | Destination | Story |
-|------------|----------------|-------------|-------|
-| **Logs** | Structured JSON logging via std/log | Console (INFO+) + File (ALL levels) | 1.8 |
-| **Metrics** | Custom metrics tracking in PGlite | telemetry_metrics table, queryable | 1.8 |
-| **Traces** | Not implemented (Epic 1 scope) | Future: Deno Trace API (Epic 2+) | N/A |
+| Signal Type | Implementation                      | Destination                         | Story |
+| ----------- | ----------------------------------- | ----------------------------------- | ----- |
+| **Logs**    | Structured JSON logging via std/log | Console (INFO+) + File (ALL levels) | 1.8   |
+| **Metrics** | Custom metrics tracking in PGlite   | telemetry_metrics table, queryable  | 1.8   |
+| **Traces**  | Not implemented (Epic 1 scope)      | Future: Deno Trace API (Epic 2+)    | N/A   |
 
 **Logging Strategy:**
 
@@ -824,15 +841,15 @@ import * as log from "std/log";
 
 // Log levels
 export enum LogLevel {
-  ERROR = "ERROR",   // Critical failures requiring attention
-  WARN = "WARN",     // Degraded functionality, recoverable errors
-  INFO = "INFO",     // Key user actions, workflow milestones
-  DEBUG = "DEBUG",   // Detailed troubleshooting info
+  ERROR = "ERROR", // Critical failures requiring attention
+  WARN = "WARN", // Degraded functionality, recoverable errors
+  INFO = "INFO", // Key user actions, workflow milestones
+  DEBUG = "DEBUG", // Detailed troubleshooting info
 }
 
 // Structured log format
 interface LogEntry {
-  timestamp: string;      // ISO 8601
+  timestamp: string; // ISO 8601
   level: LogLevel;
   message: string;
   context?: Record<string, unknown>;
@@ -847,28 +864,28 @@ interface LogEntry {
 logger.info("MCP server discovered", {
   serverId: "filesystem",
   toolCount: 42,
-  transport: "stdio"
+  transport: "stdio",
 });
 
 logger.error("Vector search failed", {
   query: "sha256_hash_of_query",
   error: error.message,
-  latency_ms: 1523
+  latency_ms: 1523,
 });
 ```
 
 **Key Metrics Tracked:**
 
-| Metric Name | Type | Description | Target |
-|------------|------|-------------|--------|
-| `context_usage_pct` | Gauge | Percentage of LLM context consumed by tool schemas | <5% |
-| `query_latency_ms` | Histogram | End-to-end query-to-schema latency | P95 <200ms |
-| `vector_search_latency_ms` | Histogram | Vector similarity search time | P95 <100ms |
-| `embedding_generation_ms` | Histogram | Time to generate single embedding | Median <600ms |
-| `mcp_servers_discovered` | Counter | Number of successfully connected MCP servers | N/A |
-| `mcp_servers_failed` | Counter | Number of failed MCP server connections | N/A |
-| `tools_indexed` | Gauge | Total number of tools indexed in database | N/A |
-| `db_size_bytes` | Gauge | Size of PGlite database file | Monitor growth |
+| Metric Name                | Type      | Description                                        | Target         |
+| -------------------------- | --------- | -------------------------------------------------- | -------------- |
+| `context_usage_pct`        | Gauge     | Percentage of LLM context consumed by tool schemas | <5%            |
+| `query_latency_ms`         | Histogram | End-to-end query-to-schema latency                 | P95 <200ms     |
+| `vector_search_latency_ms` | Histogram | Vector similarity search time                      | P95 <100ms     |
+| `embedding_generation_ms`  | Histogram | Time to generate single embedding                  | Median <600ms  |
+| `mcp_servers_discovered`   | Counter   | Number of successfully connected MCP servers       | N/A            |
+| `mcp_servers_failed`       | Counter   | Number of failed MCP server connections            | N/A            |
+| `tools_indexed`            | Gauge     | Total number of tools indexed in database          | N/A            |
+| `db_size_bytes`            | Gauge     | Size of PGlite database file                       | Monitor growth |
 
 **Metrics Collection Examples:**
 
@@ -877,7 +894,7 @@ logger.error("Vector search failed", {
 await metrics.record("context_usage_pct", 3.2, {
   query_hash: hashQuery(query),
   tools_loaded: 5,
-  total_context_tokens: 200000
+  total_context_tokens: 200000,
 });
 
 // Story 1.5: Vector search performance
@@ -886,7 +903,7 @@ const results = await vectorSearch.search(query, topK);
 const latency = performance.now() - startTime;
 await metrics.record("vector_search_latency_ms", latency, {
   topK: topK,
-  results_count: results.length
+  results_count: results.length,
 });
 
 // Story 1.3: Server discovery
@@ -907,7 +924,12 @@ await metrics.record("mcp_servers_failed", failedServers.length);
   - Rotation: Daily, keep last 7 days, max 100MB total
   - Example:
     ```json
-    {"timestamp":"2025-11-05T10:30:45.123Z","level":"INFO","message":"Workflow completed","context":{"duration_ms":4200,"tools_executed":5}}
+    {
+      "timestamp": "2025-11-05T10:30:45.123Z",
+      "level": "INFO",
+      "message": "Workflow completed",
+      "context": { "duration_ms": 4200, "tools_executed": 5 }
+    }
     ```
 
 **Privacy & Telemetry:**
@@ -945,28 +967,32 @@ await metrics.record("mcp_servers_failed", failedServers.length);
 
 **External Dependencies (from deno.json):**
 
-| Package | Version | Purpose | Story | License |
-|---------|---------|---------|-------|---------|
-| `@electric-sql/pglite` | 0.3.11 | Embedded PostgreSQL WASM with pgvector | 1.2 | Apache 2.0 |
-| `@electric-sql/pglite/vector` | 0.3.11 | pgvector extension for HNSW vector search | 1.5 | Apache 2.0 |
-| `@xenova/transformers` | 2.17.2 | HuggingFace Transformers.js (BGE-Large-EN-v1.5 inference) | 1.4 | Apache 2.0 |
-| `@cliffy/command` | 1.0.0-rc.7 | Type-safe CLI framework for Deno | 1.7 | MIT |
-| `@std/log` | 0.224.11 | Deno standard library structured logging | 1.8 | MIT |
-| `@std/yaml` | 1.0.6 | YAML parsing for config files | 1.7 | MIT |
-| `@std/fs` | 1.0.19 | Filesystem utilities | 1.2, 1.7 | MIT |
-| `@std/assert` | 1.0.11 | Test assertions | All (testing) | MIT |
-| `graphology` | ^0.25.4 | Graph data structure library (Epic 2) | Out of scope Epic 1 | MIT |
-| `graphology-metrics` | ^2.2.0 | PageRank and centrality metrics (Epic 2) | Out of scope Epic 1 | MIT |
-| `graphology-shortest-path` | ^2.0.2 | Shortest path algorithms (Epic 2) | Out of scope Epic 1 | MIT |
-| `graphology-communities-louvain` | ^2.0.1 | Community detection (Epic 2) | Out of scope Epic 1 | MIT |
+| Package                          | Version    | Purpose                                                   | Story               | License    |
+| -------------------------------- | ---------- | --------------------------------------------------------- | ------------------- | ---------- |
+| `@electric-sql/pglite`           | 0.3.11     | Embedded PostgreSQL WASM with pgvector                    | 1.2                 | Apache 2.0 |
+| `@electric-sql/pglite/vector`    | 0.3.11     | pgvector extension for HNSW vector search                 | 1.5                 | Apache 2.0 |
+| `@xenova/transformers`           | 2.17.2     | HuggingFace Transformers.js (BGE-Large-EN-v1.5 inference) | 1.4                 | Apache 2.0 |
+| `@cliffy/command`                | 1.0.0-rc.7 | Type-safe CLI framework for Deno                          | 1.7                 | MIT        |
+| `@std/log`                       | 0.224.11   | Deno standard library structured logging                  | 1.8                 | MIT        |
+| `@std/yaml`                      | 1.0.6      | YAML parsing for config files                             | 1.7                 | MIT        |
+| `@std/fs`                        | 1.0.19     | Filesystem utilities                                      | 1.2, 1.7            | MIT        |
+| `@std/assert`                    | 1.0.11     | Test assertions                                           | All (testing)       | MIT        |
+| `graphology`                     | ^0.25.4    | Graph data structure library (Epic 2)                     | Out of scope Epic 1 | MIT        |
+| `graphology-metrics`             | ^2.2.0     | PageRank and centrality metrics (Epic 2)                  | Out of scope Epic 1 | MIT        |
+| `graphology-shortest-path`       | ^2.0.2     | Shortest path algorithms (Epic 2)                         | Out of scope Epic 1 | MIT        |
+| `graphology-communities-louvain` | ^2.0.1     | Community detection (Epic 2)                              | Out of scope Epic 1 | MIT        |
 
-**Note:** Graphology dependencies are pre-installed for Epic 2 but not used in Epic 1 implementation.
+**Note:** Graphology dependencies are pre-installed for Epic 2 but not used in Epic 1
+implementation.
 
 **MCP Protocol Dependency:**
 
-The official MCP SDK is **not listed** in deno.json as it will be integrated in Epic 2 (Story 2.4 - Gateway Integration). Epic 1 uses basic stdio subprocess communication via `Deno.Command` for server discovery only.
+The official MCP SDK is **not listed** in deno.json as it will be integrated in Epic 2 (Story 2.4 -
+Gateway Integration). Epic 1 uses basic stdio subprocess communication via `Deno.Command` for server
+discovery only.
 
 Expected addition in Epic 2:
+
 ```json
 "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@latest"
 ```
@@ -981,13 +1007,13 @@ Expected addition in Epic 2:
 
 **Integration Points:**
 
-| Integration | Direction | Protocol | Story |
-|------------|-----------|----------|-------|
-| **MCP Servers** | AgentCards → MCP Servers | stdio (stdin/stdout) | 1.3 |
-| **Claude Desktop Config** | Read-only | JSON file read (~/.config/Claude/claude_desktop_config.json) | 1.7 |
-| **PGlite Database** | Internal | SQL queries (parameterized) | 1.2 |
-| **BGE Model Cache** | HuggingFace Hub | HTTP download (first time only) | 1.4 |
-| **Filesystem** | Read/Write | Deno file APIs (~/.agentcards/ directory) | 1.2, 1.7, 1.8 |
+| Integration               | Direction                | Protocol                                                     | Story         |
+| ------------------------- | ------------------------ | ------------------------------------------------------------ | ------------- |
+| **MCP Servers**           | AgentCards → MCP Servers | stdio (stdin/stdout)                                         | 1.3           |
+| **Claude Desktop Config** | Read-only                | JSON file read (~/.config/Claude/claude_desktop_config.json) | 1.7           |
+| **PGlite Database**       | Internal                 | SQL queries (parameterized)                                  | 1.2           |
+| **BGE Model Cache**       | HuggingFace Hub          | HTTP download (first time only)                              | 1.4           |
+| **Filesystem**            | Read/Write               | Deno file APIs (~/.agentcards/ directory)                    | 1.2, 1.7, 1.8 |
 
 **External System Dependencies:**
 
@@ -1010,6 +1036,7 @@ Expected addition in Epic 2:
 **Dependency Installation:**
 
 Deno automatically installs dependencies on first run (no manual `npm install` needed):
+
 ```bash
 deno task dev  # Auto-installs all imports from deno.json
 ```
@@ -1023,7 +1050,8 @@ deno task dev  # Auto-installs all imports from deno.json
 
 ## Acceptance Criteria (Authoritative)
 
-These acceptance criteria are extracted from Epic 1 stories ([epics.md](./epics.md)) and serve as the authoritative definition of "done" for this epic.
+These acceptance criteria are extracted from Epic 1 stories ([epics.md](./epics.md)) and serve as
+the authoritative definition of "done" for this epic.
 
 **Story 1.1: Project Setup & Repository Structure**
 
@@ -1109,131 +1137,132 @@ These acceptance criteria are extracted from Epic 1 stories ([epics.md](./epics.
 
 ## Traceability Mapping
 
-This table maps each acceptance criteria to its implementation in this tech spec, the responsible component(s), and test verification strategy.
+This table maps each acceptance criteria to its implementation in this tech spec, the responsible
+component(s), and test verification strategy.
 
-| Story | AC# | Acceptance Criteria | Spec Section(s) | Component(s) | Test Strategy |
-|-------|-----|-------------------|----------------|-------------|---------------|
-| 1.1 | 1 | Repository structure initialized | System Architecture Alignment | Project root | Integration test: Verify directory structure exists |
-| 1.1 | 2 | GitHub Actions CI configured | (Out of spec scope) | .github/workflows/ | CI pipeline execution |
-| 1.1 | 3 | deno.json with task scripts | Dependencies and Integrations | deno.json | Unit test: Parse and validate tasks |
-| 1.1 | 4 | README.md with badges | (Out of spec scope) | README.md | Manual review |
-| 1.1 | 5 | .gitignore configured | (Out of spec scope) | .gitignore | Manual review |
-| 1.1 | 6 | License and CODE_OF_CONDUCT | (Out of spec scope) | LICENSE, CODE_OF_CONDUCT.md | Manual review |
-| **1.2** | **1** | **PGlite initialization** | **Data Models, APIs (DatabaseAPI)** | **src/db/client.ts** | **Unit test: db.initialize() succeeds, file created** |
-| 1.2 | 2 | pgvector extension loaded | Data Models (SQL schema) | src/db/migrations/001_initial.sql | Unit test: Query `SELECT * FROM pg_extension WHERE extname='vector'` |
-| 1.2 | 3 | Schema tables created | Data Models (tool_schema, tool_embedding, config_metadata) | src/db/migrations/001_initial.sql | Unit test: SELECT from each table, verify columns |
-| 1.2 | 4 | HNSW index created | Data Models (idx_embedding_vector) | src/db/migrations/001_initial.sql | Unit test: Query pg_indexes, verify HNSW index exists |
-| 1.2 | 5 | CRUD operations tested | APIs (DatabaseAPI methods) | src/db/client.ts, src/db/queries.ts | Unit test: Insert, select, update, delete rows |
-| 1.2 | 6 | Migration system | Workflows (Database Recovery) | src/db/migrations/ | Integration test: Run migrations, verify versioning |
-| **1.3** | **1** | **MCP discovery (stdio + SSE)** | **APIs (MCPDiscoveryAPI), Workflows (Workflow 2)** | **src/mcp/discovery.ts** | **Integration test: Mock MCP servers, verify discovery** |
-| 1.3 | 2 | Connection to servers | APIs (MCPClient) | src/mcp/client.ts | Integration test: Connect to mock server, verify handshake |
-| 1.3 | 3 | Schema extraction via list_tools | APIs (MCPDiscoveryAPI.extractSchemas) | src/mcp/discovery.ts | Integration test: Mock list_tools response, verify parsing |
-| 1.3 | 4 | Schema parsing and validation | APIs (MCPDiscoveryAPI), Data Models (MCPToolDefinition) | src/mcp/discovery.ts | Unit test: Valid/invalid schemas, verify JSON Schema validation |
-| 1.3 | 5 | Schemas stored in DB | Data Models (tool_schema table) | src/db/queries.ts | Integration test: Extract schemas, query DB, verify stored |
-| 1.3 | 6 | Error handling for failures | Reliability (MCP Server Discovery), Workflows (Workflow 2) | src/mcp/discovery.ts | Unit test: Mock server failures, verify graceful degradation |
-| 1.3 | 7 | Console output with counts | Observability (Logging) | src/mcp/discovery.ts | Integration test: Capture console output, verify format |
-| 1.3 | 8 | Support 15+ servers | Performance (MCP Server Discovery) | src/mcp/discovery.ts | Load test: 15 mock servers, verify all discovered |
-| **1.4** | **1** | **BGE model loaded** | **Dependencies (Transformers.js), Workflows (Workflow 3)** | **src/vector/embeddings.ts** | **Integration test: Load model, verify ready state** |
-| 1.4 | 2 | Schema text concatenation | Workflows (Workflow 3, step 3) | src/vector/embeddings.ts | Unit test: Input schema, verify text format |
-| 1.4 | 3 | 1024-dim embeddings generated | APIs (VectorSearchAPI.getEmbedding), Data Models (ToolEmbedding) | src/vector/embeddings.ts | Unit test: Generate embedding, verify dimensions |
-| 1.4 | 4 | Embeddings stored in DB | Data Models (tool_embedding table) | src/db/queries.ts | Integration test: Generate + store, query DB, verify vector |
-| 1.4 | 5 | Progress bar displayed | Workflows (Workflow 3, step 6) | src/vector/embeddings.ts | Manual test: Run with console, verify progress output |
-| 1.4 | 6 | Embeddings cached | Workflows (Workflow 3), Performance (Embedding Optimization) | src/vector/embeddings.ts | Unit test: Regenerate same schema, verify cache hit |
-| 1.4 | 7 | <2 min for 200 tools | Performance (Embedding Generation) | src/vector/embeddings.ts | Benchmark test: 200 tools, measure total time |
-| **1.5** | **1** | **Query embedding generation** | **APIs (VectorSearchAPI.getEmbedding), Workflows (Workflow 4, step 1)** | **src/vector/embeddings.ts** | **Unit test: Embed query, verify 1024-dim output** |
-| 1.5 | 2 | <100ms P95 cosine search | Performance (Vector Search Latency) | src/vector/search.ts | Benchmark test: 1000+ queries, measure P95 |
-| 1.5 | 3 | searchTools API | APIs (VectorSearchAPI.search) | src/vector/search.ts | Unit test: Call API, verify return format |
-| 1.5 | 4 | Top-k sorted by score | Workflows (Workflow 4, step 2-3) | src/vector/search.ts | Unit test: Query, verify descending score order |
-| 1.5 | 5 | Configurable threshold | APIs (VectorSearchAPI.search parameters) | src/vector/search.ts | Unit test: Set threshold, verify filtering |
-| 1.5 | 6 | Accuracy unit tests | (Test strategy only) | tests/unit/vector/search_test.ts | Unit test: Known queries, verify expected top results |
-| 1.5 | 7 | Benchmark P95 <100ms | Performance (Vector Search Latency) | tests/benchmark/vector_search_bench.ts | Benchmark test: P95 measurement |
-| **1.6** | **1** | **Search + schema loading integration** | **Workflows (Workflow 4)** | **src/vector/search.ts + src/db/queries.ts** | **Integration test: Query → search → load, verify schemas** |
-| 1.6 | 2 | Workflow: query → results | Workflows (Workflow 4, full sequence) | src/vector/search.ts | Integration test: Full workflow, verify each step |
-| 1.6 | 3 | Only matched tools loaded | Workflows (Workflow 4, step 4) | src/vector/search.ts | Unit test: topK=5, verify only 5 schemas returned |
-| 1.6 | 4 | Context usage <5% | Performance (Context Window Consumption) | src/telemetry/metrics.ts | Integration test: Measure tokens, verify <5% |
-| 1.6 | 5 | Before/after comparison | Observability (Metrics: context_usage_pct) | src/telemetry/metrics.ts | Integration test: Log metrics, verify comparison logged |
-| 1.6 | 6 | Cache hit optimization | Performance (Context Budget Management) | src/vector/search.ts | Unit test: Repeat query, verify cache behavior |
-| 1.6 | 7 | <200ms P95 latency | Performance (Query-to-Schema Latency) | tests/benchmark/context_optimization_bench.ts | Benchmark test: End-to-end P95 measurement |
-| **1.7** | **1** | **agentcards init command** | **APIs (CLI Commands), Workflows (Workflow 1)** | **src/cli/commands/init.ts** | **Integration test: Run CLI, verify command executes** |
-| 1.7 | 2 | Auto-detect config path | Workflows (Workflow 1, step 1) | src/cli/commands/init.ts | Unit test: Mock OS, verify correct path detection |
-| 1.7 | 3 | Parse mcp.json | Workflows (Workflow 1, step 2) | src/config/loader.ts | Unit test: Sample mcp.json, verify parsing |
-| 1.7 | 4 | Generate config.yaml | APIs (ConfigAPI.save), Workflows (Workflow 1, step 3) | src/config/loader.ts | Integration test: Parse + generate, verify YAML output |
-| 1.7 | 5 | Trigger embeddings post-migration | Workflows (Workflow 1, step 7) | src/cli/commands/init.ts | Integration test: Full init, verify embeddings generated |
-| 1.7 | 6 | Console output with instructions | Workflows (Workflow 1, step 8) | src/cli/commands/init.ts | Integration test: Capture stdout, verify instructions |
-| 1.7 | 7 | Template for new mcp.json | Workflows (Workflow 1, step 9) | src/cli/commands/init.ts | Manual test: Verify template printed to console |
-| 1.7 | 8 | Rollback on error | Reliability (Configuration Recovery) | src/cli/commands/init.ts | Unit test: Force error, verify rollback |
-| 1.7 | 9 | Dry-run mode | APIs (CLI Commands: --dry-run flag) | src/cli/commands/init.ts | Integration test: Run --dry-run, verify no changes |
-| **1.8** | **1** | **Structured logging with std/log** | **Dependencies (@std/log), Observability (Logging)** | **src/telemetry/logger.ts** | **Unit test: Log message, verify structured format** |
-| 1.8 | 2 | Log levels (error, warn, info, debug) | APIs (LoggerAPI) | src/telemetry/logger.ts | Unit test: Each level, verify output |
-| 1.8 | 3 | Console + file output | Observability (Log Destinations) | src/telemetry/logger.ts | Integration test: Log, verify both destinations |
-| 1.8 | 4 | Metrics table in DB | Data Models (telemetry_metrics) | src/db/migrations/001_initial.sql | Unit test: Insert metric, query table |
-| 1.8 | 5 | Metrics tracked | Observability (Key Metrics Tracked) | src/telemetry/metrics.ts | Integration test: Record metrics, verify storage |
-| 1.8 | 6 | Opt-in consent prompt | Observability (Privacy & Telemetry) | src/cli/commands/init.ts | Manual test: First launch, verify prompt |
-| 1.8 | 7 | --telemetry CLI flag | APIs (CLI Commands) | src/cli/main.ts | Unit test: Parse flag, verify config override |
-| 1.8 | 8 | Privacy: no data leakage | Security (Data Protection), Observability (Privacy) | All components | Security audit: Review logs, verify no sensitive data |
+| Story   | AC#   | Acceptance Criteria                     | Spec Section(s)                                                         | Component(s)                                  | Test Strategy                                                        |
+| ------- | ----- | --------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------- |
+| 1.1     | 1     | Repository structure initialized        | System Architecture Alignment                                           | Project root                                  | Integration test: Verify directory structure exists                  |
+| 1.1     | 2     | GitHub Actions CI configured            | (Out of spec scope)                                                     | .github/workflows/                            | CI pipeline execution                                                |
+| 1.1     | 3     | deno.json with task scripts             | Dependencies and Integrations                                           | deno.json                                     | Unit test: Parse and validate tasks                                  |
+| 1.1     | 4     | README.md with badges                   | (Out of spec scope)                                                     | README.md                                     | Manual review                                                        |
+| 1.1     | 5     | .gitignore configured                   | (Out of spec scope)                                                     | .gitignore                                    | Manual review                                                        |
+| 1.1     | 6     | License and CODE_OF_CONDUCT             | (Out of spec scope)                                                     | LICENSE, CODE_OF_CONDUCT.md                   | Manual review                                                        |
+| **1.2** | **1** | **PGlite initialization**               | **Data Models, APIs (DatabaseAPI)**                                     | **src/db/client.ts**                          | **Unit test: db.initialize() succeeds, file created**                |
+| 1.2     | 2     | pgvector extension loaded               | Data Models (SQL schema)                                                | src/db/migrations/001_initial.sql             | Unit test: Query `SELECT * FROM pg_extension WHERE extname='vector'` |
+| 1.2     | 3     | Schema tables created                   | Data Models (tool_schema, tool_embedding, config_metadata)              | src/db/migrations/001_initial.sql             | Unit test: SELECT from each table, verify columns                    |
+| 1.2     | 4     | HNSW index created                      | Data Models (idx_embedding_vector)                                      | src/db/migrations/001_initial.sql             | Unit test: Query pg_indexes, verify HNSW index exists                |
+| 1.2     | 5     | CRUD operations tested                  | APIs (DatabaseAPI methods)                                              | src/db/client.ts, src/db/queries.ts           | Unit test: Insert, select, update, delete rows                       |
+| 1.2     | 6     | Migration system                        | Workflows (Database Recovery)                                           | src/db/migrations/                            | Integration test: Run migrations, verify versioning                  |
+| **1.3** | **1** | **MCP discovery (stdio + SSE)**         | **APIs (MCPDiscoveryAPI), Workflows (Workflow 2)**                      | **src/mcp/discovery.ts**                      | **Integration test: Mock MCP servers, verify discovery**             |
+| 1.3     | 2     | Connection to servers                   | APIs (MCPClient)                                                        | src/mcp/client.ts                             | Integration test: Connect to mock server, verify handshake           |
+| 1.3     | 3     | Schema extraction via list_tools        | APIs (MCPDiscoveryAPI.extractSchemas)                                   | src/mcp/discovery.ts                          | Integration test: Mock list_tools response, verify parsing           |
+| 1.3     | 4     | Schema parsing and validation           | APIs (MCPDiscoveryAPI), Data Models (MCPToolDefinition)                 | src/mcp/discovery.ts                          | Unit test: Valid/invalid schemas, verify JSON Schema validation      |
+| 1.3     | 5     | Schemas stored in DB                    | Data Models (tool_schema table)                                         | src/db/queries.ts                             | Integration test: Extract schemas, query DB, verify stored           |
+| 1.3     | 6     | Error handling for failures             | Reliability (MCP Server Discovery), Workflows (Workflow 2)              | src/mcp/discovery.ts                          | Unit test: Mock server failures, verify graceful degradation         |
+| 1.3     | 7     | Console output with counts              | Observability (Logging)                                                 | src/mcp/discovery.ts                          | Integration test: Capture console output, verify format              |
+| 1.3     | 8     | Support 15+ servers                     | Performance (MCP Server Discovery)                                      | src/mcp/discovery.ts                          | Load test: 15 mock servers, verify all discovered                    |
+| **1.4** | **1** | **BGE model loaded**                    | **Dependencies (Transformers.js), Workflows (Workflow 3)**              | **src/vector/embeddings.ts**                  | **Integration test: Load model, verify ready state**                 |
+| 1.4     | 2     | Schema text concatenation               | Workflows (Workflow 3, step 3)                                          | src/vector/embeddings.ts                      | Unit test: Input schema, verify text format                          |
+| 1.4     | 3     | 1024-dim embeddings generated           | APIs (VectorSearchAPI.getEmbedding), Data Models (ToolEmbedding)        | src/vector/embeddings.ts                      | Unit test: Generate embedding, verify dimensions                     |
+| 1.4     | 4     | Embeddings stored in DB                 | Data Models (tool_embedding table)                                      | src/db/queries.ts                             | Integration test: Generate + store, query DB, verify vector          |
+| 1.4     | 5     | Progress bar displayed                  | Workflows (Workflow 3, step 6)                                          | src/vector/embeddings.ts                      | Manual test: Run with console, verify progress output                |
+| 1.4     | 6     | Embeddings cached                       | Workflows (Workflow 3), Performance (Embedding Optimization)            | src/vector/embeddings.ts                      | Unit test: Regenerate same schema, verify cache hit                  |
+| 1.4     | 7     | <2 min for 200 tools                    | Performance (Embedding Generation)                                      | src/vector/embeddings.ts                      | Benchmark test: 200 tools, measure total time                        |
+| **1.5** | **1** | **Query embedding generation**          | **APIs (VectorSearchAPI.getEmbedding), Workflows (Workflow 4, step 1)** | **src/vector/embeddings.ts**                  | **Unit test: Embed query, verify 1024-dim output**                   |
+| 1.5     | 2     | <100ms P95 cosine search                | Performance (Vector Search Latency)                                     | src/vector/search.ts                          | Benchmark test: 1000+ queries, measure P95                           |
+| 1.5     | 3     | searchTools API                         | APIs (VectorSearchAPI.search)                                           | src/vector/search.ts                          | Unit test: Call API, verify return format                            |
+| 1.5     | 4     | Top-k sorted by score                   | Workflows (Workflow 4, step 2-3)                                        | src/vector/search.ts                          | Unit test: Query, verify descending score order                      |
+| 1.5     | 5     | Configurable threshold                  | APIs (VectorSearchAPI.search parameters)                                | src/vector/search.ts                          | Unit test: Set threshold, verify filtering                           |
+| 1.5     | 6     | Accuracy unit tests                     | (Test strategy only)                                                    | tests/unit/vector/search_test.ts              | Unit test: Known queries, verify expected top results                |
+| 1.5     | 7     | Benchmark P95 <100ms                    | Performance (Vector Search Latency)                                     | tests/benchmark/vector_search_bench.ts        | Benchmark test: P95 measurement                                      |
+| **1.6** | **1** | **Search + schema loading integration** | **Workflows (Workflow 4)**                                              | **src/vector/search.ts + src/db/queries.ts**  | **Integration test: Query → search → load, verify schemas**          |
+| 1.6     | 2     | Workflow: query → results               | Workflows (Workflow 4, full sequence)                                   | src/vector/search.ts                          | Integration test: Full workflow, verify each step                    |
+| 1.6     | 3     | Only matched tools loaded               | Workflows (Workflow 4, step 4)                                          | src/vector/search.ts                          | Unit test: topK=5, verify only 5 schemas returned                    |
+| 1.6     | 4     | Context usage <5%                       | Performance (Context Window Consumption)                                | src/telemetry/metrics.ts                      | Integration test: Measure tokens, verify <5%                         |
+| 1.6     | 5     | Before/after comparison                 | Observability (Metrics: context_usage_pct)                              | src/telemetry/metrics.ts                      | Integration test: Log metrics, verify comparison logged              |
+| 1.6     | 6     | Cache hit optimization                  | Performance (Context Budget Management)                                 | src/vector/search.ts                          | Unit test: Repeat query, verify cache behavior                       |
+| 1.6     | 7     | <200ms P95 latency                      | Performance (Query-to-Schema Latency)                                   | tests/benchmark/context_optimization_bench.ts | Benchmark test: End-to-end P95 measurement                           |
+| **1.7** | **1** | **agentcards init command**             | **APIs (CLI Commands), Workflows (Workflow 1)**                         | **src/cli/commands/init.ts**                  | **Integration test: Run CLI, verify command executes**               |
+| 1.7     | 2     | Auto-detect config path                 | Workflows (Workflow 1, step 1)                                          | src/cli/commands/init.ts                      | Unit test: Mock OS, verify correct path detection                    |
+| 1.7     | 3     | Parse mcp.json                          | Workflows (Workflow 1, step 2)                                          | src/config/loader.ts                          | Unit test: Sample mcp.json, verify parsing                           |
+| 1.7     | 4     | Generate config.yaml                    | APIs (ConfigAPI.save), Workflows (Workflow 1, step 3)                   | src/config/loader.ts                          | Integration test: Parse + generate, verify YAML output               |
+| 1.7     | 5     | Trigger embeddings post-migration       | Workflows (Workflow 1, step 7)                                          | src/cli/commands/init.ts                      | Integration test: Full init, verify embeddings generated             |
+| 1.7     | 6     | Console output with instructions        | Workflows (Workflow 1, step 8)                                          | src/cli/commands/init.ts                      | Integration test: Capture stdout, verify instructions                |
+| 1.7     | 7     | Template for new mcp.json               | Workflows (Workflow 1, step 9)                                          | src/cli/commands/init.ts                      | Manual test: Verify template printed to console                      |
+| 1.7     | 8     | Rollback on error                       | Reliability (Configuration Recovery)                                    | src/cli/commands/init.ts                      | Unit test: Force error, verify rollback                              |
+| 1.7     | 9     | Dry-run mode                            | APIs (CLI Commands: --dry-run flag)                                     | src/cli/commands/init.ts                      | Integration test: Run --dry-run, verify no changes                   |
+| **1.8** | **1** | **Structured logging with std/log**     | **Dependencies (@std/log), Observability (Logging)**                    | **src/telemetry/logger.ts**                   | **Unit test: Log message, verify structured format**                 |
+| 1.8     | 2     | Log levels (error, warn, info, debug)   | APIs (LoggerAPI)                                                        | src/telemetry/logger.ts                       | Unit test: Each level, verify output                                 |
+| 1.8     | 3     | Console + file output                   | Observability (Log Destinations)                                        | src/telemetry/logger.ts                       | Integration test: Log, verify both destinations                      |
+| 1.8     | 4     | Metrics table in DB                     | Data Models (telemetry_metrics)                                         | src/db/migrations/001_initial.sql             | Unit test: Insert metric, query table                                |
+| 1.8     | 5     | Metrics tracked                         | Observability (Key Metrics Tracked)                                     | src/telemetry/metrics.ts                      | Integration test: Record metrics, verify storage                     |
+| 1.8     | 6     | Opt-in consent prompt                   | Observability (Privacy & Telemetry)                                     | src/cli/commands/init.ts                      | Manual test: First launch, verify prompt                             |
+| 1.8     | 7     | --telemetry CLI flag                    | APIs (CLI Commands)                                                     | src/cli/main.ts                               | Unit test: Parse flag, verify config override                        |
+| 1.8     | 8     | Privacy: no data leakage                | Security (Data Protection), Observability (Privacy)                     | All components                                | Security audit: Review logs, verify no sensitive data                |
 
 ## Risks, Assumptions, Open Questions
 
 **RISKS:**
 
-| ID | Risk | Impact | Likelihood | Mitigation | Owner |
-|----|------|--------|-----------|-----------|-------|
-| R1 | BGE model download fails (network issues, HuggingFace Hub down) | High - blocks initialization | Medium | Provide manual download instructions, local cache fallback, retry with exponential backoff | Story 1.4 |
-| R2 | PGlite WASM performance slower than expected on low-end devices | Medium - degraded UX | Low | Benchmark on target devices early, document minimum requirements (4GB RAM), optimize HNSW params | Story 1.2, 1.5 |
-| R3 | Vector search recall <90% for ambiguous queries | Medium - incorrect tool suggestions | Medium | Extensive testing with real-world queries, adjustable threshold, user feedback loop | Story 1.5 |
-| R4 | MCP server diversity causes parsing failures (non-standard schemas) | Medium - partial functionality | High | Robust JSON Schema validation, graceful degradation, log invalid schemas for investigation | Story 1.3 |
-| R5 | Memory exhaustion from large HNSW index (>1000 tools) | Low - crashes on load | Low | Monitor memory usage, implement index size limits, paginate if needed | Story 1.5 |
-| R6 | Claude Desktop config path detection fails on non-standard installations | Medium - migration fails | Medium | Provide manual config path flag (--config), clear error messages with troubleshooting steps | Story 1.7 |
-| R7 | Token counting inaccuracy leads to >5% context usage | High - defeats core value prop | Low | Use same tokenizer as Claude (cl100k_base), add 10% safety margin, measure with real LLM | Story 1.6 |
+| ID | Risk                                                                     | Impact                              | Likelihood | Mitigation                                                                                       | Owner          |
+| -- | ------------------------------------------------------------------------ | ----------------------------------- | ---------- | ------------------------------------------------------------------------------------------------ | -------------- |
+| R1 | BGE model download fails (network issues, HuggingFace Hub down)          | High - blocks initialization        | Medium     | Provide manual download instructions, local cache fallback, retry with exponential backoff       | Story 1.4      |
+| R2 | PGlite WASM performance slower than expected on low-end devices          | Medium - degraded UX                | Low        | Benchmark on target devices early, document minimum requirements (4GB RAM), optimize HNSW params | Story 1.2, 1.5 |
+| R3 | Vector search recall <90% for ambiguous queries                          | Medium - incorrect tool suggestions | Medium     | Extensive testing with real-world queries, adjustable threshold, user feedback loop              | Story 1.5      |
+| R4 | MCP server diversity causes parsing failures (non-standard schemas)      | Medium - partial functionality      | High       | Robust JSON Schema validation, graceful degradation, log invalid schemas for investigation       | Story 1.3      |
+| R5 | Memory exhaustion from large HNSW index (>1000 tools)                    | Low - crashes on load               | Low        | Monitor memory usage, implement index size limits, paginate if needed                            | Story 1.5      |
+| R6 | Claude Desktop config path detection fails on non-standard installations | Medium - migration fails            | Medium     | Provide manual config path flag (--config), clear error messages with troubleshooting steps      | Story 1.7      |
+| R7 | Token counting inaccuracy leads to >5% context usage                     | High - defeats core value prop      | Low        | Use same tokenizer as Claude (cl100k_base), add 10% safety margin, measure with real LLM         | Story 1.6      |
 
 **ASSUMPTIONS:**
 
-| ID | Assumption | Validation | Impact if False |
-|----|-----------|-----------|-----------------|
-| A1 | Claude Desktop uses `claude_desktop_config.json` format consistently across versions | Check Claude documentation, test with multiple versions | Migration tool breaks, require manual config |
-| A2 | MCP servers expose stdio transport reliably | Test with 5+ popular MCP servers (filesystem, database, github, etc.) | Cannot discover servers, need SSE fallback |
-| A3 | BGE-Large-EN-v1.5 provides sufficient accuracy for tool search (>80% recall) | Benchmark with ground-truth dataset of 50+ queries | Need to switch models or hybrid search |
-| A4 | PGlite supports concurrent reads without locking issues | Load test with parallel queries | Performance degradation, need connection pooling |
-| A5 | Users have 4GB RAM and 1GB disk space available | Document system requirements clearly | Out-of-memory errors, cannot store model/database |
-| A6 | MCP protocol spec remains stable (no breaking changes) | Monitor @modelcontextprotocol/sdk releases | Need to update implementation for protocol changes |
-| A7 | Vector search on 200-1000 tools fits in memory without pagination | Test with 1000 tool embeddings (~400MB) | Need to implement index sharding or pagination |
-| A8 | Deno 2.5+ npm compatibility works for all dependencies | Test all npm packages (PGlite, Transformers.js) | Need to find Deno-native alternatives |
+| ID | Assumption                                                                           | Validation                                                            | Impact if False                                    |
+| -- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | -------------------------------------------------- |
+| A1 | Claude Desktop uses `claude_desktop_config.json` format consistently across versions | Check Claude documentation, test with multiple versions               | Migration tool breaks, require manual config       |
+| A2 | MCP servers expose stdio transport reliably                                          | Test with 5+ popular MCP servers (filesystem, database, github, etc.) | Cannot discover servers, need SSE fallback         |
+| A3 | BGE-Large-EN-v1.5 provides sufficient accuracy for tool search (>80% recall)         | Benchmark with ground-truth dataset of 50+ queries                    | Need to switch models or hybrid search             |
+| A4 | PGlite supports concurrent reads without locking issues                              | Load test with parallel queries                                       | Performance degradation, need connection pooling   |
+| A5 | Users have 4GB RAM and 1GB disk space available                                      | Document system requirements clearly                                  | Out-of-memory errors, cannot store model/database  |
+| A6 | MCP protocol spec remains stable (no breaking changes)                               | Monitor @modelcontextprotocol/sdk releases                            | Need to update implementation for protocol changes |
+| A7 | Vector search on 200-1000 tools fits in memory without pagination                    | Test with 1000 tool embeddings (~400MB)                               | Need to implement index sharding or pagination     |
+| A8 | Deno 2.5+ npm compatibility works for all dependencies                               | Test all npm packages (PGlite, Transformers.js)                       | Need to find Deno-native alternatives              |
 
 **OPEN QUESTIONS:**
 
-| ID | Question | Decision Needed By | Assigned To |
-|----|---------|-------------------|-------------|
-| Q1 | Should we support migration from other MCP clients (not just Claude Desktop)? | Story 1.7 start | Product (BMad) |
-| Q2 | What is the fallback strategy if BGE model is unavailable (no internet, limited RAM)? | Story 1.4 start | Architecture |
-| Q3 | Do we need to support custom embedding models (allow users to choose)? | Epic 2 (deferred) | Product |
-| Q4 | Should telemetry be opt-out instead of opt-in for better observability? | Story 1.8 start | Legal/Privacy |
-| Q5 | What is the strategy for handling MCP protocol version mismatches? | Epic 2 (Story 2.4) | Architecture |
-| Q6 | Should we cache MCP server responses to reduce discovery latency? | Story 1.3 design | Architecture |
-| Q7 | How do we handle tool schema changes (versioning, invalidation)? | Story 1.3 design | Architecture |
-| Q8 | Is <5% context usage sufficient, or should we target <3% for more buffer? | Story 1.6 testing | Product |
+| ID | Question                                                                              | Decision Needed By | Assigned To    |
+| -- | ------------------------------------------------------------------------------------- | ------------------ | -------------- |
+| Q1 | Should we support migration from other MCP clients (not just Claude Desktop)?         | Story 1.7 start    | Product (BMad) |
+| Q2 | What is the fallback strategy if BGE model is unavailable (no internet, limited RAM)? | Story 1.4 start    | Architecture   |
+| Q3 | Do we need to support custom embedding models (allow users to choose)?                | Epic 2 (deferred)  | Product        |
+| Q4 | Should telemetry be opt-out instead of opt-in for better observability?               | Story 1.8 start    | Legal/Privacy  |
+| Q5 | What is the strategy for handling MCP protocol version mismatches?                    | Epic 2 (Story 2.4) | Architecture   |
+| Q6 | Should we cache MCP server responses to reduce discovery latency?                     | Story 1.3 design   | Architecture   |
+| Q7 | How do we handle tool schema changes (versioning, invalidation)?                      | Story 1.3 design   | Architecture   |
+| Q8 | Is <5% context usage sufficient, or should we target <3% for more buffer?             | Story 1.6 testing  | Product        |
 
 **DECISION LOG:**
 
-| Date | Question | Decision | Rationale |
-|------|---------|----------|-----------|
-| 2025-11-03 | Q: Use sqlite-vec or pgvector? | Decision: pgvector via PGlite | HNSW support, production-ready, <100ms P95 performance |
-| 2025-11-03 | Q: Local embeddings vs API (OpenAI)? | Decision: Local (BGE-Large-EN-v1.5) | Privacy-first, no API costs, offline support |
-| 2025-11-03 | Q: Custom DAG implementation or library? | Decision: Custom (zero deps) | Explicit AC requirement, educational value, no bloat |
-| 2025-11-03 | Q: Use Graphology or implement graph algorithms in SQL? | Decision: Graphology | True algorithms (PageRank, Louvain), 90% simpler schema, 3-5x faster |
-| 2025-11-05 | Q: Should Epic 1 include MCP gateway? | Decision: No, defer to Epic 2 | Epic 1 focuses on context optimization only, gateway adds complexity |
+| Date       | Question                                                | Decision                            | Rationale                                                            |
+| ---------- | ------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| 2025-11-03 | Q: Use sqlite-vec or pgvector?                          | Decision: pgvector via PGlite       | HNSW support, production-ready, <100ms P95 performance               |
+| 2025-11-03 | Q: Local embeddings vs API (OpenAI)?                    | Decision: Local (BGE-Large-EN-v1.5) | Privacy-first, no API costs, offline support                         |
+| 2025-11-03 | Q: Custom DAG implementation or library?                | Decision: Custom (zero deps)        | Explicit AC requirement, educational value, no bloat                 |
+| 2025-11-03 | Q: Use Graphology or implement graph algorithms in SQL? | Decision: Graphology                | True algorithms (PageRank, Louvain), 90% simpler schema, 3-5x faster |
+| 2025-11-05 | Q: Should Epic 1 include MCP gateway?                   | Decision: No, defer to Epic 2       | Epic 1 focuses on context optimization only, gateway adds complexity |
 
 ## Test Strategy Summary
 
 **Testing Levels and Coverage Target:**
 
-| Test Level | Coverage Target | Tools | Responsibility |
-|------------|----------------|-------|----------------|
-| **Unit Tests** | >80% code coverage | Deno.test, @std/assert | Per-function logic, edge cases |
-| **Integration Tests** | All AC workflows | Deno.test, mock fixtures | Component interactions, data flow |
-| **Benchmark Tests** | All performance ACs | Deno bench | P95 latency, throughput validation |
-| **E2E Tests** | Critical user paths | Deno.test, real MCP servers | Full initialization workflow |
-| **Manual Tests** | UX validation | Human testing | Console output, error messages |
-| **Security Audit** | Privacy/security ACs | Code review | No PII leakage, input validation |
+| Test Level            | Coverage Target      | Tools                       | Responsibility                     |
+| --------------------- | -------------------- | --------------------------- | ---------------------------------- |
+| **Unit Tests**        | >80% code coverage   | Deno.test, @std/assert      | Per-function logic, edge cases     |
+| **Integration Tests** | All AC workflows     | Deno.test, mock fixtures    | Component interactions, data flow  |
+| **Benchmark Tests**   | All performance ACs  | Deno bench                  | P95 latency, throughput validation |
+| **E2E Tests**         | Critical user paths  | Deno.test, real MCP servers | Full initialization workflow       |
+| **Manual Tests**      | UX validation        | Human testing               | Console output, error messages     |
+| **Security Audit**    | Privacy/security ACs | Code review                 | No PII leakage, input validation   |
 
 **Test Organization:**
 
@@ -1307,26 +1336,30 @@ deno coverage coverage/
 
 1. **Story 1.2:** Database initialization on fresh system, migration rollback on failure
 2. **Story 1.3:** MCP server discovery with 15+ servers, graceful failure handling (5 down, 10 up)
-3. **Story 1.4:** Embedding generation with network failure (mock HuggingFace Hub down), cache hit verification
-4. **Story 1.5:** Vector search accuracy with ambiguous queries, P95 latency <100ms with 1000 vectors
+3. **Story 1.4:** Embedding generation with network failure (mock HuggingFace Hub down), cache hit
+   verification
+4. **Story 1.5:** Vector search accuracy with ambiguous queries, P95 latency <100ms with 1000
+   vectors
 5. **Story 1.6:** Context usage measurement accuracy, <5% target validation with token counting
-6. **Story 1.7:** Migration tool with malformed mcp.json, dry-run mode verification, rollback on error
+6. **Story 1.7:** Migration tool with malformed mcp.json, dry-run mode verification, rollback on
+   error
 7. **Story 1.8:** Privacy validation: no queries or schemas in logs (only hashes/IDs)
 
 **Performance Test Matrix:**
 
-| Test | Story | Load Profile | Success Criteria | Priority |
-|------|-------|--------------|------------------|----------|
-| Vector search P95 | 1.5 | 1000 queries, 1000+ vectors | P95 <100ms | Critical |
-| Embedding generation | 1.4 | 200 tool schemas | Total time <2 minutes | High |
-| Context optimization E2E | 1.6 | 50 queries, topK=5 | P95 <200ms, context <5% | Critical |
-| MCP server discovery | 1.3 | 15 concurrent connections | All connected <10s | High |
-| Database CRUD | 1.2 | 1000 inserts, 10k queries | P95 <50ms per operation | Medium |
+| Test                     | Story | Load Profile                | Success Criteria        | Priority |
+| ------------------------ | ----- | --------------------------- | ----------------------- | -------- |
+| Vector search P95        | 1.5   | 1000 queries, 1000+ vectors | P95 <100ms              | Critical |
+| Embedding generation     | 1.4   | 200 tool schemas            | Total time <2 minutes   | High     |
+| Context optimization E2E | 1.6   | 50 queries, topK=5          | P95 <200ms, context <5% | Critical |
+| MCP server discovery     | 1.3   | 15 concurrent connections   | All connected <10s      | High     |
+| Database CRUD            | 1.2   | 1000 inserts, 10k queries   | P95 <50ms per operation | Medium   |
 
 **Mocking Strategy:**
 
 - **MCP Servers:** Mock stdio communication with predefined responses (fixtures/tool-schemas.json)
-- **BGE Model:** Mock transformers.js inference for fast tests, use real model for accuracy validation
+- **BGE Model:** Mock transformers.js inference for fast tests, use real model for accuracy
+  validation
 - **Filesystem:** Use Deno's `--unstable-fs` for in-memory filesystem (fast, isolated)
 - **HuggingFace Hub:** Mock HTTP responses for model downloads (avoid network dependency)
 
@@ -1346,15 +1379,16 @@ jobs:
           deno-version: 2.5
       - run: deno task lint
       - run: deno task check
-      - run: deno task test        # Unit + integration (exclude E2E)
-      - run: deno task bench        # Run benchmarks, fail if targets missed
+      - run: deno task test # Unit + integration (exclude E2E)
+      - run: deno task bench # Run benchmarks, fail if targets missed
       - run: deno coverage coverage/ --lcov > coverage.lcov
-      - uses: codecov/codecov-action@v3  # Upload coverage report
+      - uses: codecov/codecov-action@v3 # Upload coverage report
 ```
 
 **Acceptance Criteria Validation Checklist:**
 
 For each story, QA validates:
+
 - [ ] All ACs pass automated tests (green CI)
 - [ ] Performance targets met (benchmark tests)
 - [ ] Manual UX review completed (console output, error messages)
@@ -1364,20 +1398,21 @@ For each story, QA validates:
 
 **Test Data:**
 
-- **Tool Schemas:** 50 sample schemas covering diverse MCP servers (filesystem, database, github, slack, etc.)
+- **Tool Schemas:** 50 sample schemas covering diverse MCP servers (filesystem, database, github,
+  slack, etc.)
 - **Queries:** 100 test queries with ground-truth expected results for accuracy validation
 - **Embeddings:** Pre-computed embeddings for test schemas (avoid model loading delay in tests)
 
 **Edge Cases and Error Scenarios:**
 
-| Scenario | Test Coverage | Story |
-|----------|--------------|-------|
-| Empty database (first run) | Unit test: db.initialize() on fresh system | 1.2 |
-| All MCP servers down | Integration test: Discovery returns empty, no crash | 1.3 |
-| Invalid tool schema (malformed JSON) | Unit test: Graceful skip, log error | 1.3 |
-| Query with no results (threshold too high) | Unit test: Return empty array, log warning | 1.5 |
-| Disk full during migration | Integration test: Rollback, clean partial data | 1.7 |
-| Model download interrupted | Integration test: Retry with backoff, fail after 3 attempts | 1.4 |
+| Scenario                                   | Test Coverage                                               | Story |
+| ------------------------------------------ | ----------------------------------------------------------- | ----- |
+| Empty database (first run)                 | Unit test: db.initialize() on fresh system                  | 1.2   |
+| All MCP servers down                       | Integration test: Discovery returns empty, no crash         | 1.3   |
+| Invalid tool schema (malformed JSON)       | Unit test: Graceful skip, log error                         | 1.3   |
+| Query with no results (threshold too high) | Unit test: Return empty array, log warning                  | 1.5   |
+| Disk full during migration                 | Integration test: Rollback, clean partial data              | 1.7   |
+| Model download interrupted                 | Integration test: Retry with backoff, fail after 3 attempts | 1.4   |
 
 **Success Metrics:**
 
@@ -1389,7 +1424,5 @@ For each story, QA validates:
 
 ---
 
-**Generated:** 2025-11-05
-**Author:** BMad
-**Epic:** 1 - Project Foundation & Context Optimization Engine
-**Status:** Draft → Ready for Review
+**Generated:** 2025-11-05 **Author:** BMad **Epic:** 1 - Project Foundation & Context Optimization
+Engine **Status:** Draft → Ready for Review

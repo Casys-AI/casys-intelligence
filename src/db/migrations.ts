@@ -111,7 +111,8 @@ export class MigrationRunner {
           await migration.up(this.db);
 
           // Record the migration
-          const query = `INSERT INTO migrations_history (version, name) VALUES (${migration.version}, '${migration.name}')`;
+          const query =
+            `INSERT INTO migrations_history (version, name) VALUES (${migration.version}, '${migration.name}')`;
           await tx.exec(query);
         });
 
@@ -122,8 +123,10 @@ export class MigrationRunner {
         );
 
         throw new DatabaseError(
-          `Migration ${migration.version} (${migration.name}) failed: ${error instanceof Error ? error.message : String(error)}`,
-          "migration"
+          `Migration ${migration.version} (${migration.name}) failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          "migration",
         );
       }
     }
@@ -158,7 +161,7 @@ export class MigrationRunner {
       if (!mig) {
         throw new DatabaseError(
           `Migration ${migration.version} not found in migration list`,
-          "rollback"
+          "rollback",
         );
       }
 
@@ -180,8 +183,10 @@ export class MigrationRunner {
         log.error(`✗ Migration ${mig.version} rollback failed: ${error}`);
 
         throw new DatabaseError(
-          `Rollback of migration ${mig.version} (${mig.name}) failed: ${error instanceof Error ? error.message : String(error)}`,
-          "rollback"
+          `Rollback of migration ${mig.version} (${mig.name}) failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+          "rollback",
         );
       }
     }

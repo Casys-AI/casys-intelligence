@@ -11,11 +11,11 @@
  * - AC7: Performance targets
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import {
   EmbeddingModel,
-  schemaToText,
   generateEmbeddings,
+  schemaToText,
   type ToolSchema,
 } from "../../../src/vector/embeddings.ts";
 import { PGliteClient } from "../../../src/db/client.ts";

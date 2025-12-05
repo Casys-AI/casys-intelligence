@@ -37,14 +37,14 @@ Deno.test("AC6: LICENSE file exists", async () => {
   assertEquals(stat.isFile, true);
 });
 
-Deno.test("AC6: LICENSE - is MIT license", async () => {
+Deno.test("AC6: LICENSE - is AGPL license", async () => {
   const content = await Deno.readTextFile("LICENSE");
-  assertStringIncludes(content, "MIT License");
+  assertStringIncludes(content, "GNU AFFERO GENERAL PUBLIC LICENSE");
 });
 
-Deno.test("AC6: LICENSE - contains copyright year 2025", async () => {
+Deno.test("AC6: LICENSE - contains copyright year", async () => {
   const content = await Deno.readTextFile("LICENSE");
-  assertStringIncludes(content, "2025");
+  assertStringIncludes(content, "2007");
 });
 
 Deno.test("AC6: CODE_OF_CONDUCT.md exists", async () => {

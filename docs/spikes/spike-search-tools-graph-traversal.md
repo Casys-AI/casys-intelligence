@@ -1,6 +1,7 @@
 # Spike: search_tools avec traversée de graphe et Adamic-Adar
 
 ## Status
+
 Approved - Ready for implementation
 
 ## Contexte
@@ -18,6 +19,7 @@ import { bidirectional } from "graphology-shortest-path";
 ```
 
 **Capacités actuelles:**
+
 - `PageRank` - centralité des outils
 - `Louvain` - détection de communautés
 - `bidirectional` - shortest path entre outils
@@ -26,15 +28,18 @@ import { bidirectional } from "graphology-shortest-path";
 ### Problème actuel
 
 `execute_workflow` mélange deux responsabilités:
+
 1. **Recherche d'outils** (sémantique)
 2. **Construction de DAG** (graphe)
 
 Le calcul de confidence combine:
+
 ```typescript
 const confidence = semanticScore * 0.5 + pageRankScore * 0.3 + pathStrength * 0.2;
 ```
 
 **Problèmes:**
+
 - PageRank inutile pour chercher UN outil (mesure importance globale, pas pertinence)
 - Sans edges (0 edges), PageRank = 1/N pour tous → plombe le score
 - Seuil 0.50 trop strict: "screenshot" → 0.48 (semantic 75%, pagerank 2%)
@@ -43,15 +48,17 @@ const confidence = semanticScore * 0.5 + pageRankScore * 0.3 + pathStrength * 0.
 
 ### Comparaison des algorithmes
 
-| Algorithme | Usage | Verdict pour "related tools" |
-|------------|-------|------------------------------|
-| **PageRank** | Importance globale | ❌ Pas pour la recherche |
-| **Louvain** | Grouper en catégories | ❌ Pas pour la recherche |
-| **Adamic-Adar** | "Tools souvent utilisés ensemble" | ✅ **Meilleur choix** |
-| **Jaccard** | Similarité simple | ⚠️ Fallback si peu de données |
+| Algorithme      | Usage                             | Verdict pour "related tools"  |
+| --------------- | --------------------------------- | ----------------------------- |
+| **PageRank**    | Importance globale                | ❌ Pas pour la recherche      |
+| **Louvain**     | Grouper en catégories             | ❌ Pas pour la recherche      |
+| **Adamic-Adar** | "Tools souvent utilisés ensemble" | ✅ **Meilleur choix**         |
+| **Jaccard**     | Similarité simple                 | ⚠️ Fallback si peu de données |
 
 **Pourquoi Adamic-Adar gagne:**
-- Voisins communs **rares** comptent plus (si 2 tools sont utilisés avec un tool spécialisé, c'est plus significatif qu'avec un tool ubiquitaire)
+
+- Voisins communs **rares** comptent plus (si 2 tools sont utilisés avec un tool spécialisé, c'est
+  plus significatif qu'avec un tool ubiquitaire)
 - Surpasse les autres méthodes de link prediction dans les benchmarks académiques
 - **Non disponible dans graphology** → implémentation custom requise
 
@@ -186,10 +193,10 @@ computeGraphRelatedness(
 
 ### 3. Séparation des responsabilités
 
-| Outil | Rôle | Scoring |
-|-------|------|---------|
-| `search_tools` | Trouver des outils pertinents | Semantic + Adamic-Adar (adaptatif) |
-| `execute_workflow` | Construire/exécuter un DAG | Utilise search_tools + PageRank pour ordering |
+| Outil              | Rôle                          | Scoring                                       |
+| ------------------ | ----------------------------- | --------------------------------------------- |
+| `search_tools`     | Trouver des outils pertinents | Semantic + Adamic-Adar (adaptatif)            |
+| `execute_workflow` | Construire/exécuter un DAG    | Utilise search_tools + PageRank pour ordering |
 
 ### 4. Bootstrap du graphe avec templates
 

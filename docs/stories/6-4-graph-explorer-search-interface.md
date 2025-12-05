@@ -1,17 +1,14 @@
 # Story 6.4: Graph Explorer & Search Interface
 
-**Epic:** 6 - Real-time Graph Monitoring & Observability
-**Story ID:** 6.4
-**Status:** done
+**Epic:** 6 - Real-time Graph Monitoring & Observability **Story ID:** 6.4 **Status:** done
 **Estimated Effort:** 3-4 hours
 
 ---
 
 ## User Story
 
-**As a** user,
-**I want** to search and explore the graph interactively,
-**So that** I can find specific tools and understand their relationships.
+**As a** user, **I want** to search and explore the graph interactively, **So that** I can find
+specific tools and understand their relationships.
 
 ---
 
@@ -53,7 +50,8 @@
 
 ### Fresh Architecture (Suivre Story 6.2/6.3 Patterns)
 
-**IMPORTANT:** Le dashboard utilise Fresh avec le pattern Islands. Cette story doit suivre les patterns établis:
+**IMPORTANT:** Le dashboard utilise Fresh avec le pattern Islands. Cette story doit suivre les
+patterns établis:
 
 ```
 src/web/
@@ -73,6 +71,7 @@ src/web/
 ### GraphExplorer Island
 
 Le GraphExplorer DOIT être un **island** car il:
+
 - Gère état local (search query, selected nodes, filters)
 - Fait des requêtes API pour autocomplete
 - Communique avec GraphVisualization via events/callbacks
@@ -102,7 +101,11 @@ export default function GraphExplorer({
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<ToolSuggestion[]>([]);
   const [selectedForPath, setSelectedForPath] = useState<string[]>([]);
-  const [filters, setFilters] = useState<FilterState>({ servers: [], minConfidence: 0, createdAfter: null });
+  const [filters, setFilters] = useState<FilterState>({
+    servers: [],
+    minConfidence: 0,
+    createdAfter: null,
+  });
 
   // Debounced autocomplete search
   useEffect(() => {
@@ -111,7 +114,9 @@ export default function GraphExplorer({
       return;
     }
     const timeout = setTimeout(async () => {
-      const res = await fetch(`${apiBase}/api/tools/search?q=${encodeURIComponent(query)}&limit=10`);
+      const res = await fetch(
+        `${apiBase}/api/tools/search?q=${encodeURIComponent(query)}&limit=10`,
+      );
       const data = await res.json();
       setSuggestions(data.results);
     }, 300);
@@ -142,6 +147,7 @@ export default function GraphExplorer({
 ### API Endpoints Design
 
 **AC10 - Search Endpoint:**
+
 ```typescript
 // GET /api/tools/search?q=screenshot&limit=10
 interface ToolSearchResponse {
@@ -150,7 +156,7 @@ interface ToolSearchResponse {
     name: string;
     server: string;
     description: string;
-    score: number;  // Semantic similarity score
+    score: number; // Semantic similarity score
     pagerank: number;
   }>;
   total: number;
@@ -158,10 +164,11 @@ interface ToolSearchResponse {
 ```
 
 **Path Finding Endpoint:**
+
 ```typescript
 // GET /api/graph/path?from=filesystem:read&to=json:parse
 interface PathResponse {
-  path: string[];  // Ordered list of tool_ids
+  path: string[]; // Ordered list of tool_ids
   edges: Array<{
     from: string;
     to: string;
@@ -172,6 +179,7 @@ interface PathResponse {
 ```
 
 **Adamic-Adar Endpoint:**
+
 ```typescript
 // GET /api/graph/related?tool_id=filesystem:read&limit=5
 interface RelatedToolsResponse {
@@ -180,8 +188,8 @@ interface RelatedToolsResponse {
     tool_id: string;
     name: string;
     server: string;
-    adamic_adar_score: number;  // Similarity based on common neighbors
-    edge_confidence: number | null;  // Direct edge confidence if exists
+    adamic_adar_score: number; // Similarity based on common neighbors
+    edge_confidence: number | null; // Direct edge confidence if exists
   }>;
 }
 ```
@@ -189,11 +197,13 @@ interface RelatedToolsResponse {
 ### GraphRAGEngine Extensions
 
 Méthodes existantes à réutiliser:
+
 - `vectorSearch(query, k)` - Semantic search for autocomplete
 - `findShortestPath(from, to)` - Bidirectional path finding
 - `getNeighbors(toolId)` - Get connected tools
 
 Nouvelles méthodes à ajouter:
+
 ```typescript
 // src/graphrag/graph-engine.ts
 
@@ -222,6 +232,7 @@ getFilteredSnapshot(filters: {
 Le GraphVisualization island existant doit être étendu pour:
 
 1. **Highlight Node (AC3):**
+
 ```typescript
 const highlightNode = (nodeId: string) => {
   cyRef.current?.nodes().removeClass("selected");
@@ -232,6 +243,7 @@ const highlightNode = (nodeId: string) => {
 ```
 
 2. **Show Path (AC4):**
+
 ```typescript
 const showPath = (path: string[]) => {
   cyRef.current?.elements().removeClass("path-highlight");
@@ -246,11 +258,12 @@ const showPath = (path: string[]) => {
 ```
 
 3. **Filter Nodes/Edges (AC5):**
+
 ```typescript
 const applyFilters = (filters: FilterState) => {
   cyRef.current?.nodes().forEach((node) => {
     const visible = filters.servers.length === 0 ||
-                    filters.servers.includes(node.data("server"));
+      filters.servers.includes(node.data("server"));
     if (visible) {
       node.removeClass("filtered");
     } else {
@@ -269,16 +282,20 @@ const applyFilters = (filters: FilterState) => {
 ```
 
 4. **Show Related on Hover (AC6):**
+
 ```typescript
 cy.on("mouseover", "node", async (event) => {
   const nodeId = event.target.data("id");
-  const response = await fetch(`${apiBase}/api/graph/related?tool_id=${encodeURIComponent(nodeId)}&limit=5`);
+  const response = await fetch(
+    `${apiBase}/api/graph/related?tool_id=${encodeURIComponent(nodeId)}&limit=5`,
+  );
   const data = await response.json();
   // Show tooltip with related tools and Adamic-Adar scores
 });
 ```
 
 5. **Breadcrumb Navigation (AC8):**
+
 ```typescript
 const [viewHistory, setViewHistory] = useState<ViewState[]>([]);
 
@@ -324,20 +341,20 @@ const generateGraphML = (cy: any): string => {
   xml += '  <graph id="G" edgedefault="directed">\n';
 
   cy.nodes().forEach((node: any) => {
-    xml += `    <node id="${node.data('id')}">\n`;
-    xml += `      <data key="label">${node.data('label')}</data>\n`;
-    xml += `      <data key="server">${node.data('server')}</data>\n`;
-    xml += `      <data key="pagerank">${node.data('pagerank')}</data>\n`;
+    xml += `    <node id="${node.data("id")}">\n`;
+    xml += `      <data key="label">${node.data("label")}</data>\n`;
+    xml += `      <data key="server">${node.data("server")}</data>\n`;
+    xml += `      <data key="pagerank">${node.data("pagerank")}</data>\n`;
     xml += `    </node>\n`;
   });
 
   cy.edges().forEach((edge: any) => {
-    xml += `    <edge source="${edge.data('source')}" target="${edge.data('target')}">\n`;
-    xml += `      <data key="confidence">${edge.data('confidence')}</data>\n`;
+    xml += `    <edge source="${edge.data("source")}" target="${edge.data("target")}">\n`;
+    xml += `      <data key="confidence">${edge.data("confidence")}</data>\n`;
     xml += `    </edge>\n`;
   });
 
-  xml += '  </graph>\n</graphml>';
+  xml += "  </graph>\n</graphml>";
   return xml;
 };
 ```
@@ -346,79 +363,197 @@ const generateGraphML = (cy: any): string => {
 
 ```css
 /* Search Bar */
-.search-container { position: relative; margin-bottom: 12px; }
-.search-input {
-  width: 100%; padding: 10px 36px 10px 12px;
-  background: #1f2937; border: 1px solid #374151;
-  border-radius: 6px; color: #f3f4f6; font-size: 14px;
+.search-container {
+  position: relative;
+  margin-bottom: 12px;
 }
-.search-input:focus { outline: none; border-color: #3b82f6; }
+.search-input {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #f3f4f6;
+  font-size: 14px;
+}
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
 .search-kbd {
-  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  background: #374151; padding: 2px 6px; border-radius: 4px;
-  font-size: 11px; color: #9ca3af;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #374151;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #9ca3af;
 }
 
 /* Autocomplete Dropdown */
 .autocomplete-dropdown {
-  position: absolute; top: 100%; left: 0; right: 0;
-  background: #1f2937; border: 1px solid #374151;
-  border-radius: 0 0 6px 6px; max-height: 300px; overflow-y: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 0 0 6px 6px;
+  max-height: 300px;
+  overflow-y: auto;
   z-index: 50;
 }
 .autocomplete-item {
-  padding: 8px 12px; cursor: pointer;
-  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.autocomplete-item:hover { background: #374151; }
-.autocomplete-item-name { color: #f3f4f6; font-weight: 500; }
-.autocomplete-item-server { color: #9ca3af; font-size: 12px; }
-.autocomplete-item-score { color: #6b7280; font-size: 11px; font-family: monospace; }
+.autocomplete-item:hover {
+  background: #374151;
+}
+.autocomplete-item-name {
+  color: #f3f4f6;
+  font-weight: 500;
+}
+.autocomplete-item-server {
+  color: #9ca3af;
+  font-size: 12px;
+}
+.autocomplete-item-score {
+  color: #6b7280;
+  font-size: 11px;
+  font-family: monospace;
+}
 
 /* Filter Panel */
-.filter-section { background: #1f2937; border-radius: 6px; padding: 12px; }
-.filter-section h4 { font-size: 12px; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; }
-.filter-checkbox { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-.filter-slider { width: 100%; accent-color: #3b82f6; }
+.filter-section {
+  background: #1f2937;
+  border-radius: 6px;
+  padding: 12px;
+}
+.filter-section h4 {
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.filter-slider {
+  width: 100%;
+  accent-color: #3b82f6;
+}
 
 /* Path Finding */
-.path-selector { display: flex; gap: 8px; margin-top: 12px; }
+.path-selector {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
 .path-node-badge {
-  flex: 1; padding: 8px; background: #374151; border-radius: 4px;
-  font-size: 12px; color: #f3f4f6; text-align: center;
+  flex: 1;
+  padding: 8px;
+  background: #374151;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #f3f4f6;
+  text-align: center;
   border: 1px dashed #6b7280;
 }
-.path-node-badge.selected { border-style: solid; border-color: #3b82f6; }
-.path-btn {
-  padding: 8px 12px; background: #3b82f6; color: white;
-  border: none; border-radius: 4px; cursor: pointer; font-size: 12px;
+.path-node-badge.selected {
+  border-style: solid;
+  border-color: #3b82f6;
 }
-.path-btn:disabled { background: #374151; cursor: not-allowed; }
+.path-btn {
+  padding: 8px 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.path-btn:disabled {
+  background: #374151;
+  cursor: not-allowed;
+}
 
 /* Breadcrumb */
-.breadcrumb { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; }
-.breadcrumb-btn {
-  padding: 4px 8px; background: #374151; border: none; border-radius: 4px;
-  color: #9ca3af; font-size: 11px; cursor: pointer;
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
 }
-.breadcrumb-btn:hover { background: #4b5563; color: #f3f4f6; }
+.breadcrumb-btn {
+  padding: 4px 8px;
+  background: #374151;
+  border: none;
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 11px;
+  cursor: pointer;
+}
+.breadcrumb-btn:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
 
 /* Cytoscape extensions */
-.node.selected { border-width: 4px; border-color: #3b82f6; }
-.node.path-highlight { border-width: 4px; border-color: #10b981; }
-.edge.path-highlight { line-color: #10b981; target-arrow-color: #10b981; width: 4px; opacity: 1; }
-.node.filtered, .edge.filtered { display: none; }
+.node.selected {
+  border-width: 4px;
+  border-color: #3b82f6;
+}
+.node.path-highlight {
+  border-width: 4px;
+  border-color: #10b981;
+}
+.edge.path-highlight {
+  line-color: #10b981;
+  target-arrow-color: #10b981;
+  width: 4px;
+  opacity: 1;
+}
+.node.filtered, .edge.filtered {
+  display: none;
+}
 
 /* Related Tools Tooltip */
 .related-tooltip {
-  position: absolute; background: rgba(0,0,0,0.95);
-  padding: 12px; border-radius: 8px; border: 1px solid #374151;
-  min-width: 200px; z-index: 100;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.95);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #374151;
+  min-width: 200px;
+  z-index: 100;
 }
-.related-tooltip h4 { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
-.related-item { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
-.related-name { color: #f3f4f6; }
-.related-score { color: #10b981; font-family: monospace; }
+.related-tooltip h4 {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+.related-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.related-name {
+  color: #f3f4f6;
+}
+.related-score {
+  color: #10b981;
+  font-family: monospace;
+}
 ```
 
 ---
@@ -427,7 +562,8 @@ const generateGraphML = (cy: any): string => {
 
 - [ ] **Task 0 (BUG FIX - PRIORITÉ HAUTE):** Fix server mapping dans /api/graph/snapshot
   - [ ] 0.1: Investiguer pourquoi `server` = "unknown" pour tous les nodes
-  - [ ] 0.2: S'assurer que `/api/graph/snapshot` extrait le server depuis tool_id (regex `^([^:]+):`)
+  - [ ] 0.2: S'assurer que `/api/graph/snapshot` extrait le server depuis tool_id (regex
+        `^([^:]+):`)
   - [ ] 0.3: Vérifier que GraphVisualization reçoit bien le champ `server` pour chaque node
   - [ ] 0.4: Tester que la légende affiche les servers corrects après fix
 
@@ -552,6 +688,7 @@ const generateGraphML = (cy: any): string => {
 4. **MetricsPanel OK** - La sidebar droite fonctionne bien (24 nodes, 4 edges, etc.)
 
 **Bug à corriger en priorité (Task 0):**
+
 ```typescript
 // /api/graph/snapshot doit retourner le bon server
 // Actuellement: server = "unknown" pour tous les nodes
@@ -561,6 +698,7 @@ const generateGraphML = (cy: any): string => {
 ---
 
 **Problèmes identifiés (résumé):**
+
 1. Tous les nodes sont gris ("unknown" server color) - **BUG API**
 2. Labels trop longs avec prefix MCP (ex: "filesystem:read") - **UX**
 3. Nodes orphelins (sans edges) polluent le graphe - **UX**
@@ -570,7 +708,8 @@ const generateGraphML = (cy: any): string => {
 
 #### Pattern Neo4j "Color on Demand" (APPROUVÉ)
 
-**Principe:** L'utilisateur voit d'abord la STRUCTURE (tout en gris), puis CHOISIT quels servers colorier via la légende.
+**Principe:** L'utilisateur voit d'abord la STRUCTURE (tout en gris), puis CHOISIT quels servers
+colorier via la légende.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -598,12 +737,14 @@ const generateGraphML = (cy: any): string => {
 ```
 
 **Avantages:**
+
 - Cognitive load réduit (pas submergé de couleurs)
 - Focus intentionnel (on colorie ce qu'on explore)
 - Scalabilité (fonctionne avec 5 ou 50 servers)
 - Comparaison facile (activer 2-3 servers)
 
 **Implémentation:**
+
 ```typescript
 interface LegendState {
   servers: Map<string, {
@@ -667,6 +808,7 @@ const getServerColor = (server: string): string =>
 ```
 
 **Implémentation:**
+
 ```typescript
 cy.on("mouseover", "node", async (event) => {
   const node = event.target;
@@ -680,7 +822,7 @@ cy.on("mouseover", "node", async (event) => {
     pagerank: node.data("pagerank"),
     inDegree: node.indegree(),
     outDegree: node.outdegree(),
-    related: related.slice(0, 3)
+    related: related.slice(0, 3),
   });
 });
 ```
@@ -707,6 +849,7 @@ const getShortLabel = (toolId: string): string => {
 #### Orphelins (APPROUVÉ)
 
 **Comportement:**
+
 - Visibles par défaut mais visuellement atténués (opacity 0.4, border dashed)
 - Toggle dans la légende pour les masquer
 - Counter informatif "(15)" dans la légende
@@ -764,6 +907,7 @@ cy.nodes().forEach((node) => {
 ```
 
 **Décisions de placement:**
+
 - **Search bar:** Floating top-left du graph canvas (accès rapide, pas dans sidebar)
 - **Légende Neo4j:** Bottom-left du graph canvas (remplace la légende actuelle top-right)
 - **Navigation:** Bottom-left, sous la légende (Back, Fit buttons)
@@ -792,6 +936,7 @@ cy.nodes().forEach((node) => {
 ```
 
 **Détails:**
+
 - Nom court en gras (sans prefix server)
 - Server en texte + badge coloré si activé dans légende
 - PageRank pour indiquer l'importance
@@ -803,6 +948,7 @@ cy.nodes().forEach((node) => {
 #### Find Path UX (APPROUVÉ)
 
 **Flow utilisateur:**
+
 1. Click sur node A → panel détails s'ouvre avec bouton [📍 Start path from here]
 2. Indicateur visuel: "Select destination node..." + Node A marqué (pin icon)
 3. Click sur node B → path calculé automatiquement
@@ -834,14 +980,15 @@ cy.nodes().forEach((node) => {
 
 #### Keyboard Shortcuts (APPROUVÉ)
 
-| Shortcut | Action | Discoverability |
-|----------|--------|-----------------|
-| `/` | Focus search | Affiché dans placeholder `[/]` |
-| `Esc` | Clear/Close | Standard, pas besoin d'afficher |
-| `?` | Aide shortcuts | Petit `?` en haut à droite |
-| `r` | Reset view (fit) | Tooltip sur bouton Fit |
+| Shortcut | Action           | Discoverability                 |
+| -------- | ---------------- | ------------------------------- |
+| `/`      | Focus search     | Affiché dans placeholder `[/]`  |
+| `Esc`    | Clear/Close      | Standard, pas besoin d'afficher |
+| `?`      | Aide shortcuts   | Petit `?` en haut à droite      |
+| `r`      | Reset view (fit) | Tooltip sur bouton Fit          |
 
 **Modal d'aide (accessible via `?`):**
+
 ```
 ┌─────────────────────────────────────┐
 │ ⌨️ Keyboard Shortcuts               │
@@ -880,6 +1027,7 @@ cy.nodes().forEach((node) => {
 ### Existing Methods to Reuse
 
 From GraphRAGEngine (src/graphrag/graph-engine.ts):
+
 - `vectorSearch(query, k)` - Pour autocomplete semantic
 - `findShortestPath(from, to)` - Pour path finding
 - `computeAdamicAdar(nodeA, nodeB)` - Pour related tools
@@ -904,14 +1052,17 @@ From GraphRAGEngine (src/graphrag/graph-engine.ts):
 - **API Base:** Hard-coded à `http://localhost:3001` dans island (Fresh props serialization issue)
 - **Testing:** 23 tests (15 unit + 8 integration) - suivre même pattern
 - **CSS-in-JS:** Styles dans dashboard.tsx (not separate CSS files)
-- **GraphRAGEngine Methods:** getMetrics(), getAdaptiveAlpha(), getGraphDensity(), getPageRankTop(), getTotalCommunities() - patterns pour nouvelles méthodes
+- **GraphRAGEngine Methods:** getMetrics(), getAdaptiveAlpha(), getGraphDensity(), getPageRankTop(),
+  getTotalCommunities() - patterns pour nouvelles méthodes
 
 **Files Created in Story 6.3:**
+
 - src/web/islands/MetricsPanel.tsx
 - tests/unit/graphrag/graph_engine_metrics_test.ts
 - tests/integration/dashboard_metrics_test.ts
 
 **Reuse from Story 6.2/6.3:**
+
 - GraphVisualization island avec Cytoscape.js
 - SSE event handling pattern
 - Tailwind-like styling conventions
@@ -1004,43 +1155,46 @@ Task 14 - Tests:
 ### File List
 
 **New Files:**
+
 - `src/web/islands/GraphExplorer.tsx` (276 lines) - Main explorer island
 - `src/web/routes/graph/explorer.tsx` - Explorer page route
 - `tests/unit/graphrag/graph_engine_search_test.ts` - 11 unit tests
 
 **Modified Files:**
+
 - `src/graphrag/graph-engine.ts` - Added searchToolsForAutocomplete(), fixed getGraphSnapshot()
 - `src/mcp/gateway-server.ts` - Added /api/tools/search, /api/graph/path, /api/graph/related
-- `src/web/islands/GraphVisualization.tsx` - Extended with props, tooltip, Neo4j colors, orphan management
+- `src/web/islands/GraphVisualization.tsx` - Extended with props, tooltip, Neo4j colors, orphan
+  management
 
 ---
 
 ## Code Review Notes
 
-**Review Date:** 2025-12-04
-**Reviewer:** Claude Opus 4.5 (Senior Developer Agent)
+**Review Date:** 2025-12-04 **Reviewer:** Claude Opus 4.5 (Senior Developer Agent)
 
 ### Review Outcome: ✅ APPROVED
 
 #### Summary
 
-Story 6.4 implementation is **complete and approved**. All 11 acceptance criteria are fully implemented with clean code, passing tests, and proper architecture following Fresh island patterns.
+Story 6.4 implementation is **complete and approved**. All 11 acceptance criteria are fully
+implemented with clean code, passing tests, and proper architecture following Fresh island patterns.
 
 #### Acceptance Criteria Validation
 
-| AC# | Description | Implementation | Status |
-|-----|-------------|----------------|--------|
-| AC1 | Autocomplete search input with debouncing | `GraphExplorer.tsx:82-106` - 200ms debounce via setTimeout | ✅ |
-| AC2 | Search endpoint returns results with PageRank | `gateway-server.ts:2048-2072`, `graph-engine.ts:825-914` | ✅ |
-| AC3 | Click-to-select highlights node & centers | `GraphVisualization.tsx:241-262`, `360-377` | ✅ |
-| AC4 | Path finder for shortest path visualization | `gateway-server.ts:1965-1993`, `GraphExplorer.tsx:142-158` | ✅ |
-| AC5 | Orphan nodes toggle (degree=0) | `GraphVisualization.tsx:452-478` | ✅ |
-| AC6 | Related tools panel (Adamic-Adar) | `gateway-server.ts:1996-2046`, `GraphExplorer.tsx:108-128` | ✅ |
-| AC7 | Export graph (JSON/PNG) | `GraphVisualization.tsx:524-543` | ✅ |
-| AC8 | SSE real-time updates | `GraphVisualization.tsx:298-356` | ✅ |
-| AC9 | Keyboard shortcuts | `GraphExplorer.tsx:58-79` - `/`, `Ctrl+K`, `Escape`, `Ctrl+P` | ✅ |
-| AC10 | Debounced search (perf <10ms) | Tested in `graph_engine_search_test.ts:255-268` | ✅ |
-| AC11 | Enriched tooltip on hover | `GraphVisualization.tsx:273-292`, `614-632` | ✅ |
+| AC#  | Description                                   | Implementation                                                | Status |
+| ---- | --------------------------------------------- | ------------------------------------------------------------- | ------ |
+| AC1  | Autocomplete search input with debouncing     | `GraphExplorer.tsx:82-106` - 200ms debounce via setTimeout    | ✅     |
+| AC2  | Search endpoint returns results with PageRank | `gateway-server.ts:2048-2072`, `graph-engine.ts:825-914`      | ✅     |
+| AC3  | Click-to-select highlights node & centers     | `GraphVisualization.tsx:241-262`, `360-377`                   | ✅     |
+| AC4  | Path finder for shortest path visualization   | `gateway-server.ts:1965-1993`, `GraphExplorer.tsx:142-158`    | ✅     |
+| AC5  | Orphan nodes toggle (degree=0)                | `GraphVisualization.tsx:452-478`                              | ✅     |
+| AC6  | Related tools panel (Adamic-Adar)             | `gateway-server.ts:1996-2046`, `GraphExplorer.tsx:108-128`    | ✅     |
+| AC7  | Export graph (JSON/PNG)                       | `GraphVisualization.tsx:524-543`                              | ✅     |
+| AC8  | SSE real-time updates                         | `GraphVisualization.tsx:298-356`                              | ✅     |
+| AC9  | Keyboard shortcuts                            | `GraphExplorer.tsx:58-79` - `/`, `Ctrl+K`, `Escape`, `Ctrl+P` | ✅     |
+| AC10 | Debounced search (perf <10ms)                 | Tested in `graph_engine_search_test.ts:255-268`               | ✅     |
+| AC11 | Enriched tooltip on hover                     | `GraphVisualization.tsx:273-292`, `614-632`                   | ✅     |
 
 #### Tests
 
@@ -1050,22 +1204,24 @@ Story 6.4 implementation is **complete and approved**. All 11 acceptance criteri
 
 #### Code Quality Assessment
 
-| Aspect | Rating | Notes |
-|--------|--------|-------|
-| **Type Safety** | ✅ Excellent | Full TypeScript, proper interfaces |
-| **Security** | ✅ Excellent | All URLs use `encodeURIComponent`, no XSS vectors |
-| **Architecture** | ✅ Excellent | Follows Fresh island pattern correctly |
-| **Performance** | ✅ Excellent | Debounced search, SSE for real-time, <10ms latency |
-| **Maintainability** | ✅ Good | Clear separation, reusable methods |
+| Aspect              | Rating       | Notes                                              |
+| ------------------- | ------------ | -------------------------------------------------- |
+| **Type Safety**     | ✅ Excellent | Full TypeScript, proper interfaces                 |
+| **Security**        | ✅ Excellent | All URLs use `encodeURIComponent`, no XSS vectors  |
+| **Architecture**    | ✅ Excellent | Follows Fresh island pattern correctly             |
+| **Performance**     | ✅ Excellent | Debounced search, SSE for real-time, <10ms latency |
+| **Maintainability** | ✅ Good      | Clear separation, reusable methods                 |
 
 #### Minor Issues (Non-blocking)
 
-- **Lint warnings:** 5 `jsx-button-has-type` warnings in `GraphExplorer.tsx` (lines 219, 247, 254, 298, 581)
+- **Lint warnings:** 5 `jsx-button-has-type` warnings in `GraphExplorer.tsx` (lines 219, 247, 254,
+  298, 581)
   - Recommendation: Add `type="button"` to buttons in future PR
 
 #### Verified Test Failures
 
 The 19 failed tests in `tests/unit/graphrag/` are **pre-existing issues** unrelated to Story 6.4:
+
 - `workflow_loader_playground_test.ts` - Missing config file
 - `workflow_sync_test.ts` - Existing sync issues
 - These failures existed before Story 6.4 implementation
@@ -1081,6 +1237,7 @@ The 19 failed tests in `tests/unit/graphrag/` are **pre-existing issues** unrela
 ## Change Log
 
 **2025-12-03** - UX Design Review Extended (Sally, UX Designer Agent)
+
 - Analysé screenshot réel du dashboard (.playwright-mcp/dashboard-working.png)
 - Identifié BUG CRITIQUE: tous les nodes = "unknown" server (API /api/graph/snapshot)
 - Ajouté Task 0 (bug fix prioritaire) pour corriger le mapping server
@@ -1091,6 +1248,7 @@ The 19 failed tests in `tests/unit/graphrag/` are **pre-existing issues** unrela
 - Keyboard shortcuts finalisés: /, Esc, ?, r
 
 **2025-12-03** - UX Design Review (Sally, UX Designer Agent)
+
 - Pattern Neo4j "Color on Demand" approuvé: nodes gris par défaut, activation via légende
 - Tooltip enrichi approuvé: full ID + PageRank + connections + related tools preview
 - Labels courts approuvés: tool name sans prefix, désambiguïsation par couleur/tooltip
@@ -1099,11 +1257,13 @@ The 19 failed tests in `tests/unit/graphrag/` are **pre-existing issues** unrela
 - Task 14 ajoutée pour tests LegendState
 
 **2025-12-03** - Story drafted
+
 - Created from Epic 6 requirements in epics.md
 - Updated for Fresh architecture (consistent with Story 6.2/6.3)
 - Learnings from Story 6.3 incorporated (island pattern, API patterns, testing)
 - 15 tasks (Task 0-14) with 50+ subtasks mapped to 11 ACs
 - GraphExplorer island designed for search/filter/path/export functionality
-- 4 new API endpoints designed: /api/tools/search, /api/graph/path, /api/graph/related, export functions
+- 4 new API endpoints designed: /api/tools/search, /api/graph/path, /api/graph/related, export
+  functions
 
 ---

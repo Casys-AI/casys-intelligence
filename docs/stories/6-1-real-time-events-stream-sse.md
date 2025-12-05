@@ -1,18 +1,14 @@
 # Story 6.1: Real-time Events Stream (SSE)
 
-**Epic:** 6 - Real-time Graph Monitoring & Observability
-**Story ID:** 6.1
-**Status:** done
-**Estimated Effort:** 2-3 hours
-**Completed:** 2025-12-01
+**Epic:** 6 - Real-time Graph Monitoring & Observability **Story ID:** 6.1 **Status:** done
+**Estimated Effort:** 2-3 hours **Completed:** 2025-12-01
 
 ---
 
 ## User Story
 
-**As a** developer monitoring AgentCards,
-**I want** to receive graph events in real-time via Server-Sent Events,
-**So that** I can observe how the system learns without polling.
+**As a** developer monitoring AgentCards, **I want** to receive graph events in real-time via
+Server-Sent Events, **So that** I can observe how the system learns without polling.
 
 ---
 
@@ -20,7 +16,8 @@
 
 1. **AC1:** SSE endpoint créé: `GET /events/stream`
 2. **AC2:** EventEmitter intégré dans GraphRAGEngine
-3. **AC3:** Event types: `graph_synced`, `edge_created`, `edge_updated`, `workflow_executed`, `metrics_updated`
+3. **AC3:** Event types: `graph_synced`, `edge_created`, `edge_updated`, `workflow_executed`,
+   `metrics_updated`
 4. **AC4:** Event payload: timestamp, event_type, data (tool_ids, scores, etc.)
 5. **AC5:** Reconnection automatique si connexion perdue (client-side retry logic)
 6. **AC6:** Heartbeat events toutes les 30s pour maintenir la connexion
@@ -231,9 +228,9 @@ import type { GraphRAGEngine } from "../graphrag/graph-engine.ts";
 import type { GraphEvent } from "../graphrag/events.ts";
 
 interface EventsStreamConfig {
-  maxClients: number;        // Default: 100
+  maxClients: number; // Default: 100
   heartbeatIntervalMs: number; // Default: 30000
-  corsOrigins: string[];     // Default: ["http://localhost:*"]
+  corsOrigins: string[]; // Default: ["http://localhost:*"]
 }
 
 const DEFAULT_CONFIG: EventsStreamConfig = {
@@ -250,7 +247,7 @@ export class EventsStreamManager {
 
   constructor(
     private graphEngine: GraphRAGEngine,
-    private config: EventsStreamConfig = DEFAULT_CONFIG
+    private config: EventsStreamConfig = DEFAULT_CONFIG,
   ) {
     // Subscribe to graph events
     this.graphEngine.on("graph_event", this.broadcastEvent.bind(this));
@@ -267,7 +264,7 @@ export class EventsStreamManager {
     if (this.clients.size >= this.config.maxClients) {
       return new Response(
         JSON.stringify({ error: "Too many clients", max: this.config.maxClients }),
-        { status: 503, headers: { "Content-Type": "application/json" } }
+        { status: 503, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -333,7 +330,7 @@ export class EventsStreamManager {
    */
   private async sendToClient(
     writer: WritableStreamDefaultWriter<Uint8Array>,
-    event: GraphEvent
+    event: GraphEvent,
   ): Promise<void> {
     const sseData = `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
     await writer.write(this.encoder.encode(sseData));
@@ -359,7 +356,7 @@ export class EventsStreamManager {
    * Get CORS headers based on origin
    */
   private getCorsHeaders(origin: string): Record<string, string> {
-    const isAllowed = this.config.corsOrigins.some(pattern => {
+    const isAllowed = this.config.corsOrigins.some((pattern) => {
       if (pattern.includes("*")) {
         const regex = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
         return regex.test(origin);
@@ -460,7 +457,11 @@ function connectToEventsStream(baseUrl: string): EventSource {
 
   eventSource.addEventListener("edge_updated", (event) => {
     const data = JSON.parse(event.data);
-    console.log(`📈 Edge updated: ${data.from_tool_id} → ${data.to_tool_id} (${data.new_confidence.toFixed(2)})`);
+    console.log(
+      `📈 Edge updated: ${data.from_tool_id} → ${data.to_tool_id} (${
+        data.new_confidence.toFixed(2)
+      })`,
+    );
   });
 
   eventSource.addEventListener("workflow_executed", (event) => {
@@ -471,8 +472,12 @@ function connectToEventsStream(baseUrl: string): EventSource {
 
   eventSource.addEventListener("metrics_updated", (event) => {
     const data = JSON.parse(event.data);
-    console.log(`📉 Metrics: density=${data.density.toFixed(3)}, communities=${data.communities_count}`);
-    console.log(`   Top tools: ${data.pagerank_top_10.slice(0, 3).map(t => t.tool_id).join(", ")}`);
+    console.log(
+      `📉 Metrics: density=${data.density.toFixed(3)}, communities=${data.communities_count}`,
+    );
+    console.log(
+      `   Top tools: ${data.pagerank_top_10.slice(0, 3).map((t) => t.tool_id).join(", ")}`,
+    );
   });
 
   eventSource.addEventListener("heartbeat", (event) => {
@@ -565,13 +570,13 @@ curl -N -H "Accept: text/event-stream" http://localhost:3000/events/stream
 
 ### Différences avec Story 2.3
 
-| Aspect | Story 2.3 (DAG Streaming) | Story 6.1 (Graph Events) |
-|--------|---------------------------|--------------------------|
-| Scope | Single workflow execution | Long-lived connection |
-| Events | Task execution events | Graph learning events |
-| Clients | 1 per workflow | N clients persistent |
-| Lifetime | Workflow duration | Server uptime |
-| Heartbeat | Non | Oui (30s) |
+| Aspect    | Story 2.3 (DAG Streaming) | Story 6.1 (Graph Events) |
+| --------- | ------------------------- | ------------------------ |
+| Scope     | Single workflow execution | Long-lived connection    |
+| Events    | Task execution events     | Graph learning events    |
+| Clients   | 1 per workflow            | N clients persistent     |
+| Lifetime  | Workflow duration         | Server uptime            |
+| Heartbeat | Non                       | Oui (30s)                |
 
 ### Project Structure Notes
 
@@ -619,7 +624,8 @@ docs/
 
 ### Context Reference
 
-- [6-1-real-time-events-stream-sse.context.xml](6-1-real-time-events-stream-sse.context.xml) - Generated 2025-12-01
+- [6-1-real-time-events-stream-sse.context.xml](6-1-real-time-events-stream-sse.context.xml) -
+  Generated 2025-12-01
 
 ### Agent Model Used
 
@@ -628,6 +634,7 @@ claude-sonnet-4-5 (2025-12-01)
 ### Debug Log References
 
 **Implementation Plan:**
+
 1. Created GraphEvent type definitions (6 event types)
 2. Integrated EventTarget into GraphRAGEngine with listener map for proper on/off
 3. Modified syncFromDatabase() and updateFromExecution() to emit events
@@ -638,6 +645,7 @@ claude-sonnet-4-5 (2025-12-01)
 8. Created comprehensive API documentation
 
 **Technical Decisions:**
+
 - Used EventTarget (native Deno) instead of node:events for better compatibility
 - Implemented listener map to support proper off() functionality
 - Used execution_id as workflow_id in events (WorkflowExecution type constraint)
@@ -646,9 +654,11 @@ claude-sonnet-4-5 (2025-12-01)
 ### Completion Notes List
 
 ✅ All 10 acceptance criteria met:
+
 - AC1: SSE endpoint GET /events/stream created
 - AC2: EventTarget integrated in GraphRAGEngine
-- AC3: All 6 event types implemented (graph_synced, edge_created, edge_updated, workflow_executed, metrics_updated, heartbeat)
+- AC3: All 6 event types implemented (graph_synced, edge_created, edge_updated, workflow_executed,
+  metrics_updated, heartbeat)
 - AC4: Event payloads include timestamp, event_type, and structured data
 - AC5: EventSource automatic reconnection documented
 - AC6: Heartbeat every 30s implemented
@@ -660,6 +670,7 @@ claude-sonnet-4-5 (2025-12-01)
 ### File List
 
 **New Files:**
+
 - src/graphrag/events.ts
 - src/server/events-stream.ts
 - public/examples/events-client.ts
@@ -668,6 +679,7 @@ claude-sonnet-4-5 (2025-12-01)
 - docs/api/events.md
 
 **Modified Files:**
+
 - src/graphrag/graph-engine.ts (added EventTarget, on/off methods, event emission)
 - src/graphrag/index.ts (exported GraphEvent types)
 - src/mcp/gateway-server.ts (added EventsStreamManager, /events/stream route)
@@ -677,11 +689,13 @@ claude-sonnet-4-5 (2025-12-01)
 ## Change Log
 
 **2025-12-01** - Story drafted
+
 - Created from Epic 6 requirements in epics.md
 - Technical design based on Story 2.3 SSE patterns
 - 7 tasks with 22 subtasks mapped to 10 ACs
 
 **2025-12-01** - Story implemented and ready for review
+
 - All 7 tasks completed
 - 12 unit tests passing (7 EventsStreamManager + 5 GraphRAGEngine)
 - Comprehensive API documentation created
@@ -689,6 +703,7 @@ claude-sonnet-4-5 (2025-12-01)
 - Zero breaking changes to GraphRAGEngine API
 
 **2025-12-01** - Code review APPROVED and story completed
+
 - Systematic validation: All 10 ACs verified with evidence
 - All 21 completed tasks verified with file:line references
 - Quality Score: 100/100

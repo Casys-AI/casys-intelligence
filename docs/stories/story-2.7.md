@@ -1,23 +1,23 @@
 # Story 2.7: End-to-End Tests & Production Hardening
 
-**Epic:** 2 - DAG Execution & Production Readiness
-**Story ID:** 2.7
-**Status:** done
-**Estimated Effort:** 6-8 hours
-**Actual Effort:** ~7 hours
+**Epic:** 2 - DAG Execution & Production Readiness **Story ID:** 2.7 **Status:** done **Estimated
+Effort:** 6-8 hours **Actual Effort:** ~7 hours
 
 ---
 
 ## Dev Agent Record
 
 ### Context Reference
-- [Story Context File](./2-7-end-to-end-tests-production-hardening.context.xml) - Generated 2025-11-08
+
+- [Story Context File](./2-7-end-to-end-tests-production-hardening.context.xml) - Generated
+  2025-11-08
 
 ### Debug Log
 
 **Plan d'implémentation - 2025-11-08**
 
-Cette story complète l'Epic 2 avec une suite de tests E2E complète et un durcissement production. Approche systématique :
+Cette story complète l'Epic 2 avec une suite de tests E2E complète et un durcissement production.
+Approche systématique :
 
 1. **Infrastructure de test** :
    - Créer structure tests/{e2e,benchmarks,memory,load,fixtures,mocks}
@@ -46,6 +46,7 @@ Cette story complète l'Epic 2 avec une suite de tests E2E complète et un durci
    - README : installation, usage, troubleshooting
 
 **Edge cases à gérer** :
+
 - Timeouts dans tests E2E (30s par défaut)
 - Cleanup proper des ressources temporaires
 - Isolation tests (base de données temporaire par test)
@@ -59,6 +60,7 @@ Cette story complète l'Epic 2 avec une suite de tests E2E complète et un durci
 Suite de tests E2E complète implémentée avec succès. Points clés :
 
 **Tests créés** :
+
 - 9 fichiers E2E couvrant le parcours utilisateur complet
 - Mock MCP servers réutilisables avec tracking des appels
 - Helpers de test pour DB, embeddings, et mesures de performance
@@ -67,16 +69,19 @@ Suite de tests E2E complète implémentée avec succès. Points clés :
 - Tests de charge avec 15 serveurs, 100+ tools
 
 **CI/CD amélioré** :
+
 - Pipeline séparé pour unit, integration, E2E, memory, load tests
 - Stage de coverage avec validation >80%
 - Benchmarks automatiques pour suivi de performance
 
 **Documentation** :
+
 - README étendu avec section troubleshooting complète
 - 6 scénarios de dépannage documentés avec solutions
 - Guide d'installation et usage clarifié
 
 **Défis rencontrés** :
+
 - Adaptation des tests aux APIs réelles (GraphRAGEngine, HealthChecker)
 - Gestion des types TypeScript dans les tests
 - Balance entre tests complets et temps d'exécution
@@ -87,9 +92,8 @@ Suite de tests E2E complète implémentée avec succès. Points clés :
 
 ## User Story
 
-**As a** developer shipping production software,
-**I want** comprehensive E2E tests et production hardening,
-**So that** AgentCards is reliable et users don't experience bugs.
+**As a** developer shipping production software, **I want** comprehensive E2E tests et production
+hardening, **So that** AgentCards is reliable et users don't experience bugs.
 
 ---
 
@@ -118,6 +122,7 @@ Suite de tests E2E complète implémentée avec succès. Points clés :
 ## Technical Notes
 
 ### E2E Test Suite Structure
+
 ```typescript
 // tests/e2e/
 ├── 01-init.test.ts           // Migration and initialization
@@ -132,6 +137,7 @@ Suite de tests E2E complète implémentée avec succès. Points clés :
 ```
 
 ### Mock MCP Server
+
 ```typescript
 // tests/fixtures/mock-mcp-server.ts
 export class MockMCPServer {
@@ -192,6 +198,7 @@ interface MockTool {
 ```
 
 ### E2E Test: Full User Journey
+
 ```typescript
 // tests/e2e/09-full-workflow.test.ts
 Deno.test("E2E: Complete user journey", async (t) => {
@@ -226,7 +233,7 @@ Deno.test("E2E: Complete user journey", async (t) => {
     await generateEmbeddings(db, embeddingModel);
 
     const embeddingCount = await db.query(
-      "SELECT COUNT(*) as count FROM tool_embedding"
+      "SELECT COUNT(*) as count FROM tool_embedding",
     );
     assert(embeddingCount[0].count > 0);
   });
@@ -303,6 +310,7 @@ Deno.test("E2E: Complete user journey", async (t) => {
 ```
 
 ### Performance Regression Tests
+
 ```typescript
 // tests/benchmarks/performance.bench.ts
 Deno.bench("Vector search latency", async (b) => {
@@ -343,6 +351,7 @@ Deno.bench("Parallel execution (5 tasks)", async (b) => {
 ```
 
 ### Memory Leak Detection
+
 ```typescript
 // tests/memory/leak-detection.test.ts
 Deno.test("Memory leak: Long-running daemon", async () => {
@@ -370,12 +379,13 @@ Deno.test("Memory leak: Long-running daemon", async () => {
   // Memory growth should be < 50MB for 1000 requests
   assert(
     memoryGrowth < 50 * 1024 * 1024,
-    `Memory leak detected: ${(memoryGrowth / 1024 / 1024).toFixed(2)}MB growth`
+    `Memory leak detected: ${(memoryGrowth / 1024 / 1024).toFixed(2)}MB growth`,
   );
 });
 ```
 
 ### Load Testing
+
 ```typescript
 // tests/load/stress-test.ts
 Deno.test("Load test: 15 servers, 100 tools", async () => {
@@ -435,6 +445,7 @@ Deno.test("Load test: 15 servers, 100 tools", async () => {
 ```
 
 ### CI Configuration Update
+
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -503,6 +514,7 @@ jobs:
 ```
 
 ### Code Coverage Requirements
+
 ```typescript
 // tests/coverage/coverage-check.ts
 const MIN_COVERAGE = 80;
@@ -525,12 +537,14 @@ if (coveragePct < MIN_COVERAGE) {
 ```
 
 ### Documentation Updates
-```markdown
+
+````markdown
 # README.md updates
 
 ## Installation
 
 ### Prerequisites
+
 - Deno 2.5 or higher
 - 15+ MCP servers configured (optional for full experience)
 
@@ -540,6 +554,7 @@ if (coveragePct < MIN_COVERAGE) {
    ```bash
    deno install --allow-all -n agentcards https://deno.land/x/agentcards/cli.ts
    ```
+````
 
 2. **Initialize configuration**
    ```bash
@@ -566,20 +581,23 @@ if (coveragePct < MIN_COVERAGE) {
 ## Troubleshooting
 
 ### MCP Server Not Connecting
+
 - Check server health: `agentcards status`
 - Verify configuration: `~/.agentcards/config.yaml`
 - Check logs: `~/.agentcards/logs/agentcards.log`
 
 ### Vector Search Slow
+
 - Check database file permissions
 - Verify HNSW index: `agentcards debug --check-index`
 - Re-generate embeddings: `agentcards init --force-embeddings`
 
 ### Memory Issues
+
 - Limit tool count: reduce `context.topK` in config
 - Clear cache: `agentcards cache clear`
-```
 
+```
 ---
 
 ## Tasks/Subtasks
@@ -877,3 +895,4 @@ Comprehensive E2E testing infrastructure implemented with excellent code quality
 
 **Senior Developer Signature (AI):** Claude Code Review System v2.0
 **Review Duration:** 45 minutes (systematic validation of 10 ACs, 8 tasks, code quality analysis)
+```

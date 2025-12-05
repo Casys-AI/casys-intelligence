@@ -29,7 +29,11 @@ Deno.test("PIIDetector - Email detection accuracy >95%", () => {
   // Calculate precision for valid emails (should be 100% for true positives)
   const precision = validEmails.length / validEmails.length;
   console.log(`Email detection precision: ${(precision * 100).toFixed(1)}%`);
-  assertEquals(precision, 1.0, "Should detect all valid emails (100% precision for true positives)");
+  assertEquals(
+    precision,
+    1.0,
+    "Should detect all valid emails (100% precision for true positives)",
+  );
 
   // False positives (should NOT detect)
   const falsePositives = [

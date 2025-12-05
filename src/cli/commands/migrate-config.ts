@@ -8,10 +8,7 @@
 
 import { Command } from "@cliffy/command";
 import { parse as parseYAML } from "@std/yaml";
-import {
-  getAgentCardsConfigPath,
-  getLegacyConfigPath,
-} from "../utils.ts";
+import { getAgentCardsConfigPath, getLegacyConfigPath } from "../utils.ts";
 
 /**
  * Create migrate-config command

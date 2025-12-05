@@ -1,18 +1,15 @@
 # Story 2.5-6: Adaptive Thresholds Learning
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops
-**Story ID:** 2.5-6
-**Status:** drafted
-**Estimated Effort:** 2-3 heures
-**Priority:** P1 (Depends on 2.5-4, 2.5-5)
+**Epic:** 2.5 - Adaptive DAG Feedback Loops **Story ID:** 2.5-6 **Status:** drafted **Estimated
+Effort:** 2-3 heures **Priority:** P1 (Depends on 2.5-4, 2.5-5)
 
 ---
 
 ## User Story
 
-**As a** developer building self-improving agent workflows,
-**I want** adaptive thresholds that automatically adjust based on speculation success rates,
-**So that** the system finds optimal confidence thresholds per context without manual tuning.
+**As a** developer building self-improving agent workflows, **I want** adaptive thresholds that
+automatically adjust based on speculation success rates, **So that** the system finds optimal
+confidence thresholds per context without manual tuning.
 
 ---
 
@@ -58,12 +55,12 @@
   - [ ] Add to `src/learning/types.ts`:
     ```typescript
     export interface ThresholdConfig {
-      initial: number;          // 0.92 (conservative start)
-      min: number;              // 0.70 (don't go below)
-      max: number;              // 0.95 (don't exceed)
+      initial: number; // 0.92 (conservative start)
+      min: number; // 0.70 (don't go below)
+      max: number; // 0.95 (don't exceed)
       targetSuccessRate: number; // 0.85 (goal)
-      targetWasteRate: number;   // 0.15 (max acceptable waste)
-      learningRate: number;     // 0.02 (adjustment step)
+      targetWasteRate: number; // 0.15 (max acceptable waste)
+      learningRate: number; // 0.02 (adjustment step)
       evaluationWindow: number; // 50 (samples before adjustment)
     }
 
@@ -94,8 +91,8 @@
           targetSuccessRate: 0.85,
           targetWasteRate: 0.15,
           learningRate: 0.02,
-          evaluationWindow: 50
-        }
+          evaluationWindow: 50,
+        },
       ) {}
 
       // Get threshold for context (with caching)
@@ -108,10 +105,13 @@
         }
 
         // Query database
-        const result = await this.db.query(`
+        const result = await this.db.query(
+          `
           SELECT * FROM adaptive_thresholds
           WHERE context_hash = $1
-        `, [contextHash]);
+        `,
+          [contextHash],
+        );
 
         if (result.rows.length > 0) {
           const record = this.deserialize(result.rows[0]);
@@ -126,13 +126,13 @@
       // Update threshold based on speculation outcomes
       async updateFromEpisodes(
         context: Record<string, any>,
-        episodes: EpisodicEvent[]
+        episodes: EpisodicEvent[],
       ): Promise<void> {
         const contextHash = this.hashContext(context);
 
         // Filter speculation events
         const speculationEvents = episodes.filter(
-          e => e.event_type === 'speculation_start' && e.data.prediction
+          (e) => e.event_type === "speculation_start" && e.data.prediction,
         );
 
         if (speculationEvents.length < this.config.evaluationWindow) {
@@ -141,9 +141,8 @@
         }
 
         // Calculate success rate
-        const successful = speculationEvents.filter(e =>
-          e.data.prediction?.wasCorrect === true
-        ).length;
+        const successful =
+          speculationEvents.filter((e) => e.data.prediction?.wasCorrect === true).length;
         const successRate = successful / speculationEvents.length;
 
         // Get current threshold
@@ -152,7 +151,7 @@
         // Apply learning algorithm
         const newThreshold = this.adjustThreshold(
           currentThreshold,
-          successRate
+          successRate,
         );
 
         // Save to database
@@ -161,16 +160,20 @@
           context,
           newThreshold,
           successRate,
-          speculationEvents.length
+          speculationEvents.length,
         );
 
-        console.log(`[AdaptiveThreshold] Context: ${contextHash}, Success: ${(successRate * 100).toFixed(1)}%, Threshold: ${currentThreshold.toFixed(3)} → ${newThreshold.toFixed(3)}`);
+        console.log(
+          `[AdaptiveThreshold] Context: ${contextHash}, Success: ${
+            (successRate * 100).toFixed(1)
+          }%, Threshold: ${currentThreshold.toFixed(3)} → ${newThreshold.toFixed(3)}`,
+        );
       }
 
       // Learning algorithm
       private adjustThreshold(
         currentThreshold: number,
-        successRate: number
+        successRate: number,
       ): number {
         let newThreshold = currentThreshold;
 
@@ -179,14 +182,14 @@
           // Lower threshold to speculate more
           newThreshold = Math.max(
             this.config.min,
-            currentThreshold - this.config.learningRate
+            currentThreshold - this.config.learningRate,
           );
         } else if (successRate < 0.80) {
           // Too aggressive (success <80%)
           // Raise threshold to speculate less
           newThreshold = Math.min(
             this.config.max,
-            currentThreshold + this.config.learningRate
+            currentThreshold + this.config.learningRate,
           );
         }
         // else: success rate is in target range (80-90%), no change
@@ -196,10 +199,10 @@
 
       private hashContext(context: Record<string, any>): string {
         // Hash based on key features only
-        const keys = ['workflowType', 'domain', 'complexity'];
+        const keys = ["workflowType", "domain", "complexity"];
         const signature = keys
-          .map(k => `${k}:${context[k] ?? 'default'}`)
-          .join('|');
+          .map((k) => `${k}:${context[k] ?? "default"}`)
+          .join("|");
         return signature;
       }
 
@@ -208,9 +211,10 @@
         context: Record<string, any>,
         threshold: number,
         successRate: number,
-        sampleCount: number
+        sampleCount: number,
       ): Promise<void> {
-        await this.db.query(`
+        await this.db.query(
+          `
           INSERT INTO adaptive_thresholds (
             context_hash,
             context_keys,
@@ -224,13 +228,15 @@
             success_rate = $4,
             sample_count = adaptive_thresholds.sample_count + $5,
             updated_at = NOW()
-        `, [
-          contextHash,
-          JSON.stringify(context),
-          threshold,
-          successRate,
-          sampleCount
-        ]);
+        `,
+          [
+            contextHash,
+            JSON.stringify(context),
+            threshold,
+            successRate,
+            sampleCount,
+          ],
+        );
 
         // Update cache
         this.cache.set(contextHash, {
@@ -239,7 +245,7 @@
           threshold,
           successRate,
           sampleCount,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         });
       }
 
@@ -250,7 +256,7 @@
           threshold: row.threshold,
           successRate: row.success_rate,
           sampleCount: row.sample_count,
-          updatedAt: new Date(row.updated_at)
+          updatedAt: new Date(row.updated_at),
         };
       }
     }
@@ -264,21 +270,24 @@
     export class SpeculativeExecutor {
       constructor(
         private executor: ParallelExecutor,
-        private adaptiveThresholds: AdaptiveThresholdManager
+        private adaptiveThresholds: AdaptiveThresholdManager,
       ) {}
 
       async start(
         predictions: PredictedNode[],
-        context: Record<string, any>
+        context: Record<string, any>,
       ): Promise<void> {
         // Get adaptive threshold for context
         const threshold = await this.adaptiveThresholds.getThreshold(context);
 
-        console.log(`[Speculation] Using adaptive threshold: ${threshold.toFixed(3)} for context:`, context);
+        console.log(
+          `[Speculation] Using adaptive threshold: ${threshold.toFixed(3)} for context:`,
+          context,
+        );
 
         // Only speculate on high-confidence predictions
         const highConfidence = predictions.filter(
-          p => p.confidence > threshold
+          (p) => p.confidence > threshold,
         );
 
         for (const pred of highConfidence) {
@@ -296,7 +305,7 @@
     export class GraphRAGEngine {
       constructor(
         private storage: GraphStorage,
-        private adaptiveThresholds: AdaptiveThresholdManager
+        private adaptiveThresholds: AdaptiveThresholdManager,
       ) {}
 
       async updateFromExecution(execution: WorkflowExecution): Promise<void> {
@@ -305,12 +314,12 @@
 
         // NEW: Update adaptive thresholds
         const episodes = await this.episodicMemory.getWorkflowEvents(
-          execution.workflow_id
+          execution.workflow_id,
         );
 
         await this.adaptiveThresholds.updateFromEpisodes(
           execution.context,
-          episodes
+          episodes,
         );
       }
     }
@@ -442,16 +451,19 @@ Different workflow types converge to different optimal thresholds:
 ### Performance Considerations
 
 **Write Performance:**
+
 - Threshold updates: Once per workflow (~50-100 workflows/day)
 - Database upsert: <5ms
 - Cache update: Instant
 
 **Read Performance:**
+
 - Cached lookups: <1ms (Map.get)
 - Database miss: <5ms (indexed query)
 - No impact on speculation latency
 
 **Convergence Time:**
+
 - Evaluation window: 50 speculations
 - Typical workflow: 3-5 speculations
 - Convergence: ~10-15 workflows (~1-2 weeks)
@@ -487,11 +499,13 @@ WEEK 4+: Stable operation
 ### Error Handling
 
 **Learning Failures:**
+
 - Not enough samples → Skip update, wait for more data
 - Database error → Log, use cached threshold
 - Invalid success rate (NaN) → Skip update, log warning
 
 **Threshold Bounds:**
+
 - Always clamp to [0.7, 0.95] range
 - Never exceed bounds even with extreme data
 - Log warning if trying to exceed bounds
@@ -499,6 +513,7 @@ WEEK 4+: Stable operation
 ### Project Structure
 
 **New Files:**
+
 ```
 src/learning/
 └── adaptive-threshold-manager.ts  # AdaptiveThresholdManager class
@@ -508,6 +523,7 @@ src/db/migrations/
 ```
 
 **Modified Files:**
+
 ```
 src/dag/speculative-executor.ts    # Use adaptive threshold
 src/graphrag/graph-engine.ts       # Update thresholds in Loop 3
@@ -519,7 +535,8 @@ src/graphrag/graph-engine.ts       # Update thresholds in Loop 3
 
 - **ADR-007**: DAG Adaptive Feedback Loops (docs/adrs/ADR-007-dag-adaptive-feedback-loops.md)
 - **Architecture**: Pattern 4 - Adaptive DAG Feedback Loop (docs/architecture.md)
-- **Spike**: CoALA Comparison - Section 5.1 Confidence Adaptative (docs/spikes/spike-coala-comparison-adaptive-feedback.md)
+- **Spike**: CoALA Comparison - Section 5.1 Confidence Adaptative
+  (docs/spikes/spike-coala-comparison-adaptive-feedback.md)
 - **Story 2.5-4**: Speculative Execution (uses adaptive threshold)
 - **Story 2.5-5**: Episodic Memory (provides data for learning)
 

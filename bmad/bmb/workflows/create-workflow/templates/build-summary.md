@@ -4,22 +4,19 @@
 
 {{#generatedFiles}}
 
-- **{{type}}**: {{path}}
-  {{/generatedFiles}}
+- **{{type}}**: {{path}} {{/generatedFiles}}
 
 ### Customizations Made
 
 {{#customizations}}
 
-- {{.}}
-  {{/customizations}}
+- {{.}} {{/customizations}}
 
 ### Manual Steps Required
 
 {{#manualSteps}}
 
-- {{.}}
-  {{/manualSteps}}
+- {{.}} {{/manualSteps}}
 
 ### Build Validation Results
 

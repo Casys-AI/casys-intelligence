@@ -80,7 +80,7 @@ export async function generateCompletion(
     system?: string;
     maxTokens?: number;
     temperature?: number;
-  }
+  },
 ) {
   const model = createLLM(config);
 
@@ -104,8 +104,8 @@ export async function generateCompletion(
  */
 if (import.meta.main) {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY") ||
-                 Deno.env.get("OPENAI_API_KEY") ||
-                 Deno.env.get("GOOGLE_API_KEY");
+    Deno.env.get("OPENAI_API_KEY") ||
+    Deno.env.get("GOOGLE_API_KEY");
 
   if (!apiKey) {
     console.error("No API key found. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY");
@@ -120,7 +120,7 @@ if (import.meta.main) {
 
   const result = await generateCompletion(
     { apiKey },
-    "Say hello in one sentence"
+    "Say hello in one sentence",
   );
 
   console.log(`\n✅ Response: ${result.text}`);

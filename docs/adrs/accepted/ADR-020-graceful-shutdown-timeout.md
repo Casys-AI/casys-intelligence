@@ -1,14 +1,15 @@
 # ADR-020: Graceful Shutdown with Timeout Guard
 
-**Status:** Accepted
-**Date:** 2025-12-01
-**Context:** Story 6.2 - Interactive Graph Visualization Dashboard
+**Status:** Accepted **Date:** 2025-12-01 **Context:** Story 6.2 - Interactive Graph Visualization
+Dashboard
 
 ## Problem
 
-The AgentCards gateway server's shutdown handler would hang indefinitely when receiving SIGINT/SIGTERM signals, requiring force-kill (kill -9).
+The AgentCards gateway server's shutdown handler would hang indefinitely when receiving
+SIGINT/SIGTERM signals, requiring force-kill (kill -9).
 
 **Observed behavior:**
+
 ```
 ^C[INFO] Shutting down...
 ^C[INFO] Shutting down...
@@ -17,6 +18,7 @@ The AgentCards gateway server's shutdown handler would hang indefinitely when re
 ```
 
 **Root cause:**
+
 - `Deno.addSignalListener` doesn't properly handle async callbacks
 - No guard against multiple concurrent shutdown attempts
 - No timeout protection if `gateway.stop()` or `db.close()` hang
@@ -72,23 +74,23 @@ Deno.addSignalListener("SIGTERM", shutdown);
 
 ## Benefits
 
-✅ **Clean shutdown:** Server exits properly on Ctrl+C
-✅ **No hangs:** 2-second timeout guarantees process termination
-✅ **No duplicates:** Flag prevents multiple concurrent shutdowns
-✅ **Proper cleanup:** Attempts graceful cleanup before forcing exit
-✅ **Clear logging:** User sees shutdown progress and completion
+✅ **Clean shutdown:** Server exits properly on Ctrl+C ✅ **No hangs:** 2-second timeout guarantees
+process termination ✅ **No duplicates:** Flag prevents multiple concurrent shutdowns ✅ **Proper
+cleanup:** Attempts graceful cleanup before forcing exit ✅ **Clear logging:** User sees shutdown
+progress and completion
 
 ## Trade-offs
 
-⚠️ **Hard timeout:** Forces exit after 2s even if cleanup incomplete
-→ Acceptable: prevents indefinite hangs, 2s is sufficient for cleanup
+⚠️ **Hard timeout:** Forces exit after 2s even if cleanup incomplete → Acceptable: prevents
+indefinite hangs, 2s is sufficient for cleanup
 
-⚠️ **Exit code 1 on timeout:** Timeout treated as error condition
-→ Acceptable: indicates abnormal shutdown, useful for monitoring
+⚠️ **Exit code 1 on timeout:** Timeout treated as error condition → Acceptable: indicates abnormal
+shutdown, useful for monitoring
 
 ## Testing
 
 Manual test:
+
 ```bash
 # Start server
 deno run --allow-all src/main.ts serve --port 3001 --config playground/config/mcp-servers.json

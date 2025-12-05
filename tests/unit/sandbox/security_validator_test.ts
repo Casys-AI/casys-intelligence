@@ -9,8 +9,8 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import {
-  SecurityValidator,
   SecurityValidationError,
+  SecurityValidator,
 } from "../../../src/sandbox/security-validator.ts";
 
 Deno.test({
@@ -26,7 +26,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "EVAL_USAGE"
+      "EVAL_USAGE",
     );
   },
 });
@@ -44,7 +44,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "FUNCTION_CONSTRUCTOR"
+      "FUNCTION_CONSTRUCTOR",
     );
   },
 });
@@ -63,7 +63,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "PROTO_POLLUTION"
+      "PROTO_POLLUTION",
     );
   },
 });
@@ -81,7 +81,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "CONSTRUCTOR_PROTOTYPE"
+      "CONSTRUCTOR_PROTOTYPE",
     );
   },
 });
@@ -100,7 +100,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "DEFINE_GETTER"
+      "DEFINE_GETTER",
     );
   },
 });
@@ -119,7 +119,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "DEFINE_SETTER"
+      "DEFINE_SETTER",
     );
   },
 });
@@ -137,7 +137,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(maliciousCode),
       SecurityValidationError,
-      "DYNAMIC_IMPORT"
+      "DYNAMIC_IMPORT",
     );
   },
 });
@@ -152,7 +152,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(longCode),
       SecurityValidationError,
-      "CODE_TOO_LONG"
+      "CODE_TOO_LONG",
     );
   },
 });
@@ -202,7 +202,7 @@ Deno.test({
     assertThrows(
       () => validator.validateContext(maliciousContext),
       SecurityValidationError,
-      "DANGEROUS_CONTEXT_KEY"
+      "DANGEROUS_CONTEXT_KEY",
     );
   },
 });
@@ -219,7 +219,7 @@ Deno.test({
     assertThrows(
       () => validator.validateContext(maliciousContext),
       SecurityValidationError,
-      "DANGEROUS_CONTEXT_KEY"
+      "DANGEROUS_CONTEXT_KEY",
     );
   },
 });
@@ -236,7 +236,7 @@ Deno.test({
     assertThrows(
       () => validator.validateContext(invalidContext),
       SecurityValidationError,
-      "INVALID_CONTEXT_KEY"
+      "INVALID_CONTEXT_KEY",
     );
   },
 });
@@ -253,7 +253,7 @@ Deno.test({
     assertThrows(
       () => validator.validateContext(contextWithFunction),
       SecurityValidationError,
-      "FUNCTION_IN_CONTEXT"
+      "FUNCTION_IN_CONTEXT",
     );
   },
 });
@@ -272,7 +272,7 @@ Deno.test({
     assertThrows(
       () => validator.validateContext(nested),
       SecurityValidationError,
-      "CONTEXT_TOO_DEEP"
+      "CONTEXT_TOO_DEEP",
     );
   },
 });
@@ -309,7 +309,7 @@ Deno.test({
     assertThrows(
       () => validator.validate(maliciousCode, context),
       SecurityValidationError,
-      "EVAL_USAGE"
+      "EVAL_USAGE",
     );
   },
 });
@@ -335,11 +335,11 @@ Deno.test({
     assertEquals(patterns.length > 0, true);
     assertEquals(
       patterns.some((p) => p.type === "EVAL_USAGE"),
-      true
+      true,
     );
     assertEquals(
       patterns.some((p) => p.type === "FUNCTION_CONSTRUCTOR"),
-      true
+      true,
     );
   },
 });
@@ -404,7 +404,7 @@ Deno.test({
     assertThrows(
       () => validator.validateCode(code),
       SecurityValidationError,
-      "CONSOLE_LOG"
+      "CONSOLE_LOG",
     );
   },
 });
@@ -415,7 +415,7 @@ Deno.test({
     const error = new SecurityValidationError(
       "TEST_TYPE",
       "Test pattern",
-      "Test details"
+      "Test details",
     );
 
     assertEquals(error.name, "SecurityValidationError");

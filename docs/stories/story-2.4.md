@@ -1,17 +1,14 @@
 # Story 2.4: MCP Gateway Integration avec Claude Code
 
-**Epic:** 2 - DAG Execution & Production Readiness
-**Story ID:** 2.4
-**Status:** ready-for-dev
+**Epic:** 2 - DAG Execution & Production Readiness **Story ID:** 2.4 **Status:** ready-for-dev
 **Estimated Effort:** 5-6 hours
 
 ---
 
 ## User Story
 
-**As a** Claude Code user,
-**I want** AgentCards to act as a transparent MCP gateway,
-**So that** Claude can interact with all my MCP servers via a single entry point.
+**As a** Claude Code user, **I want** AgentCards to act as a transparent MCP gateway, **So that**
+Claude can interact with all my MCP servers via a single entry point.
 
 ---
 
@@ -38,6 +35,7 @@
 ## Technical Notes
 
 ### MCP Server Implementation
+
 ```typescript
 // src/mcp/gateway-server.ts
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -51,7 +49,7 @@ export class AgentCardsGateway {
 
   constructor(
     private db: PGlite,
-    private mcpClients: Map<string, MCPClient>
+    private mcpClients: Map<string, MCPClient>,
   ) {
     this.server = new Server(
       {
@@ -63,7 +61,7 @@ export class AgentCardsGateway {
           tools: {},
           prompts: {},
         },
-      }
+      },
     );
 
     this.setupHandlers();
@@ -200,13 +198,17 @@ export class AgentCardsGateway {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              mode: "suggestion",
-              suggested_dag: suggestion.dagStructure,
-              confidence: suggestion.confidence,
-              rationale: suggestion.rationale,
-              alternatives: suggestion.alternatives,
-            }, null, 2),
+            text: JSON.stringify(
+              {
+                mode: "suggestion",
+                suggested_dag: suggestion.dagStructure,
+                confidence: suggestion.confidence,
+                rationale: suggestion.rationale,
+                alternatives: suggestion.alternatives,
+              },
+              null,
+              2,
+            ),
           },
         ],
       };
@@ -225,13 +227,17 @@ export class AgentCardsGateway {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            status: "completed",
-            results: result.results,
-            execution_time_ms: result.executionTimeMs,
-            parallelization_layers: result.parallelizationLayers,
-            errors: result.errors,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              status: "completed",
+              results: result.results,
+              execution_time_ms: result.executionTimeMs,
+              parallelization_layers: result.parallelizationLayers,
+              errors: result.errors,
+            },
+            null,
+            2,
+          ),
         },
       ],
     };
@@ -251,6 +257,7 @@ export class AgentCardsGateway {
 ```
 
 ### MCP Configuration for Claude Code
+
 ```json
 // ~/.config/Claude/claude_desktop_config.json
 {
@@ -264,6 +271,7 @@ export class AgentCardsGateway {
 ```
 
 ### CLI Command: `agentcards serve`
+
 ```typescript
 // src/cli/serve.ts
 export const serveCommand = new Command()
@@ -287,6 +295,7 @@ export const serveCommand = new Command()
 ```
 
 ### Transparent Proxying Example
+
 ```typescript
 // Claude Code sees AgentCards as single server with all tools
 
@@ -304,6 +313,7 @@ export const serveCommand = new Command()
 ```
 
 ### Error Handling (MCP-Compliant)
+
 ```typescript
 // MCP error codes
 const MCPErrorCodes = {
@@ -329,12 +339,13 @@ if (!args.intent && !args.workflow) {
   return formatMCPError(
     MCPErrorCodes.INVALID_PARAMS,
     "Missing required parameter: 'intent' or 'workflow'",
-    { received: Object.keys(args) }
+    { received: Object.keys(args) },
   );
 }
 ```
 
 ### Integration Test
+
 ```typescript
 Deno.test("MCP Gateway - list_tools", async () => {
   const gateway = await setupTestGateway();
@@ -416,11 +427,15 @@ Deno.test("MCP Gateway - execute_workflow", async () => {
 ## Dev Agent Record
 
 ### Context Reference
-- Story context file: [2-4-mcp-gateway-integration-avec-claude-code.context.xml](./2-4-mcp-gateway-integration-avec-claude-code.context.xml)
+
+- Story context file:
+  [2-4-mcp-gateway-integration-avec-claude-code.context.xml](./2-4-mcp-gateway-integration-avec-claude-code.context.xml)
 - Generated: 2025-11-06
 
 ### Debug Log
+
 **Implementation Plan:**
+
 1. Add @modelcontextprotocol/sdk dependency to deno.json ✅
 2. Create AgentCardsGatewayServer wrapper around GatewayHandler ✅
 3. Implement MCP protocol handlers (list_tools, call_tool, get_prompt) ✅
@@ -429,38 +444,50 @@ Deno.test("MCP Gateway - execute_workflow", async () => {
 6. Write comprehensive unit and integration tests ✅
 
 **Technical Approach:**
-- Used official MCP SDK schemas (ListToolsRequestSchema, CallToolRequestSchema, GetPromptRequestSchema)
+
+- Used official MCP SDK schemas (ListToolsRequestSchema, CallToolRequestSchema,
+  GetPromptRequestSchema)
 - Leveraged existing GatewayHandler for workflow intelligence
 - Integrated VectorSearch for semantic tool discovery
 - Proxying via MCPClient for transparent tool execution
 - MCP-compliant JSON-RPC error codes (-32700 to -32603)
 
 **Challenges Resolved:**
-- TypeScript type mismatches with ExecutionMode properties (used explanation vs message, dagStructure vs dag, execution_time_ms vs executionTimeMs)
+
+- TypeScript type mismatches with ExecutionMode properties (used explanation vs message,
+  dagStructure vs dag, execution_time_ms vs executionTimeMs)
 - SDK schema requirements (initially tried `as any`, corrected to use proper Zod schemas from SDK)
 - Database query return type (db.query returns Row[] directly, not {rows: Row[]})
 
 **Post-Implementation Bug Fixes (Code Review):**
-- Fixed TypeScript return type errors in handler methods (changed Promise<unknown> to specific types)
+
+- Fixed TypeScript return type errors in handler methods (changed Promise<unknown> to specific
+  types)
 - Fixed database schema inconsistency (mcp_tools → tool_schema to match migrations)
 - Added missing tool_dependency table to initial migration for GraphRAG engine
-- Updated integration tests to use correct table names (tool_schema instead of mcp_servers/mcp_tools)
+- Updated integration tests to use correct table names (tool_schema instead of
+  mcp_servers/mcp_tools)
 - Updated unit test mocks to match new SQL query structure
 - All tests now passing: 9/9 (7 unit + 2 integration)
 
 ### Completion Notes
+
 **Implemented:**
-- ✅ MCP Gateway Server (src/mcp/gateway-server.ts) - Full MCP protocol implementation with stdio transport
+
+- ✅ MCP Gateway Server (src/mcp/gateway-server.ts) - Full MCP protocol implementation with stdio
+  transport
 - ✅ Enhanced MCPClient with callTool() for proxying
 - ✅ CLI serve command (src/cli/commands/serve.ts) - Complete initialization and server startup
 - ✅ Unit tests (7/7 passing) covering all handlers and error cases
 - ✅ Integration tests (E2E test created for future execution)
 
 **Acceptance Criteria Coverage:**
+
 - AC1-AC7: ✅ All core functionality implemented and tested
 - AC8: ✅ Integration test created (E2E with mock Claude client)
 
 **Key Features:**
+
 - Semantic tool search via VectorSearch when query provided
 - Transparent proxying to underlying MCP servers (serverId:toolName pattern)
 - Special workflow execution tool (agentcards:execute_workflow)
@@ -468,12 +495,12 @@ Deno.test("MCP Gateway - execute_workflow", async () => {
 - Explicit workflow execution via ParallelExecutor
 - MCP-compliant error responses with proper JSON-RPC codes
 
-**Files Modified:** See File List below
-**Tests:** 7 unit tests passing, integration tests created
+**Files Modified:** See File List below **Tests:** 7 unit tests passing, integration tests created
 
 ---
 
 ## File List
+
 - src/mcp/gateway-server.ts (new - 478 lines)
 - src/mcp/client.ts (modified - added callTool() and disconnect())
 - src/cli/commands/serve.ts (new - 234 lines)
@@ -485,6 +512,7 @@ Deno.test("MCP Gateway - execute_workflow", async () => {
 ---
 
 ## Change Log
+
 - 2025-11-08: Story 2.4 implementation completed
   - Implemented MCP Gateway Server with stdio transport
   - Created serve CLI command with full initialization
@@ -496,4 +524,5 @@ Deno.test("MCP Gateway - execute_workflow", async () => {
 ---
 
 ## Status
+
 **review**

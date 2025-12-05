@@ -20,17 +20,22 @@ Quick answers to common questions about the BMad Method Module.
 
 ### Q: Do I always need to run workflow-init?
 
-**A:** No, once you learn the flow you can go directly to workflows. However, workflow-init is helpful because it:
+**A:** No, once you learn the flow you can go directly to workflows. However, workflow-init is
+helpful because it:
 
 - Determines your project's appropriate level automatically
 - Creates the tracking status file
 - Routes you to the correct starting workflow
 
-For experienced users: use the [Quick Reference](./quick-start.md#quick-reference-agent-document-mapping) to go directly to the right agent/workflow.
+For experienced users: use the
+[Quick Reference](./quick-start.md#quick-reference-agent-document-mapping) to go directly to the
+right agent/workflow.
 
 ### Q: Why do I need fresh chats for each workflow?
 
-**A:** Context-intensive workflows (like brainstorming, PRD creation, architecture design) can cause AI hallucinations if run in sequence within the same chat. Starting fresh ensures the agent has maximum context capacity for each workflow. This is particularly important for:
+**A:** Context-intensive workflows (like brainstorming, PRD creation, architecture design) can cause
+AI hallucinations if run in sequence within the same chat. Starting fresh ensures the agent has
+maximum context capacity for each workflow. This is particularly important for:
 
 - Planning workflows (PRD, architecture)
 - Analysis workflows (brainstorming, research)
@@ -40,7 +45,8 @@ Quick workflows like status checks can reuse chats safely.
 
 ### Q: Can I skip workflow-status and just start working?
 
-**A:** Yes, if you already know your project level and which workflow comes next. workflow-status is mainly useful for:
+**A:** Yes, if you already know your project level and which workflow comes next. workflow-status is
+mainly useful for:
 
 - New projects (guides initial setup)
 - When you're unsure what to do next
@@ -57,7 +63,8 @@ Quick workflows like status checks can reuse chats safely.
 
 ### Q: How do I know if I'm in Phase 1, 2, 3, or 4?
 
-**A:** Check your `bmm-workflow-status.md` file (created by workflow-init). It shows your current phase and progress. If you don't have this file, you can also tell by what you're working on:
+**A:** Check your `bmm-workflow-status.md` file (created by workflow-init). It shows your current
+phase and progress. If you don't have this file, you can also tell by what you're working on:
 
 - **Phase 1** - Brainstorming, research, product brief (optional)
 - **Phase 2** - Creating either a PRD or tech-spec (always required)
@@ -82,15 +89,19 @@ When in doubt, start smaller. You can always run create-prd later if needed.
 
 ### Q: Can I change levels mid-project?
 
-**A:** Yes! If you started at Level 1 but realize it's Level 2, you can run create-prd to add proper planning docs. The system is flexible - your initial level choice isn't permanent.
+**A:** Yes! If you started at Level 1 but realize it's Level 2, you can run create-prd to add proper
+planning docs. The system is flexible - your initial level choice isn't permanent.
 
 ### Q: What if workflow-init suggests the wrong level?
 
-**A:** You can override it! workflow-init suggests a level but always asks for confirmation. If you disagree, just say so and choose the level you think is appropriate. Trust your judgment.
+**A:** You can override it! workflow-init suggests a level but always asks for confirmation. If you
+disagree, just say so and choose the level you think is appropriate. Trust your judgment.
 
 ### Q: Do I always need architecture for Level 2?
 
-**A:** No, architecture is **optional** for Level 2. Only create architecture if you need system-level design. Many Level 2 projects work fine with just PRD + epic-tech-context created during implementation.
+**A:** No, architecture is **optional** for Level 2. Only create architecture if you need
+system-level design. Many Level 2 projects work fine with just PRD + epic-tech-context created
+during implementation.
 
 ### Q: What's the difference between Level 1 and Level 2?
 
@@ -138,7 +149,8 @@ If status file exists, use workflow-status. If not, use workflow-init.
 
 ### Q: What happens if I skip a recommended workflow?
 
-**A:** Nothing breaks! Workflows are guidance, not enforcement. However, skipping recommended workflows (like architecture for Level 3) may cause:
+**A:** Nothing breaks! Workflows are guidance, not enforcement. However, skipping recommended
+workflows (like architecture for Level 3) may cause:
 
 - Integration issues during implementation
 - Rework due to poor planning
@@ -147,7 +159,9 @@ If status file exists, use workflow-status. If not, use workflow-init.
 
 ### Q: How do I know when Phase 3 is complete and I can start Phase 4?
 
-**A:** For Level 3-4, run the implementation-readiness workflow. It validates that PRD (FRs/NFRs), architecture, epics+stories, and UX (if applicable) are cohesive before implementation. Pass the gate check = ready for Phase 4.
+**A:** For Level 3-4, run the implementation-readiness workflow. It validates that PRD (FRs/NFRs),
+architecture, epics+stories, and UX (if applicable) are cohesive before implementation. Pass the
+gate check = ready for Phase 4.
 
 ### Q: Can I run workflows in parallel or do they have to be sequential?
 
@@ -156,7 +170,8 @@ If status file exists, use workflow-status. If not, use workflow-init.
 - Phase 1: brainstorm → research → product-brief (optional order)
 - Phase 2: PRD must complete before moving forward
 - Phase 3: architecture → epics+stories → implementation-readiness (sequential)
-- Phase 4: Stories within an epic should generally be sequential, but stories in different epics can be parallel if you have capacity
+- Phase 4: Stories within an epic should generally be sequential, but stories in different epics can
+  be parallel if you have capacity
 
 ---
 
@@ -166,14 +181,20 @@ If status file exists, use workflow-status. If not, use workflow-init.
 
 **A:**
 
-- **Tech-spec (Level 0-1):** Created upfront in Planning Phase, serves as primary/only planning document, a combination of enough technical and planning information to drive a single or multiple files
-- **Epic-tech-context (Level 2-4):** Created during Implementation Phase per epic, supplements PRD + Architecture
+- **Tech-spec (Level 0-1):** Created upfront in Planning Phase, serves as primary/only planning
+  document, a combination of enough technical and planning information to drive a single or multiple
+  files
+- **Epic-tech-context (Level 2-4):** Created during Implementation Phase per epic, supplements PRD +
+  Architecture
 
-Think of it as: tech-spec is for small projects (replaces PRD and architecture), epic-tech-context is for large projects (supplements PRD).
+Think of it as: tech-spec is for small projects (replaces PRD and architecture), epic-tech-context
+is for large projects (supplements PRD).
 
 ### Q: Why no tech-spec at Level 2+?
 
-**A:** Level 2+ projects need product-level planning (PRD) and system-level design (Architecture), which tech-spec doesn't provide. Tech-spec is too narrow for coordinating multiple features. Instead, Level 2-4 uses:
+**A:** Level 2+ projects need product-level planning (PRD) and system-level design (Architecture),
+which tech-spec doesn't provide. Tech-spec is too narrow for coordinating multiple features.
+Instead, Level 2-4 uses:
 
 - PRD (product vision, functional requirements, non-functional requirements)
 - Architecture (system design)
@@ -182,9 +203,12 @@ Think of it as: tech-spec is for small projects (replaces PRD and architecture),
 
 ### Q: When do I create epic-tech-context?
 
-**A:** In Phase 4, right before implementing each epic. Don't create all epic-tech-context upfront - that's over-planning. Create them just-in-time using the epic-tech-context workflow as you're about to start working on that epic.
+**A:** In Phase 4, right before implementing each epic. Don't create all epic-tech-context upfront -
+that's over-planning. Create them just-in-time using the epic-tech-context workflow as you're about
+to start working on that epic.
 
-**Why just-in-time?** You'll learn from earlier epics, and those learnings improve later epic-tech-context.
+**Why just-in-time?** You'll learn from earlier epics, and those learnings improve later
+epic-tech-context.
 
 ### Q: Do I need a PRD for a bug fix?
 
@@ -211,13 +235,15 @@ PRDs are for Level 2-4 projects with multiple features requiring product-level c
 
 ### Q: Do I need story-context for every story?
 
-**A:** Technically no, but it's recommended. story-context provides implementation-specific guidance, references existing patterns, and injects expertise. Skip it only if:
+**A:** Technically no, but it's recommended. story-context provides implementation-specific
+guidance, references existing patterns, and injects expertise. Skip it only if:
 
 - Very simple story (self-explanatory)
 - You're already expert in the area
 - Time is extremely limited
 
-For Level 0-1 using tech-spec, story-context is less critical because tech-spec is already comprehensive.
+For Level 0-1 using tech-spec, story-context is less critical because tech-spec is already
+comprehensive.
 
 ### Q: What if I don't create epic-tech-context before drafting stories?
 
@@ -253,7 +279,8 @@ The story-done workflow is faster and ensures proper status file updates.
 
 ### Q: Can I work on multiple stories at once?
 
-**A:** Yes, if you have capacity! Stories within different epics can be worked in parallel. However, stories within the same epic are usually sequential because they build on each other.
+**A:** Yes, if you have capacity! Stories within different epics can be worked in parallel. However,
+stories within the same epic are usually sequential because they build on each other.
 
 ### Q: What if my story takes longer than estimated?
 
@@ -331,7 +358,8 @@ This prevents old Level 3 PRDs from forcing Level 3 workflow for new Level 0 bug
 
 ### Q: What if my existing code doesn't follow best practices?
 
-**A:** Quick Spec Flow detects your conventions and asks: "Should I follow these existing conventions?" You decide:
+**A:** Quick Spec Flow detects your conventions and asks: "Should I follow these existing
+conventions?" You decide:
 
 - **Yes** → Maintain consistency with current codebase
 - **No** → Establish new standards (document why in tech-spec)
@@ -346,7 +374,7 @@ BMM respects your choice - it won't force modernization, but it will offer it.
 
 **A:** Common issues:
 
-1. Missing language tag: Use ` ```mermaid` not just ` ``` `
+1. Missing language tag: Use `` ```mermaid `` not just `` ``` ``
 2. Syntax errors in diagram (validate at mermaid.live)
 3. Tool doesn't support Mermaid (check your Markdown renderer)
 
@@ -372,7 +400,8 @@ Use them together for best results.
 
 ### Q: What IDEs/tools support BMM?
 
-**A:** BMM requires tools with **agent mode** and access to **high-quality LLM models** that can load and follow complex workflows, then properly implement code changes.
+**A:** BMM requires tools with **agent mode** and access to **high-quality LLM models** that can
+load and follow complex workflows, then properly implement code changes.
 
 **Recommended Tools:**
 
@@ -398,15 +427,22 @@ Use them together for best results.
 3. **Model selection** - Access to Claude Sonnet 4.5, Opus, or GPT-4o class models
 4. **Context capacity** - Can handle large planning documents and codebases
 
-**Why model quality matters:** BMM workflows require LLMs that can follow multi-step processes, maintain context across phases, and implement code that adheres to specifications. Tools with weaker models will struggle with workflow adherence and code quality.
+**Why model quality matters:** BMM workflows require LLMs that can follow multi-step processes,
+maintain context across phases, and implement code that adheres to specifications. Tools with weaker
+models will struggle with workflow adherence and code quality.
 
-See [IDE Setup Guides](https://github.com/bmad-code-org/BMAD-METHOD/tree/main/docs/ide-info) for configuration specifics.
+See [IDE Setup Guides](https://github.com/bmad-code-org/BMAD-METHOD/tree/main/docs/ide-info) for
+configuration specifics.
 
 ### Q: Can I customize agents?
 
-**A:** Yes! Agents are installed as markdown files with XML-style content (optimized for LLMs, readable by any model). Create customization files in `bmad/_cfg/agents/[agent-name].customize.yaml` to override default behaviors while keeping core functionality intact. See agent documentation for customization options.
+**A:** Yes! Agents are installed as markdown files with XML-style content (optimized for LLMs,
+readable by any model). Create customization files in `bmad/_cfg/agents/[agent-name].customize.yaml`
+to override default behaviors while keeping core functionality intact. See agent documentation for
+customization options.
 
-**Note:** While source agents in this repo are YAML, they install as `.md` files with XML-style tags - a format any LLM can read and follow.
+**Note:** While source agents in this repo are YAML, they install as `.md` files with XML-style
+tags - a format any LLM can read and follow.
 
 ### Q: What happens to my planning docs after implementation?
 
@@ -417,11 +453,14 @@ See [IDE Setup Guides](https://github.com/bmad-code-org/BMAD-METHOD/tree/main/do
 - Reference for future enhancements
 - Audit trail for compliance
 
-For enterprise projects (Level 4), consider archiving completed planning artifacts to keep workspace clean.
+For enterprise projects (Level 4), consider archiving completed planning artifacts to keep workspace
+clean.
 
 ### Q: Can I use BMM for non-software projects?
 
-**A:** BMM is optimized for software development, but the methodology principles (scale-adaptive planning, just-in-time design, context injection) can apply to other complex project types. You'd need to adapt workflows and agents for your domain.
+**A:** BMM is optimized for software development, but the methodology principles (scale-adaptive
+planning, just-in-time design, context injection) can apply to other complex project types. You'd
+need to adapt workflows and agents for your domain.
 
 ---
 
@@ -461,7 +500,8 @@ Level 0 Quick Spec Flow is perfect for urgent fixes.
 
 ### Q: What if I disagree with the workflow's recommendations?
 
-**A:** Workflows are guidance, not enforcement. If a workflow recommends something that doesn't make sense for your context:
+**A:** Workflows are guidance, not enforcement. If a workflow recommends something that doesn't make
+sense for your context:
 
 - Explain your reasoning to the agent
 - Ask for alternative approaches
@@ -479,9 +519,11 @@ Trust your expertise - BMM supports your decisions.
 - **Traditional:** Multiple devs work on stories within one epic (months)
 - **Agentic:** Each dev owns complete epics (days)
 
-**In traditional agile:** A team of 5 devs might spend 2-3 months on a single epic, with each dev owning different stories.
+**In traditional agile:** A team of 5 devs might spend 2-3 months on a single epic, with each dev
+owning different stories.
 
-**With BMM + AI agents:** A single dev can complete an entire epic in 1-3 days. What used to take months now takes days.
+**With BMM + AI agents:** A single dev can complete an entire epic in 1-3 days. What used to take
+months now takes days.
 
 **Team Work Distribution:**
 
@@ -511,13 +553,15 @@ Trust your expertise - BMM supports your decisions.
 - Coordinate at epic boundaries, not story level
 - Use git submodules for BMM in enterprise settings
 
-**For comprehensive coverage of enterprise team collaboration, work distribution strategies, git submodule setup, and velocity expectations, see:**
+**For comprehensive coverage of enterprise team collaboration, work distribution strategies, git
+submodule setup, and velocity expectations, see:**
 
 👉 **[Enterprise Agentic Development Guide](./enterprise-agentic-development.md)**
 
 ### Q: What is party mode and when should I use it?
 
-**A:** Party mode is a unique multi-agent collaboration feature where ALL your installed agents (19+ from BMM, CIS, BMB, custom modules) discuss your challenges together in real-time.
+**A:** Party mode is a unique multi-agent collaboration feature where ALL your installed agents (19+
+from BMM, CIS, BMB, custom modules) discuss your challenges together in real-time.
 
 **How it works:**
 
@@ -548,7 +592,8 @@ Trust your expertise - BMM supports your decisions.
 
 **For complete documentation:**
 
-👉 **[Party Mode Guide](./party-mode.md)** - How it works, when to use it, example compositions, best practices
+👉 **[Party Mode Guide](./party-mode.md)** - How it works, when to use it, example compositions,
+best practices
 
 ---
 
@@ -585,4 +630,6 @@ Please include:
 
 ---
 
-**Have a question not answered here?** Please [open an issue](https://github.com/bmad-code-org/BMAD-METHOD/issues) or ask in [Discord](https://discord.gg/gk8jAdXWmj) so we can add it!
+**Have a question not answered here?** Please
+[open an issue](https://github.com/bmad-code-org/BMAD-METHOD/issues) or ask in
+[Discord](https://discord.gg/gk8jAdXWmj) so we can add it!

@@ -12,10 +12,10 @@
  * - AC8: Unit tests for graph operations
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 /**
  * Create test database with schema
@@ -224,7 +224,11 @@ Deno.test("GraphRAGEngine - findShortestPath returns correct path", async () => 
 
   assertExists(path, "Should find path from http:get to filesystem:write");
   assertEquals(path![0], "http:get", "Path should start with http:get");
-  assertEquals(path![path!.length - 1], "filesystem:write", "Path should end with filesystem:write");
+  assertEquals(
+    path![path!.length - 1],
+    "filesystem:write",
+    "Path should end with filesystem:write",
+  );
   assert(path!.length >= 2, "Path should have at least 2 nodes");
 
   await db.close();
@@ -285,7 +289,11 @@ Deno.test("GraphRAGEngine - buildDAG handles tools with no dependencies", async 
 
   assertEquals(dag.tasks.length, 2);
   assertEquals(dag.tasks[0].depends_on.length, 0, "First task should have no dependencies");
-  assertEquals(dag.tasks[1].depends_on.length, 0, "Second task should have no dependencies (no path)");
+  assertEquals(
+    dag.tasks[1].depends_on.length,
+    0,
+    "Second task should have no dependencies (no path)",
+  );
 
   await db.close();
 });

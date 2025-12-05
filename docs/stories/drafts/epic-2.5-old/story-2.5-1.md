@@ -1,18 +1,15 @@
 # Story 2.5-1: Event Stream + Command Queue + State Management
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops
-**Story ID:** 2.5-1
-**Status:** drafted
-**Estimated Effort:** 3-4 heures
-**Priority:** P0 (Foundation for AIL/HIL)
+**Epic:** 2.5 - Adaptive DAG Feedback Loops **Story ID:** 2.5-1 **Status:** drafted **Estimated
+Effort:** 3-4 heures **Priority:** P0 (Foundation for AIL/HIL)
 
 ---
 
 ## User Story
 
-**As a** developer building agent workflows,
-**I want** a controlled DAG executor with event stream observability and command queue control,
-**So that** agents and humans can monitor execution in real-time and inject control commands dynamically.
+**As a** developer building agent workflows, **I want** a controlled DAG executor with event stream
+observability and command queue control, **So that** agents and humans can monitor execution in
+real-time and inject control commands dynamically.
 
 ---
 
@@ -44,11 +41,11 @@
   - [ ] Create `src/dag/types.ts` with `WorkflowState` interface:
     ```typescript
     interface WorkflowState {
-      messages: Message[];      // Agent/human messages
-      tasks: TaskResult[];      // Completed tasks
-      decisions: Decision[];    // AIL/HIL decisions
-      context: Record<string, any>;  // Shared context
-      checkpoint_id?: string;   // Resume capability
+      messages: Message[]; // Agent/human messages
+      tasks: TaskResult[]; // Completed tasks
+      decisions: Decision[]; // AIL/HIL decisions
+      context: Record<string, any>; // Shared context
+      checkpoint_id?: string; // Resume capability
     }
     ```
   - [ ] Implement state reducers pattern (MessagesState-inspired)
@@ -101,10 +98,10 @@
   - [ ] Create reducer functions:
     ```typescript
     const reducers = {
-      messages: (existing, update) => [...existing, ...update],  // append
-      tasks: (existing, update) => [...existing, ...update],     // append
+      messages: (existing, update) => [...existing, ...update], // append
+      tasks: (existing, update) => [...existing, ...update], // append
       decisions: (existing, update) => [...existing, ...update], // append
-      context: (existing, update) => ({ ...existing, ...update }) // merge
+      context: (existing, update) => ({ ...existing, ...update }), // merge
     };
     ```
   - [ ] Implement `updateState(update: Partial<WorkflowState>)` method
@@ -155,6 +152,7 @@ This story implements the **DAG execution layer** with control mechanisms.
 ### Project Structure
 
 **New Files:**
+
 ```
 src/dag/
 ├── controlled-executor.ts   # ControlledExecutor class
@@ -164,6 +162,7 @@ src/dag/
 ```
 
 **Modified Files:**
+
 ```
 src/dag/executor.ts          # ParallelExecutor (base class)
 mod.ts                       # Export new classes
@@ -179,18 +178,20 @@ mod.ts                       # Export new classes
 ### Implementation References
 
 **LangGraph MessagesState Pattern** (v1.0, 2025):
+
 ```typescript
 // Inspired by LangGraph's automatic state reducers
 // https://langchain-ai.github.io/langgraph/reference/state/#messagesstate
 const reducers = {
-  messages: (existing, update) => [...existing, ...update],  // append
+  messages: (existing, update) => [...existing, ...update], // append
   tasks: (existing, update) => [...existing, ...update],
   decisions: (existing, update) => [...existing, ...update],
-  context: (existing, update) => ({ ...existing, ...update })
+  context: (existing, update) => ({ ...existing, ...update }),
 };
 ```
 
 **AsyncQueue Pattern** (ai-zen/async-queue):
+
 ```typescript
 // Custom implementation based on proven patterns
 // Non-blocking dequeue with Promise-based API
@@ -224,6 +225,7 @@ class AsyncQueue<T> {
 ### Testing Strategy
 
 **Test Files:**
+
 ```
 tests/unit/dag/
 ├── controlled-executor.test.ts
@@ -232,6 +234,7 @@ tests/unit/dag/
 ```
 
 **Test Scenarios:**
+
 1. Event stream correctness (order, content, timing)
 2. Command injection mid-execution
 3. State consistency during concurrent updates
@@ -252,7 +255,8 @@ tests/unit/dag/
 - **ADR-007**: DAG Adaptive Feedback Loops (docs/adrs/ADR-007-dag-adaptive-feedback-loops.md)
 - **Architecture**: Pattern 4 - Adaptive DAG Feedback Loop (docs/architecture.md)
 - **Research Report**: Technical Research 2025-11-13 (docs/research-technical-2025-11-13.md)
-- **Spike Document**: Agent-Human DAG Feedback Loop (docs/spikes/spike-agent-human-dag-feedback-loop.md)
+- **Spike Document**: Agent-Human DAG Feedback Loop
+  (docs/spikes/spike-agent-human-dag-feedback-loop.md)
 - **Base Class**: ParallelExecutor (src/dag/executor.ts)
 
 ---

@@ -1,8 +1,10 @@
 # User Documentation Workflow Instructions
 
-<critical>The workflow execution engine is governed by: {project-root}/bmad/core/tasks/workflow.xml</critical>
+<critical>The workflow execution engine is governed by:
+{project-root}/bmad/core/tasks/workflow.xml</critical>
 <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
-<critical>Communicate all responses in {communication_language} and language MUST be tailored to {user_skill_level}</critical>
+<critical>Communicate all responses in {communication_language} and language MUST be tailored to
+{user_skill_level}</critical>
 <critical>Generate all documents in {document_output_language}</critical>
 <critical>This workflow creates END-USER documentation, not technical/developer docs</critical>
 <critical>Focus on clarity, practical examples, and task-based organization</critical>
@@ -25,6 +27,7 @@
 <ask>What type of documentation do you need to create?
 
 **Available types:**
+
 1. **Getting Started** - Quick start for new users (recommended first)
 2. **User Guide** - Comprehensive usage documentation
 3. **API Reference** - Technical API documentation for developers
@@ -58,6 +61,7 @@ You can select multiple (e.g., "1, 2, 4")</ask>
 <action>Document any CLI commands, API endpoints, or UI screens</action>
 
 <ask>Please describe or confirm:
+
 1. What does this product do in one sentence?
 2. What are the 3-5 main things users will want to accomplish?
 3. Are there any prerequisites users need before starting?
@@ -200,8 +204,8 @@ You can select multiple (e.g., "1, 2, 4")</ask>
 
 5. **Billing/Account Questions** (if applicable)
 
-<ask>What are the most common questions users ask about this product?
-List any support tickets, GitHub issues, or user feedback that reveals common confusion points.</ask>
+<ask>What are the most common questions users ask about this product? List any support tickets,
+GitHub issues, or user feedback that reveals common confusion points.</ask>
 
 <action>Generate Q&A pairs with clear, actionable answers</action>
 <action>Write faq.md to {faq_output}</action>
@@ -234,8 +238,8 @@ List any support tickets, GitHub issues, or user feedback that reveals common co
    - What information to include
    - Support channels
 
-<ask>What are the most common problems users encounter?
-Include any known bugs, edge cases, or environmental issues.</ask>
+<ask>What are the most common problems users encounter? Include any known bugs, edge cases, or
+environmental issues.</ask>
 
 <action>Write troubleshooting.md to {troubleshooting_output}</action>
 
@@ -293,6 +297,7 @@ For each version:
 - [ ] Expected outputs shown where applicable
 
 <ask>Would you like me to:
+
 1. Review a specific document
 2. Generate an index/table of contents
 3. Add more examples to a section
@@ -311,24 +316,27 @@ For each version:
 # {project_name} Documentation
 
 ## Quick Links
+
 - [Getting Started](./getting-started.md) - New here? Start here!
 - [User Guide](./user-guide.md) - Complete usage documentation
 - [FAQ](./faq.md) - Common questions answered
 
 ## Reference
+
 - [API Reference](./api-reference.md) - Technical API documentation
 - [Troubleshooting](./troubleshooting.md) - Problem resolution
 
 ## Updates
+
 - [Release Notes](./release-notes.md) - What's new
 ```
 
 <output>**User Documentation Complete!**
 
-**Documents Created:**
-{{list of created documents with paths}}
+**Documents Created:** {{list of created documents with paths}}
 
 **Next Steps:**
+
 - Review generated documentation
 - Add screenshots/diagrams where helpful
 - Test all code examples

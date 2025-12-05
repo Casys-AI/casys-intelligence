@@ -1,18 +1,15 @@
 # Story 2.5-4: Speculative Execution + GraphRAG Feedback Loop
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops
-**Story ID:** 2.5-4
-**Status:** drafted
-**Estimated Effort:** 3-4 heures
-**Priority:** P1 (Depends on 2.5-1, 2.5-2, 2.5-3)
+**Epic:** 2.5 - Adaptive DAG Feedback Loops **Story ID:** 2.5-4 **Status:** drafted **Estimated
+Effort:** 3-4 heures **Priority:** P1 (Depends on 2.5-1, 2.5-2, 2.5-3)
 
 ---
 
 ## User Story
 
-**As a** developer building intelligent agent workflows,
-**I want** speculative execution based on GraphRAG predictions with continuous learning,
-**So that** workflows execute faster (0ms latency) and improve over time from usage patterns.
+**As a** developer building intelligent agent workflows, **I want** speculative execution based on
+GraphRAG predictions with continuous learning, **So that** workflows execute faster (0ms latency)
+and improve over time from usage patterns.
 
 ---
 
@@ -81,7 +78,7 @@
       // Predict next nodes
       const predictions = await this.dagSuggester.predictNextNodes(
         this.state,
-        this.state.tasks
+        this.state.tasks,
       );
 
       // Execute speculatively
@@ -106,9 +103,9 @@
       workflow_id: this.executionId,
       executed_dag: this.currentDAG,
       execution_results: this.state.tasks,
-      decisions: this.state.decisions,  // Learn from AIL/HIL choices
+      decisions: this.state.decisions, // Learn from AIL/HIL choices
       timestamp: new Date(),
-      success: result.success
+      success: result.success,
     });
     ```
   - [ ] GraphRAGEngine updates knowledge graph:
@@ -128,7 +125,7 @@
   - [ ] Pattern 2: User preferences
     ```typescript
     // If human always skips CSV parser, lower its PageRank
-    if (decision.action === 'reject' && tool === 'csv:parse') {
+    if (decision.action === "reject" && tool === "csv:parse") {
       adjustPageRankWeight(tool, -0.05);
     }
     ```
@@ -147,11 +144,11 @@
     ```typescript
     interface SpeculationMetrics {
       totalSpeculations: number;
-      successfulSpeculations: number;  // Confirmed by agent
-      wastedSpeculations: number;      // Discarded/wrong
-      latencyReduction: number;        // ms saved
-      successRate: number;             // %
-      wasteRate: number;               // %
+      successfulSpeculations: number; // Confirmed by agent
+      wastedSpeculations: number; // Discarded/wrong
+      latencyReduction: number; // ms saved
+      successRate: number; // %
+      wasteRate: number; // %
     }
     ```
   - [ ] Store metrics in PGlite (opt-in telemetry)
@@ -235,19 +232,20 @@ NEXT WORKFLOW: Improved predictions
 ### DAGSuggester Extension
 
 **New method to add:**
+
 ```typescript
 // src/graphrag/dag-suggester.ts
 export class DAGSuggester {
   // ✅ EXISTS
-  async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null>
+  async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null>;
 
   // ✅ NEW (Story 2.5-3)
-  async replanDAG(currentDAG, newContext): Promise<DAGStructure>
+  async replanDAG(currentDAG, newContext): Promise<DAGStructure>;
 
   // ✅ NEW (This story)
   async predictNextNodes(
     state: WorkflowState,
-    completed: TaskResult[]
+    completed: TaskResult[],
   ): Promise<PredictedNode[]> {
     const lastTool = completed[completed.length - 1]?.toolId;
     if (!lastTool) return [];
@@ -256,17 +254,17 @@ export class DAGSuggester {
     const neighbors = this.graphEngine.findCommunityMembers(lastTool);
 
     // Score by PageRank
-    const predictions = neighbors.map(toolId => ({
-      task: { toolId, inputs: {} },  // Simplified for speculation
+    const predictions = neighbors.map((toolId) => ({
+      task: { toolId, inputs: {} }, // Simplified for speculation
       confidence: this.graphEngine.getPageRank(toolId),
-      reasoning: `Often follows ${lastTool} based on historical patterns`
+      reasoning: `Often follows ${lastTool} based on historical patterns`,
     }));
 
     // Filter high-confidence only
     return predictions
-      .filter(p => p.confidence > 0.7)
+      .filter((p) => p.confidence > 0.7)
       .sort((a, b) => b.confidence - a.confidence)
-      .slice(0, 3);  // Top 3 predictions max
+      .slice(0, 3); // Top 3 predictions max
   }
 }
 ```
@@ -274,17 +272,18 @@ export class DAGSuggester {
 ### GraphRAGEngine Usage
 
 **Existing methods used:**
+
 ```typescript
 // src/graphrag/graph-engine.ts
 export class GraphRAGEngine {
   // For prediction
-  findCommunityMembers(toolId: string): string[]
-  getPageRank(toolId: string): number
+  findCommunityMembers(toolId: string): string[];
+  getPageRank(toolId: string): number;
 
   // For learning
   async updateFromExecution(execution: WorkflowExecution): Promise<void> {
     // Extract executed path
-    const path = execution.execution_results.map(r => r.toolId);
+    const path = execution.execution_results.map((r) => r.toolId);
 
     // Update edges (co-occurrence)
     for (let i = 0; i < path.length - 1; i++) {
@@ -293,7 +292,7 @@ export class GraphRAGEngine {
 
       if (this.graph.hasEdge(from, to)) {
         const edge = this.graph.getEdgeAttributes(from, to);
-        this.graph.setEdgeAttribute(from, to, 'weight', edge.weight + 1);
+        this.graph.setEdgeAttribute(from, to, "weight", edge.weight + 1);
       } else {
         this.graph.addEdge(from, to, { weight: 1 });
       }
@@ -312,7 +311,7 @@ export class GraphRAGEngine {
 
 ```typescript
 class SpeculativeExecutor {
-  private cache: Map<string, { result: any, timestamp: number }> = new Map();
+  private cache: Map<string, { result: any; timestamp: number }> = new Map();
 
   async start(predictions: PredictedNode[]): Promise<void> {
     for (const pred of predictions) {
@@ -325,13 +324,13 @@ class SpeculativeExecutor {
     try {
       const result = await Promise.race([
         this.executor.executeTask(pred.task),
-        this.timeout(5000)  // 5s timeout
+        this.timeout(5000), // 5s timeout
       ]);
 
       // Cache result
       this.cache.set(pred.task.toolId, {
         result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     } catch (error) {
       // Speculation failed, log and continue
@@ -357,6 +356,7 @@ class SpeculativeExecutor {
 ### Learning Example
 
 **Week 1:**
+
 ```
 User executes: list_dir → discovers XML → manually adds xml:parse → analyze
 GraphRAG learns: list_dir → xml:parse (edge weight: 1)
@@ -364,6 +364,7 @@ PageRank: xml:parse = 0.05 (low)
 ```
 
 **Week 2:**
+
 ```
 Same pattern: list_dir → xml:parse → analyze
 GraphRAG learns: list_dir → xml:parse (edge weight: 2)
@@ -372,6 +373,7 @@ Confidence for speculation: 0.75 > 0.7 → Speculate!
 ```
 
 **Week 3:**
+
 ```
 Speculation succeeds again
 Edge weight: 3, PageRank: 0.18
@@ -382,12 +384,14 @@ Speculation happens automatically, 0ms latency
 ### Project Structure
 
 **New Files:**
+
 ```
 src/dag/
 └── speculative-executor.ts      # Speculative execution logic
 ```
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts   # Add speculation integration
 src/graphrag/dag-suggester.ts    # Add predictNextNodes()
@@ -404,15 +408,18 @@ src/graphrag/graph-engine.ts     # updateFromExecution() already exists
 ### Error Handling
 
 **Failed Predictions:**
+
 - GraphRAG query fails → Skip speculation, continue normally
 - No predictions (confidence too low) → Normal execution
 
 **Failed Speculations:**
+
 - Task errors → Log, discard result, execute normally
 - Timeout → Discard, execute normally
 - Wrong prediction → Discard (waste), execute correct task
 
 **Learning Failures:**
+
 - updateFromExecution() fails → Log error, don't block workflow
 - Graph corruption → Fallback to read-only mode
 

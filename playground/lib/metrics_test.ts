@@ -4,18 +4,14 @@
  * @module playground/lib/metrics_test
  */
 
+import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1.0.11";
 import {
-  assertEquals,
-  assertStringIncludes,
-  assert,
-} from "jsr:@std/assert@1.0.11";
-import {
-  progressBar,
   compareMetrics,
-  speedupChart,
-  metricLine,
-  reductionSummary,
   isJupyter,
+  metricLine,
+  progressBar,
+  reductionSummary,
+  speedupChart,
 } from "./metrics.ts";
 
 // ============================================================================
@@ -76,7 +72,7 @@ Deno.test("progressBar - hide percentage option", () => {
 Deno.test("compareMetrics - shows before and after values", () => {
   const result = compareMetrics(
     { tokens: 45000 },
-    { tokens: 12000 }
+    { tokens: 12000 },
   );
   assertStringIncludes(result, "tokens");
   assertStringIncludes(result, "45,000");
@@ -86,7 +82,7 @@ Deno.test("compareMetrics - shows before and after values", () => {
 Deno.test("compareMetrics - calculates delta", () => {
   const result = compareMetrics(
     { latency: 2500 },
-    { latency: 1800 }
+    { latency: 1800 },
   );
   assertStringIncludes(result, "-700"); // 1800 - 2500 = -700
 });
@@ -94,7 +90,7 @@ Deno.test("compareMetrics - calculates delta", () => {
 Deno.test("compareMetrics - shows percentage change", () => {
   const result = compareMetrics(
     { tokens: 100 },
-    { tokens: 50 }
+    { tokens: 50 },
   );
   assertStringIncludes(result, "-50"); // Delta
   assertStringIncludes(result, "-50.0%"); // Percentage
@@ -104,7 +100,7 @@ Deno.test("compareMetrics - custom labels", () => {
   const result = compareMetrics(
     { x: 10 },
     { x: 5 },
-    { labels: { before: "Without Gateway", after: "With Gateway" } }
+    { labels: { before: "Without Gateway", after: "With Gateway" } },
   );
   assertStringIncludes(result, "Without Gateway");
   assertStringIncludes(result, "With Gateway");
@@ -113,7 +109,7 @@ Deno.test("compareMetrics - custom labels", () => {
 Deno.test("compareMetrics - handles multiple metrics", () => {
   const result = compareMetrics(
     { tokens: 45000, latency: 2500, tools: 25 },
-    { tokens: 12000, latency: 1800, tools: 3 }
+    { tokens: 12000, latency: 1800, tools: 3 },
   );
   assertStringIncludes(result, "tokens");
   assertStringIncludes(result, "latency");
@@ -123,7 +119,7 @@ Deno.test("compareMetrics - handles multiple metrics", () => {
 Deno.test("compareMetrics - handles zero before value", () => {
   const result = compareMetrics(
     { x: 0 },
-    { x: 10 }
+    { x: 10 },
   );
   assertStringIncludes(result, "+10");
 });

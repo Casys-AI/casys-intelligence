@@ -74,12 +74,14 @@ Configure AgentCards gateway comme serveur MCP pour Claude Code :
 **Objectif**: Parallélisation lecture/écriture fichiers
 
 **Outils**:
+
 - `read_multiple_files` - Lecture parallèle
 - `read_text_file` - Lecture avec head/tail
 - `list_directory` - Lister contenu
 - `write_file` - Écriture fichiers
 
 **Pattern DAG**:
+
 ```
 [Parallèle] read_multiple_files([package.json, README.md])
      ↓
@@ -93,6 +95,7 @@ Configure AgentCards gateway comme serveur MCP pour Claude Code :
 **Objectif**: Knowledge graph local pour GraphRAG
 
 **Outils**:
+
 - `create_entities` - Créer entités
 - `create_relations` - Créer relations
 - `read_graph` - Lire le graphe
@@ -105,9 +108,11 @@ Configure AgentCards gateway comme serveur MCP pour Claude Code :
 **Objectif**: Branchement DAG pour résolution de problèmes
 
 **Outils**:
+
 - `sequentialthinking` - Pensée structurée avec branchement
 
 **Pattern branchement**:
+
 ```
 Pensée 1 → Pensée 2
               ├─ Branche A (database)
@@ -127,6 +132,7 @@ Définit les patterns GraphRAG pour bootstrap :
 3. **Multi-level DAG** - Fan-out → parallel → fan-in
 
 **Sync vers DB**:
+
 ```bash
 deno task cli workflows sync
 ```

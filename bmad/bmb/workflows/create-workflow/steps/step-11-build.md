@@ -1,34 +1,35 @@
 ---
-name: 'step-11-build'
-description: 'Generate all workflow files based on the approved plan'
+name: "step-11-build"
+description: "Generate all workflow files based on the approved plan"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-11-build.md'
-nextStepFile: '{workflow_path}/steps/step-12-review.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-11-build.md"
+nextStepFile: "{workflow_path}/steps/step-12-review.md"
+workflowFile: "{workflow_path}/workflow.md"
 # Output files for workflow creation process
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
-targetWorkflowPath: '{custom_workflow_location}/{new_workflow_name}'
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
+targetWorkflowPath: "{custom_workflow_location}/{new_workflow_name}"
 
 # Task References
-advancedElicitationTask: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/bmad/core/workflows/party-mode/workflow.md"
 
 # Template References
-workflowTemplate: '{project-root}/bmad/bmb/docs/workflows/workflow-template.md'
-stepTemplate: '{project-root}/bmad/bmb/docs/workflows/step-template.md'
-contentTemplate: '{workflow_path}/templates/content-template.md'
-buildSummaryTemplate: '{workflow_path}/templates/build-summary.md'
+workflowTemplate: "{project-root}/bmad/bmb/docs/workflows/workflow-template.md"
+stepTemplate: "{project-root}/bmad/bmb/docs/workflows/step-template.md"
+contentTemplate: "{workflow_path}/templates/content-template.md"
+buildSummaryTemplate: "{workflow_path}/templates/build-summary.md"
 ---
 
 # Step 5: Workflow File Generation
 
 ## STEP GOAL:
 
-To generate all the workflow files (workflow.md, step files, templates, and supporting files) based on the approved plan from the previous review step.
+To generate all the workflow files (workflow.md, step files, templates, and supporting files) based
+on the approved plan from the previous review step.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -42,7 +43,8 @@ To generate all the workflow files (workflow.md, step files, templates, and supp
 ### Role Reinforcement:
 
 - ✅ You are a workflow architect and systems designer
-- ✅ If you already have been given communication or persona patterns, continue to use those while playing this new role
+- ✅ If you already have been given communication or persona patterns, continue to use those while
+  playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
 - ✅ You bring implementation expertise and best practices
 - ✅ User brings their specific requirements and design approvals
@@ -70,16 +72,19 @@ To generate all the workflow files (workflow.md, step files, templates, and supp
 
 ## BUILD REFERENCE MATERIALS:
 
-- When building each step file, you must follow template `{project-root}/bmad/bmb/docs/workflows/step-template.md`
-- When building the main workflow.md file, you must follow template `{project-root}/bmad/bmb/docs/workflows/workflow-template.md`
-- Example step files from {project-root}/bmad/bmb/reference/workflows/meal-prep-nutrition/workflow.md for patterns
+- When building each step file, you must follow template
+  `{project-root}/bmad/bmb/docs/workflows/step-template.md`
+- When building the main workflow.md file, you must follow template
+  `{project-root}/bmad/bmb/docs/workflows/workflow-template.md`
+- Example step files from
+  {project-root}/bmad/bmb/reference/workflows/meal-prep-nutrition/workflow.md for patterns
 
 ## FILE GENERATION SEQUENCE:
 
 ### 1. Confirm Build Readiness
 
-Based on the approved plan, confirm:
-"I have your approved plan and I'm ready to generate the workflow files. The plan specifies creating:
+Based on the approved plan, confirm: "I have your approved plan and I'm ready to generate the
+workflow files. The plan specifies creating:
 
 - Main workflow.md file
 - [Number] step files
@@ -107,8 +112,8 @@ Create the workflow folder structure in the target location:
     └── [as needed]
 ```
 
-For bmb module, this will be: `bmad/custom/src/workflows/{workflow_name}/`
-For other modules, check their install-config.yaml for custom_workflow_location
+For bmb module, this will be: `bmad/custom/src/workflows/{workflow_name}/` For other modules, check
+their install-config.yaml for custom_workflow_location
 
 ### 3. Generate workflow.md
 
@@ -233,12 +238,14 @@ Display: **Build Complete - Select an Option:** [C] Continue to Review
 
 #### Menu Handling Logic:
 
-- IF C: Save build summary to {workflowPlanFile}, update frontmatter, then load, read entire file, then execute {nextStepFile}
+- IF C: Save build summary to {workflowPlanFile}, update frontmatter, then load, read entire file,
+  then execute {nextStepFile}
 - IF Any other comments or queries: respond and redisplay menu
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and content is saved to plan and frontmatter is updated, will you then load, read entire file, then execute {nextStepFile} to execute and begin workflow review step.
+ONLY WHEN C is selected and content is saved to plan and frontmatter is updated, will you then load,
+read entire file, then execute {nextStepFile} to execute and begin workflow review step.
 
 ---
 
@@ -259,4 +266,5 @@ ONLY WHEN C is selected and content is saved to plan and frontmatter is updated,
 - Creating files with incorrect paths
 - Not updating plan frontmatter
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

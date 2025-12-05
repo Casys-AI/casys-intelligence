@@ -4,10 +4,14 @@
 
 ## Qu'est-ce qu'AgentCards?
 
-AgentCards est un MCP gateway intelligent qui consolide tous vos serveurs MCP en un point d'entrée unique avec recherche sémantique, orchestration de workflows DAG, et découverte d'outils auto-apprenante.
+AgentCards est un MCP gateway intelligent qui consolide tous vos serveurs MCP en un point d'entrée
+unique avec recherche sémantique, orchestration de workflows DAG, et découverte d'outils
+auto-apprenante.
 
 **Problèmes résolus:**
-- **Saturation du contexte** - Les schemas d'outils consomment 30-50% de la fenêtre LLM → réduit à <5%
+
+- **Saturation du contexte** - Les schemas d'outils consomment 30-50% de la fenêtre LLM → réduit à
+  <5%
 - **Latence séquentielle** - Les workflows multi-outils s'exécutent en série → parallélisés via DAG
 
 ## Prérequis
@@ -25,6 +29,7 @@ deno --version
 ```
 
 Vous devriez voir:
+
 ```
 deno 2.x.x (...)
 ```
@@ -45,6 +50,7 @@ deno task build
 ```
 
 Vous devriez voir:
+
 ```
 Compile file:///.../src/main.ts to agentcards
 ```
@@ -56,6 +62,7 @@ Compile file:///.../src/main.ts to agentcards
 ```
 
 Sortie attendue:
+
 ```
 Usage: agentcards [options] [command]
 
@@ -91,7 +98,8 @@ cat > config/mcp-servers.json << 'EOF'
 EOF
 ```
 
-> **Tip:** Vous pouvez aussi migrer votre config Claude Desktop existante avec `./agentcards init --config ~/.config/Claude/claude_desktop_config.json`
+> **Tip:** Vous pouvez aussi migrer votre config Claude Desktop existante avec
+> `./agentcards init --config ~/.config/Claude/claude_desktop_config.json`
 
 ### 2. Initialiser AgentCards
 
@@ -100,12 +108,14 @@ EOF
 ```
 
 Cette commande:
+
 - Découvre tous vos serveurs MCP configurés
 - Extrait les schemas d'outils via le protocole MCP
 - Génère les embeddings pour la recherche sémantique
 - Stocke tout dans une base PGlite locale (`~/.agentcards/db`)
 
 Sortie attendue:
+
 ```
 🚀 Initializing AgentCards...
 ✓ Found 2 MCP server(s)
@@ -120,8 +130,8 @@ AgentCards is ready!
 
 Ajoutez AgentCards à votre configuration Claude Code MCP:
 
-**Linux/macOS:** `~/.config/Claude/claude_desktop_config.json`
-**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+**Linux/macOS:** `~/.config/Claude/claude_desktop_config.json` **Windows:**
+`%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -143,18 +153,22 @@ Redémarrez Claude Code. Le gateway démarre automatiquement.
 Pour tester manuellement:
 
 **Mode stdio (défaut - recommandé pour Claude Code):**
+
 ```bash
 ./agentcards serve --config config/mcp-servers.json
 ```
 
 **Mode HTTP (avec dashboard Fresh):**
+
 ```bash
 ./agentcards serve --config config/mcp-servers.json --port 3001
 ```
 
-> **Note:** Le dashboard Fresh (`deno task dev:fresh`) nécessite le mode HTTP (`--port`). En mode stdio, seule l'interface MCP est disponible.
+> **Note:** Le dashboard Fresh (`deno task dev:fresh`) nécessite le mode HTTP (`--port`). En mode
+> stdio, seule l'interface MCP est disponible.
 
 Vous devriez voir:
+
 ```
 🚀 Starting AgentCards MCP Gateway...
 
@@ -207,7 +221,8 @@ cd monitoring && docker-compose up -d
 open http://localhost:3000
 ```
 
-> **Note:** Le monitoring fonctionne en mode stdio ET Streamable HTTP car Promtail lit les fichiers de log (`~/.agentcards/logs/`).
+> **Note:** Le monitoring fonctionne en mode stdio ET Streamable HTTP car Promtail lit les fichiers
+> de log (`~/.agentcards/logs/`).
 
 ---
 
@@ -225,4 +240,4 @@ Maintenant que vous êtes opérationnel:
 
 ---
 
-*Généré le 2025-12-03 par le workflow user-docs BMAD*
+_Généré le 2025-12-03 par le workflow user-docs BMAD_

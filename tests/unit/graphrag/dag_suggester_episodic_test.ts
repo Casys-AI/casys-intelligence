@@ -4,7 +4,7 @@
  * Tests learning-enhanced predictions using historical episode data.
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { DAGSuggester } from "../../../src/graphrag/dag-suggester.ts";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { VectorSearch } from "../../../src/vector/search.ts";
@@ -282,7 +282,10 @@ Deno.test({
     // Note: Actual penalty depends on base confidence from graph patterns.
     // This test verifies the tool is still predicted (not excluded) despite failures.
     // The penalty calculation is verified in unit tests for adjustConfidenceFromEpisodes().
-    assert(npmTestPred!.confidence >= 0 && npmTestPred!.confidence <= 1.0, "Confidence should be in valid range");
+    assert(
+      npmTestPred!.confidence >= 0 && npmTestPred!.confidence <= 1.0,
+      "Confidence should be in valid range",
+    );
 
     await episodicMemory.shutdown();
     await db.close();
@@ -367,7 +370,11 @@ Deno.test({
 
     // deploy:production should be EXCLUDED due to failureRate > 0.50
     const deployPred = predictions.find((p) => p.toolId === "deploy:production");
-    assertEquals(deployPred, undefined, "deploy:production should be excluded due to high failure rate (>50%)");
+    assertEquals(
+      deployPred,
+      undefined,
+      "deploy:production should be excluded due to high failure rate (>50%)",
+    );
 
     await episodicMemory.shutdown();
     await db.close();
@@ -486,10 +493,16 @@ Deno.test({
     // Episode retrieval alone should be <50ms, but we're testing the integrated flow
     assert(
       elapsedMs < 200,
-      `predictNextNodes with episode retrieval should complete in <200ms (actual: ${elapsedMs.toFixed(1)}ms)`,
+      `predictNextNodes with episode retrieval should complete in <200ms (actual: ${
+        elapsedMs.toFixed(1)
+      }ms)`,
     );
 
-    console.log(`✓ Performance test: predictNextNodes completed in ${elapsedMs.toFixed(1)}ms with 120 episodes`);
+    console.log(
+      `✓ Performance test: predictNextNodes completed in ${
+        elapsedMs.toFixed(1)
+      }ms with 120 episodes`,
+    );
 
     await episodicMemory.shutdown();
     await db.close();

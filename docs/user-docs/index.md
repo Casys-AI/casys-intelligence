@@ -6,11 +6,11 @@
 
 ## Liens rapides
 
-| Document | Description | Public |
-|----------|-------------|--------|
-| [Démarrage rapide](./getting-started.md) | Installation et premier workflow en 10 min | Tous |
-| [Guide utilisateur](./user-guide.md) | Documentation complète des fonctionnalités | Intermédiaire+ |
-| [Référence API](./api-reference.md) | Documentation technique des outils MCP | Avancé |
+| Document                                 | Description                                | Public         |
+| ---------------------------------------- | ------------------------------------------ | -------------- |
+| [Démarrage rapide](./getting-started.md) | Installation et premier workflow en 10 min | Tous           |
+| [Guide utilisateur](./user-guide.md)     | Documentation complète des fonctionnalités | Intermédiaire+ |
+| [Référence API](./api-reference.md)      | Documentation technique des outils MCP     | Avancé         |
 
 ---
 
@@ -32,13 +32,13 @@
 
 ## Fonctionnalités principales
 
-| Fonctionnalité | Description |
-|----------------|-------------|
-| **Recherche sémantique** | Trouvez les outils par intention naturelle |
-| **Exécution DAG** | Parallélisez automatiquement vos workflows |
-| **Sandbox TypeScript** | Exécutez du code en isolation sécurisée |
-| **GraphRAG** | Recommandations qui s'améliorent avec l'usage |
-| **AIL/HIL** | Points de décision agent et humain |
+| Fonctionnalité           | Description                                   |
+| ------------------------ | --------------------------------------------- |
+| **Recherche sémantique** | Trouvez les outils par intention naturelle    |
+| **Exécution DAG**        | Parallélisez automatiquement vos workflows    |
+| **Sandbox TypeScript**   | Exécutez du code en isolation sécurisée       |
+| **GraphRAG**             | Recommandations qui s'améliorent avec l'usage |
+| **AIL/HIL**              | Points de décision agent et humain            |
 
 ---
 
@@ -50,5 +50,4 @@
 
 ---
 
-*Documentation générée le 2025-12-03*
-*Version: 1.0.0*
+_Documentation générée le 2025-12-03_ _Version: 1.0.0_

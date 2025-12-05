@@ -1,18 +1,19 @@
 # Architecture Spike: MCP Tools Injection dans Sandbox Deno
 
-**Date:** 2025-11-11
-**Owner:** Winston (Architect)
-**Status:** DRAFT - Architecture Spike
-**Epic:** Epic 3 - Code Execution Sandbox
-**Related Stories:** 3.2 (MCP Tools Injection), 3.4 (Expose execute_code tool)
+**Date:** 2025-11-11 **Owner:** Winston (Architect) **Status:** DRAFT - Architecture Spike **Epic:**
+Epic 3 - Code Execution Sandbox **Related Stories:** 3.2 (MCP Tools Injection), 3.4 (Expose
+execute_code tool)
 
 ---
 
 ## Executive Summary
 
-Ce document présente l'architecture spike pour l'injection des MCP tools dans le sandbox Deno pour Epic 3. L'objectif est de permettre au code utilisateur exécuté dans le sandbox d'accéder aux MCP tools (via vector search) de manière sécurisée et performante.
+Ce document présente l'architecture spike pour l'injection des MCP tools dans le sandbox Deno pour
+Epic 3. L'objectif est de permettre au code utilisateur exécuté dans le sandbox d'accéder aux MCP
+tools (via vector search) de manière sécurisée et performante.
 
 **Key Findings:**
+
 - ✅ 3 options de design identifiées avec trade-offs clairs
 - ✅ POC vector search depuis TypeScript validé
 - ✅ Recommandation: **Option 2 - API Bridge via FFI/Web Worker**
@@ -40,16 +41,19 @@ Ce document présente l'architecture spike pour l'injection des MCP tools dans l
 
 **Epic 3:** Code Execution Sandbox & Speculative Execution
 
-Permettre aux agents d'exécuter du code TypeScript généré de manière sécurisée dans un sandbox Deno, avec accès aux MCP tools via vector search.
+Permettre aux agents d'exécuter du code TypeScript généré de manière sécurisée dans un sandbox Deno,
+avec accès aux MCP tools via vector search.
 
 ### 1.2 Stories Concernées
 
 **Story 3.2:** MCP Tools Injection
+
 - Injecter les MCP tools dans le sandbox context
 - Support vector search depuis code TypeScript
 - Gestion sécurisée des permissions
 
 **Story 3.4:** Expose execute_code Tool
+
 - Exposer `agentcards:execute_code` via gateway MCP
 - Intégration avec Claude Code
 - SSE streaming des résultats
@@ -58,14 +62,14 @@ Permettre aux agents d'exécuter du code TypeScript généré de manière sécur
 
 ```typescript
 // Code généré par Claude, exécuté dans sandbox
-import { searchTools, callTool } from "agentcards";
+import { callTool, searchTools } from "agentcards";
 
 // Vector search pour trouver tools pertinents
 const tools = await searchTools("read file and parse JSON");
 
 // Exécuter les tools découverts
 const fileContent = await callTool(tools[0].name, {
-  path: "/data/config.json"
+  path: "/data/config.json",
 });
 
 const parsed = JSON.parse(fileContent);
@@ -79,16 +83,19 @@ console.log("Config:", parsed);
 ### 2.1 Functional Requirements
 
 **FR-1: Vector Search Access**
+
 - Le code sandbox doit pouvoir appeler vector search
 - Query en langage naturel → top-k tools pertinents
 - Latence: <100ms (P95)
 
 **FR-2: Tool Execution**
+
 - Le code sandbox doit pouvoir exécuter MCP tools
 - Passage d'arguments typés (JSON)
 - Retour des résultats (success/error)
 
 **FR-3: Seamless API**
+
 - API TypeScript idiomatique (import/export)
 - Pas de boilerplate complexe
 - Auto-completion friendly
@@ -96,16 +103,19 @@ console.log("Config:", parsed);
 ### 2.2 Non-Functional Requirements
 
 **NFR-1: Security**
+
 - Sandbox ne doit pas échapper l'isolation Deno
 - Pas d'accès direct aux MCP clients (stdio/process)
 - Validation des arguments côté host
 
 **NFR-2: Performance**
+
 - Overhead minimal (<10ms par call)
 - Support streaming pour résultats longs
 - Pas de sérialisation excessive
 
 **NFR-3: Debuggability**
+
 - Stack traces claires
 - Logging transparent
 - Error messages utiles
@@ -152,12 +162,13 @@ console.log("Config:", parsed);
 ### 3.2 Key Components
 
 **VectorSearch** (`src/vector/search.ts`)
+
 ```typescript
 class VectorSearch {
   async searchTools(
     query: string,
     limit: number = 10,
-    threshold: number = 0.6
+    threshold: number = 0.6,
   ): Promise<SearchResult[]> {
     // 1. Generate query embedding
     // 2. Similarity search in PGlite (pgvector)
@@ -167,6 +178,7 @@ class VectorSearch {
 ```
 
 **GatewayHandler** (`src/mcp/gateway-handler.ts`)
+
 ```typescript
 class GatewayHandler {
   async processIntent(intent: WorkflowIntent): Promise<ExecutionMode> {
@@ -178,11 +190,12 @@ class GatewayHandler {
 ```
 
 **MCPClient** (`src/mcp/client.ts`)
+
 ```typescript
 class MCPClient {
   async callTool(
     name: string,
-    args: Record<string, unknown>
+    args: Record<string, unknown>,
   ): Promise<unknown> {
     // Proxy call to underlying MCP server (stdio)
   }
@@ -205,19 +218,20 @@ const worker = new Worker(
     type: "module",
     deno: {
       permissions: {
-        read: false,    // ❌ No filesystem
-        write: false,   // ❌ No write
-        net: false,     // ❌ No network
-        env: false,     // ❌ No env vars
-        run: false,     // ❌ No subprocess
-        ffi: false,     // ❌ No FFI (default)
+        read: false, // ❌ No filesystem
+        write: false, // ❌ No write
+        net: false, // ❌ No network
+        env: false, // ❌ No env vars
+        run: false, // ❌ No subprocess
+        ffi: false, // ❌ No FFI (default)
       },
     },
-  }
+  },
 );
 ```
 
 **Problème:** Le sandbox ne peut pas:
+
 - Accéder au PGlite database (needs read/write)
 - Appeler les MCP clients (needs net/run for stdio)
 - Charger le modèle d'embeddings (needs read)
@@ -225,14 +239,17 @@ const worker = new Worker(
 ### 4.2 Cross-Context Communication
 
 **Option 1:** Shared Memory (ArrayBuffer)
+
 - Avantage: Zero-copy, ultra-rapide
 - Inconvénient: Complexe, pas de structures complexes
 
 **Option 2:** Message Passing (postMessage)
+
 - Avantage: Standard, type-safe
 - Inconvénient: Sérialisation, latence
 
 **Option 3:** FFI Bridge
+
 - Avantage: Performance
 - Inconvénient: Requires FFI permission, complexe
 
@@ -298,15 +315,11 @@ eval(fullCode); // Inside sandbox worker
 └─────────────────────────────────────┘
 ```
 
-**Pros:**
-✅ Simple à implémenter
-✅ Pas de imports nécessaires
-✅ Fonctionne avec permissions minimales
+**Pros:** ✅ Simple à implémenter ✅ Pas de imports nécessaires ✅ Fonctionne avec permissions
+minimales
 
-**Cons:**
-❌ Globals pollution
-❌ Pas type-safe (pas d'auto-completion)
-❌ Difficile à debug (stack traces)
+**Cons:** ❌ Globals pollution ❌ Pas type-safe (pas d'auto-completion) ❌ Difficile à debug (stack
+traces)
 
 ---
 
@@ -316,7 +329,7 @@ eval(fullCode); // Inside sandbox worker
 
 ```typescript
 // User code (in sandbox)
-import { searchTools, callTool } from "agentcards";
+import { callTool, searchTools } from "agentcards";
 
 const tools = await searchTools("read file");
 const result = await callTool(tools[0].name, { path: "/data/file.txt" });
@@ -328,7 +341,7 @@ const result = await callTool(tools[0].name, { path: "/data/file.txt" });
 // agentcards-bridge.ts (injected in sandbox)
 export async function searchTools(
   query: string,
-  limit = 10
+  limit = 10,
 ): Promise<MCPTool[]> {
   // Post message to host
   const requestId = crypto.randomUUID();
@@ -358,7 +371,7 @@ export async function searchTools(
 
 export async function callTool(
   name: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<unknown> {
   const requestId = crypto.randomUUID();
 
@@ -397,7 +410,7 @@ worker.addEventListener("message", async (event) => {
       const tools = await vectorSearch.searchTools(query, limit, 0.6);
       worker.postMessage({
         requestId,
-        tools: tools.map(r => r.schema),
+        tools: tools.map((r) => r.schema),
       });
     } catch (error) {
       worker.postMessage({
@@ -462,16 +475,11 @@ worker.addEventListener("message", async (event) => {
 └─────────────────────────────────────┘
 ```
 
-**Pros:**
-✅ Type-safe API (TypeScript definitions)
-✅ Auto-completion friendly
-✅ Clean imports (idiomatique)
-✅ Stack traces préservées
-✅ Fonctionne avec permissions minimales
+**Pros:** ✅ Type-safe API (TypeScript definitions) ✅ Auto-completion friendly ✅ Clean imports
+(idiomatique) ✅ Stack traces préservées ✅ Fonctionne avec permissions minimales
 
-**Cons:**
-⚠️ Message passing overhead (~5-10ms par call)
-⚠️ Complexité de synchronisation (promise-based)
+**Cons:** ⚠️ Message passing overhead (~5-10ms par call) ⚠️ Complexité de synchronisation
+(promise-based)
 
 ---
 
@@ -493,15 +501,10 @@ const tools = await searchTools("read file");
 // → Sandbox reads result
 ```
 
-**Pros:**
-✅ Zero-copy (ultra-rapide)
-✅ Pas de sérialisation
+**Pros:** ✅ Zero-copy (ultra-rapide) ✅ Pas de sérialisation
 
-**Cons:**
-❌ Complexité extrême (synchronization primitives)
-❌ Pas adapté aux structures complexes (JSON)
-❌ Debugging difficile
-❌ Requires SharedArrayBuffer support
+**Cons:** ❌ Complexité extrême (synchronization primitives) ❌ Pas adapté aux structures complexes
+(JSON) ❌ Debugging difficile ❌ Requires SharedArrayBuffer support
 
 **Verdict:** ❌ Trop complexe pour MVP
 
@@ -571,7 +574,7 @@ Deno.test("POC: Vector search from sandbox via message passing", async () => {
       deno: {
         permissions: "none", // ⚠️ No permissions
       },
-    }
+    },
   );
 
   // 3. Message handler (host side)
@@ -582,7 +585,7 @@ Deno.test("POC: Vector search from sandbox via message passing", async () => {
       const results = await vectorSearch.searchTools(query, limit, 0.6);
       worker.postMessage({
         requestId,
-        tools: results.map(r => r.schema),
+        tools: results.map((r) => r.schema),
       });
     }
   });
@@ -657,11 +660,13 @@ self.addEventListener("message", (event) => {
 ### 6.3 POC Results
 
 **Expected Performance:**
+
 - Vector search latency: ~50ms (host side)
 - Message passing overhead: ~5ms (round-trip)
 - Total latency: ~55ms ✅ (Target: <100ms)
 
 **Security Validation:**
+
 - ✅ Sandbox has no permissions
 - ✅ Cannot access database directly
 - ✅ Cannot spawn processes
@@ -684,18 +689,21 @@ self.addEventListener("message", (event) => {
 ### 7.2 Implementation Phases
 
 **Phase 1: Basic Bridge (Story 3.2)**
+
 - `searchTools(query, limit)` implementation
 - `callTool(name, args)` implementation
 - Message passing infrastructure
 - Type definitions
 
 **Phase 2: Advanced Features (Story 3.4)**
+
 - Streaming support (SSE)
 - Batch operations
 - Error handling sophistiqué
 - Timeout management
 
 **Phase 3: Optimization (Story 3.6)**
+
 - Caching layer
 - Request deduplication
 - Connection pooling
@@ -722,23 +730,23 @@ export interface CallToolResult {
 export async function searchTools(
   query: string,
   limit?: number,
-  threshold?: number
+  threshold?: number,
 ): Promise<MCPTool[]>;
 
 // Execution API
 export async function callTool(
   name: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
 ): Promise<CallToolResult>;
 
 // Batch API (Phase 2)
 export async function callToolsBatch(
-  calls: Array<{ name: string; args: Record<string, unknown> }>
+  calls: Array<{ name: string; args: Record<string, unknown> }>,
 ): Promise<CallToolResult[]>;
 
 // Workflow API (Phase 2)
 export async function executeWorkflow(
-  intent: string
+  intent: string,
 ): Promise<WorkflowResult>;
 ```
 
@@ -751,21 +759,25 @@ export async function executeWorkflow(
 **Threats:**
 
 **T1: Sandbox Escape**
+
 - Attacker executes malicious code to escape sandbox
 - Impact: Full system compromise
 - Mitigation: Deno permissions = "none", no FFI
 
 **T2: Resource Exhaustion**
+
 - Attacker floods searchTools() calls
 - Impact: DoS, memory exhaustion
 - Mitigation: Rate limiting, request queue
 
 **T3: Tool Injection**
+
 - Attacker manipulates tool names to call unauthorized tools
 - Impact: Privilege escalation
 - Mitigation: Whitelist validation, namespace enforcement
 
 **T4: Data Exfiltration**
+
 - Attacker uses callTool to leak sensitive data
 - Impact: Data breach
 - Mitigation: PII detection (Story 3.5), audit logging
@@ -810,7 +822,7 @@ async function handleCallTool(name: string, args: unknown) {
   // Whitelist check (from database)
   const allowed = await db.query(
     "SELECT 1 FROM tool_schema WHERE server_id = $1 AND name = $2",
-    [serverId, toolName]
+    [serverId, toolName],
   );
 
   if (allowed.rows.length === 0) {
@@ -864,7 +876,7 @@ async function logToolCall(log: AuditLog): Promise<void> {
   await db.query(
     `INSERT INTO audit_log (timestamp, sandbox_id, type, query, tool_name, success, error)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [log.timestamp, log.sandboxId, log.type, log.query, log.toolName, log.success, log.error]
+    [log.timestamp, log.sandboxId, log.type, log.query, log.toolName, log.success, log.error],
   );
 }
 ```
@@ -982,20 +994,22 @@ Story 3.6 (Caching & Optimization)
 **Options:**
 
 **A) Import Map:**
+
 ```typescript
 const importMap = {
   imports: {
-    "agentcards": "./agentcards-bridge.ts"
-  }
+    "agentcards": "./agentcards-bridge.ts",
+  },
 };
 
 new Worker(url, {
   type: "module",
-  deno: { importMap }
+  deno: { importMap },
 });
 ```
 
 **B) Dynamic Import Interception:**
+
 ```typescript
 // Inject at runtime via eval preamble
 const preamble = `
@@ -1011,6 +1025,7 @@ globalThis.agentcards = agentcards;
 **Question:** Support streaming pour `callTool()` results?
 
 **Scenario:**
+
 ```typescript
 // Tool returns large result (100MB file)
 const result = await callTool("filesystem:read", { path: "/large-file.json" });
@@ -1019,10 +1034,12 @@ const result = await callTool("filesystem:read", { path: "/large-file.json" });
 **Options:**
 
 **A) Full Result:** Attend résultat complet
+
 - Pros: Simple
 - Cons: Memory spike, latency
 
 **B) Streaming:** Stream chunks progressivement
+
 - Pros: Constant memory, better UX
 - Cons: Complexité
 
@@ -1049,32 +1066,38 @@ const results = await callToolsBatch([
 ### 12.1 Functional Validation
 
 ✅ **Criterion 1:** Code sandbox peut appeler `searchTools()` avec succès
+
 - Query: "read file"
 - Returns: Top-k tools (filesystem:read, etc.)
 - Latency: <100ms
 
 ✅ **Criterion 2:** Code sandbox peut appeler `callTool()` avec succès
+
 - Tool: "filesystem:read"
 - Args: { path: "/test.txt" }
 - Returns: File content
 
 ✅ **Criterion 3:** TypeScript auto-completion fonctionne
+
 - Import: `import { searchTools } from "agentcards"`
 - IDE shows types, docs
 
 ### 12.2 Non-Functional Validation
 
 ✅ **Criterion 4:** Security validation
+
 - Sandbox cannot escape isolation
 - Invalid tool names rejected
 - Rate limiting enforced
 
 ✅ **Criterion 5:** Performance
+
 - Vector search: <50ms
 - Message passing overhead: <10ms
 - Total latency: <100ms
 
 ✅ **Criterion 6:** Debuggability
+
 - Clear error messages
 - Stack traces preserved
 - Logging transparent
@@ -1109,6 +1132,7 @@ const results = await callToolsBatch([
 **Architecture Spike Status:** ✅ COMPLETE
 
 **Key Deliverables:**
+
 1. ✅ 3 design options analyzed with trade-offs
 2. ✅ Recommended option: API Bridge (Option 2)
 3. ✅ POC implementation path defined
@@ -1116,19 +1140,19 @@ const results = await callToolsBatch([
 5. ✅ Implementation plan for Stories 3.2 & 3.4
 
 **Next Steps:**
+
 1. Review spike with team
 2. Validate POC with basic implementation
 3. Begin Story 3.2 development
 4. Security review before Story 3.4 (expose to Claude Code)
 
 **Critical Path:**
+
 - ⚠️ Deno sandbox basic (Story 3.1) must be complete first
 - ⚠️ Security review required before public exposure
 - ✅ No blockers identified for Epic 3 start
 
 ---
 
-**Document Status:** ✅ COMPLETE
-**Date:** 2025-11-11
-**Author:** Winston (Architect)
-**Reviewed by:** TBD (Amelia, Bob, BMad)
+**Document Status:** ✅ COMPLETE **Date:** 2025-11-11 **Author:** Winston (Architect) **Reviewed
+by:** TBD (Amelia, Bob, BMad)

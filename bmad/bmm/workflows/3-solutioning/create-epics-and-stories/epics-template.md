@@ -1,17 +1,17 @@
 # {{project_name}} - Epic Breakdown
 
-**Author:** {{user_name}}
-**Date:** {{date}}
-**Project Level:** {{project_level}}
-**Target Scale:** {{target_scale}}
+**Author:** {{user_name}} **Date:** {{date}} **Project Level:** {{project_level}} **Target Scale:**
+{{target_scale}}
 
 ---
 
 ## Overview
 
-This document provides the complete epic and story breakdown for {{project_name}}, decomposing the requirements from the [PRD](./PRD.md) into implementable stories.
+This document provides the complete epic and story breakdown for {{project_name}}, decomposing the
+requirements from the [PRD](./PRD.md) into implementable stories.
 
-**Living Document Notice:** This is the initial version. It will be updated after UX Design and Architecture workflows add interaction and technical details to stories.
+**Living Document Notice:** This is the initial version. It will be updated after UX Design and
+Architecture workflows add interaction and technical details to stories.
 
 {{epics_summary}}
 
@@ -39,15 +39,11 @@ This document provides the complete epic and story breakdown for {{project_name}
 
 ### Story {{N}}.{{M}}: {{story_title_N_M}}
 
-As a {{user_type}},
-I want {{capability}},
-So that {{value_benefit}}.
+As a {{user_type}}, I want {{capability}}, So that {{value_benefit}}.
 
 **Acceptance Criteria:**
 
-**Given** {{precondition}}
-**When** {{action}}
-**Then** {{expected_outcome}}
+**Given** {{precondition}} **When** {{action}} **Then** {{expected_outcome}}
 
 **And** {{additional_criteria}}
 
@@ -75,6 +71,8 @@ So that {{value_benefit}}.
 
 ---
 
-_For implementation: Use the `create-story` workflow to generate individual story implementation plans from this epic breakdown._
+_For implementation: Use the `create-story` workflow to generate individual story implementation
+plans from this epic breakdown._
 
-_This document will be updated after UX Design and Architecture workflows to incorporate interaction details and technical decisions._
+_This document will be updated after UX Design and Architecture workflows to incorporate interaction
+details and technical decisions._

@@ -13,7 +13,7 @@
  */
 
 // Core components
-export { SpeculationManager, DEFAULT_SPECULATION_CONFIG } from "./speculation-manager.ts";
+export { DEFAULT_SPECULATION_CONFIG, SpeculationManager } from "./speculation-manager.ts";
 export type { SpeculationOutcome } from "./speculation-manager.ts";
 
 export { SpeculativeExecutor } from "./speculative-executor.ts";
@@ -21,21 +21,21 @@ export type { SpeculativeExecutorConfig } from "./speculative-executor.ts";
 
 // Config loader (Story 3.5-2)
 export {
+  ConfigValidationError,
+  DEFAULT_FILE_CONFIG,
+  DEFAULT_SPECULATION_CONFIG_PATH,
   loadSpeculationConfig,
   saveSpeculationConfig,
   toSpeculationConfig,
-  ConfigValidationError,
-  DEFAULT_SPECULATION_CONFIG_PATH,
-  DEFAULT_FILE_CONFIG,
 } from "./speculation-config-loader.ts";
 export type { SpeculationFileConfig } from "./speculation-config-loader.ts";
 
 // Re-export types from graphrag for convenience
 export type {
-  PredictedNode,
-  SpeculationConfig,
-  SpeculationCache,
-  SpeculationMetrics,
   CompletedTask,
+  PredictedNode,
+  SpeculationCache,
+  SpeculationConfig,
+  SpeculationMetrics,
   WorkflowPredictionState,
 } from "../graphrag/types.ts";

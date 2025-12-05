@@ -33,7 +33,10 @@ const result3 = await executor.execute(`
   return content;
 `);
 console.log("Result:", result3);
-console.log("Success:", result3.success === false && result3.error?.type === "PermissionError" ? "✅" : "❌");
+console.log(
+  "Success:",
+  result3.success === false && result3.error?.type === "PermissionError" ? "✅" : "❌",
+);
 console.log();
 
 // Test 4: Network access denied
@@ -43,7 +46,10 @@ const result4 = await executor.execute(`
   return response.status;
 `);
 console.log("Result:", result4);
-console.log("Success:", result4.success === false && result4.error?.type === "PermissionError" ? "✅" : "❌");
+console.log(
+  "Success:",
+  result4.success === false && result4.error?.type === "PermissionError" ? "✅" : "❌",
+);
 console.log();
 
 console.log("=== All tests completed ===");

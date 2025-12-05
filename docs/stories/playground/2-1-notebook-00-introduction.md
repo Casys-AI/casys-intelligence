@@ -4,9 +4,8 @@ Status: ready-for-dev
 
 ## Story
 
-As a **new user**,
-I want **an introduction notebook**,
-so that **I understand what I'm about to learn and verify my environment**.
+As a **new user**, I want **an introduction notebook**, so that **I understand what I'm about to
+learn and verify my environment**.
 
 ## Acceptance Criteria
 
@@ -37,7 +36,8 @@ so that **I understand what I'm about to learn and verify my environment**.
 - [ ] Task 4: Mettre à jour Notebook Roadmap (AC: #4)
   - [ ] Remplacer table actuelle (9 notebooks 01-09) par nouvelle séquence (6 notebooks 01-06)
   - [ ] Format: | Notebook | What You'll Learn |
-  - [ ] Séquence: 01-the-problem, 02-context-optimization, 03-dag-execution, 04-sandbox-security, 05-graphrag-learning, 06-workflow-templates
+  - [ ] Séquence: 01-the-problem, 02-context-optimization, 03-dag-execution, 04-sandbox-security,
+        05-graphrag-learning, 06-workflow-templates
   - [ ] Ajouter note sur archivage des anciens notebooks (Story 2.8)
 
 - [ ] Task 5: Améliorer Quick Start cell (AC: #5)
@@ -59,13 +59,13 @@ so that **I understand what I'm about to learn and verify my environment**.
 
 **Gap Analysis:**
 
-| AC | Requis | État actuel | Action |
-|----|--------|-------------|--------|
-| #1 | 5 Learning Objectives | ✅ 5 checkboxes présents | Review texte |
-| #2 | Architecture Mermaid | ❌ ASCII art seulement | Convertir en Mermaid |
-| #3 | `ensurePlaygroundReady()` | ❌ Import sandbox seulement | Implémenter appel complet |
-| #4 | Table 01-06 | ❌ Table montre 01-09 (ancienne séquence) | Mettre à jour |
-| #5 | Quick Start complet | ⚠️ Vérifie Deno mais pas API key | Compléter checks |
+| AC | Requis                    | État actuel                               | Action                    |
+| -- | ------------------------- | ----------------------------------------- | ------------------------- |
+| #1 | 5 Learning Objectives     | ✅ 5 checkboxes présents                  | Review texte              |
+| #2 | Architecture Mermaid      | ❌ ASCII art seulement                    | Convertir en Mermaid      |
+| #3 | `ensurePlaygroundReady()` | ❌ Import sandbox seulement               | Implémenter appel complet |
+| #4 | Table 01-06               | ❌ Table montre 01-09 (ancienne séquence) | Mettre à jour             |
+| #5 | Quick Start complet       | ⚠️ Vérifie Deno mais pas API key          | Compléter checks          |
 
 ### Architecture Constraints
 
@@ -86,10 +86,11 @@ await displayMermaid(`
 `);
 
 // lib/metrics.ts - Story 1.7 DONE
-import { progressBar, compareMetrics, speedupChart } from "../lib/metrics.ts";
+import { compareMetrics, progressBar, speedupChart } from "../lib/metrics.ts";
 ```
 
 **Notebook current structure (8 cells):**
+
 1. Title + Learning Objectives (markdown)
 2. The Problem: MCP Doesn't Scale (markdown)
 3. The Solution: Casys MCP Gateway (markdown)
@@ -131,18 +132,19 @@ graph TB
 
 ### New Notebook Roadmap Table
 
-| Notebook | What You'll Learn |
-|----------|-------------------|
-| **01-the-problem** | See the MCP context explosion and latency issues live |
-| **02-context-optimization** | Reduce context usage with vector search |
-| **03-dag-execution** | Parallelize workflows with DAG |
-| **04-sandbox-security** | Execute code safely in isolation |
-| **05-graphrag-learning** | See how the system learns patterns |
-| **06-workflow-templates** | Define and sync your own workflow patterns |
+| Notebook                    | What You'll Learn                                     |
+| --------------------------- | ----------------------------------------------------- |
+| **01-the-problem**          | See the MCP context explosion and latency issues live |
+| **02-context-optimization** | Reduce context usage with vector search               |
+| **03-dag-execution**        | Parallelize workflows with DAG                        |
+| **04-sandbox-security**     | Execute code safely in isolation                      |
+| **05-graphrag-learning**    | See how the system learns patterns                    |
+| **06-workflow-templates**   | Define and sync your own workflow patterns            |
 
 ### Testing Strategy
 
 **Manual Validation:**
+
 1. Ouvrir notebook dans VS Code Jupyter
 2. Exécuter toutes les cellules séquentiellement
 3. Vérifier outputs:
@@ -153,15 +155,18 @@ graph TB
    - Quick Start: Affiche Deno version + gateway import status + API key status
 
 **No Unit Tests Required:**
+
 - Story est modification notebook (fichier .ipynb)
 - Validation manuelle par exécution
 
 ### Project Structure Notes
 
 **Target File:**
+
 - `playground/notebooks/00-introduction.ipynb` (modification)
 
 **Dependencies from Epic 1:**
+
 - Story 1.5: `lib/init.ts` avec `ensurePlaygroundReady()` ✅ DONE
 - Story 1.6: `lib/viz.ts` avec `displayMermaid()` ✅ DONE
 - Story 1.7: `lib/metrics.ts` helpers ✅ DONE

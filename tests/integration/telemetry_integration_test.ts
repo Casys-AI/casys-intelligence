@@ -8,7 +8,7 @@ import { assertEquals, assertExists } from "@std/assert";
 import { setupLogger } from "../../src/telemetry/logger.ts";
 import { TelemetryService } from "../../src/telemetry/telemetry.ts";
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import * as log from "@std/log";
 
 async function createTestDb(): Promise<PGliteClient> {
@@ -44,52 +44,52 @@ Deno.test({
   // Log files ARE created and written in production, verified manually
   ignore: true,
   async fn() {
-  const testLogDir = `/tmp/agentcards-test-logs-${Date.now()}`;
-  const testLogPath = `${testLogDir}/agentcards.log`;
+    const testLogDir = `/tmp/agentcards-test-logs-${Date.now()}`;
+    const testLogPath = `${testLogDir}/agentcards.log`;
 
-  // Setup logger with custom path
-  await setupLogger({
-    logFilePath: testLogPath,
-  });
+    // Setup logger with custom path
+    await setupLogger({
+      logFilePath: testLogPath,
+    });
 
-  // Write a test log
-  log.info("Integration test log message");
+    // Write a test log
+    log.info("Integration test log message");
 
-  // Wait for file to be written
-  const fileExists = await waitForLogFile(testLogPath);
-  assertEquals(fileExists, true, "Log file should be created within timeout");
+    // Wait for file to be written
+    const fileExists = await waitForLogFile(testLogPath);
+    assertEquals(fileExists, true, "Log file should be created within timeout");
 
-  try {
-    // Verify file exists
-    const fileInfo = await Deno.stat(testLogPath);
-    assertExists(fileInfo);
-    assertEquals(fileInfo.isFile, true);
-
-    // Verify content is JSON formatted
-    const content = await Deno.readTextFile(testLogPath);
-    const lines = content.trim().split("\n").filter((l) => l.length > 0);
-
-    // At least one log line should exist
-    assertEquals(lines.length >= 1, true);
-
-    // Verify JSON format (should have level, timestamp, message)
-    const logEntry = JSON.parse(lines[0]);
-    assertExists(logEntry.level);
-    assertExists(logEntry.timestamp);
-    assertExists(logEntry.message);
-
-    // Clean up
-    await Deno.remove(testLogDir, { recursive: true });
-  } catch (error) {
-    console.error("Log file test failed:", error);
-    // Try to clean up even if test failed
     try {
+      // Verify file exists
+      const fileInfo = await Deno.stat(testLogPath);
+      assertExists(fileInfo);
+      assertEquals(fileInfo.isFile, true);
+
+      // Verify content is JSON formatted
+      const content = await Deno.readTextFile(testLogPath);
+      const lines = content.trim().split("\n").filter((l) => l.length > 0);
+
+      // At least one log line should exist
+      assertEquals(lines.length >= 1, true);
+
+      // Verify JSON format (should have level, timestamp, message)
+      const logEntry = JSON.parse(lines[0]);
+      assertExists(logEntry.level);
+      assertExists(logEntry.timestamp);
+      assertExists(logEntry.message);
+
+      // Clean up
       await Deno.remove(testLogDir, { recursive: true });
-    } catch {
-      // Ignore cleanup errors
+    } catch (error) {
+      console.error("Log file test failed:", error);
+      // Try to clean up even if test failed
+      try {
+        await Deno.remove(testLogDir, { recursive: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+      throw error;
     }
-    throw error;
-  }
   },
 });
 
@@ -161,38 +161,38 @@ Deno.test({
   // Log rotation DOES work in production, verified manually
   ignore: true,
   async fn() {
-  const testLogDir = `/tmp/agentcards-test-logs-${Date.now()}`;
-  const testLogPath = `${testLogDir}/agentcards.log`;
+    const testLogDir = `/tmp/agentcards-test-logs-${Date.now()}`;
+    const testLogPath = `${testLogDir}/agentcards.log`;
 
-  await setupLogger({
-    logFilePath: testLogPath,
-  });
+    await setupLogger({
+      logFilePath: testLogPath,
+    });
 
-  // Write many logs to trigger rotation (would need to write 10MB+ for real rotation)
-  // For this test, we just verify the rotation function exists and doesn't error
-  for (let i = 0; i < 10; i++) {
-    log.info(`Test log message ${i}`.repeat(100));
-  }
-
-  // Wait for file to be written
-  const fileExists = await waitForLogFile(testLogPath);
-  assertEquals(fileExists, true, "Log file should be created within timeout");
-
-  try {
-    // Verify log file exists
-    const fileInfo = await Deno.stat(testLogPath);
-    assertExists(fileInfo);
-
-    // Clean up
-    await Deno.remove(testLogDir, { recursive: true });
-  } catch (error) {
-    console.error("Log rotation test failed:", error);
-    try {
-      await Deno.remove(testLogDir, { recursive: true });
-    } catch {
-      // Ignore cleanup errors
+    // Write many logs to trigger rotation (would need to write 10MB+ for real rotation)
+    // For this test, we just verify the rotation function exists and doesn't error
+    for (let i = 0; i < 10; i++) {
+      log.info(`Test log message ${i}`.repeat(100));
     }
-    throw error;
-  }
+
+    // Wait for file to be written
+    const fileExists = await waitForLogFile(testLogPath);
+    assertEquals(fileExists, true, "Log file should be created within timeout");
+
+    try {
+      // Verify log file exists
+      const fileInfo = await Deno.stat(testLogPath);
+      assertExists(fileInfo);
+
+      // Clean up
+      await Deno.remove(testLogDir, { recursive: true });
+    } catch (error) {
+      console.error("Log rotation test failed:", error);
+      try {
+        await Deno.remove(testLogDir, { recursive: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+      throw error;
+    }
   },
 });

@@ -6,14 +6,18 @@
 
 ## Context
 
-The current `buildDAG` algorithm uses a "greedy triangular" approach: it only checks dependencies between a candidate tool and tools that appear _before_ it in the list (`j < i`).
+The current `buildDAG` algorithm uses a "greedy triangular" approach: it only checks dependencies
+between a candidate tool and tools that appear _before_ it in the list (`j < i`).
 
 This creates a critical **Ordering Bias**:
 
-- If `Parent` appears _after_ `Child` in the candidate list (e.g., because `Child` has a better semantic match to the user query), the dependency is missed.
+- If `Parent` appears _after_ `Child` in the candidate list (e.g., because `Child` has a better
+  semantic match to the user query), the dependency is missed.
 - Result: Both run in parallel → `Child` fails.
 
-With the introduction of **Hybrid Search (ADR-022)**, this risk increases significantly. Hybrid Search injects graph-related tools (often prerequisites like `install` or `auth`) into the list, but their ranking might be lower than the main intent tools.
+With the introduction of **Hybrid Search (ADR-022)**, this risk increases significantly. Hybrid
+Search injects graph-related tools (often prerequisites like `install` or `auth`) into the list, but
+their ranking might be lower than the main intent tools.
 
 ## Decision
 
@@ -58,13 +62,16 @@ for (let i = 0; i < candidates.length; i++) {
 
 ### Positive
 
-- **Order Independence**: The DAG structure is now determined solely by the graph topology, not by the arbitrary sort order of the search results.
-- **Synergy with Hybrid Search**: Perfectly handles cases where "Prerequisites" are discovered by the graph but ranked lower than "Goals".
+- **Order Independence**: The DAG structure is now determined solely by the graph topology, not by
+  the arbitrary sort order of the search results.
+- **Synergy with Hybrid Search**: Perfectly handles cases where "Prerequisites" are discovered by
+  the graph but ranked lower than "Goals".
 - **Correctness**: Eliminates the "Parallel Execution Crash" for inverted parent/child pairs.
 
 ### Negative
 
-- **Complexity**: Requires cycle detection/breaking logic (which wasn't needed with the triangular loop as it structurally prevented cycles).
+- **Complexity**: Requires cycle detection/breaking logic (which wasn't needed with the triangular
+  loop as it structurally prevented cycles).
 - **Performance**: O(N²) comparisons instead of O(N²/2). Negligible for small N (top 10-20 tools).
 
 ## Compliance

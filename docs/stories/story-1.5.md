@@ -1,17 +1,14 @@
 # Story 1.5: Semantic Vector Search Implementation
 
-**Epic:** 1 - Project Foundation & Context Optimization Engine
-**Story ID:** 1.5
-**Status:** done
+**Epic:** 1 - Project Foundation & Context Optimization Engine **Story ID:** 1.5 **Status:** done
 **Estimated Effort:** 3-4 hours
 
 ---
 
 ## User Story
 
-**As a** developer,
-**I want** to search for relevant tools using natural language queries,
-**So that** I can find the right tools without knowing their exact names.
+**As a** developer, **I want** to search for relevant tools using natural language queries, **So
+that** I can find the right tools without knowing their exact names.
 
 ---
 
@@ -36,6 +33,7 @@
 ## Technical Notes
 
 ### Semantic Search API
+
 ```typescript
 interface SearchResult {
   toolId: string;
@@ -48,19 +46,20 @@ interface SearchResult {
 class VectorSearch {
   constructor(
     private db: PGlite,
-    private embeddingModel: EmbeddingModel
+    private embeddingModel: EmbeddingModel,
   ) {}
 
   async searchTools(
     query: string,
     topK: number = 5,
-    minScore: number = 0.7
+    minScore: number = 0.7,
   ): Promise<SearchResult[]> {
     // 1. Generate query embedding
     const queryEmbedding = await this.embeddingModel.encode(query);
 
     // 2. Perform cosine similarity search with pgvector
-    const results = await this.db.query(`
+    const results = await this.db.query(
+      `
       SELECT
         te.tool_id,
         te.server_id,
@@ -72,30 +71,34 @@ class VectorSearch {
       WHERE 1 - (te.embedding <=> $1::vector) >= $2
       ORDER BY te.embedding <=> $1::vector
       LIMIT $3
-    `, [
-      `[${queryEmbedding.join(",")}]`,
-      minScore,
-      topK
-    ]);
+    `,
+      [
+        `[${queryEmbedding.join(",")}]`,
+        minScore,
+        topK,
+      ],
+    );
 
     // 3. Parse and return results
-    return results.map(row => ({
+    return results.map((row) => ({
       toolId: row.tool_id,
       serverId: row.server_id,
       toolName: row.tool_name,
       score: parseFloat(row.score),
-      schema: JSON.parse(row.schema_json)
+      schema: JSON.parse(row.schema_json),
     }));
   }
 }
 ```
 
 ### pgvector Cosine Similarity
+
 - Operator: `<=>` (cosine distance)
 - Score conversion: `1 - distance` = similarity (0-1 range)
 - HNSW index automatically used for fast queries
 
 ### Sample Test Queries
+
 ```typescript
 // Test 1: File operations
 const results1 = await vectorSearch.searchTools("read a file", 5);
@@ -111,6 +114,7 @@ const results3 = await vectorSearch.searchTools("query database records", 5);
 ```
 
 ### Performance Optimization
+
 - **HNSW index parameters:**
   - `m = 16`: number of connections per layer
   - `ef_construction = 64`: index build quality
@@ -122,6 +126,7 @@ const results3 = await vectorSearch.searchTools("query database records", 5);
   - Use prepared statements for repeated queries
 
 ### Benchmark Tests
+
 ```typescript
 Deno.test("Vector search performance P95 <100ms", async () => {
   const latencies: number[] = [];
@@ -158,26 +163,33 @@ Deno.test("Vector search performance P95 <100ms", async () => {
 ## Dev Agent Record
 
 ### Context Reference
+
 - [Story Context](1-5-semantic-vector-search-implementation.context.xml) - Generated 2025-11-04
 
 ### Files Created/Modified
 
 **Created:**
-- `src/vector/search.ts` - VectorSearch class with searchTools() method, SearchResult interface, pgvector cosine similarity implementation
-- `tests/unit/vector/search_test.ts` - Comprehensive test suite (15 tests covering ACs 1-7 + edge cases)
+
+- `src/vector/search.ts` - VectorSearch class with searchTools() method, SearchResult interface,
+  pgvector cosine similarity implementation
+- `tests/unit/vector/search_test.ts` - Comprehensive test suite (15 tests covering ACs 1-7 + edge
+  cases)
 
 **Modified:**
+
 - `src/vector/index.ts` - Added exports for VectorSearch class and SearchResult interface
 
 ### Debug Log
 
 **Planning:**
+
 - Analyzed story context with 7 ACs, constraints, and existing interfaces
 - Designed VectorSearch class using PGliteClient and EmbeddingModel
 - Planned pgvector cosine distance (<= >) implementation with parameterized queries
 - Structured test suite mapping each test to specific ACs
 
 **Implementation:**
+
 - **src/vector/search.ts:**
   - SearchResult interface (toolId, serverId, toolName, score, schema)
   - VectorSearch class with constructor(db, model)
@@ -198,9 +210,13 @@ Deno.test("Vector search performance P95 <100ms", async () => {
   - AC7 benchmark test: 100 queries, P95 latency validation
 
 **Challenges:**
-- ~~Test infrastructure issue: PGlite pgvector extension encounters errors during table creation in test environment~~ **RESOLVED 2025-11-04**
-- Root cause: SQL migration statement parser was not properly removing comments before splitting statements
-- Fix: Updated [migrations.ts:242-262](../../src/db/migrations.ts:242-262) to filter comments before parsing
+
+- ~~Test infrastructure issue: PGlite pgvector extension encounters errors during table creation in
+  test environment~~ **RESOLVED 2025-11-04**
+- Root cause: SQL migration statement parser was not properly removing comments before splitting
+  statements
+- Fix: Updated [migrations.ts:242-262](../../src/db/migrations.ts:242-262) to filter comments before
+  parsing
 - Tests now execute successfully with proper table creation
 - Type checking passes for all code (confirmed with `deno check`)
 
@@ -209,6 +225,7 @@ Deno.test("Vector search performance P95 <100ms", async () => {
 ✅ **Story 1.5 complete and ready for review**
 
 **Implementation:**
+
 - VectorSearch class provides semantic search over tool embeddings
 - Full pgvector cosine similarity support with HNSW index
 - Configurable parameters: topK (default 5), minScore (default 0.7)
@@ -217,12 +234,14 @@ Deno.test("Vector search performance P95 <100ms", async () => {
 - Structured logging for all search operations
 
 **Tests:**
+
 - 15 tests covering all 7 ACs + edge cases
 - Tests follow project standards (Deno.test, @std/assert, memory db)
 - Fast tests validate structure, integration tests validate full behavior
 - Sample queries for file ops, GitHub ops, and database tools
 
 **AC Validation:**
+
 - AC1 ✅: Query embedding via BGE-Large-EN-v1.5 (EmbeddingModel.encode)
 - AC2 ✅: pgvector cosine similarity with `<=>` operator, HNSW index
 - AC3 ✅: searchTools(query, topK) API returns toolId + score + schema
@@ -232,12 +251,14 @@ Deno.test("Vector search performance P95 <100ms", async () => {
 - AC7 ✅: Architecture supports P95 <100ms (benchmark test included)
 
 **Known Issues:**
+
 - ~~Test infrastructure: PGlite pgvector table creation fails in test env~~ **RESOLVED 2025-11-04**
 - Integration tests marked `{ignore: true}` require BGE model download (~400MB from HuggingFace)
 - Tests can be run manually with: `deno test --allow-all --no-ignore`
 - Non-integration tests (structure, edge cases) pass successfully
 
 **Next Steps:**
+
 - Code review
 - Manual validation with integration tests if needed
 - Address test infrastructure issue in story 1.2 (separate task)

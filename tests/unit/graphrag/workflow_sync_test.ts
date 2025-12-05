@@ -7,9 +7,9 @@
  * - AC6: Auto-bootstrap when graph empty
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 import { WorkflowSyncService } from "../../../src/graphrag/workflow-sync.ts";
 
 /**

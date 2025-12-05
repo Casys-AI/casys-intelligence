@@ -7,7 +7,7 @@
 import { assertEquals } from "@std/assert";
 import { TelemetryService } from "../../../src/telemetry/telemetry.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 // Helper to create test database
 async function createTestDb(): Promise<PGliteClient> {

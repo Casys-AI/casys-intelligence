@@ -1,10 +1,8 @@
 # 🔍 RAPPORT D'AUDIT COMPLET - AgentCards
 
-**Date:** 2025-11-24
-**Auditeur:** Claude (Anthropic)
-**Portée:** Audit complet du concept et de l'implémentation
-**Durée de l'audit:** Analyse approfondie (niveau "very thorough")
-**Version du projet:** commit e2594ec
+**Date:** 2025-11-24 **Auditeur:** Claude (Anthropic) **Portée:** Audit complet du concept et de
+l'implémentation **Durée de l'audit:** Analyse approfondie (niveau "very thorough") **Version du
+projet:** commit e2594ec
 
 ---
 
@@ -12,14 +10,18 @@
 
 ### Score Global: **78/100** (B+)
 
-AgentCards est un **projet ambitieux et techniquement solide** qui s'attaque à un vrai problème de l'écosystème MCP. Le concept est **innovant et différenciant**, l'architecture est **bien pensée**, et l'implémentation démontre une **qualité de code au-dessus de la moyenne**.
+AgentCards est un **projet ambitieux et techniquement solide** qui s'attaque à un vrai problème de
+l'écosystème MCP. Le concept est **innovant et différenciant**, l'architecture est **bien pensée**,
+et l'implémentation démontre une **qualité de code au-dessus de la moyenne**.
 
-**Cependant**, plusieurs **problèmes critiques de concurrence et de gestion des ressources** ont été identifiés qui pourraient causer des défaillances en production. De plus, l'**alignement concept-implémentation** présente des écarts significatifs qui diluent la proposition de valeur unique.
+**Cependant**, plusieurs **problèmes critiques de concurrence et de gestion des ressources** ont été
+identifiés qui pourraient causer des défaillances en production. De plus, l'**alignement
+concept-implémentation** présente des écarts significatifs qui diluent la proposition de valeur
+unique.
 
 ### Verdict Final
 
-✅ **Concept:** Excellent (88/100)
-⚠️ **Implémentation:** Bonne mais avec risques critiques (72/100)
+✅ **Concept:** Excellent (88/100) ⚠️ **Implémentation:** Bonne mais avec risques critiques (72/100)
 ⚠️ **Alignement:** Partiel avec déviations importantes (75/100)
 
 ---
@@ -43,23 +45,27 @@ AgentCards est un **projet ambitieux et techniquement solide** qui s'attaque à 
 #### ✅ Points Forts Exceptionnels
 
 **1. Problème clairement identifié et quantifié**
+
 - "Taxe invisible" du contexte: 30-50% → objectif <5% ✅
 - Latence cumulative 5x → objectif 1x avec parallélisation ✅
 - Limitation pratique: 7-8 servers au lieu de 15-20+ désirés ✅
 
-**2. Positionnement marché astucieux**
-Le PRD démontre une **analyse concurrentielle exceptionnelle**:
+**2. Positionnement marché astucieux** Le PRD démontre une **analyse concurrentielle
+exceptionnelle**:
 
-> "Le marché des gateways MCP est encombré avec de nombreuses tentatives [...] Cependant, **aucune ne résout de manière satisfaisante les deux problèmes simultanément**"
+> "Le marché des gateways MCP est encombré avec de nombreuses tentatives [...] Cependant, **aucune
+> ne résout de manière satisfaisante les deux problèmes simultanément**"
 
 Différenciateurs identifiés:
+
 - AIRIS, Smithery, Unla: Lazy loading défaillant ou incomplet
 - Autres: Orchestration sans optimisation contexte
 - Majorité: Approche "all-at-once" qui sature la context window
 - **Aucun**: Vector search sémantique ET DAG execution production-ready
 
-**3. Architecture de "THE feature": Speculative Execution**
-Le concept de spéculation est **brillamment conçu**:
+**3. Architecture de "THE feature": Speculative Execution** Le concept de spéculation est
+**brillamment conçu**:
+
 - Confidence-based (>0.85) avec safety checks
 - GraphRAG pour pattern learning
 - ROI clair: $5-10/jour context savings >> $0.50 waste
@@ -68,16 +74,19 @@ Le concept de spéculation est **brillamment conçu**:
 #### ⚠️ Faiblesses Conceptuelles
 
 **1. Business Model peu détaillé pour un Level 2**
+
 - Freemium confirmé mais timeline floue (Mois 3-36)
 - Pas de stratégie go-to-market claire
 - $5M ARR dans 3 ans: optimiste sans plan d'acquisition
 
 **2. Adoption Friction sous-estimée**
+
 - Migration requiert édition manuelle `claude_desktop_config.json`
 - Change mental model: de "tools directs" à "intent-based"
 - Courbe d'apprentissage non documentée
 
 **3. Dépendance à Claude Code**
+
 - Locked-in à l'écosystème Anthropic
 - Pas de stratégie multi-client (Cursor, autres IDEs)
 
@@ -86,22 +95,26 @@ Le concept de spéculation est **brillamment conçu**:
 #### ✅ Décisions Architecturales Excellentes
 
 **ADR-001: PGlite + pgvector** (vs SQLite)
+
 - Justification solide: HNSW index production-ready
 - Trade-off documenté: 3MB vs <1MB acceptable
 - Performance target: <100ms P95 ✅
 
 **ADR-005: Graphology pour GraphRAG**
+
 - Vision "NetworkX of JavaScript" claire
 - 90% SQL plus simple vs recursive CTEs
 - Vraies métriques graph: PageRank, Louvain, bidirectional search
 
 **ADR-007: 3-Loop Learning Architecture**
+
 - Loop 1 (Execution): Event stream, checkpoints (milliseconds)
 - Loop 2 (Adaptation): AIL/HIL, replanning (seconds-minutes)
 - Loop 3 (Meta-Learning): Knowledge graph updates (per-workflow)
 - **Pattern MessagesState-inspired** bien choisi (95/100 score)
 
 **ADR-013: Meta-Tools Only**
+
 - Cohérent avec vision context optimization
 - Réduit 44.5k tokens → ~500 tokens (99% reduction)
 - Force intent-driven usage (aligné PRD)
@@ -109,16 +122,19 @@ Le concept de spéculation est **brillamment conçu**:
 #### ⚠️ Risques Architecturaux
 
 **1. Complexité Epic 2.5 (3-Loop Learning)**
+
 - ControlledExecutor: 1,251 LOC (trop gros)
 - Event-driven + Reducers + Command Queue: courbe d'apprentissage
 - Pas de metrics de production pour valider patterns
 
 **2. Sandbox Isolation (Epic 3)**
+
 - Deno permissions: robustes mais restrictives
 - Virtual filesystem: incomplet (pas de vrais fichiers)
 - PII protection: framework présent mais détection basique
 
 **3. Speculative Execution reporté Epic 3.5**
+
 - THE feature pas encore implémentée
 - Dépend de Epic 3 (sandbox) pour safety
 - Risque: concept différenciateur non livré
@@ -127,20 +143,19 @@ Le concept de spéculation est **brillamment conçu**:
 
 #### ✅ Qualité Exceptionnelle
 
-**README.md:** Professionnel, complet, exemples clairs
-**PRD.md:** Niveau enterprise (goals, context, requirements, journeys)
-**architecture.md:** 1,897 lignes, patterns détaillés, ADRs intégrés
-**10 ADRs:** Décisions documentées avec rationale, alternatives, conséquences
-**32 Stories:** Structured avec AC, DoD, estimations
+**README.md:** Professionnel, complet, exemples clairs **PRD.md:** Niveau enterprise (goals,
+context, requirements, journeys) **architecture.md:** 1,897 lignes, patterns détaillés, ADRs
+intégrés **10 ADRs:** Décisions documentées avec rationale, alternatives, conséquences **32
+Stories:** Structured avec AC, DoD, estimations
 
 #### Comparaison Industrie
 
-| Aspect | AgentCards | Industrie Standard | Verdict |
-|--------|-----------|-------------------|---------|
-| Documentation technique | 1,897 lignes arch.md | ~500 lignes | ✅ Supérieur |
-| ADRs | 10 formels | 0-3 informels | ✅ Excellent |
-| User journeys | Détaillés avec temps | Souvent absent | ✅ Excellent |
-| Business model | Freemium documenté | Rarement documenté | ✅ Bon |
+| Aspect                  | AgentCards           | Industrie Standard | Verdict      |
+| ----------------------- | -------------------- | ------------------ | ------------ |
+| Documentation technique | 1,897 lignes arch.md | ~500 lignes        | ✅ Supérieur |
+| ADRs                    | 10 formels           | 0-3 informels      | ✅ Excellent |
+| User journeys           | Détaillés avec temps | Souvent absent     | ✅ Excellent |
+| Business model          | Freemium documenté   | Rarement documenté | ✅ Bon       |
 
 ---
 
@@ -173,6 +188,7 @@ Le concept de spéculation est **brillamment conçu**:
 #### ✅ Excellente Implémentation (90% alignement)
 
 **1. MCP Gateway Server** (`src/mcp/gateway-server.ts`)
+
 - ✅ Stdio + HTTP transport (ADR-014)
 - ✅ Meta-tools exposure (ADR-013)
 - ✅ Safety checks dangerous operations
@@ -180,6 +196,7 @@ Le concept de spéculation est **brillamment conçu**:
 - ✅ Adaptive thresholds integration
 
 **2. DAG Execution** (`src/dag/executor.ts`, `controlled-executor.ts`)
+
 - ✅ Topological sort custom (ADR-002: zero deps)
 - ✅ Promise.allSettled resilient execution
 - ✅ Rate limiting MCP servers
@@ -189,17 +206,20 @@ Le concept de spéculation est **brillamment conçu**:
 - ✅ AIL/HIL decision points framework
 
 **3. Vector Search** (`src/vector/search.ts`)
+
 - ✅ BGE-M3 embeddings (upgrade de BGE-Large-EN-v1.5)
 - ✅ pgvector HNSW index
 - ✅ Graceful fallback keyword search
 - ✅ Performance logging
 
 **4. GraphRAG Engine** (`src/graphrag/graph-engine.ts`)
+
 - ✅ Graphology integration
 - ✅ PageRank + Louvain + bidirectional paths
 - ✅ Hybrid storage (PGlite + in-memory)
 
 **5. Sandbox Execution** (`src/sandbox/executor.ts`)
+
 - ✅ Deno subprocess isolation
 - ✅ Timeout + memory limits
 - ✅ Code execution caching
@@ -209,19 +229,23 @@ Le concept de spéculation est **brillamment conçu**:
 #### ⚠️ Déviations et Code Incomplet
 
 **1. Gateway Handler Incomplet**
+
 ```typescript
 // src/mcp/gateway-handler.ts:194
 // TODO: Call actual MCP tool execution
 ```
+
 - Stub implementation dans `processIntent()`
 - Speculative execution partiellement implémentée
 - **Impact:** Fonctionnalité core non opérationnelle
 
 **2. Command Processing Incomplet**
+
 ```typescript
 // src/dag/controlled-executor.ts:336
 // TODO: Story 2.5-3 - Implement command handlers
 ```
+
 - Commands enqueued mais handlers manquants:
   - `inject_tasks` ❌
   - `skip_layer` ❌
@@ -231,10 +255,12 @@ Le concept de spéculation est **brillamment conçu**:
 - **Impact:** AIL/HIL incomplet
 
 **3. Console Logging Non Capturé**
+
 ```typescript
 // src/mcp/gateway-server.ts:768
 logs: [], // TODO: Capture console logs in future enhancement
 ```
+
 - CodeExecutionResponse sans logs sandbox
 - **Impact:** Debugging difficile
 
@@ -258,11 +284,13 @@ private model: any = null;
 ```
 
 **Impact:**
+
 - Perte de vérification compile-time
 - Bugs runtime difficiles à tracer
 - IntelliSense dégradé
 
 **Configuration TypeScript:**
+
 ```json
 // deno.json
 "compilerOptions": {
@@ -278,6 +306,7 @@ private model: any = null;
 ##### 🔴 **Problème Critique #2: Race Conditions**
 
 **Race Condition #1: CommandQueue.processCommands()**
+
 ```typescript
 // src/dag/command-queue.ts:201-206
 while (!this.queue.isEmpty()) {
@@ -287,9 +316,8 @@ while (!this.queue.isEmpty()) {
 return commands; // ❌ Returns BEFORE .then() executes
 ```
 
-**Impact:** Commands lost/duplicated
-**Sévérité:** 🔴 HIGH
-**Fix:**
+**Impact:** Commands lost/duplicated **Sévérité:** 🔴 HIGH **Fix:**
+
 ```typescript
 async processCommands(): Promise<Command[]> {
   const commands: Command[] = [];
@@ -305,6 +333,7 @@ async processCommands(): Promise<Command[]> {
 ```
 
 **Race Condition #2: EventStream Subscriber Counter**
+
 ```typescript
 // src/dag/event-stream.ts:92
 async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
@@ -314,9 +343,8 @@ async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
 }
 ```
 
-**Impact:** Memory leak
-**Sévérité:** 🟡 MEDIUM
-**Fix:**
+**Impact:** Memory leak **Sévérité:** 🟡 MEDIUM **Fix:**
+
 ```typescript
 async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
   this.stats.subscribers++;
@@ -329,6 +357,7 @@ async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
 ```
 
 **Race Condition #3: Checkpoint Pruning**
+
 ```typescript
 // src/dag/checkpoint-manager.ts:99-104
 if (this.autoPrune) {
@@ -336,12 +365,13 @@ if (this.autoPrune) {
 }
 ```
 
-**Impact:** New checkpoint saved while prune in-flight → could delete wrong checkpoint
-**Sévérité:** 🟡 MEDIUM
+**Impact:** New checkpoint saved while prune in-flight → could delete wrong checkpoint **Sévérité:**
+🟡 MEDIUM
 
 ##### 🔴 **Problème Critique #3: Resource Leaks**
 
 **Memory Leak #1: Tool Schema Cache Unbounded**
+
 ```typescript
 // src/mcp/gateway-server.ts:881-887
 private buildToolVersionsMap(): Record<string, string> {
@@ -356,6 +386,7 @@ private buildToolVersionsMap(): Record<string, string> {
 **Fix:** LRU cache avec taille max (1000 tools)
 
 **Memory Leak #2: EventStream Buffer Unbounded**
+
 ```typescript
 // src/dag/event-stream.ts:34
 private events: ExecutionEvent[] = []; // ❌ Never cleared
@@ -368,6 +399,7 @@ private events: ExecutionEvent[] = []; // ❌ Never cleared
 ##### ✅ Points Forts Code Quality
 
 **1. Error Handling Custom Hierarchy**
+
 ```typescript
 // src/errors/error-types.ts
 AgentCardsError (base)
@@ -377,16 +409,19 @@ AgentCardsError (base)
   ├─ SandboxExecutionError
   └─ ... (8 types total)
 ```
+
 - Stack traces préservés
 - Error codes + recoverable flag
 - Suggestions intégrées
 
 **2. Async/Await Consistance: 99%**
+
 - Seulement 5 Promise chains dans toute la codebase
 - `for...of` + `await` pour séquentiel
 - `Promise.all()` pour parallèle
 
 **3. Code Organization Modulaire**
+
 - Séparation claire des concerns
 - Dependency injection pattern
 - Type-safe interfaces
@@ -398,26 +433,31 @@ AgentCardsError (base)
 ##### ✅ Bonnes Pratiques
 
 **1. Sandbox Isolation Robuste**
+
 ```bash
 --deny-write --deny-net --deny-run --deny-ffi
 --allow-env --allow-read=~/.agentcards
 ```
+
 - Whitelist-only approach ✅
 - No eval(), template strings only ✅
 - Subprocess isolation ✅
 - Timeout enforcement (30s) ✅
 
 **2. SQL Injection Prevention**
+
 - Parameterized queries partout
 - Aucune string concatenation dans SQL
 
 **3. PII Protection Framework**
+
 - Email, phone, credit_card, SSN, API keys détectés
 - Tokenization optionnelle
 
 ##### ⚠️ Vulnérabilités
 
 **1. Configuration Validation Manquante**
+
 ```typescript
 // src/mcp/gateway-server.ts:94-111
 this.config = {
@@ -425,50 +465,59 @@ this.config = {
   // ❌ No schema validation
 };
 ```
+
 **Risque:** Config malicieuse pourrait désactiver PII protection
 
 **2. Unsafe Type Casting**
+
 ```typescript
 // src/vector/search.ts:122-130
 schema: JSON.parse(row.schema_json) as MCPTool,
 ```
+
 **Risque:** Malformed tool schemas acceptés sans validation
 
 **3. Rate Limiter Bypassable**
+
 ```typescript
 // src/dag/executor.ts:256-259
 const [serverId] = task.tool.split(":");
 await this.rateLimiter.waitForSlot(serverId);
 ```
+
 **Risque:** Rate limit par server, pas par tool → un tool agressif épuise le quota
 
 ### 2.5 Performance
 
 #### Targets vs Réalité
 
-| Métrique | Target | Mesuré/Estimé | Status |
-|----------|--------|---------------|--------|
-| Vector search P95 | <100ms | Atteint selon logs | ✅ |
-| Context usage | <5% | ADR-013: ~500 tokens (99% reduc) | ✅ |
-| Sandbox startup | <100ms | 34.77ms mesuré | ✅✅ |
-| Workflow 5 tools P95 | <3s | Non mesuré en prod | ⚠️ |
-| GraphRAG sync | <200ms | ~150-200ms estimé | ✅ |
+| Métrique             | Target | Mesuré/Estimé                    | Status |
+| -------------------- | ------ | -------------------------------- | ------ |
+| Vector search P95    | <100ms | Atteint selon logs               | ✅     |
+| Context usage        | <5%    | ADR-013: ~500 tokens (99% reduc) | ✅     |
+| Sandbox startup      | <100ms | 34.77ms mesuré                   | ✅✅   |
+| Workflow 5 tools P95 | <3s    | Non mesuré en prod               | ⚠️     |
+| GraphRAG sync        | <200ms | ~150-200ms estimé                | ✅     |
 
 #### Bottlenecks Identifiés
 
 **1. Vector Search Query Encoding**
+
 - Chaque query réencode embedding (même si cached)
 - **Fix:** Cache query embeddings (LRU 100 queries)
 
 **2. GraphRAG Recomputation**
+
 - PageRank + Louvain recalculés à chaque sync
 - **Fix:** Lazy recomputation sur détection changements graph
 
 **3. Checkpoint Serialization**
+
 - `JSON.stringify()` synchrone bloque sur gros states
 - **Fix:** Async serialization ou streaming
 
 **4. EventStream Array Growth**
+
 - Buffer unbounded peut exploser mémoire
 - **Fix:** Ring buffer avec auto-cleanup
 
@@ -493,8 +542,7 @@ await this.rateLimiter.waitForSlot(serverId);
 - Speculative execution logic
 ```
 
-**Epic 2.5:** 13/13 E2E tests passing ✅
-**Epic 3:** Couverture partielle
+**Epic 2.5:** 13/13 E2E tests passing ✅ **Epic 3:** Couverture partielle
 
 ---
 
@@ -505,21 +553,25 @@ await this.rateLimiter.waitForSlot(serverId);
 #### ✅ Alignements Forts
 
 **1. Context Optimization (90% aligné)**
+
 - Concept: <5% context via semantic search
 - Implémentation: ADR-013 meta-tools only → 99% reduction
 - Vector search fonctionnel avec fallback
 
 **2. DAG Execution (85% aligné)**
+
 - Concept: Parallélisation 5x speedup
 - Implémentation: Topological sort + Promise.all
 - Rate limiting + resilient execution
 
 **3. GraphRAG Foundation (80% aligné)**
+
 - Concept: PageRank + Louvain + patterns
 - Implémentation: Graphology intégré, métriques calculées
 - Feedback loop framework présent
 
 **4. Sandbox Isolation (90% aligné)**
+
 - Concept: Safe-to-fail branches, local processing
 - Implémentation: Deno permissions robustes, PII protection
 
@@ -528,7 +580,9 @@ await this.rateLimiter.waitForSlot(serverId);
 **1. Speculative Execution - THE FEATURE (0% implémenté)**
 
 **Concept (ADR-006):**
-> "Make speculative execution the default mode for high-confidence workflows (>0.85), not an optional feature. [...] THE feature - core differentiator"
+
+> "Make speculative execution the default mode for high-confidence workflows (>0.85), not an
+> optional feature. [...] THE feature - core differentiator"
 
 **Implémentation:** Reporté Epic 3.5 (backlog)
 
@@ -537,9 +591,11 @@ await this.rateLimiter.waitForSlot(serverId);
 **2. AIL/HIL Command Handlers (40% implémenté)**
 
 **Concept (ADR-007):**
+
 > "Loop 2 (Adaptation): AIL/HIL decision points, dynamic DAG modification, command injection"
 
 **Implémentation:**
+
 ```typescript
 // controlled-executor.ts:336
 // TODO: Story 2.5-3 - Implement command handlers
@@ -552,9 +608,11 @@ await this.rateLimiter.waitForSlot(serverId);
 **3. Meta-Tools vs Transparent Proxy (Confusion)**
 
 **Concept PRD:**
+
 > "AgentCards acts as a **transparent MCP gateway** that consolidates all your MCP servers"
 
 **vs ADR-013 (Accepted):**
+
 > "Meta-Tools Only with semantic discovery via `execute_workflow`"
 
 **Implémentation actuelle:** Meta-tools only (ADR-013)
@@ -564,12 +622,14 @@ await this.rateLimiter.waitForSlot(serverId);
 **4. Tool Discovery Gap**
 
 **README.md examples:**
+
 ```typescript
 // Example: Single tool execution (transparent proxy)
 await callTool("filesystem:read_file", { path: "/config.json" });
 ```
 
 **vs ADR-013 Reality:**
+
 - `tools/list` retourne seulement 2 meta-tools
 - Direct tool access requires `execute_workflow` wrapper
 
@@ -578,6 +638,7 @@ await callTool("filesystem:read_file", { path: "/config.json" });
 ### Diagnostic: Dérive Architecturale
 
 **Timeline:**
+
 1. **Concept initial (PRD):** Transparent proxy + context optimization
 2. **ADR-013 (Nov 2025):** Pivot vers meta-tools only
 3. **Conséquence:** README/examples pas mis à jour
@@ -585,6 +646,7 @@ await callTool("filesystem:read_file", { path: "/config.json" });
 **Risque:** Utilisateurs s'attendent à proxy transparent, découvrent intent-based forcé
 
 **Recommandation:**
+
 - Option A: Revenir à transparent proxy + semantic filtering
 - Option B: Assumer meta-tools only, réécrire README/PRD
 - Option C: Hybrid mode configurable (ADR-013 Option C)
@@ -595,25 +657,27 @@ await callTool("filesystem:read_file", { path: "/config.json" });
 
 ### AgentCards vs Compétiteurs
 
-| Critère | AgentCards | AIRIS | Smithery | Unla | Context Forge |
-|---------|-----------|-------|----------|------|---------------|
-| Context Optimization | ✅ 99% reduc (meta-tools) | ⚠️ Lazy défaillant | ❌ All-at-once | ⚠️ Incomplet | ❌ No optimization |
-| DAG Execution | ✅ Parallel layers | ❌ Sequential | ❌ Sequential | ⚠️ Basic | ❌ No orchestration |
-| GraphRAG | ✅ Graphology (PageRank, Louvain) | ❌ No graph | ❌ No graph | ❌ No graph | ❌ No graph |
-| Speculative Execution | ⏳ Planned Epic 3.5 | ❌ No | ❌ No | ❌ No | ❌ No |
-| Vector Search | ✅ BGE-M3 + HNSW | ⚠️ Basic embed | ❌ No | ⚠️ Basic | ❌ No |
-| Local-First | ✅ PGlite portable | ⚠️ Docker issues | ☁️ Cloud | ☁️ Cloud | ❌ Server |
-| Documentation | ✅✅ Exceptional | ⚠️ Minimal | ⚠️ Basic | ⚠️ Basic | ⚠️ Basic |
+| Critère               | AgentCards                        | AIRIS              | Smithery       | Unla         | Context Forge       |
+| --------------------- | --------------------------------- | ------------------ | -------------- | ------------ | ------------------- |
+| Context Optimization  | ✅ 99% reduc (meta-tools)         | ⚠️ Lazy défaillant | ❌ All-at-once | ⚠️ Incomplet | ❌ No optimization  |
+| DAG Execution         | ✅ Parallel layers                | ❌ Sequential      | ❌ Sequential  | ⚠️ Basic     | ❌ No orchestration |
+| GraphRAG              | ✅ Graphology (PageRank, Louvain) | ❌ No graph        | ❌ No graph    | ❌ No graph  | ❌ No graph         |
+| Speculative Execution | ⏳ Planned Epic 3.5               | ❌ No              | ❌ No          | ❌ No        | ❌ No               |
+| Vector Search         | ✅ BGE-M3 + HNSW                  | ⚠️ Basic embed     | ❌ No          | ⚠️ Basic     | ❌ No               |
+| Local-First           | ✅ PGlite portable                | ⚠️ Docker issues   | ☁️ Cloud       | ☁️ Cloud     | ❌ Server           |
+| Documentation         | ✅✅ Exceptional                  | ⚠️ Minimal         | ⚠️ Basic       | ⚠️ Basic     | ⚠️ Basic            |
 
 ### Forces Compétitives
 
 ✅ **Différenciateurs Réels:**
+
 1. GraphRAG avec vrais algos graph (unique)
 2. 3-Loop Learning Architecture (unique)
 3. Documentation level enterprise (rare)
 4. PGlite portable zero-config (rare)
 
 ⚠️ **Différenciateurs Promis Non Livrés:**
+
 1. Speculative execution (THE feature) - Epic 3.5 backlog
 2. Parallélisation 5x - framework présent, perf non mesurée
 3. AIL/HIL complet - partiellement implémenté
@@ -629,6 +693,7 @@ await callTool("filesystem:read_file", { path: "/config.json" });
 **Fichier:** `src/dag/command-queue.ts:197-214`
 
 **Problème:**
+
 ```typescript
 while (!this.queue.isEmpty()) {
   const cmd = this.queue.dequeue();
@@ -638,6 +703,7 @@ return commands; // ❌ Returns BEFORE .then() executes
 ```
 
 **Fix:**
+
 ```typescript
 async processCommands(): Promise<Command[]> {
   const commands: Command[] = [];
@@ -657,6 +723,7 @@ async processCommands(): Promise<Command[]> {
 **Fichier:** `src/dag/event-stream.ts:86-100`
 
 **Problème:**
+
 ```typescript
 async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
   this.stats.subscribers++; // ✅ Incremented
@@ -666,6 +733,7 @@ async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
 ```
 
 **Fix:**
+
 ```typescript
 async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
   this.stats.subscribers++;
@@ -689,6 +757,7 @@ async *subscribe(): AsyncIterableIterator<ExecutionEvent> {
 **Fichier:** `src/mcp/gateway-server.ts:881-887`
 
 **Problème:**
+
 ```typescript
 private buildToolVersionsMap(): Record<string, string> {
   const versions: Record<string, string> = {};
@@ -700,6 +769,7 @@ private buildToolVersionsMap(): Record<string, string> {
 ```
 
 **Fix:**
+
 ```typescript
 // Add to deno.json imports:
 "lru-cache": "npm:lru-cache@^10.0.0"
@@ -719,6 +789,7 @@ private toolSchemaCache = new LRUCache<string, string>({
 **Fichier:** `src/dag/executor.ts:256-259`
 
 **Problème:**
+
 ```typescript
 const [serverId] = task.tool.split(":");
 if (serverId) {
@@ -727,6 +798,7 @@ if (serverId) {
 ```
 
 **Fix:**
+
 ```typescript
 // Rate limit per tool, not just per server
 const rateKey = `${task.tool}`; // ✅ FIX - Full tool ID
@@ -742,6 +814,7 @@ await this.rateLimiter.waitForSlot(rateKey);
 **Option A: Hybrid Mode (Recommandé)**
 
 Créer `src/mcp/types.ts` config extension:
+
 ```typescript
 export interface GatewayConfig {
   name: string;
@@ -757,6 +830,7 @@ export interface GatewayConfig {
 ```
 
 Modifier `src/mcp/gateway-server.ts:handleListTools()`:
+
 ```typescript
 async handleListTools(request: unknown): Promise<ListToolsResult> {
   const mode = this.config.tools_exposure ?? "meta_only";
@@ -783,6 +857,7 @@ async handleListTools(request: unknown): Promise<ListToolsResult> {
 ```
 
 **Avantages:**
+
 - Backward compatible
 - Satisfait PRD (transparent si full_proxy) ET ADR-013 (meta_only par défaut)
 - Flexible selon use case
@@ -792,6 +867,7 @@ async handleListTools(request: unknown): Promise<ListToolsResult> {
 **Fichier:** `src/dag/controlled-executor.ts:336-430`
 
 Implémenter handlers manquants:
+
 ```typescript
 private async processCommands(): Promise<void> {
   const commands = await this.commandQueue.processCommands();
@@ -867,8 +943,8 @@ private async handleCheckpointResponse(cmd: CheckpointResponseCommand): Promise<
 }
 ```
 
-**Tests intégration:**
-Créer `tests/integration/controlled-executor-commands.test.ts`:
+**Tests intégration:** Créer `tests/integration/controlled-executor-commands.test.ts`:
+
 ```typescript
 Deno.test("ControlledExecutor - inject_tasks command", async () => {
   // Test dynamic task injection
@@ -894,6 +970,7 @@ Deno.test("ControlledExecutor - checkpoint_response command", async () => {
 **Story 3.5-1: DAGSuggester Speculative Execution**
 
 Modifier `src/graphrag/dag-suggester.ts`:
+
 ```typescript
 export class DAGSuggester {
   /**
@@ -903,7 +980,7 @@ export class DAGSuggester {
   async predictNextNodes(
     state: WorkflowState,
     completed: TaskResult[],
-    confidence_threshold = 0.7
+    confidence_threshold = 0.7,
   ): Promise<PredictedNode[]> {
     const lastTool = completed[completed.length - 1]?.tool;
     if (!lastTool) return [];
@@ -912,14 +989,17 @@ export class DAGSuggester {
     const communityMembers = await this.graphEngine.findCommunityMembers(lastTool);
 
     // 2. Get historical co-occurrence patterns
-    const patterns = await this.db.query(`
+    const patterns = await this.db.query(
+      `
       SELECT to_tool_id, confidence_score
       FROM tool_dependency
       WHERE from_tool_id = $1
       AND confidence_score > $2
       ORDER BY confidence_score DESC
       LIMIT 5
-    `, [lastTool, confidence_threshold]);
+    `,
+      [lastTool, confidence_threshold],
+    );
 
     // 3. Score predictions
     const predictions: PredictedNode[] = [];
@@ -935,7 +1015,7 @@ export class DAGSuggester {
       }
     }
 
-    return predictions.filter(p => p.confidence >= confidence_threshold);
+    return predictions.filter((p) => p.confidence >= confidence_threshold);
   }
 }
 ```
@@ -943,6 +1023,7 @@ export class DAGSuggester {
 **Story 3.5-2: Confidence-Based Speculation + Rollback**
 
 Modifier `src/dag/controlled-executor.ts`:
+
 ```typescript
 async executeStream(
   dag: DAGStructure,
@@ -1017,6 +1098,7 @@ private resultsMatch(speculative: any, actual: any): boolean {
 ```
 
 **Safety Checks:**
+
 ```typescript
 private isDangerousOperation(tool_id: string): boolean {
   const DANGEROUS_PATTERNS = [
@@ -1034,6 +1116,7 @@ private isDangerousOperation(tool_id: string): boolean {
 ```
 
 **Metrics Tracking:**
+
 ```typescript
 interface SpeculationMetrics {
   total_predictions: number;
@@ -1048,6 +1131,7 @@ interface SpeculationMetrics {
 **8. Performance Benchmarking (3 jours)**
 
 Créer `tests/benchmarks/workflow-performance.bench.ts`:
+
 ```typescript
 Deno.bench("Workflow 5 tools sequential", async () => {
   // Baseline: sequential execution
@@ -1067,6 +1151,7 @@ Deno.bench("15 MCP servers simultaneous", async () => {
 ```
 
 **Targets:**
+
 - Workflow 5 tools P95: <3s
 - Speedup vs sequential: 5x
 - Context usage: <5%
@@ -1075,12 +1160,14 @@ Deno.bench("15 MCP servers simultaneous", async () => {
 **9. Type Safety Pass (1 semaine)**
 
 **Plan:**
+
 1. Audit tous les `any` (10+ occurrences identifiées)
 2. Remplacer par types spécifiques ou `unknown` + type guards
 3. Ajouter runtime validation (zod ou validator)
 4. Tester avec `noImplicitAny` strict
 
 **Exemple fix:**
+
 ```typescript
 // AVANT
 async (request: any) => await this.handleListTools(request),
@@ -1108,6 +1195,7 @@ async (request: ListToolsRequest) => {
 **10. Testing Coverage 60% → 85%**
 
 **Tests critiques manquants:**
+
 ```
 tests/integration/
   ├─ controlled-executor-commands.test.ts (NEW)
@@ -1125,6 +1213,7 @@ tests/e2e/
 **11. Refactoring Modules Trop Gros**
 
 **gateway-server.ts (1,055 LOC) → 3 modules:**
+
 ```
 src/mcp/
   ├─ gateway-server.ts (300 LOC - orchestration)
@@ -1133,6 +1222,7 @@ src/mcp/
 ```
 
 **controlled-executor.ts (1,251 LOC) → 3 modules:**
+
 ```
 src/dag/
   ├─ controlled-executor.ts (400 LOC - orchestration)
@@ -1143,6 +1233,7 @@ src/dag/
 **12. Observability Production**
 
 **Sentry Integration Complète:**
+
 ```typescript
 // src/telemetry/sentry.ts
 import * as Sentry from "@sentry/deno";
@@ -1166,6 +1257,7 @@ export function initSentry(dsn: string, environment: string) {
 ```
 
 **Metrics Dashboard:**
+
 - Context usage over time
 - Workflow latency P50/P95/P99
 - Speculation hit rate
@@ -1179,11 +1271,13 @@ export function initSentry(dsn: string, environment: string) {
 ### 6.1 Market Fit
 
 **Problem-Solution Fit: 9/10** ✅
+
 - Problème réel, quantifié, vécu par early adopters
 - Solution technique crédible et différenciée
 - Documentation démontre expertise technique
 
 **Product-Market Fit: 6/10** ⚠️
+
 - THE feature (speculation) pas livrée → différenciation limitée
 - Adoption friction sous-estimée (intent-based vs direct tools)
 - Pas de stratégie GTM documentée
@@ -1193,16 +1287,17 @@ export function initSentry(dsn: string, environment: string) {
 
 **Freemium Strategy:**
 
-| Tier | Prix | Limites | Features | Target |
-|------|------|---------|----------|--------|
-| Free | $0 | 3 MCP servers | Context optimization, DAG basic | Hobbyists, learners |
-| Pro | $15/mo | Unlimited servers | + Speculation, advanced DAG, priority support | Power users |
-| Team | $25/user/mo | Unlimited | + Shared configs, team dashboard, analytics | Small teams (5-20) |
-| Enterprise | $50-75/user/mo + $10K platform | Custom | + SSO, RBAC, SOC2, SLAs, dedicated support | Large orgs (100+) |
+| Tier       | Prix                           | Limites           | Features                                      | Target              |
+| ---------- | ------------------------------ | ----------------- | --------------------------------------------- | ------------------- |
+| Free       | $0                             | 3 MCP servers     | Context optimization, DAG basic               | Hobbyists, learners |
+| Pro        | $15/mo                         | Unlimited servers | + Speculation, advanced DAG, priority support | Power users         |
+| Team       | $25/user/mo                    | Unlimited         | + Shared configs, team dashboard, analytics   | Small teams (5-20)  |
+| Enterprise | $50-75/user/mo + $10K platform | Custom            | + SSO, RBAC, SOC2, SLAs, dedicated support    | Large orgs (100+)   |
 
 **Revenue Target: $5M ARR en 3 ans**
 
 **Validation:**
+
 ```
 Scénario Réaliste:
 - Year 1: 1,000 users (100 Pro, 10 Team) → $25K ARR
@@ -1213,6 +1308,7 @@ Scénario Réaliste:
 ```
 
 **Problème:** Cible trop optimiste sans:
+
 - Plan d'acquisition (CAC?)
 - Taux de conversion Free→Pro estimé
 - Churn rate assumptions
@@ -1220,13 +1316,13 @@ Scénario Réaliste:
 
 ### 6.3 Analyse Concurrentielle Prix
 
-| Concurrent | Modèle | Prix | Forces | Faiblesses |
-|-----------|--------|------|---------|------------|
-| Smithery | Cloud SaaS | Gratuit | Hébergé, UI | Pas d'optimisation contexte |
-| Unla | Cloud SaaS | Gratuit | Registry central | Dépendance cloud |
-| AIRIS | Self-hosted | Open-source | Lazy loading | Défaillances Docker |
-| Context Forge | Self-hosted | $? | Orchestration | Pas de context optimization |
-| **AgentCards** | Local-first | Freemium ($0-75/user) | GraphRAG, speculation, local | Adoption friction |
+| Concurrent     | Modèle      | Prix                  | Forces                       | Faiblesses                  |
+| -------------- | ----------- | --------------------- | ---------------------------- | --------------------------- |
+| Smithery       | Cloud SaaS  | Gratuit               | Hébergé, UI                  | Pas d'optimisation contexte |
+| Unla           | Cloud SaaS  | Gratuit               | Registry central             | Dépendance cloud            |
+| AIRIS          | Self-hosted | Open-source           | Lazy loading                 | Défaillances Docker         |
+| Context Forge  | Self-hosted | $?                    | Orchestration                | Pas de context optimization |
+| **AgentCards** | Local-first | Freemium ($0-75/user) | GraphRAG, speculation, local | Adoption friction           |
 
 **Opportunité:** Gap entre "100% free mais limité" et "enterprise-only pricing"
 
@@ -1237,11 +1333,13 @@ Scénario Réaliste:
 **Phase 0: Pre-Launch (2 mois)**
 
 **Objectifs:**
+
 - Livrer THE feature (speculation)
 - Beta program 10-20 early adopters
 - Mesurer metrics réelles: adoption, context savings, speedup
 
 **Tactiques:**
+
 1. **Beta Program:**
    - Recruter via Twitter/HN/Reddit (r/LocalLLaMA, r/ClaudeAI)
    - Critères: Active Claude Code users, 10+ MCP servers configurés
@@ -1260,11 +1358,13 @@ Scénario Réaliste:
 **Phase 1: Launch (M3-6)**
 
 **Objectifs:**
+
 - 100 active users
 - 10 Pro conversions ($150 MRR)
 - Établir thought leadership
 
 **Tactiques:**
+
 1. **Open-Source Launch:**
    - HackerNews post: "AgentCards - MCP Gateway with GraphRAG"
    - Reddit: r/ClaudeAI, r/LocalLLaMA
@@ -1288,11 +1388,13 @@ Scénario Réaliste:
 **Phase 2: Growth (M7-18)**
 
 **Objectifs:**
+
 - 1,000 active users
 - $50K ARR
 - Team tier launched
 
 **Tactiques:**
+
 1. **Product Expansion:**
    - Intégrations: Cursor, Windsurf, autres IDEs
    - Enterprise features: SSO, RBAC
@@ -1311,11 +1413,13 @@ Scénario Réaliste:
 **Phase 3: Scale (M19-36)**
 
 **Objectifs:**
+
 - 20,000 users
 - $500K ARR
 - Enterprise tier mature
 
 **Tactiques:**
+
 1. **Enterprise Sales:**
    - Dedicated sales team
    - Case studies
@@ -1329,6 +1433,7 @@ Scénario Réaliste:
 ### 6.5 Acquisition Channels
 
 **Priorité 1 (Low CAC, High Intent):**
+
 1. **GitHub / Open-Source:**
    - Stars, forks, contributions
    - README quality (déjà excellent ✅)
@@ -1345,6 +1450,7 @@ Scénario Réaliste:
    - Twitter technical threads
 
 **Priorité 2 (Medium CAC):**
+
 1. **Paid Ads:**
    - Google Ads (keywords: "MCP gateway", "Claude Code optimization")
    - Reddit Ads (r/ClaudeAI, r/LocalLLaMA)
@@ -1354,6 +1460,7 @@ Scénario Réaliste:
    - Anthropic listing (if available)
 
 **Priorité 3 (High CAC, Enterprise):**
+
 1. **Outbound Sales:**
    - LinkedIn outreach
    - Cold email campaigns
@@ -1362,21 +1469,25 @@ Scénario Réaliste:
 ### 6.6 Risques Business
 
 **Risque #1: Anthropic Builds In-House Solution**
+
 - Probabilité: Moyenne (40%)
 - Impact: Élevé (marché disparaît)
 - Mitigation: Diversifier IDE support (Cursor, etc.), focus differentiators (GraphRAG)
 
 **Risque #2: Concurrents Copient GraphRAG/Speculation**
+
 - Probabilité: Élevée (70%)
 - Impact: Moyen (perte avantage compétitif)
 - Mitigation: Exécution rapide, network effects (community), continuous innovation
 
 **Risque #3: Adoption Friction Trop Élevée**
+
 - Probabilité: Moyenne (50%)
 - Impact: Élevé (croissance lente)
 - Mitigation: Hybrid mode (transparent proxy + meta-tools), better onboarding
 
 **Risque #4: MCP Ecosystem Stagnation**
+
 - Probabilité: Faible (20%)
 - Impact: Critique (marché n'existe pas)
 - Mitigation: Diversifier (support autres protocols?), pivot si nécessaire
@@ -1475,39 +1586,44 @@ Scénario Réaliste:
 
 ### Score Final Détaillé
 
-| Dimension | Score | Pondération | Contribution | Commentaire |
-|-----------|-------|-------------|--------------|-------------|
-| **Vision & Concept** | 88/100 | 15% | 13.2 | Excellente identification problème, différenciateurs clairs |
-| **Architecture Design** | 85/100 | 15% | 12.75 | ADRs solides, patterns modernes, complexité maîtrisée |
-| **Code Quality** | 72/100 | 20% | 14.4 | Organisation excellente, mais type safety faible + race conditions |
-| **Security** | 75/100 | 10% | 7.5 | Sandbox robuste, mais validation config manquante |
-| **Performance** | 70/100 | 10% | 7.0 | Targets atteints, mais non mesurés production |
-| **Testing** | 60/100 | 10% | 6.0 | Couverture modérée, tests critiques manquants |
-| **Documentation** | 95/100 | 10% | 9.5 | Exceptional, niveau enterprise rare |
-| **Concept-Impl Alignment** | 75/100 | 10% | 7.5 | Base solide, mais THE feature absente + dérive |
+| Dimension                  | Score  | Pondération | Contribution | Commentaire                                                        |
+| -------------------------- | ------ | ----------- | ------------ | ------------------------------------------------------------------ |
+| **Vision & Concept**       | 88/100 | 15%         | 13.2         | Excellente identification problème, différenciateurs clairs        |
+| **Architecture Design**    | 85/100 | 15%         | 12.75        | ADRs solides, patterns modernes, complexité maîtrisée              |
+| **Code Quality**           | 72/100 | 20%         | 14.4         | Organisation excellente, mais type safety faible + race conditions |
+| **Security**               | 75/100 | 10%         | 7.5          | Sandbox robuste, mais validation config manquante                  |
+| **Performance**            | 70/100 | 10%         | 7.0          | Targets atteints, mais non mesurés production                      |
+| **Testing**                | 60/100 | 10%         | 6.0          | Couverture modérée, tests critiques manquants                      |
+| **Documentation**          | 95/100 | 10%         | 9.5          | Exceptional, niveau enterprise rare                                |
+| **Concept-Impl Alignment** | 75/100 | 10%         | 7.5          | Base solide, mais THE feature absente + dérive                     |
 
 ### **SCORE GLOBAL: 77.85/100 ≈ 78/100 (B+)**
 
 ### Verdict Final
 
-AgentCards est un **projet sérieux avec vision claire** et **implémentation au-dessus de la moyenne**. Le concept est **innovant**, l'architecture est **solide**, et la documentation est **exceptionnelle**.
+AgentCards est un **projet sérieux avec vision claire** et **implémentation au-dessus de la
+moyenne**. Le concept est **innovant**, l'architecture est **solide**, et la documentation est
+**exceptionnelle**.
 
 **Cependant:**
 
-✅ **Prêt pour Beta:** Oui, après fix race conditions (8h Sprint 0)
-⚠️ **Prêt pour Production:** Non, manque:
-   - Speculation (THE feature) - 1 semaine
-   - Benchmarks perf réels - 3 jours
-   - Tests critiques - 1 semaine
+✅ **Prêt pour Beta:** Oui, après fix race conditions (8h Sprint 0) ⚠️ **Prêt pour Production:**
+Non, manque:
+
+- Speculation (THE feature) - 1 semaine
+- Benchmarks perf réels - 3 jours
+- Tests critiques - 1 semaine
 
 ⚠️ **Prêt pour Marché:** Non, manque:
-   - GTM strategy documentée
-   - Beta program validation
-   - Product-market fit prouvé
+
+- GTM strategy documentée
+- Beta program validation
+- Product-market fit prouvé
 
 ### Chemin Critique Recommandé
 
 **Sprint 0 (1 semaine) - CRITIQUE:**
+
 - Fix race conditions CommandQueue (2h)
 - Fix EventStream subscriber leak (1h)
 - Fix tool cache unbounded (3h)
@@ -1515,12 +1631,14 @@ AgentCards est un **projet sérieux avec vision claire** et **implémentation au
 - **Résultat:** Production-safe code
 
 **Sprint 1 (2 semaines) - ALIGNMENT:**
+
 - Résoudre dérive meta-tools vs transparent (hybrid mode - 1 jour)
 - Compléter command handlers AIL/HIL (2 jours)
 - Type safety pass (éliminer `any` - 1 semaine)
 - **Résultat:** Architecture cohérente, DX amélioré
 
 **Sprint 2-3 (1 mois) - DIFFÉRENCIATION:**
+
 - Implémenter speculation (Epic 3.5 - 1 semaine)
 - Performance benchmarks + stress tests (3 jours)
 - Tests intégration critiques (1 semaine)
@@ -1528,6 +1646,7 @@ AgentCards est un **projet sérieux avec vision claire** et **implémentation au
 - **Résultat:** THE feature livrée, perf prouvée
 
 **Beta Program (2 mois) - VALIDATION:**
+
 - Recruter 10-20 early adopters
 - A/B testing vs direct MCP
 - Metrics: context saved, speedup, satisfaction
@@ -1535,6 +1654,7 @@ AgentCards est un **projet sérieux avec vision claire** et **implémentation au
 - **Résultat:** Product-market fit validé
 
 **Launch (M6) - GO-TO-MARKET:**
+
 - Open-source + Pro tier
 - HN/Reddit/ProductHunt launch
 - Content marketing (blog series technique)
@@ -1561,6 +1681,7 @@ AgentCards est un **projet sérieux avec vision claire** et **implémentation au
    - Standalone profitable SaaS
 
 **Mais nécessite:**
+
 - Fix immédiat race conditions (8h)
 - Livrer THE feature speculation (1 semaine)
 - Exécution GTM disciplinée (6-12 mois)
@@ -1571,6 +1692,7 @@ AgentCards est un **projet sérieux avec vision claire** et **implémentation au
 **CONTINUE avec priorité aux fixes critiques puis différenciateurs.**
 
 Le projet a un **excellent foundation** mais doit:
+
 1. Éliminer risques production (Sprint 0)
 2. Livrer promesses compétitives (Sprint 2-3)
 3. Valider market fit (Beta program)
@@ -1581,6 +1703,5 @@ Le projet a un **excellent foundation** mais doit:
 
 **Fin du Rapport d'Audit Complet**
 
-*Généré le 2025-11-24 par Claude (Anthropic)*
-*Audit réalisé sur commit: e2594ec*
-*Portée: Concept, Implémentation, Alignement, Business*
+_Généré le 2025-11-24 par Claude (Anthropic)_ _Audit réalisé sur commit: e2594ec_ _Portée: Concept,
+Implémentation, Alignement, Business_

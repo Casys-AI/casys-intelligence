@@ -10,7 +10,11 @@ import { Command } from "@cliffy/command";
 import * as log from "@std/log";
 import { MCPServerDiscovery } from "../../mcp/discovery.ts";
 import { MCPClient } from "../../mcp/client.ts";
-import { HealthChecker, type ServerHealth, type HealthStatus } from "../../health/health-checker.ts";
+import {
+  HealthChecker,
+  type HealthStatus,
+  type ServerHealth,
+} from "../../health/health-checker.ts";
 import type { MCPServer } from "../../mcp/types.ts";
 
 /**

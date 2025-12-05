@@ -10,12 +10,7 @@ import * as log from "@std/log";
 import { PGliteClient } from "../db/client.ts";
 import { MCPServerDiscovery } from "./discovery.ts";
 import { MCPClient } from "./client.ts";
-import {
-  MCPServer,
-  MCPTool,
-  ServerDiscoveryResult,
-  DiscoveryStats,
-} from "./types.ts";
+import { DiscoveryStats, MCPServer, MCPTool, ServerDiscoveryResult } from "./types.ts";
 
 /**
  * Schema Extractor Service
@@ -238,9 +233,7 @@ export class SchemaExtractor {
             tool.name,
             tool.description,
             JSON.stringify(tool.inputSchema),
-            tool.outputSchema
-              ? JSON.stringify(tool.outputSchema)
-              : null,
+            tool.outputSchema ? JSON.stringify(tool.outputSchema) : null,
           ],
         );
       } catch (error) {

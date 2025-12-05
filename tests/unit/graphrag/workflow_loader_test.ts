@@ -7,7 +7,7 @@
  * - Steps → edges conversion
  */
 
-import { assertEquals, assert, assertRejects } from "@std/assert";
+import { assert, assertEquals, assertRejects } from "@std/assert";
 import { WorkflowLoader, type WorkflowTemplate } from "../../../src/graphrag/workflow-loader.ts";
 
 // ============================================

@@ -36,7 +36,8 @@
 
 ### Deprecations
 
-- `{deprecated_feature}` is deprecated and will be removed in v{removal_version}. Use `{replacement}` instead.
+- `{deprecated_feature}` is deprecated and will be removed in v{removal_version}. Use
+  `{replacement}` instead.
 
 ### Known Issues
 
@@ -92,11 +93,11 @@
 
 ## Version Support
 
-| Version | Status | Support Until |
-|---------|--------|---------------|
-| {version} | Active | Current |
-| {previous_version} | Maintained | {support_end_date} |
-| {old_version} | End of Life | - |
+| Version            | Status      | Support Until      |
+| ------------------ | ----------- | ------------------ |
+| {version}          | Active      | Current            |
+| {previous_version} | Maintained  | {support_end_date} |
+| {old_version}      | End of Life | -                  |
 
 ---
 

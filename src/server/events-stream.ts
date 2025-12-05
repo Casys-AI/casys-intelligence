@@ -182,8 +182,7 @@ export class EventsStreamManager {
     event: GraphEvent,
   ): Promise<void> {
     // SSE format: event: {type}\ndata: {JSON}\n\n
-    const sseData =
-      `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
+    const sseData = `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
     await writer.write(this.encoder.encode(sseData));
   }
 

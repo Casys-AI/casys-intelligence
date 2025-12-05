@@ -6,7 +6,7 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 
 async function createTestDb(): Promise<PGliteClient> {
@@ -156,13 +156,13 @@ Deno.test("GraphRAGEngine.getGraphSnapshot - parsing des tool IDs multiples", as
   assertEquals(snapshot.nodes.length, 3);
 
   // Vérifier que chaque server est correctement parsé
-  const servers = snapshot.nodes.map(n => n.server);
+  const servers = snapshot.nodes.map((n) => n.server);
   assertEquals(servers.includes("filesystem"), true);
   assertEquals(servers.includes("brave-search"), true);
   assertEquals(servers.includes("sequential-thinking"), true);
 
   // Vérifier que les labels sont corrects
-  const labels = snapshot.nodes.map(n => n.label);
+  const labels = snapshot.nodes.map((n) => n.label);
   assertEquals(labels.includes("read_file"), true);
   assertEquals(labels.includes("search"), true);
   assertEquals(labels.includes("think"), true);

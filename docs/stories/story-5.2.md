@@ -4,9 +4,8 @@ Status: done
 
 ## Story
 
-As a user,
-I want to define workflow patterns in a simple YAML file,
-so that the system can learn my common tool sequences and speculate effectively.
+As a user, I want to define workflow patterns in a simple YAML file, so that the system can learn my
+common tool sequences and speculate effectively.
 
 ## Acceptance Criteria
 
@@ -63,9 +62,11 @@ so that the system can learn my common tool sequences and speculate effectively.
 
 ### Architecture Context
 
-Story 5-2 provides the **user interface** for defining workflow patterns. Story 3.5-1 **consumes** these patterns for speculation.
+Story 5-2 provides the **user interface** for defining workflow patterns. Story 3.5-1 **consumes**
+these patterns for speculation.
 
 **Separation of concerns:**
+
 - 5-2 = YAML file format + sync to DB
 - 3.5-1 = Speculation engine + learning + export
 
@@ -85,6 +86,7 @@ workflows:
 ```
 
 **Design decisions:**
+
 - No `confidence` in YAML → system calculates from success rate
 - No `parallel`/`sequential` → gateway optimizes automatically
 - Just tool sequences → simplest possible format for users
@@ -114,6 +116,7 @@ CREATE TABLE tool_dependency (
 ```
 
 **Note:** Need to add `source` column via migration:
+
 ```sql
 ALTER TABLE tool_dependency ADD COLUMN source TEXT DEFAULT 'learned';
 ```
@@ -157,6 +160,7 @@ N/A
 ### File List
 
 **New Files:**
+
 - src/graphrag/workflow-loader.ts
 - src/graphrag/workflow-sync.ts
 - src/cli/commands/workflows.ts
@@ -167,6 +171,7 @@ N/A
 - tests/unit/graphrag/workflow_sync_test.ts
 
 **Modified Files:**
+
 - src/graphrag/graph-engine.ts (searchToolsHybrid method added)
 - src/graphrag/dag-suggester.ts (uses hybrid search, new confidence/rationale methods)
 - src/graphrag/types.ts (HybridSearchResult type)
@@ -188,26 +193,26 @@ N/A
 
 ### AC Validation Summary
 
-| AC | Status | Evidence |
-|----|--------|----------|
-| AC #1: Simple YAML format | ✅ PASS | `config/workflow-templates.yaml` (55 lines), format: `workflows: [{name, steps[]}]` |
-| AC #2: `agentcards workflows sync` CLI | ✅ PASS | `src/cli/commands/workflows.ts:45-99` - createSyncSubcommand() |
-| AC #3: `source='user'` in tool_dependency | ✅ PASS | `workflow-sync.ts:161-166` - INSERT with `source='user'`, confidence=0.90 |
-| AC #4: Auto-sync on checksum change | ✅ PASS | `workflow-sync.ts:57-70` - needsSync() compares SHA-256 checksums |
-| AC #5: Unknown tools logged as warnings | ✅ PASS | `workflow-loader.ts` - setKnownTools() + validate() with warnings array |
-| AC #6: Bootstrap on empty graph | ✅ PASS | `serve.ts:188-194` - bootstrapIfEmpty() called at startup |
-| AC #7: Tests cover scenarios | ✅ PASS | 52 tests passing (17 workflow_loader + 14 workflow_sync + 21 graph_engine) |
+| AC                                        | Status  | Evidence                                                                            |
+| ----------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| AC #1: Simple YAML format                 | ✅ PASS | `config/workflow-templates.yaml` (55 lines), format: `workflows: [{name, steps[]}]` |
+| AC #2: `agentcards workflows sync` CLI    | ✅ PASS | `src/cli/commands/workflows.ts:45-99` - createSyncSubcommand()                      |
+| AC #3: `source='user'` in tool_dependency | ✅ PASS | `workflow-sync.ts:161-166` - INSERT with `source='user'`, confidence=0.90           |
+| AC #4: Auto-sync on checksum change       | ✅ PASS | `workflow-sync.ts:57-70` - needsSync() compares SHA-256 checksums                   |
+| AC #5: Unknown tools logged as warnings   | ✅ PASS | `workflow-loader.ts` - setKnownTools() + validate() with warnings array             |
+| AC #6: Bootstrap on empty graph           | ✅ PASS | `serve.ts:188-194` - bootstrapIfEmpty() called at startup                           |
+| AC #7: Tests cover scenarios              | ✅ PASS | 52 tests passing (17 workflow_loader + 14 workflow_sync + 21 graph_engine)          |
 
 ### Code Quality Assessment
 
-| Category | Rating | Notes |
-|----------|--------|-------|
-| TypeScript Type Safety | ⭐⭐⭐⭐⭐ | Strict types, proper interfaces, no `any` except Graphology imports |
-| Test Coverage | ⭐⭐⭐⭐⭐ | 52 tests covering all ACs, edge cases, error handling |
-| Error Handling | ⭐⭐⭐⭐⭐ | Graceful degradation, warnings not errors, proper try/catch |
-| Performance | ⭐⭐⭐⭐⭐ | searchToolsHybrid <20ms overhead (measured: 0.4ms), graph sync <50ms |
-| Documentation | ⭐⭐⭐⭐ | JSDoc comments, ADR-022 references, inline explanations |
-| Architecture | ⭐⭐⭐⭐⭐ | Follows ADR-022, clean separation (Loader vs Sync), proper DI |
+| Category               | Rating     | Notes                                                                |
+| ---------------------- | ---------- | -------------------------------------------------------------------- |
+| TypeScript Type Safety | ⭐⭐⭐⭐⭐ | Strict types, proper interfaces, no `any` except Graphology imports  |
+| Test Coverage          | ⭐⭐⭐⭐⭐ | 52 tests covering all ACs, edge cases, error handling                |
+| Error Handling         | ⭐⭐⭐⭐⭐ | Graceful degradation, warnings not errors, proper try/catch          |
+| Performance            | ⭐⭐⭐⭐⭐ | searchToolsHybrid <20ms overhead (measured: 0.4ms), graph sync <50ms |
+| Documentation          | ⭐⭐⭐⭐   | JSDoc comments, ADR-022 references, inline explanations              |
+| Architecture           | ⭐⭐⭐⭐⭐ | Follows ADR-022, clean separation (Loader vs Sync), proper DI        |
 
 ### Strengths
 
@@ -219,7 +224,8 @@ N/A
 
 ### Minor Observations (Non-Blocking)
 
-1. **Observation**: `workflow-sync.ts:199-206` queries `config` table, but checksum key comment mentions `adaptive_config`
+1. **Observation**: `workflow-sync.ts:199-206` queries `config` table, but checksum key comment
+   mentions `adaptive_config`
    - **Impact**: None (code uses correct `config` table)
    - **Recommendation**: Consider updating comment for clarity
 
@@ -244,7 +250,8 @@ searchToolsHybrid: 0.4ms overhead (target: <20ms) ✅
 
 ### Conclusion
 
-Story 5.2 is **production-ready**. All acceptance criteria are met with high-quality implementation. The ADR-022 integration is well-executed, and the test coverage provides confidence in the solution's robustness.
+Story 5.2 is **production-ready**. All acceptance criteria are met with high-quality implementation.
+The ADR-022 integration is well-executed, and the test coverage provides confidence in the
+solution's robustness.
 
 **Recommendation**: Proceed to DONE status.
-

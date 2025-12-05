@@ -78,9 +78,12 @@ export default function NeuralGraph() {
           0,
           particle.x,
           particle.y,
-          particle.radius * 8
+          particle.radius * 8,
         );
-        gradient.addColorStop(0, `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, ${currentAlpha})`);
+        gradient.addColorStop(
+          0,
+          `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, ${currentAlpha})`,
+        );
         gradient.addColorStop(1, `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, 0)`);
 
         ctx.beginPath();
@@ -91,7 +94,9 @@ export default function NeuralGraph() {
         // Core dot
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, ${currentAlpha * 1.5})`;
+        ctx.fillStyle = `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, ${
+          currentAlpha * 1.5
+        })`;
         ctx.fill();
       });
 
@@ -108,7 +113,8 @@ export default function NeuralGraph() {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, ${opacity})`;
+            ctx.strokeStyle =
+              `rgba(${accentColor.r}, ${accentColor.g}, ${accentColor.b}, ${opacity})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }

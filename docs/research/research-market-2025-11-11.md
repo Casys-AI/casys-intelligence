@@ -1,26 +1,28 @@
 # Market Research Report: AgentsCards
 
-**Date:** 2025-11-11
-**Prepared by:** BMad
-**Research Depth:** Standard Analysis (4-6 hours)
+**Date:** 2025-11-11 **Prepared by:** BMad **Research Depth:** Standard Analysis (4-6 hours)
 
 ---
 
 ## Executive Summary
 
-**Décision recommandée : ✅ GO - Le modèle SaaS AgentsCards est viable et présente une opportunité significative.**
+**Décision recommandée : ✅ GO - Le modèle SaaS AgentsCards est viable et présente une opportunité
+significative.**
 
 ### Market Opportunity - Synthèse
 
-AgentsCards opère dans un marché MCP Gateway émergent et en croissance explosive, avec une fenêtre d'opportunité critique de **18-24 mois** avant commoditization.
+AgentsCards opère dans un marché MCP Gateway émergent et en croissance explosive, avec une fenêtre
+d'opportunité critique de **18-24 mois** avant commoditization.
 
 **Le timing est idéal :**
+
 - MCP lancé novembre 2024 (protocole très récent)
 - 1000+ MCP servers créés en 3 mois → adoption explosive confirmée
 - 90% des organisations prévoient adoption MCP d'ici fin 2025
 - MAIS : Aucun compétiteur n'a réussi la context optimization (AIRIS a échoué)
 
 **Le gap de marché est clair :**
+
 - **Gap #1 :** ZERO solutions de context optimization qui fonctionnent
 - **Gap #2 :** Focus compétiteurs = security/governance, pas developer productivity
 - **Gap #3 :** Pricing soit 100% gratuit (unsustainable) soit enterprise custom (inaccessible)
@@ -31,11 +33,13 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 ### Key Market Metrics
 
 **Total Addressable Market (TAM) :** **$500M - $1B annuellement d'ici 2027**
+
 - Méthode bottom-up : 2M développeurs × $20/mo ARPU = $480M/an
 - Méthode value theory : 2M devs × $360/an capturable = $720M/an
 - Convergence des méthodes confirme TAM ~$500M-1B
 
 **Serviceable Addressable Market (SAM) :** **~$125M annuellement d'ici 2027**
+
 - Geographic focus (US/EU) : 70% du TAM
 - B2B SaaS focus : 60% (teams + enterprise vs individual)
 - Active MCP users : 40% (adoption croissante)
@@ -43,15 +47,16 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 
 **Serviceable Obtainable Market (SOM) - Scénarios :**
 
-| Scénario | Market Share | Annual ARR | Probabilité |
-|----------|--------------|------------|-------------|
-| Conservative | 1.5% | **$1.9M** | Si execution moyenne |
-| **Realistic** | 4% | **$5M** | Si execution strong ✅ |
-| Optimistic | 7.5% | **$9.4M** | Si viral adoption |
+| Scénario      | Market Share | Annual ARR | Probabilité            |
+| ------------- | ------------ | ---------- | ---------------------- |
+| Conservative  | 1.5%         | **$1.9M**  | Si execution moyenne   |
+| **Realistic** | 4%           | **$5M**    | Si execution strong ✅ |
+| Optimistic    | 7.5%         | **$9.4M**  | Si viral adoption      |
 
 **Target recommandé : Scénario Realistic ($5M ARR dans 3 ans)**
 
 **Timeline to SOM :**
+
 - Year 1 (2026) : $500K ARR (10% of realistic SOM)
 - Year 2 (2027) : $2.5M ARR (50% of realistic SOM)
 - Year 3 (2028) : $5M ARR (100% of realistic SOM)
@@ -93,6 +98,7 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 ### Competitive Landscape - Synthèse
 
 **Marché fragmenté, aucun leader dominant :**
+
 - 15-20 entrants identifiés
 - Différenciation faible (plupart = "basic gateway + routing")
 - Focus compétiteurs : security/governance (Airia, Kong, Lasso)
@@ -100,16 +106,17 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 
 **Compétiteurs clés & threat levels :**
 
-| Compétiteur | Type | Pricing | Threat Level | Rationale |
-|-------------|------|---------|--------------|-----------|
-| **Smithery** | Registry platform | FREE | 🟡 MODERATE | Complémentaire (registry), ne résout pas context |
-| **IBM ContextForge** | Enterprise | $50K-200K+/an | 🟢 LOW | Different segment (Fortune 500) |
-| **AIRIS** | Open-source | FREE | 🟢 LOW | Failed execution, negative proof point |
-| **Unla** | Open-source | FREE | 🟢 LOW | Basic gateway, no intelligence |
-| **Kong** | Enterprise API mgmt | $10K-100K+/an | 🟡 MODERATE | Different segment, overkill complexity |
-| **Airia** | Security-first | $20K-100K+/an | 🟡 MODERATE | Complementary (security vs productivity) |
+| Compétiteur          | Type                | Pricing       | Threat Level | Rationale                                        |
+| -------------------- | ------------------- | ------------- | ------------ | ------------------------------------------------ |
+| **Smithery**         | Registry platform   | FREE          | 🟡 MODERATE  | Complémentaire (registry), ne résout pas context |
+| **IBM ContextForge** | Enterprise          | $50K-200K+/an | 🟢 LOW       | Different segment (Fortune 500)                  |
+| **AIRIS**            | Open-source         | FREE          | 🟢 LOW       | Failed execution, negative proof point           |
+| **Unla**             | Open-source         | FREE          | 🟢 LOW       | Basic gateway, no intelligence                   |
+| **Kong**             | Enterprise API mgmt | $10K-100K+/an | 🟡 MODERATE  | Different segment, overkill complexity           |
+| **Airia**            | Security-first      | $20K-100K+/an | 🟡 MODERATE  | Complementary (security vs productivity)         |
 
 **Positionnement unique AgentsCards :**
+
 - **Axe 1 :** Context Optimization (seul dans quadrant haut)
 - **Axe 2 :** Developer Productivity focus (vs Enterprise Governance)
 - **Pricing :** Sustainable freemium $15-25/mo (sweet spot manquant)
@@ -117,12 +124,14 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 ### Strategic Recommendations - Résumé
 
 **Phase 1 (Mois 1-6) : MVP Launch & Early Adoption**
+
 - Focus : Power users (Claude Code developers)
 - Channels : GitHub, HackerNews, Reddit, word-of-mouth
 - Goal : 1K GitHub stars, 500+ users, NPS >75, first 10 paying
 - Budget : $0-2K/mo (bootstrap, organic-first)
 
 **Phase 2 (Mois 7-18) : SaaS Scaling**
+
 - Expand : Teams segment (5-50 devs)
 - New tier : Team ($25/user/mo)
 - Channels : + Paid ads, partnerships, content scaling
@@ -130,6 +139,7 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 - Budget : $5K-10K/mo
 
 **Phase 3 (Mois 19-36) : Enterprise Readiness**
+
 - Expand : Enterprise segment (50+ devs)
 - New tier : Enterprise (custom, $50-75/user/mo + $10K platform)
 - Channels : Outbound sales, AWS/Azure marketplaces
@@ -139,18 +149,23 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 ### Key Risks & Mitigation
 
 **Risk #1 : Big Tech Entry (Microsoft/Anthropic)** - 🔴 CRITICAL
-- **Mitigation :** Speed to market (18mo window), architectural moat (DAG, learning), community lock-in
+
+- **Mitigation :** Speed to market (18mo window), architectural moat (DAG, learning), community
+  lock-in
 - **Monitoring :** VS Code/Claude Code roadmaps, Anthropic blog
 
 **Risk #2 : Execution Failure (AIRIS Redux)** - 🔴 CRITICAL
+
 - **Mitigation :** Quality gates (NPS >75 before SaaS), incremental rollout, community feedback
 - **Monitoring :** NPS tracking, GitHub issues sentiment, churn rate
 
 **Risk #3 : Market Timing (Too Early/Late)** - 🟡 MODERATE
+
 - **Mitigation :** Lean operations (burn <$10K/mo), market signals tracking, pivot flexibility
 - **Monitoring :** MCP ecosystem growth, competitor news, user acquisition velocity
 
 **Risk #4 : Freemium Conversion Failure** - 🟡 MODERATE
+
 - **Mitigation :** Value-gating (Free = 3 servers), conversion optimization, B2B pivot if needed
 - **Monitoring :** Conversion rate, cohort analysis, churn analysis
 
@@ -166,11 +181,13 @@ AgentsCards opère dans un marché MCP Gateway émergent et en croissance explos
 **Si ces conditions remplies : High probability of success ($5M ARR realistic scenario)**
 
 **Red flags qui forceraient pivot :**
+
 - NPS <60 après 6 mois (execution failure)
 - Conversion <5% après 12 mois (pricing/value proposition issue)
 - Big tech announces native context optimization (market disruption)
 
-**Opportunité unique : First-mover sur context optimization, marché en hyper-croissance, fenêtre 18-24 mois, gap pricing clair, open-source DNA = adoption catalyst.**
+**Opportunité unique : First-mover sur context optimization, marché en hyper-croissance, fenêtre
+18-24 mois, gap pricing clair, open-source DNA = adoption catalyst.**
 
 **Decision : GO. Avec vigilance sur execution quality & market timing.**
 
@@ -205,7 +222,8 @@ Cette recherche vise à évaluer la viabilité d'un modèle SaaS pour AgentsCard
 
 ### Scope and Boundaries
 
-- **Product/Service:** AgentsCards - Gateway MCP intelligente avec context optimization (30-50% → <5%) et parallélisation intelligente via DAG execution (speedup 5x)
+- **Product/Service:** AgentsCards - Gateway MCP intelligente avec context optimization (30-50% →
+  <5%) et parallélisation intelligente via DAG execution (speedup 5x)
 - **Market Definition:**
   - **Primaire:** MCP Gateway et orchestration platforms
   - **Adjacent:** AI agent tooling, LLM context management, developer productivity tools pour AI
@@ -244,12 +262,14 @@ Cette recherche vise à évaluer la viabilité d'un modèle SaaS pour AgentsCard
 ### Data Sources
 
 **Sources primaires à collecter :**
+
 - Sites web officiels des compétiteurs
 - GitHub repositories (metrics, issues, discussions)
 - Product Hunt, HackerNews discussions
 - Developer communities (Discord, Reddit r/ClaudeAI, r/LangChain)
 
 **Sources secondaires :**
+
 - Rapports d'industrie sur developer tools market
 - Études sur adoption LLM/AI coding assistants
 - Financial data (funding rounds, acquisitions dans l'espace)
@@ -272,7 +292,8 @@ Cette recherche vise à évaluer la viabilité d'un modèle SaaS pour AgentsCard
    - Marché actuel : **$4-5B (2025)**
    - Croissance projetée : **$12-15B d'ici 2027** (CAGR 35-40%)
    - Adoption massive : 70-97% des développeurs utilisent déjà l'IA
-   - Leaders : GitHub Copilot (20M users, 42% market share), Claude Code (53% adoption), Cursor ($500M ARR)
+   - Leaders : GitHub Copilot (20M users, 42% market share), Claude Code (53% adoption), Cursor
+     ($500M ARR)
 
 3. **Marché parent : Developer Tools SaaS**
    - Enterprise Application SaaS : **$218.5B (2024)**, croissance 16.7%
@@ -286,19 +307,23 @@ Cette recherche vise à évaluer la viabilité d'un modèle SaaS pour AgentsCard
 **Méthode 1 : Top-Down (AI Coding Assistant Market)**
 
 Le marché des AI coding assistants représente notre TAM le plus conservateur :
+
 - **Marché actuel (2025) :** $4-5B
 - **Marché projeté (2027) :** $12-15B
 - **CAGR :** 35-40%
 
 **Sous-segment MCP Gateway :**
+
 - Early estimates : **$1.8B - $10.3B (2025)** selon scope
   - $1.8B : MCP servers market (vue conservative)
   - $4.5B : MCP ecosystem complet (middleware estimate)
   - $10.3B : Enterprise MCP adoption projection (optimiste)
 
 **AgentsCards TAM conservateur pour SaaS Gateway :**
+
 - Nous ciblons le **segment "MCP Gateway & Orchestration"** dans l'écosystème AI coding
-- TAM estimé : **$2-4B d'ici 2027** (intersection MCP gateway + orchestration + context optimization)
+- TAM estimé : **$2-4B d'ici 2027** (intersection MCP gateway + orchestration + context
+  optimization)
 - Basé sur :
   - Adoption MCP explosive (90% orgs d'ici fin 2025)
   - Besoin universel de context optimization (30-50% tokens gaspillés actuellement)
@@ -307,6 +332,7 @@ Le marché des AI coding assistants représente notre TAM le plus conservateur :
 **Méthode 2 : Bottom-Up (Developer Count × Adoption × ARPU)**
 
 **Calcul détaillé :**
+
 ```
 1. Développeurs avec AI coding assistants worldwide (2025) : ~25-30M
    (Sur ~28M développeurs globalement, 70-97% utilisent l'AI)
@@ -337,12 +363,14 @@ Le marché des AI coding assistants représente notre TAM le plus conservateur :
 **Méthode 3 : Value Theory (Problem Cost × Capturable %)**
 
 **Coût actuel du problème :**
+
 - Développeur senior AI : ~$150K/an salary ($75/h)
 - Temps perdu quotidien avec contexte saturé : 30-45 min/jour (product brief estimate)
 - Workflows lents (5x latency) : 15-30 min/jour additionnels
 - **Total temps perdu : ~1h/jour = 12.5% du temps productif**
 
 **Value capturable :**
+
 ```
 Coût annuel du problème par développeur :
 $150K × 12.5% = $18,750/an de productivité perdue
@@ -363,24 +391,27 @@ TAM Value Theory = 2M devs × $360/an = $720M/an
 **AgentsCards TAM Value Theory :** **~$700M annuellement**
 
 #### Triangulation TAM :
+
 - **Top-Down (Market Sizing) :** $2-4B d'ici 2027 (segment MCP gateway)
 - **Bottom-Up (Developer Count) :** ~$500M annuellement (SaaS conservative)
 - **Value Theory (Problem Cost) :** ~$700M annuellement
 
-**TAM retenu pour AgentsCards SaaS : $500M - $1B d'ici 2027**
-(Conservateur, basé sur convergence bottom-up et value theory, avec croissance du marché MCP)
+**TAM retenu pour AgentsCards SaaS : $500M - $1B d'ici 2027** (Conservateur, basé sur convergence
+bottom-up et value theory, avec croissance du marché MCP)
 
 #### Serviceable Addressable Market (SAM)
 
 Application de contraintes géographiques et de go-to-market :
 
 **Contraintes :**
+
 1. **Géographie :** Focus US/Europe initialement (70% du marché dev tools)
 2. **Segment :** B2B SaaS uniquement (pas B2C individual pour MVP)
 3. **Adoption MCP :** Seuls les utilisateurs MCP actifs (pas tous les AI coding users)
 4. **Language :** Documentation anglais primarily (barrier minimal pour devs)
 
 **SAM Calculation :**
+
 ```
 TAM : $500M-1B
 × Geographic reach (US/EU) : 70%
@@ -400,6 +431,7 @@ SAM Range : $84M - $168M annuellement
 Estimation réaliste de capture de marché en tenant compte de la compétition et des ressources.
 
 **Facteurs limitants :**
+
 - Compétiteurs existants (Smithery, IBM, AIRIS, etc.)
 - Ressources limitées (bootstrap/small team vs big tech)
 - Time to market (8 semaines MVP + 6-12 mois GTM)
@@ -408,6 +440,7 @@ Estimation réaliste de capture de marché en tenant compte de la compétition e
 **Scénarios SOM (% de SAM) :**
 
 **Scénario 1 : Conservative (1-2% market share)**
+
 ```
 Hypothèses :
 - Open-source traction modérée (1K-2K active users)
@@ -418,6 +451,7 @@ SOM Conservative = $125M × 1.5% = $1.875M ARR
 ```
 
 **Scénario 2 : Realistic (3-5% market share)**
+
 ```
 Hypothèses :
 - Strong open-source adoption (5K-10K active users)
@@ -429,6 +463,7 @@ SOM Realistic = $125M × 4% = $5M ARR
 ```
 
 **Scénario 3 : Optimistic (5-10% market share)**
+
 ```
 Hypothèses :
 - Viral adoption (20K+ active users open-source)
@@ -441,13 +476,15 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 ```
 
 **SOM Summary :**
-| Scénario | Market Share | Annual ARR | Monthly ARR |
-|----------|--------------|------------|-------------|
-| Conservative | 1.5% | $1.9M | $158K |
-| Realistic | 4% | $5M | $417K |
-| Optimistic | 7.5% | $9.4M | $783K |
+
+| Scénario     | Market Share | Annual ARR | Monthly ARR |
+| ------------ | ------------ | ---------- | ----------- |
+| Conservative | 1.5%         | $1.9M      | $158K       |
+| Realistic    | 4%           | $5M        | $417K       |
+| Optimistic   | 7.5%         | $9.4M      | $783K       |
 
 **Timeline to SOM (Realistic Scenario) :**
+
 - **Year 1 (2026) :** $500K ARR (10% of realistic SOM)
 - **Year 2 (2027) :** $2.5M ARR (50% of realistic SOM)
 - **Year 3 (2028) :** $5M ARR (100% of realistic SOM)
@@ -459,17 +496,20 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 #### MCP Ecosystem Momentum
 
 **Adoption explosive :**
+
 - Lancé novembre 2024 par Anthropic
 - 1000+ MCP servers créés en 3 mois (fév 2025)
 - 90% des organisations prévoient adoption d'ici fin 2025
 - Décrit comme le "USB-C pour AI" par l'industrie
 
 **Early adopters confirmés :**
+
 - **Enterprises :** Block, Apollo, IBM, Altana, Behavox, Rakuten
 - **Dev tools :** Zed, Replit, Codeium, Sourcegraph
 - **Cloud providers :** AWS, Azure, Google Cloud (intégrations MCP)
 
 **Résultats mesurés :**
+
 - Altana : 2-10x amélioration vélocité développement
 - Rakuten : 7 heures de coding autonome sur refactoring complexe
 - IBM early testing : 45% gains productivité moyenne
@@ -477,6 +517,7 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 #### AI Coding Assistant Landscape
 
 **Market leaders :**
+
 1. **GitHub Copilot**
    - 20M+ utilisateurs (Juillet 2025)
    - 90% Fortune 100 adoption
@@ -495,6 +536,7 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
    - Growth via developer word-of-mouth
 
 **Adoption trends :**
+
 - 70-97% des développeurs utilisent AI assistants (2025)
 - Gartner : near-universal enterprise adoption d'ici 2028
 - Preference shift : grandes entreprises (200+) → Copilot ; petites teams → Claude Code, Cursor
@@ -502,17 +544,20 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 #### Developer Tools SaaS Economics
 
 **Pricing benchmarks identifiés :**
+
 - **Raycast :** Free + Pro $10/mo + Team $15/user/mo
 - **GitHub Copilot :** $10-19/mo individual, $39/user/mo enterprise
 - **Cursor :** ~$20/mo (inferred from ARR/users)
 - **Claude Code :** Bundled (Team/Enterprise pricing non-public)
 
 **MCP-specific pricing patterns émergents :**
+
 - **Per-method invocation :** Facturation par appel JSON-RPC
 - **Payload-based :** Facturation selon data transferred
 - **Hybrid :** Base subscription + overages
 
 **Developer tools SaaS characteristics :**
+
 - Freemium dominant (core free, premium features paid)
 - Individual plans : $10-20/mo sweet spot
 - Team plans : $15-30/user/mo
@@ -544,9 +589,12 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
    - Industry benchmark sources (Gartner, Forrester dev tools reports)
 
 **Source Credibility Assessment :**
+
 - ✅ **Haute crédibilité :** Gartner, Forrester, Statista, official vendor sites, Anthropic blog
-- ⚠️ **Crédibilité moyenne :** Tech news (TechCrunch, VentureBeat) - bonne pour trends, moins pour chiffres précis
-- ⚠️ **À valider :** Estimates de marché MCP ($1.8B-$10.3B) - range large indique marché immature, chiffres à prendre avec prudence
+- ⚠️ **Crédibilité moyenne :** Tech news (TechCrunch, VentureBeat) - bonne pour trends, moins pour
+  chiffres précis
+- ⚠️ **À valider :** Estimates de marché MCP ($1.8B-$10.3B) - range large indique marché immature,
+  chiffres à prendre avec prudence
 
 ---
 
@@ -555,22 +603,26 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 ### Key Technology Trends
 
 **1. MCP Protocol Standardization**
+
 - MCP décrit comme le "USB-C pour AI" - standardisation critique
 - Support multi-LLM : OpenAI, Anthropic, Google adoptent MCP
 - Écosystème open-source explosif : 1000+ servers en 3 mois
 
 **2. Context Window Expansion... avec Coûts Croissants**
+
 - Models avec context windows de plus en plus larges (Claude 200K, GPT-4 Turbo 128K)
 - MAIS : Coûts exponentiels (cached tokens 10x moins cher que uncached)
 - **Paradoxe :** Plus de contexte disponible ≠ problème résolu, car coûts prohibitifs
 - Context optimization devient PLUS important, pas moins
 
 **3. AI Coding Assistant Adoption Near-Universal**
+
 - 70-97% des développeurs utilisent déjà l'IA (2025)
 - Gartner : adoption universelle enterprise d'ici 2028
 - Shift de "nice-to-have" à "infrastructure critique"
 
 **4. Enterprise AI Governance & Security Focus**
+
 - Préoccupations croissantes : prompt injection, PII leakage, credential exposure
 - Besoin de centralized control plane pour AI agent access
 - Compliance requirements (SOC2, GDPR) driving enterprise adoption
@@ -580,7 +632,8 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 **Drivers primaires pour adoption MCP Gateway :**
 
 1. **Explosion complexité MCP** - 1000+ servers disponibles, impossible de gérer manuellement
-2. **Context saturation universelle** - Tous les utilisateurs MCP multi-servers souffrent du problème
+2. **Context saturation universelle** - Tous les utilisateurs MCP multi-servers souffrent du
+   problème
 3. **Security imperatives** - Ungoverned AI agent access = risque enterprise inacceptable
 4. **Developer productivity demand** - Latence cumulative workflows = friction quotidienne
 5. **Open-source momentum** - Community-driven innovation accélère adoption
@@ -606,18 +659,21 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 **Projections marché :**
 
 **2025-2026 : Phase "Consolidation"**
+
 - Shakeout des premiers entrants (AIRIS-style failures vs winners émergents)
 - 3-5 leaders clarifient le marché
 - Standards MCP se stabilisent
 - Pricing models se standardisent
 
 **2027-2028 : Phase "Mainstreaming"**
+
 - Near-universal enterprise adoption (Gartner prediction)
 - Intégration native dans major IDEs (VS Code, JetBrains, etc.)
 - Commoditization des features basiques (gateway, routing)
 - Différenciation sur : context optimization, intelligence, performance
 
 **Opportunité fenêtre AgentsCards :**
+
 - **18-24 mois** pour capturer early majority avant commoditization
 - First-mover advantage sur context optimization (aucun compétiteur sérieux)
 - Brand building critique pendant phase consolidation
@@ -631,38 +687,45 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 #### Segment 1 : Power Users (Développeurs Claude Code Intensifs)
 
 **Profil démographique :**
+
 - Senior/Staff Developers, Tech Leads, Architects
 - 5-15 ans expérience développement
 - Early adopters AI tooling (top 10% adoption curve)
 - Salary range : $120K-200K/an
 
 **Comportement & Usage :**
+
 - 8-10h/jour dans Claude Code (primary IDE)
 - 10-20+ MCP servers configurés simultanément
 - Workflows complexes : multi-repo, multi-language, cross-service
 - Pain actuel : **Contexte saturé quotidiennement**
 
 **Firmographics :**
+
 - Companies : Tech startups, scale-ups (50-500 employees)
 - Industries : SaaS, DevTools, AI/ML companies
 - Geographic : Principalement US (SF/NYC), Europe (London/Berlin/Paris)
 
 **Jobs-to-be-Done :**
+
 - **Functional :** Accélérer développement avec MCP tools sans saturer contexte
 - **Emotional :** Éviter frustration repeated context overflow, flow state préservé
 - **Social :** Être productif/reconnu comme "10x developer"
 
 **Willingness to Pay :**
+
 - Current spend : $10-20/mo pour AI coding tools (Copilot, Cursor, etc.)
 - Willingness pour AgentsCards : **$15-25/mo** (si résout vraiment le problème)
 - Justification : Productivity gain 8-10% = $12K-20K/an value
 
 **Segment Size :**
+
 - Estimé : **500K-1M développeurs globally**
 - Addressable (US/EU) : ~350K-700K
 - Early adopters AgentsCards : 10-20K dans 12 mois
 
 **Acquisition Channels :**
+
 - GitHub/GitLab discovery (README, stars)
 - HackerNews, Reddit r/ClaudeAI
 - Twitter tech influencers
@@ -673,39 +736,46 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 #### Segment 2 : Teams (5-50 Développeurs)
 
 **Profil organisationnel :**
+
 - Engineering teams dans startups/scale-ups
 - Need for coordination cross-developers
 - Shared MCP server configurations
 - Budget owner : Engineering Manager / CTO
 
 **Firmographics :**
+
 - Company size : 20-500 employees
 - Team size : 5-50 développeurs
 - ARR : $1M-50M
 - Industries : SaaS B2B, AI-first companies
 
 **Pain Points spécifiques :**
+
 - **Configuration chaos :** Chaque dev configure MCP différemment
 - **Onboarding friction :** Nouveaux devs prennent 1-2 jours setup MCP
 - **Governance gaps :** Pas de contrôle centralisé sur MCP usage
 - **Cost tracking :** Impossible de voir coûts MCP par team/project
 
 **Jobs-to-be-Done :**
+
 - **Functional :** Standardiser MCP setup across team, visibility usage
 - **Emotional :** Réduire "configuration hell" anxiety
 - **Social :** Engineering Manager veut team productive & happy
 
 **Willingness to Pay :**
+
 - Current budget dev tools : $50-100/dev/mo (Copilot, IDEs, etc.)
 - Willingness AgentsCards : **$20-35/user/mo**
 - Decision maker : Engineering Manager (approval $1K-3K/mo budgets)
 
 **Segment Size :**
+
 - Estimé : **50K teams × 15 devs avg = 750K développeurs**
 - Addressable (US/EU, B2B) : ~450K devs
 - Early adopters : 20-40 teams dans 12 mois
 
 **Acquisition Channels :**
+
 - Engineering Manager communities (Lenny's Newsletter, Rands Leadership Slack)
 - Product Hunt (teams category)
 - Référence directe de power users individuels
@@ -716,40 +786,47 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 #### Segment 3 : Enterprise (50+ Développeurs)
 
 **Profil organisationnel :**
+
 - Large enterprises avec engineering orgs 50-500+ devs
 - Strict compliance requirements (SOC2, GDPR, HIPAA)
 - Procurement processus formels
 - Budget owner : VP Engineering / CTO
 
 **Firmographics :**
+
 - Company size : 500-10,000+ employees
 - Dev org : 50-500+ développeurs
 - ARR : $50M-1B+
 - Industries : Financial services, Healthcare, Enterprise SaaS
 
 **Pain Points Enterprise-spécifiques :**
+
 - **Security & Compliance :** Ungoverned AI agent access = audit nightmare
 - **Cost control :** Besoin visibility & quotas sur usage MCP/LLM
 - **SSO/RBAC requirements :** Integration avec Okta, Azure AD, etc.
 - **Support & SLAs :** Besoin de support dédié, uptime guarantees
 
 **Jobs-to-be-Done :**
+
 - **Functional :** Govern AI agent access, meet compliance, control costs
 - **Emotional :** CTO wants "sleep at night" re: AI security
 - **Social :** VP Eng wants reputation as "innovative but responsible"
 
 **Willingness to Pay :**
+
 - Current spend AI tools : $50-100/dev/mo
 - Willingness AgentsCards Enterprise : **$50-100/user/mo + platform fee**
 - Platform fee : $5K-20K/an (SSO, premium support, SLAs)
 - Decision process : 3-6 mois procurement cycle
 
 **Segment Size :**
+
 - Estimé : **5K organizations × 100 devs avg = 500K développeurs**
 - Addressable (US/EU, enterprise-ready) : ~350K devs
 - Early adopters : 5-10 enterprises dans 18-24 mois
 
 **Acquisition Channels :**
+
 - Enterprise sales (outbound, Account-Based Marketing)
 - Security/compliance conferences (RSA, Black Hat)
 - Partnerships (AWS, Azure marketplaces)
@@ -799,6 +876,7 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 ### Pricing Analysis and Willingness to Pay
 
 **Benchmarks identifiés (rappel) :**
+
 - Raycast : $10/mo Pro, $15/mo Team
 - GitHub Copilot : $10-19/mo individual, $39/mo enterprise
 - Cursor : ~$20/mo (inferred)
@@ -807,6 +885,7 @@ SOM Optimistic = $125M × 7.5% = $9.4M ARR
 **Value-based pricing AgentsCards :**
 
 **Calcul de la value créée :**
+
 ```
 Développeur senior : $150K/an ($75/h)
 Temps gagné avec AgentsCards : ~1h/jour (8-10% productivity gain)
@@ -818,25 +897,28 @@ AgentsCards peut capturer 1-5% de cette value
 
 **Recommandation pricing tiers :**
 
-| Tier | Pricing | Target Segment | Key Features |
-|------|---------|----------------|--------------|
-| **Free** | $0 | Power users (conversion funnel) | Core context optimization, 3 MCP servers, community support |
-| **Pro** | **$15/mo** | Individual power users | Unlimited MCP servers, DAG execution, priority support |
-| **Team** | **$25/user/mo** | Teams 5-50 devs | + Shared configs, team dashboard, usage analytics |
-| **Enterprise** | **$50-75/user/mo + $10K platform fee** | Enterprise 50+ devs | + SSO/RBAC, SOC2 compliance, SLAs, dedicated support |
+| Tier           | Pricing                                | Target Segment                  | Key Features                                                |
+| -------------- | -------------------------------------- | ------------------------------- | ----------------------------------------------------------- |
+| **Free**       | $0                                     | Power users (conversion funnel) | Core context optimization, 3 MCP servers, community support |
+| **Pro**        | **$15/mo**                             | Individual power users          | Unlimited MCP servers, DAG execution, priority support      |
+| **Team**       | **$25/user/mo**                        | Teams 5-50 devs                 | + Shared configs, team dashboard, usage analytics           |
+| **Enterprise** | **$50-75/user/mo + $10K platform fee** | Enterprise 50+ devs             | + SSO/RBAC, SOC2 compliance, SLAs, dedicated support        |
 
 **Justification :**
+
 - **Free tier :** Critical pour adoption (open-source DNA), conversion funnel
 - **Pro $15/mo :** Sweet spot entre Raycast ($10) et Copilot ($19), value proposition forte
 - **Team $25/mo :** Premium vs Pro justifié par team features (benchmarks $15-30 range)
 - **Enterprise $50-75/mo :** Aligné avec enterprise dev tools, compliance premium
 
 **Conversion funnel assumé :**
+
 - Free → Pro : 10-15% (benchmark dev tools freemium)
 - Pro → Team : 20-30% (teams upgrading for coordination)
 - Team → Enterprise : 5-10% (long sales cycles)
 
 **Sensibilité prix :**
+
 - **Power users :** Prix-sensibles mais value-driven (prêts à payer si ROI clair)
 - **Teams :** Budget decision collective, justification ROI nécessaire
 - **Enterprise :** Moins prix-sensibles, focus compliance/security > prix
@@ -850,6 +932,7 @@ AgentsCards peut capturer 1-5% de cette value
 Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 
 **Structure actuelle :**
+
 - **Pas de leader dominant** - Marché trop jeune (MCP lancé nov 2024)
 - **15-20 entrants** identifiés (mix open-source + commercial)
 - **3 tiers distincts** :
@@ -858,12 +941,14 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
   3. **Purpose-built MCP startups** (Smithery, Airia, Lunar.dev, TrueFoundry)
 
 **Caractéristiques du marché :**
+
 - **Fragmentation élevée** - Aucun player >10% market share
 - **Différenciation faible** - Plupart des solutions font "gateway basique + routing"
 - **Innovation concentrée** sur : security, governance, observability
 - **Gap majeur** : Aucune solution n'adresse vraiment **context optimization**
 
 **Barrières à l'entrée :**
+
 - **Faibles techniques** - MCP protocol open, implémentation gateway relativement simple
 - **Modérées distribution** - Developer tools nécessitent community building
 - **Élevées enterprise** - SOC2, compliance, support infrastructure coûteux
@@ -875,23 +960,27 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Positionnement :** "The marketplace for MCP servers" - Registry & discovery platform
 
 **Business Model :**
+
 - **Freemium** - Core platform gratuit
 - **Monetization :** Hosted servers may charge fees (indirect revenue)
 - **Hosting :** Smithery handles ngrok infrastructure costs
 
 **Features clés :**
+
 - Registry & discovery (1000+ MCP servers catalogués)
 - Free CLI & SDK pour builders
 - Local + remote deployment support
 - Developer-friendly documentation
 
 **Forces :**
+
 - ✅ First-mover sur registry/discovery
 - ✅ Strong community traction (GitHub presence)
 - ✅ Zero friction adoption (tout gratuit)
 - ✅ Good developer experience
 
 **Faiblesses :**
+
 - ❌ **NO context optimization** (all-at-once schema loading)
 - ❌ **NO intelligent orchestration** (pas de DAG execution)
 - ❌ Monetization model unclear (sustainability risk)
@@ -900,6 +989,7 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Pricing :** FREE (freemium platform)
 
 **Threat Level to AgentsCards :** 🟡 **MODERATE**
+
 - Complémentaire plutôt que concurrent direct
 - Registry utile, mais ne résout pas core problems (context, performance)
 - AgentsCards pourrait intégrer avec Smithery registry
@@ -911,22 +1001,26 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Positionnement :** "Enterprise-grade federated MCP gateway" - Most architecturally ambitious
 
 **Business Model :**
+
 - **Enterprise B2B** - Probablement bundled avec IBM AI/Cloud offerings
 - **Pricing :** Non-public (custom enterprise deals)
 
 **Features clés :**
+
 - Federation capabilities (multi-gateway coordination)
 - Auto-discovery via mDNS
 - Health monitoring & capability merging
 - Enterprise-grade reliability
 
 **Forces :**
+
 - ✅ IBM brand & enterprise relationships
 - ✅ Sophisticated architecture (federation unique)
 - ✅ Partnership avec Anthropic (strategic advantage)
 - ✅ Enterprise compliance built-in
 
 **Faiblesses :**
+
 - ❌ **NO context optimization mention** dans documentation
 - ❌ Complexity (over-engineered pour most use cases?)
 - ❌ IBM sales cycle (6-12 mois enterprise deals)
@@ -935,6 +1029,7 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Pricing :** Custom enterprise (estimé $50K-200K+/an)
 
 **Threat Level to AgentsCards :** 🟢 **LOW-MODERATE**
+
 - Different market (Fortune 500 vs startups/SMB)
 - Overkill pour 90% des use cases
 - AgentsCards peut co-exist en segment SMB/mid-market
@@ -943,22 +1038,27 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 
 #### Compétiteur 3 : **AIRIS** (Open-Source Gateway)
 
-**Positionnement :** "Open-source lazy-loading MCP gateway" - **Prometait context optimization, a échoué**
+**Positionnement :** "Open-source lazy-loading MCP gateway" - **Prometait context optimization, a
+échoué**
 
 **Business Model :**
+
 - **Open-source** (MIT license probablement)
 - **Monetization :** Unclear (possiblement hosted services)
 
 **Features promis :**
+
 - Lazy loading des tool schemas
 - Docker deployment
 - Multi-server aggregation
 
 **Forces :**
+
 - ✅ Open-source (community goodwill)
 - ✅ Bonne vision (lazy loading était la bonne intuition)
 
 **Faiblesses CRITIQUES :**
+
 - ❌ **Installation problems constants** (GitHub issues nombreux)
 - ❌ **Lazy loading raté** - implémentation ne fonctionne pas vraiment
 - ❌ **Configuration bugs** - frustrated users
@@ -968,6 +1068,7 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Pricing :** FREE (open-source)
 
 **Threat Level to AgentsCards :** 🟢 **LOW (Negative Proof Point)**
+
 - AIRIS a **validé le problème** (context optimization needed)
 - Mais a **échoué l'exécution** - opportunity pour AgentsCards
 - Leçon : DX irréprochable + fiabilité NON-NÉGOCIABLE
@@ -979,11 +1080,13 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Positionnement :** "Lightweight, zero-code MCP transformation gateway"
 
 **Business Model :**
+
 - **Open-source** (MIT License)
 - **FREE** - No commercial tier mentioned
 - **Community-driven**
 
 **Features clés :**
+
 - Zero-code transformation (config-based)
 - Docker deployment
 - Simple YAML configurations
@@ -991,12 +1094,14 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 - Hot-reloading configs
 
 **Forces :**
+
 - ✅ True open-source (MIT, no strings attached)
 - ✅ Simple architecture (Go, lightweight)
 - ✅ Good DX (YAML configs, Docker)
 - ✅ Platform-agnostic
 
 **Faiblesses :**
+
 - ❌ **NO context optimization** (standard proxy approach)
 - ❌ **NO intelligent orchestration**
 - ❌ Limited features (basic gateway only)
@@ -1005,6 +1110,7 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Pricing :** FREE (MIT open-source)
 
 **Threat Level to AgentsCards :** 🟢 **LOW**
+
 - Basic gateway, doesn't solve core problems
 - Complémentaire (could use Unla as base + add AgentsCards intelligence)
 - Different audience (DIY ops teams vs devs needing productivity)
@@ -1013,13 +1119,16 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 
 #### Compétiteur 5 : **Kong MCP Gateway** (Enterprise API Platform)
 
-**Positionnement :** "Production-ready AI Gateway with MCP support" - API management leader entering MCP
+**Positionnement :** "Production-ready AI Gateway with MCP support" - API management leader entering
+MCP
 
 **Business Model :**
+
 - **Enterprise SaaS** - Kong AI Gateway 3.12+
 - **Pricing :** Custom (contact sales), likely $$$
 
 **Features clés :**
+
 - Autogenerate MCP tools from APIs
 - Enterprise-grade security & authentication
 - AI rate limiting & guardrails
@@ -1027,12 +1136,14 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 - Monitoring & logging
 
 **Forces :**
+
 - ✅ Kong brand (leader API management)
 - ✅ Enterprise relationships établies
 - ✅ Production-grade infrastructure
 - ✅ Comprehensive security features
 
 **Faiblesses :**
+
 - ❌ **NO context optimization focus** (API gateway mindset, pas developer productivity)
 - ❌ **Expensive** (Kong Enterprise pricing typically $5K-50K+/an)
 - ❌ **Overkill complexity** pour small/mid teams
@@ -1041,6 +1152,7 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Pricing :** Custom enterprise (estimé $10K-100K+/an depending on scale)
 
 **Threat Level to AgentsCards :** 🟡 **MODERATE (Different Segment)**
+
 - Kong targets large enterprises with existing Kong deployments
 - AgentsCards targets developers & SMB/mid-market
 - Minimal overlap court-terme
@@ -1049,13 +1161,16 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 
 #### Compétiteur 6 : **Airia MCP Gateway** (Security-First)
 
-**Positionnement :** "Secure MCP Gateway for Enterprise AI Orchestration" - Security & governance focus
+**Positionnement :** "Secure MCP Gateway for Enterprise AI Orchestration" - Security & governance
+focus
 
 **Business Model :**
+
 - **Enterprise SaaS** (launched Sept 2025)
 - **Pricing :** Enterprise tier only (custom)
 
 **Features clés :**
+
 - Centralized access control pour AI agents
 - Automatic security policy enforcement
 - Full audit trails & compliance
@@ -1063,12 +1178,14 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 - Supports hundreds of MCP servers (GitHub, Slack, Atlassian, etc.)
 
 **Forces :**
+
 - ✅ Strong security positioning (critical enterprise need)
 - ✅ Solve real problem (ungoverned AI agent access)
 - ✅ Good enterprise narrative (compliance, audit)
 - ✅ Recent launch (Sept 2025) = fresh momentum
 
 **Faiblesses :**
+
 - ❌ **NO context optimization mention** (security focus, not performance/productivity)
 - ❌ **Enterprise-only** (no SMB/developer tier)
 - ❌ **Company founded 2024** (très nouveau, unproven)
@@ -1077,6 +1194,7 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 **Pricing :** Enterprise custom (estimé $20K-100K+/an)
 
 **Threat Level to AgentsCards :** 🟡 **MODERATE (Complementary)**
+
 - Airia focuses security/governance, AgentsCards focuses productivity/performance
 - Could be **complementary** (AgentsCards for context + Airia for security)
 - Different buyer (Security/Compliance vs Engineering/DevOps)
@@ -1086,20 +1204,24 @@ Le marché des MCP Gateways est **fragmenté et immature** (Nov 2025), avec :
 #### Compétiteurs Émergents (Monitoring)
 
 **Lunar.dev MCPX :**
+
 - Enterprise RBAC/ACL focus
 - Rate limits & budget constraints
 - Threat: 🟡 MODERATE (enterprise governance niche)
 
 **TrueFoundry MCP Gateway :**
+
 - Part of larger AI Platform
 - Sub-5ms latency claim
 - Threat: 🟡 MODERATE (bundled platform play)
 
 **Lasso Security Gateway :**
+
 - Open-source, security filters (PII detection, token masking)
 - Threat: 🟢 LOW (security niche, open-source)
 
 **Docker MCP Gateway :**
+
 - Container-native approach
 - Strong isolation & resource caps
 - Threat: 🟡 MODERATE (ops/DevOps audience)
@@ -1133,11 +1255,13 @@ Productivity                │               Governance
 **Positionnement unique AgentsCards :**
 
 **Axe 1 : Context Optimization** (AgentsCards seul dans quadrant haut)
+
 - **Différenciation MAJEURE** : Seule solution avec vraie context optimization (<5%)
 - **Innovation clé :** Vector search + on-demand loading + DAG execution
 - **Proof point :** AIRIS a essayé et échoué → AgentsCards exécute correctement
 
 **Axe 2 : Developer Productivity Focus** (vs Enterprise Governance)
+
 - **Target :** Developers & engineering teams (pas Security/Compliance orgs)
 - **Self-serve** : Open-source → SaaS conversion (no sales-driven)
 - **Freemium** : Low friction adoption (vs enterprise procurement cycles)
@@ -1166,14 +1290,14 @@ Productivity                │               Governance
 
 **Opportunités de différenciation :**
 
-| Dimension | Compétiteurs | AgentsCards Differentiation |
-|-----------|--------------|----------------------------|
-| **Core Value** | Routing, security, governance | **Context optimization + performance** |
-| **Target User** | Enterprise IT/Security | **Developers & engineering teams** |
-| **Pricing** | Free OR enterprise custom | **Freemium $15-25/mo (sweet spot)** |
-| **Architecture** | Static proxy | **Intelligent (DAG, learning, adaptive)** |
-| **Go-to-Market** | Sales-driven OR pure OSS | **Open-source → SaaS conversion** |
-| **DX Focus** | Variable (AIRIS failed) | **Non-negotiable NPS >75** |
+| Dimension        | Compétiteurs                  | AgentsCards Differentiation               |
+| ---------------- | ----------------------------- | ----------------------------------------- |
+| **Core Value**   | Routing, security, governance | **Context optimization + performance**    |
+| **Target User**  | Enterprise IT/Security        | **Developers & engineering teams**        |
+| **Pricing**      | Free OR enterprise custom     | **Freemium $15-25/mo (sweet spot)**       |
+| **Architecture** | Static proxy                  | **Intelligent (DAG, learning, adaptive)** |
+| **Go-to-Market** | Sales-driven OR pure OSS      | **Open-source → SaaS conversion**         |
+| **DX Focus**     | Variable (AIRIS failed)       | **Non-negotiable NPS >75**                |
 
 ---
 
@@ -1184,11 +1308,13 @@ Productivity                │               Governance
 #### Force 1 : Supplier Power (Fournisseurs) - 🟡 **MEDIUM**
 
 **Suppliers clés :**
+
 - **Anthropic/OpenAI** (LLM API providers pour embeddings)
 - **Cloud providers** (AWS, GCP, Azure pour hosting)
 - **Open-source dependencies** (Deno, PGlite, vector stores)
 
 **Évaluation :**
+
 - **Concentration modérée** - Multiple LLM providers disponibles
 - **Switching costs modérés** - Peut changer LLM provider si needed (BGE local option)
 - **Forward integration risk faible** - Anthropic unlikely to build AgentsCards-competitor
@@ -1201,11 +1327,13 @@ Productivity                │               Governance
 #### Force 2 : Buyer Power (Clients) - 🟢 **LOW-MEDIUM**
 
 **Buyer characteristics :**
+
 - **Power users :** Individuels, peu de pouvoir négociation
 - **Teams :** Decisions collectives mais budgets limités ($1K-5K/mo)
 - **Enterprise :** High buyer power (procurement, RFPs)
 
 **Évaluation :**
+
 - **Concentration faible** - Nombreux small buyers (long tail)
 - **Price sensitivity variable** - Devs value-driven si ROI clair
 - **Switching costs croissants** - Lock-in via configuration, learning curve
@@ -1220,12 +1348,14 @@ Productivity                │               Governance
 **Nombre de compétiteurs :** 15-20 identifiés (et croissant)
 
 **Intensité de la compétition :**
+
 - **Industry growth élevé** (35-40% CAGR) = atténue rivalité
 - **Différenciation faible** (pour l'instant) = intensifie compétition
 - **Exit barriers faibles** (software) = facilite sortie failures (AIRIS)
 - **Fixed costs modérés** = compétition prix possible
 
 **Facteurs d'intensification :**
+
 - Market immature → tous les players cherchent positioning
 - Open-source dynamics → pression sur pricing
 - Big tech entering (IBM, Kong) → escalation ressources
@@ -1237,17 +1367,20 @@ Productivity                │               Governance
 #### Force 4 : Threat of New Entry (Nouveaux Entrants) - 🟡 **MEDIUM-HIGH**
 
 **Barriers to entry :**
+
 - **Capital requirements faibles** - Software, bootstrap possible
 - **Technical barriers modérées** - MCP protocol public, gateway simple à implémenter
 - **Brand loyalty faible** - Market trop jeune, no incumbents
 - **Regulatory barriers nuls** - Pas de licensing requis
 
 **Mais :**
+
 - **Network effects émergents** - MCP server ecosystem (Smithery advantage)
 - **DX expectations élevées** - AIRIS failure montre qu'execution matters
 - **Time-to-market critical** - First-mover advantage sur context optimization
 
 **Nouveaux entrants potentiels :**
+
 - **Microsoft/Google** - Pourraient intégrer dans IDEs (VS Code, etc.)
 - **Anthropic** - Pourrait builder native dans Claude Code
 - **Startups AI** - Levées de fonds massives, pourraient pivoter vers MCP
@@ -1281,6 +1414,7 @@ Productivity                │               Governance
    - **Trend :** MCP gagne momentum comme standard
 
 **Évaluation :**
+
 - Substitutes existent mais tous ont trade-offs significatifs
 - MCP momentum strong → unlikely substitute emerges court-terme
 - Context optimization restera nécessaire même avec larger windows (cost reasons)
@@ -1294,11 +1428,13 @@ Productivity                │               Governance
 **Attractivité du marché : 🟡 MODERATE-ATTRACTIVE**
 
 **Forces favorables :**
+
 - ✅ Supplier power modéré
 - ✅ Buyer power faible (SMB/mid-market)
 - ✅ Substitutes limités court-terme
 
 **Forces défavorables :**
+
 - ⚠️ Rivalité élevée (mais market growth compensates)
 - ⚠️ New entry barriers faibles (mais execution moat possible)
 
@@ -1318,30 +1454,35 @@ Productivity                │               Governance
 
 #### Opportunité #1 : **First-Mover Context Optimization** 🎯 **HIGH PRIORITY**
 
-**Description :**
-Être le premier MCP gateway avec context optimization qui fonctionne réellement (après l'échec d'AIRIS).
+**Description :** Être le premier MCP gateway avec context optimization qui fonctionne réellement
+(après l'échec d'AIRIS).
 
 **Size Estimate (from SOM) :**
+
 - Conservative : $1.9M ARR dans 3 ans
 - Realistic : **$5M ARR dans 3 ans**
 - Optimistic : $9.4M ARR dans 3 ans
 
 **Resource Requirements :**
+
 - **Engineering :** Epic 3 (Context optimization) - 4-6 semaines, déjà en cours
 - **Infrastructure :** Minimal (edge-ready architecture)
 - **Marketing :** Community building, thought leadership content
 
 **Time to Market :**
+
 - **MVP :** Epic 3 completion (2-4 semaines)
 - **SaaS launch :** 6-8 semaines post-MVP (Epic 4: Billing, auth, dashboard)
 - **First revenue :** 3-4 mois
 
 **Risk Assessment :**
+
 - **Technical risk :** 🟡 MODERATE - Vector search complexity, mais POC validé
 - **Market risk :** 🟢 LOW - Problem validé par AIRIS attempt + user complaints
 - **Execution risk :** 🟡 MODERATE - DX doit être irréprochable (AIRIS lesson)
 
 **Success Criteria :**
+
 - NPS >75 (world-class DX)
 - Context reduction 30-50% → <5% (technical goal)
 - 1K+ GitHub stars dans 6 mois
@@ -1351,14 +1492,16 @@ Productivity                │               Governance
 
 #### Opportunité #2 : **Developer-First SaaS ($15-25/mo)** 🎯 **HIGH PRIORITY**
 
-**Description :**
-Combler le gap pricing entre "100% free" (Smithery, Unla) et "enterprise custom" (Kong, IBM, Airia) avec un tier developer-friendly.
+**Description :** Combler le gap pricing entre "100% free" (Smithery, Unla) et "enterprise custom"
+(Kong, IBM, Airia) avec un tier developer-friendly.
 
 **Size Estimate :**
+
 - TAM segment : Power users (500K-1M devs) × $15-25/mo = $90-300M potential
 - **Realistic capture :** 10-20K paying users × $20/mo = $200K-400K ARR dans 18-24 mois
 
 **Resource Requirements :**
+
 - **Engineering :** Epic 4 (SaaS infrastructure) - 4 semaines
   - Stripe integration
   - Auth & user management
@@ -1367,16 +1510,19 @@ Combler le gap pricing entre "100% free" (Smithery, Unla) et "enterprise custom"
 - **Marketing :** $5K-10K/mo (content, ads, community)
 
 **Time to Market :**
+
 - **SaaS MVP :** 10-12 semaines from now
 - **First $1K MRR :** 4-6 mois
 - **$10K MRR milestone :** 12-18 mois
 
 **Risk Assessment :**
+
 - **Conversion risk :** 🟡 MODERATE - Freemium conversion 10-15% assumed (industry benchmark)
 - **Pricing risk :** 🟢 LOW - $15-25 range well-validated by benchmarks
 - **Churn risk :** 🟡 MODERATE - Developer tools churn typically 5-8%/mo
 
 **Success Criteria :**
+
 - Free → Pro conversion : >10%
 - Monthly churn : <5%
 - NPS : >70 (paying users)
@@ -1386,36 +1532,41 @@ Combler le gap pricing entre "100% free" (Smithery, Unla) et "enterprise custom"
 
 #### Opportunité #3 : **Open-Source → Commercial** 🎯 **MEDIUM PRIORITY**
 
-**Description :**
-Modèle éprouvé : Open-source core pour adoption + SaaS pour teams/enterprise.
+**Description :** Modèle éprouvé : Open-source core pour adoption + SaaS pour teams/enterprise.
 
 **Strategic Rationale :**
+
 - **Adoption funnel :** Free tier drives awareness & trust
 - **Conversion lever :** Teams need coordination features (shared configs, dashboards)
 - **Brand building :** Open-source = developer credibility
 - **Moat :** Community contributions strengthen product
 
 **Success Examples :**
+
 - Raycast : Free core, $10-15/mo premium → viral growth
 - Cursor : Developer-first, word-of-mouth → $500M ARR
 - Vercel : Open-source Next.js → enterprise SaaS platform
 
 **Resource Requirements :**
+
 - **Community management :** 10-20h/semaine (GitHub, Discord, docs)
 - **Documentation :** World-class docs (non-negotiable for OSS success)
 - **Support :** Community support + premium support pour paying users
 
 **Time to Market :**
+
 - **OSS launch :** Immediate (déjà sur GitHub)
 - **Community traction :** 3-6 mois pour atteindre critical mass (1K stars)
 - **SaaS conversion :** 6-12 mois post-launch
 
 **Risk Assessment :**
+
 - **Free rider risk :** 🟢 LOW - Most devs happy with free, teams need paid features
 - **Fork risk :** 🟢 LOW - MIT license acceptable, moat = execution + community
 - **Sustainability risk :** 🟡 MODERATE - OSS requires ongoing investment sans revenue immédiat
 
 **Success Criteria :**
+
 - 1K+ GitHub stars (6 mois)
 - 5K+ active users (12 mois)
 - 10-15% SaaS conversion rate
@@ -1425,31 +1576,36 @@ Modèle éprouvé : Open-source core pour adoption + SaaS pour teams/enterprise.
 
 #### Opportunité #4 : **Team & Enterprise Expansion** 🎯 **LOW PRIORITY (Year 2+)**
 
-**Description :**
-Après traction power users, up-market vers teams (5-50 devs) puis enterprise (50+ devs).
+**Description :** Après traction power users, up-market vers teams (5-50 devs) puis enterprise (50+
+devs).
 
 **Size Estimate :**
+
 - Team tier : 50K teams × 15 devs × $25/mo = **$225M TAM**
 - Enterprise : 5K orgs × 100 devs × $75/mo = **$450M TAM**
 - **Realistic capture :** $500K-1M ARR (Year 2-3)
 
 **Resource Requirements :**
+
 - **Product :** Team features (shared configs, SSO, RBAC) - Epic 5+
 - **Sales :** Founder-led sales → hire AE (Year 2)
 - **Support :** Premium support tier, SLAs
 - **Compliance :** SOC2, GDPR readiness
 
 **Time to Market :**
+
 - **Team tier launch :** 12-18 mois (after Pro tier validation)
 - **Enterprise tier :** 18-24 mois (after team tier traction)
 - **First enterprise deal :** 24+ mois
 
 **Risk Assessment :**
+
 - **Premature scaling risk :** 🔴 HIGH - Ne pas aller enterprise trop tôt
 - **Feature bloat risk :** 🟡 MODERATE - Enterprise features peuvent compliquer product
 - **Sales capacity risk :** 🟡 MODERATE - Enterprise sales require dedicated team
 
 **Success Criteria :**
+
 - 20-40 team customers (Year 2)
 - 5-10 enterprise pilots (Year 2-3)
 - $25K+ ACV for enterprise deals
@@ -1478,12 +1634,12 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 
 **Priority Ranking :**
 
-| Rank | Opportunity | Impact | Effort | Priority | Timeline |
-|------|-------------|--------|--------|----------|----------|
-| 1 | Context Optimization First-Mover | **HIGH** | MEDIUM | 🔴 **CRITICAL** | Now - 3 months |
-| 2 | Developer SaaS ($15-25/mo) | **HIGH** | MEDIUM | 🔴 **CRITICAL** | 3-6 months |
-| 3 | Open-Source → Commercial Model | MEDIUM | MEDIUM | 🟡 **HIGH** | Ongoing |
-| 4 | Team & Enterprise Expansion | MEDIUM | **HIGH** | 🟢 **MEDIUM** | 12-24 months |
+| Rank | Opportunity                      | Impact   | Effort   | Priority        | Timeline       |
+| ---- | -------------------------------- | -------- | -------- | --------------- | -------------- |
+| 1    | Context Optimization First-Mover | **HIGH** | MEDIUM   | 🔴 **CRITICAL** | Now - 3 months |
+| 2    | Developer SaaS ($15-25/mo)       | **HIGH** | MEDIUM   | 🔴 **CRITICAL** | 3-6 months     |
+| 3    | Open-Source → Commercial Model   | MEDIUM   | MEDIUM   | 🟡 **HIGH**     | Ongoing        |
+| 4    | Team & Enterprise Expansion      | MEDIUM   | **HIGH** | 🟢 **MEDIUM**   | 12-24 months   |
 
 **Rationale prioritization :**
 
@@ -1501,6 +1657,7 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 #### Phase 1 : MVP Launch & Early Adoption (Mois 1-6)
 
 **Objectifs :**
+
 - 1K+ GitHub stars
 - 500+ active users
 - NPS >75 validation
@@ -1509,9 +1666,12 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 **Positioning Strategy :**
 
 **Value Proposition :**
-> "AgentsCards : The intelligent MCP gateway that finally solves context saturation. Use 20+ MCP servers without filling your context window."
+
+> "AgentsCards : The intelligent MCP gateway that finally solves context saturation. Use 20+ MCP
+> servers without filling your context window."
 
 **Messaging Framework :**
+
 - **Problem :** "Claude Code users hit context limits with 10+ MCP servers"
 - **Solution :** "AgentsCards optimizes context to <5% with on-demand loading"
 - **Proof :** "5x faster workflows via DAG execution parallelization"
@@ -1520,6 +1680,7 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 **Target Segment Sequencing :**
 
 **Beachhead Market :** Power Users (Claude Code intensive developers)
+
 - **Why :** Highest pain, early adopters, influencers
 - **Acquisition :** GitHub, HackerNews, Reddit r/ClaudeAI
 - **Success metric :** 100+ weekly active users
@@ -1553,10 +1714,10 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 
 **Pricing Strategy (Phase 1) :**
 
-| Tier | Price | Features | Goal |
-|------|-------|----------|------|
-| **Free** | $0 | Context optimization, 3 MCP servers, community support | **Adoption funnel** - 1K+ users |
-| **Pro** | **$15/mo** | Unlimited servers, DAG execution, priority support | **Early revenue** - 10-50 paying users |
+| Tier     | Price      | Features                                               | Goal                                   |
+| -------- | ---------- | ------------------------------------------------------ | -------------------------------------- |
+| **Free** | $0         | Context optimization, 3 MCP servers, community support | **Adoption funnel** - 1K+ users        |
+| **Pro**  | **$15/mo** | Unlimited servers, DAG execution, priority support     | **Early revenue** - 10-50 paying users |
 
 **Marketing Budget :** $0-2K/mo (bootstrap, organic-first)
 
@@ -1565,17 +1726,20 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 #### Phase 2 : SaaS Scaling (Mois 7-18)
 
 **Objectifs :**
+
 - 5K+ active users (free)
 - 500+ paying users (Pro)
 - $10K MRR milestone
 - 20-40 team customers
 
 **Positioning Evolution :**
+
 - Maintain developer-first brand
 - Add team/collaboration messaging
 - Thought leadership: "AgentsCards becomes reference for MCP context optimization"
 
 **Segment Expansion :** Teams (5-50 devs)
+
 - **Acquisition :** Engineering Manager communities, Product Hunt, referrals from power users
 - **New tier :** Team ($25/user/mo) - shared configs, team dashboard, usage analytics
 
@@ -1607,13 +1771,14 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 
 **Pricing Strategy (Phase 2) :**
 
-| Tier | Price | Target | CAC Goal |
-|------|-------|--------|----------|
-| Free | $0 | Adoption | N/A |
-| **Pro** | $15/mo | Power users | <$50 CAC |
-| **Team** | $25/user/mo | Teams 5-50 | <$150 CAC |
+| Tier     | Price       | Target      | CAC Goal  |
+| -------- | ----------- | ----------- | --------- |
+| Free     | $0          | Adoption    | N/A       |
+| **Pro**  | $15/mo      | Power users | <$50 CAC  |
+| **Team** | $25/user/mo | Teams 5-50  | <$150 CAC |
 
 **Marketing Budget :** $5K-10K/mo
+
 - **Breakdown :** 40% paid ads, 30% content, 20% community, 10% tools/infra
 
 ---
@@ -1621,17 +1786,20 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 #### Phase 3 : Enterprise Readiness (Mois 19-36)
 
 **Objectifs :**
+
 - 10K+ active users
 - 1K+ paying users
 - $50K MRR milestone
 - 5-10 enterprise pilots
 
 **Positioning Maturity :**
+
 - "The standard for intelligent MCP orchestration"
 - Enterprise-ready: SOC2, compliance, SLAs
 - Thought leadership: Conference keynotes, industry reports
 
 **Segment Addition :** Enterprise (50+ devs)
+
 - **Acquisition :** Outbound sales, AWS/Azure marketplaces, enterprise partnerships
 - **New tier :** Enterprise (custom pricing, $50-75/user/mo + platform fee)
 
@@ -1659,14 +1827,15 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 
 **Pricing Strategy (Phase 3) :**
 
-| Tier | Price | Features |
-|------|-------|----------|
-| Free | $0 | Adoption funnel |
-| Pro | $15/mo | Individual devs |
-| Team | $25/user/mo | Teams 5-50 |
+| Tier           | Price                                       | Features                                 |
+| -------------- | ------------------------------------------- | ---------------------------------------- |
+| Free           | $0                                          | Adoption funnel                          |
+| Pro            | $15/mo                                      | Individual devs                          |
+| Team           | $25/user/mo                                 | Teams 5-50                               |
 | **Enterprise** | **Custom ($50-75/user/mo + $10K platform)** | SSO, RBAC, SOC2, SLAs, dedicated support |
 
 **Marketing Budget :** $20K-50K/mo
+
 - **Breakdown :** 30% enterprise sales, 25% partnerships, 25% brand, 20% content
 
 ---
@@ -1676,21 +1845,25 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 **Year 1 (2026) : Foundation**
 
 **Q1 2026 :**
+
 - ✅ Epic 3 completion (Context optimization)
 - ✅ MVP launch (GitHub, HackerNews)
 - 🎯 Goal : 500+ users, 10+ paying
 
 **Q2 2026 :**
+
 - Epic 4 completion (SaaS infra: billing, auth, dashboard)
 - Pro tier launch ($15/mo)
 - 🎯 Goal : 1K users, 50 paying, $750 MRR
 
 **Q3 2026 :**
+
 - Team tier launch ($25/user/mo)
 - Content marketing ramp-up
 - 🎯 Goal : 3K users, 200 paying, $5K MRR
 
 **Q4 2026 :**
+
 - Paid acquisition start (Google Ads, Reddit)
 - Partnership development (Smithery, etc.)
 - 🎯 Goal : 5K users, 400 paying, $10K MRR
@@ -1702,12 +1875,14 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 **Year 2 (2027) : Scale**
 
 **Q1-Q2 2027 :**
+
 - Team tier traction (20-40 customers)
 - Enterprise tier development
 - Hire first AE (Account Executive)
 - SOC2 Type II certification
 
 **Q3-Q4 2027 :**
+
 - Enterprise tier launch
 - First enterprise pilots (5-10)
 - AWS/Azure marketplace listings
@@ -1734,15 +1909,17 @@ Après traction power users, up-market vers teams (5-50 devs) puis enterprise (5
 
 #### Risk #1 : **Big Tech Entry (Microsoft/Anthropic)** - 🔴 **HIGH IMPACT** × 🟡 **MEDIUM PROBABILITY**
 
-**Description :**
-Microsoft intègre context optimization nativement dans VS Code, ou Anthropic dans Claude Code.
+**Description :** Microsoft intègre context optimization nativement dans VS Code, ou Anthropic dans
+Claude Code.
 
 **Impact :** 🔴 **CRITICAL**
+
 - Loss of differentiation overnight
 - Competitive moat éroded
 - Potential market obsolescence
 
 **Probability :** 🟡 **MEDIUM (30-40%)**
+
 - VS Code/Claude Code ont ressources
 - MAIS : Cycles de développement lents (12-24 mois)
 - MAIS : Pas leur core focus (IDE features > MCP optimization)
@@ -1750,11 +1927,13 @@ Microsoft intègre context optimization nativement dans VS Code, ou Anthropic da
 **Mitigation Strategies :**
 
 1. **Speed to market** - Établir brand & users avant leur entry (18-24 mois fenêtre)
-2. **Architectural moat** - DAG execution, learning, speculative features = hard to replicate quickly
+2. **Architectural moat** - DAG execution, learning, speculative features = hard to replicate
+   quickly
 3. **Community lock-in** - Strong OSS community = switching cost même si big tech entre
 4. **Pivot readiness** - Si they enter, pivot vers complémentaire (enterprise governance, analytics)
 
 **Monitoring :**
+
 - VS Code/Claude Code roadmaps (watch GitHub issues, releases)
 - Anthropic blog (watch for MCP infrastructure announcements)
 - Developer sentiment (Reddit, HackerNews re: native solutions)
@@ -1763,15 +1942,17 @@ Microsoft intègre context optimization nativement dans VS Code, ou Anthropic da
 
 #### Risk #2 : **Execution Failure (AIRIS Redux)** - 🔴 **HIGH IMPACT** × 🟡 **MEDIUM PROBABILITY**
 
-**Description :**
-AgentsCards échoue l'exécution technique (context optimization buggy, DX mauvais), répète l'échec d'AIRIS.
+**Description :** AgentsCards échoue l'exécution technique (context optimization buggy, DX mauvais),
+répète l'échec d'AIRIS.
 
 **Impact :** 🔴 **CRITICAL**
+
 - Reputation damage irréversible
 - User churn before SaaS launch
 - Opportunity window closed
 
 **Probability :** 🟡 **MEDIUM (20-30%)**
+
 - Technical complexity élevée (vector search, DAG, edge runtime)
 - Single founder = execution risk
 - Time pressure = corner-cutting temptation
@@ -1799,6 +1980,7 @@ AgentsCards échoue l'exécution technique (context optimization buggy, DX mauva
    - Rollback plan for every deploy
 
 **Monitoring :**
+
 - NPS tracking (weekly survey)
 - GitHub issues (bug rate, sentiment)
 - User churn rate (weekly active users trend)
@@ -1807,14 +1989,16 @@ AgentsCards échoue l'exécution technique (context optimization buggy, DX mauva
 
 #### Risk #3 : **Market Timing (Too Early or Too Late)** - 🟡 **MEDIUM IMPACT** × 🟡 **MEDIUM PROBABILITY**
 
-**Description :**
-MCP adoption slower than expected (too early), OU consolidation plus rapide (too late).
+**Description :** MCP adoption slower than expected (too early), OU consolidation plus rapide (too
+late).
 
 **Impact :** 🟡 **MODERATE**
+
 - Too early : Insufficient users, burn rate unsustainable
 - Too late : Market already captured by incumbents
 
 **Probability :** 🟡 **MEDIUM (30-40%)**
+
 - MCP launched nov 2024 = très récent
 - Predictions 90% adoption fin 2025 = optimistes?
 - Consolidation 2026-2027 = AgentsCards doit être dans top 3-5
@@ -1836,6 +2020,7 @@ MCP adoption slower than expected (too early), OU consolidation plus rapide (too
    - If too late : Niche positioning (specific verticals/use cases)
 
 **Monitoring :**
+
 - MCP ecosystem growth (monthly check Smithery, GitHub)
 - Competitor news (funding rounds, launches)
 - User acquisition velocity (month-over-month growth)
@@ -1844,15 +2029,17 @@ MCP adoption slower than expected (too early), OU consolidation plus rapide (too
 
 #### Risk #4 : **Freemium Conversion Failure** - 🟡 **MEDIUM IMPACT** × 🟡 **MEDIUM PROBABILITY**
 
-**Description :**
-Free users adoptent massivement mais ne convertissent pas en paying (conversion <5% vs 10-15% target).
+**Description :** Free users adoptent massivement mais ne convertissent pas en paying (conversion
+<5% vs 10-15% target).
 
 **Impact :** 🟡 **MODERATE**
+
 - Revenue shortfall
 - Unsustainable burn rate (free users cost = infra, support)
 - Pivot requis (different pricing model)
 
 **Probability :** 🟡 **MEDIUM (30-40%)**
+
 - Developer tools freemium = proven model (Raycast, Vercel)
 - MAIS : Free tier peut être "too good" (unlimited servers = mistake?)
 - MAIS : Value perception = devs reluctant to pay for tools
@@ -1875,6 +2062,7 @@ Free users adoptent massivement mais ne convertissent pas en paying (conversion 
    - Consulting/support services revenue
 
 **Monitoring :**
+
 - Conversion rate (weekly: free → trial → paid)
 - Cohort analysis (which users convert? power users vs casual?)
 - Churn analysis (why users downgrade paid → free)
@@ -1885,16 +2073,17 @@ Free users adoptent massivement mais ne convertissent pas en paying (conversion 
 
 **Proactive Measures :**
 
-| Risk | Severity | Primary Mitigation | Success Metric |
-|------|----------|-------------------|----------------|
-| Big Tech Entry | 🔴 CRITICAL | Speed to market (18mo window) | 5K users, strong brand before 2027 |
-| Execution Failure | 🔴 CRITICAL | Quality gates (NPS >75) | Zero critical bugs, <24h response |
-| Market Timing | 🟡 MODERATE | Lean operations, market tracking | Burn <$10K/mo, MRR growth >20%/mo |
-| Conversion Failure | 🟡 MODERATE | Value-gating, conversion optimization | Conversion rate >10% |
+| Risk               | Severity    | Primary Mitigation                    | Success Metric                     |
+| ------------------ | ----------- | ------------------------------------- | ---------------------------------- |
+| Big Tech Entry     | 🔴 CRITICAL | Speed to market (18mo window)         | 5K users, strong brand before 2027 |
+| Execution Failure  | 🔴 CRITICAL | Quality gates (NPS >75)               | Zero critical bugs, <24h response  |
+| Market Timing      | 🟡 MODERATE | Lean operations, market tracking      | Burn <$10K/mo, MRR growth >20%/mo  |
+| Conversion Failure | 🟡 MODERATE | Value-gating, conversion optimization | Conversion rate >10%               |
 
 **Contingency Plans :**
 
-- **If Big Tech enters :** Pivot to enterprise governance/analytics (complementary to native solutions)
+- **If Big Tech enters :** Pivot to enterprise governance/analytics (complementary to native
+  solutions)
 - **If execution fails :** Pause SaaS, fix product, relaunch when NPS >75
 - **If market too early :** Consulting services bridge, wait for adoption curve
 - **If conversion fails :** Pivot to B2B (teams/enterprise), adjust pricing model

@@ -4,13 +4,13 @@ Status: Ready for Review
 
 ## Story
 
-As a **potential user**,
-I want **a clear README explaining the playground**,
-so that **I understand what it does, why it exists, and how to start**.
+As a **potential user**, I want **a clear README explaining the playground**, so that **I understand
+what it does, why it exists, and how to start**.
 
 ## Acceptance Criteria
 
-1. `playground/README.md` contient une section "What is this?" (1 paragraphe sur le problème MCP et la solution)
+1. `playground/README.md` contient une section "What is this?" (1 paragraphe sur le problème MCP et
+   la solution)
 2. Quick Start section avec badge "Open in GitHub Codespaces" fonctionnel + 3 étapes max
 3. Notebook Overview table mise à jour avec la nouvelle séquence de notebooks
 4. Section "Lib Helpers" documentant les modules disponibles (init, viz, metrics, llm-provider)
@@ -61,12 +61,14 @@ so that **I understand what it does, why it exists, and how to start**.
 ### Requirements Context
 
 **From PRD-playground.md:**
+
 - FR001: Playground doit s'exécuter dans GitHub Codespace avec devcontainer
 - FR002: Init via `agentcards init`
 - NFR001: Temps de setup < 5 minutes
 - NFR003: Documentation inline auto-explicative
 
 **From epics-playground.md (Story 1.8):**
+
 - README avec badge "Open in Codespace"
 - Table des notebooks (séquence 00-06 à venir dans Epic 2)
 - Troubleshooting FAQ
@@ -75,6 +77,7 @@ so that **I understand what it does, why it exists, and how to start**.
 ### Architecture Constraints
 
 **Existing Infrastructure:**
+
 - `playground/README.md` - Existe déjà, à mettre à jour
 - `playground/lib/init.ts` - Helper idempotent (Story 1.5)
 - `playground/lib/viz.ts` - Mermaid rendering (Story 1.6)
@@ -82,6 +85,7 @@ so that **I understand what it does, why it exists, and how to start**.
 - `playground/lib/llm-provider.ts` - Multi-LLM support (Story 1.4)
 
 **Notebook Structure Actuelle:**
+
 ```
 playground/notebooks/
 ├── 00-introduction.ipynb      # Nouveau - Epic 2
@@ -101,50 +105,57 @@ playground/notebooks/
 └── 09-workflow-templates.ipynb  # Ancien (détaillé)
 ```
 
-**Note:** Epic 2 (Stories 2.1-2.8) nettoiera et finalisera la séquence.
-Le README doit documenter l'état actuel tout en préparant la transition.
+**Note:** Epic 2 (Stories 2.1-2.8) nettoiera et finalisera la séquence. Le README doit documenter
+l'état actuel tout en préparant la transition.
 
 ### Project Structure Notes
 
 **Target File:**
+
 - `playground/README.md` (modification du fichier existant)
 
 **Related Documentation:**
+
 - `docs/PRD-playground.md` - Source pour "What is this?"
 - `docs/epics-playground.md` - Source pour notebook progression
 
 ### Learnings from Previous Stories
 
 **From Story 1-5 (Init Helper) - Completed:**
+
 - Pattern pour helpers: exports at top, types, implementation
 - `.env` contient AGENTCARDS_DB_PATH et AGENTCARDS_WORKFLOW_PATH
 - Gateway check via HTTP fetch
 - 9 tests passing
 
 **From Story 1-7 (Metrics Helper) - Completed:**
+
 - ASCII-based output pour compatibilité Jupyter
 - Couleurs ANSI optionnelles (désactivées par défaut)
 - 26 tests passing
 - CLI demo disponible
 
 **Patterns établis dans lib/:**
+
 - Chaque module a des exports clairs at top
 - Types TypeScript bien définis
 - Tests dans fichier `_test.ts` séparé
 - Support `import.meta.main` pour démo CLI
 
-[Source: docs/stories/playground/1-5-idempotent-init-helper.md#Completion-Notes]
-[Source: docs/stories/playground/1-7-metrics-visualization-helper.md#Completion-Notes]
+[Source: docs/stories/playground/1-5-idempotent-init-helper.md#Completion-Notes] [Source:
+docs/stories/playground/1-7-metrics-visualization-helper.md#Completion-Notes]
 
 ### Testing Strategy
 
 **Manual Validation:**
+
 1. Badge Codespaces ouvre le bon devcontainer
 2. Liens internes fonctionnent
 3. Examples de code sont corrects et copiables
 4. Structure markdown rend bien sur GitHub
 
 **No Unit Tests Required:**
+
 - Story purement documentation/README
 - Validation manuelle suffisante
 
@@ -171,16 +182,23 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-- **Task 1:** Rédigé section "What is this?" avec explication du problème context explosion (30-50%) et présentation de Casys MCP Gateway (Vector Search, DAG, Sandbox, GraphRAG). Ton engageant avec TL;DR et mention "no mocks".
-- **Task 2:** Quick Start mis à jour avec badge Codespaces fonctionnel (URL: `codespaces.new/Casys-AI/AgentCards?devcontainer_path=...`), 3 étapes claires, option local maintenue, temps estimé < 5 minutes.
-- **Task 3:** Créé table Notebook Overview avec deux séries (Epic 2 nouvelle séquence + Legacy détaillée), status pour chaque notebook, note sur consolidation future.
+- **Task 1:** Rédigé section "What is this?" avec explication du problème context explosion (30-50%)
+  et présentation de Casys MCP Gateway (Vector Search, DAG, Sandbox, GraphRAG). Ton engageant avec
+  TL;DR et mention "no mocks".
+- **Task 2:** Quick Start mis à jour avec badge Codespaces fonctionnel (URL:
+  `codespaces.new/Casys-AI/AgentCards?devcontainer_path=...`), 3 étapes claires, option local
+  maintenue, temps estimé < 5 minutes.
+- **Task 3:** Créé table Notebook Overview avec deux séries (Epic 2 nouvelle séquence + Legacy
+  détaillée), status pour chaque notebook, note sur consolidation future.
 - **Task 4:** Documenté tous les Lib Helpers avec exemples de code:
   - `lib/init.ts`: `ensurePlaygroundReady()`, `getPlaygroundDbPath()`
   - `lib/viz.ts`: 7 fonctions display* documentées
   - `lib/metrics.ts`: 5 fonctions documentées avec exemples ASCII
   - `lib/llm-provider.ts`: 4 fonctions avec providers supportés
-- **Task 5:** Section Troubleshooting complète avec 5 FAQ: API key, MCP servers, embedding loading, Mermaid diagrams, Jupyter kernel.
-- **Task 6:** Review complet, liens vérifiés et corrigés (docs/README.md → docs/index.md), ajout lien architecture.md.
+- **Task 5:** Section Troubleshooting complète avec 5 FAQ: API key, MCP servers, embedding loading,
+  Mermaid diagrams, Jupyter kernel.
+- **Task 6:** Review complet, liens vérifiés et corrigés (docs/README.md → docs/index.md), ajout
+  lien architecture.md.
 
 ### Change Log
 
@@ -189,4 +207,3 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### File List
 
 - `playground/README.md` - Modified (complete rewrite)
-

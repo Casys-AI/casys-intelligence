@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without user input
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS treat this as collaborative discovery between PM peers
 - 📋 YOU ARE A FACILITATOR, not a content generator
 - 💬 FOCUS on understanding where we left off and continuing appropriately
@@ -50,8 +52,8 @@ Reload the context documents listed in `inputDocuments`:
 
 ### 3. Summarize Current Progress
 
-Welcome the user back and provide context:
-"Welcome back {{user_name}}! I'm resuming our PRD collaboration for {{project_name}}.
+Welcome the user back and provide context: "Welcome back {{user_name}}! I'm resuming our PRD
+collaboration for {{project_name}}.
 
 **Current Progress:**
 
@@ -78,33 +80,32 @@ Based on `lastStep` value, determine which step to load next:
 
 ### 5. Present Continuation Options
 
-After presenting current progress, ask:
-"Ready to continue with Step {nextStepNumber}: {nextStepTitle}?
+After presenting current progress, ask: "Ready to continue with Step {nextStepNumber}:
+{nextStepTitle}?
 
 [C] Continue to Step {nextStepNumber}"
 
 ## SUCCESS METRICS:
 
-✅ All previous input documents successfully reloaded
-✅ Current workflow state accurately analyzed and presented
-✅ User confirms understanding of progress
-✅ Correct next step identified and prepared for loading
+✅ All previous input documents successfully reloaded ✅ Current workflow state accurately analyzed
+and presented ✅ User confirms understanding of progress ✅ Correct next step identified and
+prepared for loading
 
 ## FAILURE MODES:
 
-❌ Discovering new input documents instead of reloading existing ones
-❌ Modifying content from already completed steps
-❌ Loading wrong next step based on `lastStep` value
-❌ Proceeding without user confirmation of current state
+❌ Discovering new input documents instead of reloading existing ones ❌ Modifying content from
+already completed steps ❌ Loading wrong next step based on `lastStep` value ❌ Proceeding without
+user confirmation of current state
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## WORKFLOW ALREADY COMPLETE?
 
-If `lastStep = 10` (final step completed):
-"Great news! It looks like we've already completed the PRD workflow for {{project_name}}.
+If `lastStep = 10` (final step completed): "Great news! It looks like we've already completed the
+PRD workflow for {{project_name}}.
 
 The final document is ready at {output_folder}/prd.md with all sections completed through step 10.
 
@@ -118,6 +119,7 @@ What would be most helpful?"
 
 ## NEXT STEP:
 
-After user confirms they're ready to continue, load the appropriate next step file based on the `lastStep` value from frontmatter.
+After user confirms they're ready to continue, load the appropriate next step file based on the
+`lastStep` value from frontmatter.
 
 Remember: Do NOT load the next step until user explicitly selects [C] to continue!

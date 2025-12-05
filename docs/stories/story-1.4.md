@@ -1,17 +1,15 @@
 # Story 1.4: Embeddings Generation with BGE-Large-EN-v1.5
 
-**Epic:** 1 - Project Foundation & Context Optimization Engine
-**Story ID:** 1.4
-**Status:** done
+**Epic:** 1 - Project Foundation & Context Optimization Engine **Story ID:** 1.4 **Status:** done
 **Estimated Effort:** 3-4 hours
 
 ---
 
 ## User Story
 
-**As a** developer,
-**I want** tool schemas to be converted into vector embeddings using BGE-Large-EN-v1.5 locally,
-**So that** I can perform semantic search without relying on external APIs.
+**As a** developer, **I want** tool schemas to be converted into vector embeddings using
+BGE-Large-EN-v1.5 locally, **So that** I can perform semantic search without relying on external
+APIs.
 
 ---
 
@@ -36,6 +34,7 @@
 ## Technical Notes
 
 ### BGE-Large-EN-v1.5 Model Loading
+
 ```typescript
 import { pipeline } from "@xenova/transformers";
 
@@ -46,7 +45,7 @@ class EmbeddingModel {
     console.log("🔄 Loading BGE-Large-EN-v1.5 model...");
     this.model = await pipeline(
       "feature-extraction",
-      "BAAI/bge-large-en-v1.5"
+      "BAAI/bge-large-en-v1.5",
     );
     console.log("✓ Model loaded successfully");
   }
@@ -62,6 +61,7 @@ class EmbeddingModel {
 ```
 
 ### Text Concatenation for Tool Schemas
+
 ```typescript
 function schemaToText(schema: ToolSchema): string {
   // Concatenate: name + description + parameter names + parameter descriptions
@@ -69,7 +69,7 @@ function schemaToText(schema: ToolSchema): string {
     schema.name,
     schema.description,
     ...Object.entries(schema.inputSchema.properties || {}).map(
-      ([name, prop]) => `${name}: ${prop.description || ""}`
+      ([name, prop]) => `${name}: ${prop.description || ""}`,
     ),
   ];
   return parts.filter(Boolean).join(" | ");
@@ -77,10 +77,11 @@ function schemaToText(schema: ToolSchema): string {
 ```
 
 ### Embedding Generation with Progress
+
 ```typescript
 async function generateEmbeddings(
   db: PGlite,
-  model: EmbeddingModel
+  model: EmbeddingModel,
 ): Promise<void> {
   // 1. Fetch all schemas from tool_schema table
   const schemas = await db.query("SELECT * FROM tool_schema");
@@ -93,7 +94,7 @@ async function generateEmbeddings(
     // Check if embedding already exists (caching)
     const existing = await db.query(
       "SELECT tool_id FROM tool_embedding WHERE tool_id = $1",
-      [schema.tool_id]
+      [schema.tool_id],
     );
 
     if (existing.length > 0) {
@@ -106,16 +107,19 @@ async function generateEmbeddings(
     const embedding = await model.encode(text);
 
     // Store in database
-    await db.exec(`
+    await db.exec(
+      `
       INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding, metadata)
       VALUES ($1, $2, $3, $4, $5)
-    `, [
-      schema.tool_id,
-      schema.server_id,
-      JSON.parse(schema.schema_json).name,
-      `[${embedding.join(",")}]`,
-      JSON.stringify({ cached_at: new Date().toISOString() })
-    ]);
+    `,
+      [
+        schema.tool_id,
+        schema.server_id,
+        JSON.parse(schema.schema_json).name,
+        `[${embedding.join(",")}]`,
+        JSON.stringify({ cached_at: new Date().toISOString() }),
+      ],
+    );
 
     progress.increment();
   }
@@ -125,11 +129,13 @@ async function generateEmbeddings(
 ```
 
 ### Caching Strategy
+
 - Check if `tool_id` exists in `tool_embedding` table
 - Skip if embedding exists AND schema hasn't changed
 - Invalidate cache if `tool_schema.cached_at` > `tool_embedding.created_at`
 
 ### Performance Benchmarks
+
 - Single embedding generation: ~300-500ms
 - Batch of 100 tools: ~40-60 seconds
 - Batch of 200 tools: ~80-120 seconds (meets <2 min target)
@@ -153,15 +159,19 @@ async function generateEmbeddings(
 ## File List
 
 ### New Files
-- `src/vector/embeddings.ts` - Module principal d'embeddings (EmbeddingModel, generateEmbeddings, schemaToText)
+
+- `src/vector/embeddings.ts` - Module principal d'embeddings (EmbeddingModel, generateEmbeddings,
+  schemaToText)
 - `src/vector/index.ts` - Point d'entrée du module vector
 - `tests/unit/vector/embeddings_test.ts` - Tests unitaires complets (14 tests, 5 actifs)
 
 ### Modified Files
+
 - `deno.json` - Ajout de @xenova/transformers@2.17.2 et nodeModulesDir: "auto"
 - `.gitignore` - Ajout de node_modules/
 - `docs/sprint-status.yaml` - Status: ready-for-dev → in-progress → review
-- `src/vector/embeddings.ts` - Added error handling, input validation, batch transactions (review fixes)
+- `src/vector/embeddings.ts` - Added error handling, input validation, batch transactions (review
+  fixes)
 
 ---
 
@@ -177,7 +187,8 @@ async function generateEmbeddings(
   - Sprint status updated: review → done
 
 - **2025-11-04**: Code review fixes completed - All action items addressed
-  - ✅ **Error Handling:** Added top-level try-catch in generateEmbeddings() with partial result support
+  - ✅ **Error Handling:** Added top-level try-catch in generateEmbeddings() with partial result
+    support
   - ✅ **Input Validation:** Added length validation in schemaToText() with warnings for >2000 chars
   - ✅ **Performance:** Implemented batch transactions (20 tools/batch) for 2-3x speedup
   - All tests passing: 5/5 unit tests pass, no regressions introduced
@@ -195,7 +206,8 @@ async function generateEmbeddings(
   - Création de EmbeddingModel avec lazy loading et support BGE-Large-EN-v1.5
   - Fonction schemaToText pour concaténation de schémas (AC2)
   - generateEmbeddings avec caching, progress tracking, et batch processing
-  - Tests unitaires: 5 tests actifs passent, 9 tests d'intégration marqués ignored (nécessitent téléchargement du modèle)
+  - Tests unitaires: 5 tests actifs passent, 9 tests d'intégration marqués ignored (nécessitent
+    téléchargement du modèle)
   - Configuration Deno pour support node_modules (packages npm avec binaires natifs)
   - Toutes les ACs satisfaites (AC1-AC7)
 
@@ -204,23 +216,29 @@ async function generateEmbeddings(
 ## Dev Agent Record
 
 ### Debug Log
+
 **Planning:**
+
 - Analysé le contexte et les dépendances existantes (PGlite, MCP types, migrations)
 - Identifié besoin de @xenova/transformers et nodeModulesDir pour binaires natifs
 - Structuré le module en 3 composants: EmbeddingModel, schemaToText, generateEmbeddings
 
 **Implémentation:**
+
 - EmbeddingModel: Lazy loading avec pipeline BGE, pooling + normalisation
 - schemaToText: Support des schémas MCPTool et ToolSchema avec gestion input_schema/inputSchema
 - generateEmbeddings: Batch processing avec caching intelligent et ProgressTracker
 - Configuration node_modules pour sharp (dépendance native de @xenova/transformers)
 
 **Tests:**
+
 - Tests unitaires rapides (schemaToText, model initialization) - tous passent
-- Tests d'intégration (model loading, embedding generation, caching, performance) - marqués `ignore` car nécessitent 400MB download
+- Tests d'intégration (model loading, embedding generation, caching, performance) - marqués `ignore`
+  car nécessitent 400MB download
 - Stratégie: Tests rapides pour CI, tests lents pour validation manuelle
 
 **Défis:**
+
 - Type mismatch avec Pipeline (résolu avec `any` + lint-ignore)
 - Support input_schema vs inputSchema (résolu avec conditional check)
 - node_modules requis pour sharp (résolu avec nodeModulesDir + gitignore)
@@ -230,6 +248,7 @@ async function generateEmbeddings(
 ✅ **Story 1.4 - Code Review Fixes Completed (2025-11-04)**
 
 **Review Feedback Addressed:**
+
 1. ✅ **Error Handling (High):**
    - Added top-level try-catch in generateEmbeddings()
    - Graceful degradation with partial results on failures
@@ -252,6 +271,7 @@ async function generateEmbeddings(
 ✅ **Story 1.4 complète et prête pour review**
 
 **Implémentation:**
+
 - Module `src/vector/embeddings.ts` fournit toutes les fonctionnalités requises
 - Support complet BGE-Large-EN-v1.5 (1024-dim embeddings)
 - Caching intelligent basé sur tool_id avec upsert
@@ -259,11 +279,13 @@ async function generateEmbeddings(
 - Performance optimisée: batch processing avec transactions explicites
 
 **Tests:**
+
 - 5 tests unitaires rapides: ✅ 100% pass
 - 9 tests d'intégration (marqués ignored): Nécessitent `deno test --no-ignore` + 60-90s download
 - Coverage: Schéma concaténation, model lifecycle, caching logic, error handling
 
 **AC Validation:**
+
 - AC1 ✅: BGE-Large-EN-v1.5 via @xenova/transformers pipeline
 - AC2 ✅: schemaToText concatene name + description + parameters (+ validation longueur)
 - AC3 ✅: encode() génère exactly 1024-dim normalized embeddings
@@ -273,12 +295,15 @@ async function generateEmbeddings(
 - AC7 ✅: Batch transactions pour <2min/200 tools (optimisé 2-3x)
 
 **Prochaines étapes:**
+
 - Re-review par l'équipe
 - Validation tests d'intégration avec vrai modèle (optionnel pré-merge)
 - Merge vers main après approval
 
 ### Context Reference
-- [Story Context](1-4-embeddings-generation-with-bge-large-en-v1-5.context.xml) - Generated 2025-11-04
+
+- [Story Context](1-4-embeddings-generation-with-bge-large-en-v1-5.context.xml) - Generated
+  2025-11-04
 
 ---
 
@@ -292,13 +317,16 @@ async function generateEmbeddings(
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad
-**Date:** 2025-11-04
-**Outcome:** 🟡 **CHANGES REQUESTED**
+**Reviewer:** BMad **Date:** 2025-11-04 **Outcome:** 🟡 **CHANGES REQUESTED**
 
 ### Summary
 
-Story 1.4 implements a complete and well-architected embedding generation module using BGE-Large-EN-v1.5. All 7 acceptance criteria are fully implemented with proper evidence and test coverage. The code demonstrates strong engineering practices with comprehensive documentation, type safety, and security. However, **3 medium severity code quality issues** were identified that should be addressed before production deployment: missing top-level error handling, lack of input validation, and sub-optimal database insertion strategy.
+Story 1.4 implements a complete and well-architected embedding generation module using
+BGE-Large-EN-v1.5. All 7 acceptance criteria are fully implemented with proper evidence and test
+coverage. The code demonstrates strong engineering practices with comprehensive documentation, type
+safety, and security. However, **3 medium severity code quality issues** were identified that should
+be addressed before production deployment: missing top-level error handling, lack of input
+validation, and sub-optimal database insertion strategy.
 
 ### Outcome Justification
 
@@ -308,7 +336,8 @@ Story 1.4 implements a complete and well-architected embedding generation module
 - ✅ Security review passed
 - ⚠️ **3 medium severity quality issues require fixes** (detailed below)
 
-The implementation is functionally complete but needs robustness improvements for production readiness.
+The implementation is functionally complete but needs robustness improvements for production
+readiness.
 
 ---
 
@@ -324,7 +353,8 @@ The implementation is functionally complete but needs robustness improvements fo
 
 2. **[MED] No Input Validation for Schema Text Length**
    - **File:** [src/vector/embeddings.ts:160-189](src/vector/embeddings.ts#L160-L189)
-   - **Issue:** schemaToText() doesn't validate/warn about excessively long inputs (BGE truncates at 512 tokens)
+   - **Issue:** schemaToText() doesn't validate/warn about excessively long inputs (BGE truncates at
+     512 tokens)
    - **Impact:** Silent truncation could lead to poor embeddings
    - **Fix:** Add validation or warning for schemas >512 tokens
 
@@ -347,15 +377,15 @@ The implementation is functionally complete but needs robustness improvements fo
 
 ### Acceptance Criteria Coverage
 
-| AC# | Description | Status | Evidence | Tests |
-|-----|-------------|--------|----------|-------|
-| **AC1** | BGE-Large-EN-v1.5 model loaded (via @xenova/transformers) | ✅ **IMPLEMENTED** | [embeddings.ts:10](src/vector/embeddings.ts#L10), [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92) | [embeddings_test.ts:119-134](tests/unit/vector/embeddings_test.ts#L119-L134) |
-| **AC2** | Tool schemas concatenated to text input | ✅ **IMPLEMENTED** | [embeddings.ts:160-189](src/vector/embeddings.ts#L160-L189) | [embeddings_test.ts:64-86](tests/unit/vector/embeddings_test.ts#L64-L86), [embeddings_test.ts:311-335](tests/unit/vector/embeddings_test.ts#L311-L335) |
-| **AC3** | 1024-dim embeddings generated | ✅ **IMPLEMENTED** | [embeddings.ts:112-141](src/vector/embeddings.ts#L112-L141), [embeddings.ts:130-134](src/vector/embeddings.ts#L130-L134) | [embeddings_test.ts:137-154](tests/unit/vector/embeddings_test.ts#L137-L154) |
-| **AC4** | Embeddings stored in tool_embedding with metadata | ✅ **IMPLEMENTED** | [embeddings.ts:308-325](src/vector/embeddings.ts#L308-L325), [migrations.ts:209-216](src/db/migrations.ts#L209-L216) | [embeddings_test.ts:193-223](tests/unit/vector/embeddings_test.ts#L193-L223) |
-| **AC5** | Progress bar displayed during generation | ✅ **IMPLEMENTED** | [embeddings.ts:194-224](src/vector/embeddings.ts#L194-L224), [embeddings.ts:213-217](src/vector/embeddings.ts#L213-L217) | ⚠️ No test for output (functionality present) |
-| **AC6** | Embeddings cached (no regeneration) | ✅ **IMPLEMENTED** | [embeddings.ts:291-301](src/vector/embeddings.ts#L291-L301) | [embeddings_test.ts:226-247](tests/unit/vector/embeddings_test.ts#L226-L247), [embeddings_test.ts:249-279](tests/unit/vector/embeddings_test.ts#L249-L279) |
-| **AC7** | Generation time <2min for 200 tools | ✅ **IMPLEMENTED** | Architecture supports batch processing | [embeddings_test.ts:282-307](tests/unit/vector/embeddings_test.ts#L282-L307) |
+| AC#     | Description                                               | Status             | Evidence                                                                                                                 | Tests                                                                                                                                                      |
+| ------- | --------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AC1** | BGE-Large-EN-v1.5 model loaded (via @xenova/transformers) | ✅ **IMPLEMENTED** | [embeddings.ts:10](src/vector/embeddings.ts#L10), [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92)                | [embeddings_test.ts:119-134](tests/unit/vector/embeddings_test.ts#L119-L134)                                                                               |
+| **AC2** | Tool schemas concatenated to text input                   | ✅ **IMPLEMENTED** | [embeddings.ts:160-189](src/vector/embeddings.ts#L160-L189)                                                              | [embeddings_test.ts:64-86](tests/unit/vector/embeddings_test.ts#L64-L86), [embeddings_test.ts:311-335](tests/unit/vector/embeddings_test.ts#L311-L335)     |
+| **AC3** | 1024-dim embeddings generated                             | ✅ **IMPLEMENTED** | [embeddings.ts:112-141](src/vector/embeddings.ts#L112-L141), [embeddings.ts:130-134](src/vector/embeddings.ts#L130-L134) | [embeddings_test.ts:137-154](tests/unit/vector/embeddings_test.ts#L137-L154)                                                                               |
+| **AC4** | Embeddings stored in tool_embedding with metadata         | ✅ **IMPLEMENTED** | [embeddings.ts:308-325](src/vector/embeddings.ts#L308-L325), [migrations.ts:209-216](src/db/migrations.ts#L209-L216)     | [embeddings_test.ts:193-223](tests/unit/vector/embeddings_test.ts#L193-L223)                                                                               |
+| **AC5** | Progress bar displayed during generation                  | ✅ **IMPLEMENTED** | [embeddings.ts:194-224](src/vector/embeddings.ts#L194-L224), [embeddings.ts:213-217](src/vector/embeddings.ts#L213-L217) | ⚠️ No test for output (functionality present)                                                                                                              |
+| **AC6** | Embeddings cached (no regeneration)                       | ✅ **IMPLEMENTED** | [embeddings.ts:291-301](src/vector/embeddings.ts#L291-L301)                                                              | [embeddings_test.ts:226-247](tests/unit/vector/embeddings_test.ts#L226-L247), [embeddings_test.ts:249-279](tests/unit/vector/embeddings_test.ts#L249-L279) |
+| **AC7** | Generation time <2min for 200 tools                       | ✅ **IMPLEMENTED** | Architecture supports batch processing                                                                                   | [embeddings_test.ts:282-307](tests/unit/vector/embeddings_test.ts#L282-L307)                                                                               |
 
 **Summary: ✅ 7 of 7 acceptance criteria fully implemented**
 
@@ -363,21 +393,22 @@ The implementation is functionally complete but needs robustness improvements fo
 
 ### Task Completion Validation
 
-| Task | Marked | Verified | Evidence |
-|------|--------|----------|----------|
-| All acceptance criteria met | [x] | ✅ **COMPLETE** | All 7 ACs validated above |
-| BGE model loaded successfully | [x] | ✅ **COMPLETE** | [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92) |
-| Embeddings generated for all schemas | [x] | ✅ **COMPLETE** | [embeddings.ts:239-344](src/vector/embeddings.ts#L239-L344) |
-| Progress bar displays | [x] | ✅ **COMPLETE** | [embeddings.ts:194-224](src/vector/embeddings.ts#L194-L224) |
-| Caching prevents re-generation | [x] | ✅ **COMPLETE** | [embeddings.ts:291-301](src/vector/embeddings.ts#L291-L301) |
-| Performance target achieved | [x] | ✅ **DESIGN VERIFIED** | Test exists, requires runtime validation |
-| Unit tests passing | [x] | ✅ **COMPLETE** | 14 tests: 5 active pass, 9 integration (require model download) |
-| Documentation updated | [x] | ✅ **COMPLETE** | Comprehensive JSDoc throughout embeddings.ts |
-| Code reviewed and merged | [ ] | ⏳ **IN PROGRESS** | This review |
+| Task                                 | Marked | Verified               | Evidence                                                        |
+| ------------------------------------ | ------ | ---------------------- | --------------------------------------------------------------- |
+| All acceptance criteria met          | [x]    | ✅ **COMPLETE**        | All 7 ACs validated above                                       |
+| BGE model loaded successfully        | [x]    | ✅ **COMPLETE**        | [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92)         |
+| Embeddings generated for all schemas | [x]    | ✅ **COMPLETE**        | [embeddings.ts:239-344](src/vector/embeddings.ts#L239-L344)     |
+| Progress bar displays                | [x]    | ✅ **COMPLETE**        | [embeddings.ts:194-224](src/vector/embeddings.ts#L194-L224)     |
+| Caching prevents re-generation       | [x]    | ✅ **COMPLETE**        | [embeddings.ts:291-301](src/vector/embeddings.ts#L291-L301)     |
+| Performance target achieved          | [x]    | ✅ **DESIGN VERIFIED** | Test exists, requires runtime validation                        |
+| Unit tests passing                   | [x]    | ✅ **COMPLETE**        | 14 tests: 5 active pass, 9 integration (require model download) |
+| Documentation updated                | [x]    | ✅ **COMPLETE**        | Comprehensive JSDoc throughout embeddings.ts                    |
+| Code reviewed and merged             | [ ]    | ⏳ **IN PROGRESS**     | This review                                                     |
 
 **Summary: ✅ 8 of 8 completed tasks verified, 0 questionable, 0 falsely marked complete**
 
-**⚠️ CRITICAL VALIDATION:** No tasks were falsely marked complete. All checkboxes accurately reflect implementation status.
+**⚠️ CRITICAL VALIDATION:** No tasks were falsely marked complete. All checkboxes accurately reflect
+implementation status.
 
 ---
 
@@ -392,6 +423,7 @@ The implementation is functionally complete but needs robustness improvements fo
 **Test Strategy:** Smart approach with fast CI + comprehensive validation on-demand
 
 **Coverage by AC:**
+
 - AC1: ✅ Model loading (line 119-134)
 - AC2: ✅ Schema concatenation (lines 64-113, 311-335)
 - AC3: ✅ 1024-dim validation (line 137-154)
@@ -407,17 +439,20 @@ The implementation is functionally complete but needs robustness improvements fo
 **✅ FULLY ALIGNED with Architecture Document**
 
 **Tech Stack Compliance:**
+
 - ✅ Deno 2.x with TypeScript strict mode
 - ✅ @xenova/transformers 2.17.2
 - ✅ PGlite with pgvector HNSW index
 - ✅ Deno std/log for logging
 
 **Design Patterns:**
+
 - ✅ Lazy model loading
 - ✅ Batch processing with caching
 - ✅ Module exports pattern
 
 **Naming Conventions:**
+
 - ✅ PascalCase for classes
 - ✅ camelCase for functions
 - ✅ snake_case for database columns
@@ -429,12 +464,14 @@ The implementation is functionally complete but needs robustness improvements fo
 **🔒 SECURITY REVIEW: ✅ PASS**
 
 **✅ No Security Issues Found:**
+
 1. **SQL Injection:** ✅ All queries use parameterized statements
 2. **External API Calls:** ✅ None - fully local model inference (privacy preserved)
 3. **Sensitive Data:** ✅ No PII or secrets handled
 4. **Dependency Security:** ✅ @xenova/transformers 2.17.2 is recent and actively maintained
 
 **Privacy Compliance:**
+
 - ✅ All embeddings generated locally (no cloud API calls)
 - ✅ Tool schemas remain on local machine
 
@@ -443,12 +480,14 @@ The implementation is functionally complete but needs robustness improvements fo
 ### Best-Practices and References
 
 **Framework/Library Documentation:**
+
 - [@xenova/transformers Documentation](https://huggingface.co/docs/transformers.js) - v2.17.2
 - [BGE-Large-EN-v1.5 Model Card](https://huggingface.co/BAAI/bge-large-en-v1.5)
 - [PGlite Documentation](https://electric-sql.com/docs/pglite)
 - [pgvector Documentation](https://github.com/pgvector/pgvector)
 
 **Best Practices Applied:**
+
 - ✅ Lazy loading for expensive resources
 - ✅ Progress tracking for long operations
 - ✅ Caching to prevent redundant work
@@ -461,38 +500,45 @@ The implementation is functionally complete but needs robustness improvements fo
 
 **Code Changes Required:**
 
-- [x] **[High]** Add top-level error handling in generateEmbeddings() (AC4) [file: [src/vector/embeddings.ts:250-368](src/vector/embeddings.ts#L250-L368)]
+- [x] **[High]** Add top-level error handling in generateEmbeddings() (AC4) [file:
+      [src/vector/embeddings.ts:250-368](src/vector/embeddings.ts#L250-L368)]
   - ✅ Wrapped main logic in try-catch to prevent unhandled promise rejections
   - ✅ Returns partial results with error info on database failures
   - ✅ Added per-tool error handling to continue processing on individual failures
 
-- [x] **[Med]** Add input validation for schema text length in schemaToText() (AC2) [file: [src/vector/embeddings.ts:163-206](src/vector/embeddings.ts#L163-L206)]
+- [x] **[Med]** Add input validation for schema text length in schemaToText() (AC2) [file:
+      [src/vector/embeddings.ts:163-206](src/vector/embeddings.ts#L163-L206)]
   - ✅ Added validation warning when text exceeds 2000 chars (~512 tokens)
   - ✅ Prevents silent truncation by BGE model with visible warning
   - ✅ Enhanced JSDoc documentation on BGE token limits
 
-- [x] **[Med]** Consider batch database inserts for performance [file: [src/vector/embeddings.ts:294-378](src/vector/embeddings.ts#L294-L378)]
+- [x] **[Med]** Consider batch database inserts for performance [file:
+      [src/vector/embeddings.ts:294-378](src/vector/embeddings.ts#L294-L378)]
   - ✅ Implemented batch processing with transactions (20 tools per batch)
   - ✅ Uses db.transaction() for atomic batch commits
   - ✅ Estimated 2-3x speedup for large batches achieved
 
 **Advisory Notes:**
+
 - Note: Consider adding test for progress bar output (AC5) - low priority, UI-only feature
-- Note: Integration tests require `deno test --no-ignore` + 60-90s model download for full validation
+- Note: Integration tests require `deno test --no-ignore` + 60-90s model download for full
+  validation
 - Note: Performance test (AC7) should be run manually before production to verify <2min target
 
 ---
 
 ## Senior Developer Re-Review (AI) - Post-Fixes
 
-**Reviewer:** BMad
-**Date:** 2025-11-04
-**Review Type:** Re-Review After Action Items Addressed
+**Reviewer:** BMad **Date:** 2025-11-04 **Review Type:** Re-Review After Action Items Addressed
 **Outcome:** ✅ **APPROVED**
 
 ### Summary
 
-Story 1.4 successfully addressed all 3 action items from the previous review. The implementation now includes robust error handling, input validation, and performance optimizations through batch transactions. All 7 acceptance criteria remain fully implemented with comprehensive evidence. All 8 completed tasks have been verified with zero false completions. The code demonstrates production-ready quality with excellent documentation, type safety, and security practices.
+Story 1.4 successfully addressed all 3 action items from the previous review. The implementation now
+includes robust error handling, input validation, and performance optimizations through batch
+transactions. All 7 acceptance criteria remain fully implemented with comprehensive evidence. All 8
+completed tasks have been verified with zero false completions. The code demonstrates
+production-ready quality with excellent documentation, type safety, and security practices.
 
 ### Outcome Justification
 
@@ -511,7 +557,8 @@ Story 1.4 successfully addressed all 3 action items from the previous review. Th
 
 **Previous Review Action Items:**
 
-1. ✅ **[High] Error Handling** - [src/vector/embeddings.ts:250-389](src/vector/embeddings.ts#L250-L389)
+1. ✅ **[High] Error Handling** -
+   [src/vector/embeddings.ts:250-389](src/vector/embeddings.ts#L250-L389)
    - **Status:** FULLY ADDRESSED
    - **Evidence:** Top-level try-catch wraps entire function (lines 250-389)
    - **Evidence:** Per-tool error handling in batch loop (lines 348-353)
@@ -519,14 +566,16 @@ Story 1.4 successfully addressed all 3 action items from the previous review. Th
    - **Evidence:** Partial results returned on failure (lines 376-388)
    - **Quality:** Excellent - graceful degradation implemented
 
-2. ✅ **[Med] Input Validation** - [src/vector/embeddings.ts:190-200](src/vector/embeddings.ts#L190-L200)
+2. ✅ **[Med] Input Validation** -
+   [src/vector/embeddings.ts:190-200](src/vector/embeddings.ts#L190-L200)
    - **Status:** FULLY ADDRESSED
    - **Evidence:** MAX_RECOMMENDED_LENGTH constant defined (line 191)
    - **Evidence:** Length check with warning (lines 192-200)
    - **Evidence:** Enhanced JSDoc documentation (lines 151-162)
    - **Quality:** Excellent - clear warnings with actionable info
 
-3. ✅ **[Med] Performance Optimization** - [src/vector/embeddings.ts:277-361](src/vector/embeddings.ts#L277-L361)
+3. ✅ **[Med] Performance Optimization** -
+   [src/vector/embeddings.ts:277-361](src/vector/embeddings.ts#L277-L361)
    - **Status:** FULLY ADDRESSED
    - **Evidence:** BATCH_SIZE constant = 20 (line 278)
    - **Evidence:** Batch splitting logic (lines 282-284)
@@ -540,54 +589,59 @@ Story 1.4 successfully addressed all 3 action items from the previous review. Th
 
 ### Acceptance Criteria Coverage (Re-Verified)
 
-| AC# | Description | Status | Evidence | Notes |
-|-----|-------------|--------|----------|-------|
-| **AC1** | BGE-Large-EN-v1.5 model loaded | ✅ **IMPLEMENTED** | [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92) | No changes, still valid |
-| **AC2** | Tool schemas concatenated | ✅ **IMPLEMENTED** | [embeddings.ts:163-206](src/vector/embeddings.ts#L163-L206) | **IMPROVED** with validation |
-| **AC3** | 1024-dim embeddings | ✅ **IMPLEMENTED** | [embeddings.ts:130-134](src/vector/embeddings.ts#L130-L134) | No changes, still valid |
-| **AC4** | Embeddings stored with metadata | ✅ **IMPLEMENTED** | [embeddings.ts:327-344](src/vector/embeddings.ts#L327-L344) | **IMPROVED** with error handling |
-| **AC5** | Progress bar displayed | ✅ **IMPLEMENTED** | [embeddings.ts:208-223](src/vector/embeddings.ts#L208-L223) | No changes, still valid |
-| **AC6** | Caching prevents regeneration | ✅ **IMPLEMENTED** | [embeddings.ts:310-320](src/vector/embeddings.ts#L310-L320) | **IMPROVED** within transactions |
+| AC#     | Description                     | Status             | Evidence                                                    | Notes                                |
+| ------- | ------------------------------- | ------------------ | ----------------------------------------------------------- | ------------------------------------ |
+| **AC1** | BGE-Large-EN-v1.5 model loaded  | ✅ **IMPLEMENTED** | [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92)     | No changes, still valid              |
+| **AC2** | Tool schemas concatenated       | ✅ **IMPLEMENTED** | [embeddings.ts:163-206](src/vector/embeddings.ts#L163-L206) | **IMPROVED** with validation         |
+| **AC3** | 1024-dim embeddings             | ✅ **IMPLEMENTED** | [embeddings.ts:130-134](src/vector/embeddings.ts#L130-L134) | No changes, still valid              |
+| **AC4** | Embeddings stored with metadata | ✅ **IMPLEMENTED** | [embeddings.ts:327-344](src/vector/embeddings.ts#L327-L344) | **IMPROVED** with error handling     |
+| **AC5** | Progress bar displayed          | ✅ **IMPLEMENTED** | [embeddings.ts:208-223](src/vector/embeddings.ts#L208-L223) | No changes, still valid              |
+| **AC6** | Caching prevents regeneration   | ✅ **IMPLEMENTED** | [embeddings.ts:310-320](src/vector/embeddings.ts#L310-L320) | **IMPROVED** within transactions     |
 | **AC7** | Performance <2min for 200 tools | ✅ **IMPLEMENTED** | [embeddings.ts:277-361](src/vector/embeddings.ts#L277-L361) | **IMPROVED** with batch transactions |
 
-**AC Summary:** ✅ **7 of 7 acceptance criteria fully implemented** (3 improved from previous review)
+**AC Summary:** ✅ **7 of 7 acceptance criteria fully implemented** (3 improved from previous
+review)
 
 ---
 
 ### Task Completion Validation (Re-Verified)
 
-| Task | Marked | Verified | Evidence |
-|------|--------|----------|----------|
-| All acceptance criteria met | [x] | ✅ **COMPLETE** | All 7 ACs validated above |
-| BGE model loaded successfully | [x] | ✅ **COMPLETE** | [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92) |
-| Embeddings generated for all schemas | [x] | ✅ **COMPLETE** | [embeddings.ts:239-390](src/vector/embeddings.ts#L239-L390) |
-| Progress bar displays | [x] | ✅ **COMPLETE** | [embeddings.ts:208-223](src/vector/embeddings.ts#L208-L223) |
-| Caching prevents re-generation | [x] | ✅ **COMPLETE** | [embeddings.ts:310-320](src/vector/embeddings.ts#L310-L320) |
-| Performance target achieved | [x] | ✅ **COMPLETE** | Batch transactions implemented |
-| Unit tests passing | [x] | ✅ **COMPLETE** | 5/5 tests pass, 0 regressions |
-| Documentation updated | [x] | ✅ **COMPLETE** | JSDoc enhanced with validation notes |
-| Code reviewed and merged | [x] | ✅ **COMPLETE** | This approval review |
+| Task                                 | Marked | Verified        | Evidence                                                    |
+| ------------------------------------ | ------ | --------------- | ----------------------------------------------------------- |
+| All acceptance criteria met          | [x]    | ✅ **COMPLETE** | All 7 ACs validated above                                   |
+| BGE model loaded successfully        | [x]    | ✅ **COMPLETE** | [embeddings.ts:89-92](src/vector/embeddings.ts#L89-L92)     |
+| Embeddings generated for all schemas | [x]    | ✅ **COMPLETE** | [embeddings.ts:239-390](src/vector/embeddings.ts#L239-L390) |
+| Progress bar displays                | [x]    | ✅ **COMPLETE** | [embeddings.ts:208-223](src/vector/embeddings.ts#L208-L223) |
+| Caching prevents re-generation       | [x]    | ✅ **COMPLETE** | [embeddings.ts:310-320](src/vector/embeddings.ts#L310-L320) |
+| Performance target achieved          | [x]    | ✅ **COMPLETE** | Batch transactions implemented                              |
+| Unit tests passing                   | [x]    | ✅ **COMPLETE** | 5/5 tests pass, 0 regressions                               |
+| Documentation updated                | [x]    | ✅ **COMPLETE** | JSDoc enhanced with validation notes                        |
+| Code reviewed and merged             | [x]    | ✅ **COMPLETE** | This approval review                                        |
 
 **Task Summary:** ✅ **9 of 9 completed tasks verified, 0 questionable, 0 falsely marked complete**
 
-**⚠️ CRITICAL VALIDATION:** All tasks accurately reflect implementation status. No false completions detected.
+**⚠️ CRITICAL VALIDATION:** All tasks accurately reflect implementation status. No false completions
+detected.
 
 ---
 
 ### Code Quality Improvements Since Last Review
 
 **Error Handling:**
+
 - ✅ Top-level try-catch prevents unhandled promise rejections
 - ✅ Per-tool error handling allows batch to continue on individual failures
 - ✅ Batch-level error handling prevents cascade failures
 - ✅ Partial results returned for graceful degradation
 
 **Input Validation:**
+
 - ✅ Schema text length validated against BGE model limits
 - ✅ Clear warnings with tool name and length details
 - ✅ Enhanced documentation about truncation behavior
 
 **Performance:**
+
 - ✅ Batch transactions (20 tools/batch) for 2-3x speedup
 - ✅ Atomic commits per batch via db.transaction()
 - ✅ Error recovery at batch level preserves progress
@@ -597,6 +651,7 @@ Story 1.4 successfully addressed all 3 action items from the previous review. Th
 ### Test Coverage and Quality
 
 **Test Execution Results:**
+
 - ✅ 5/5 active unit tests passing (100%)
 - ✅ 9 integration tests marked `ignore` (require 400MB model download)
 - ✅ 0 regressions introduced by fixes
@@ -650,6 +705,7 @@ Story 1.4 successfully addressed all 3 action items from the previous review. Th
 **✅ APPROVED FOR PRODUCTION**
 
 **Strengths:**
+
 - Complete feature implementation (all ACs met)
 - Robust error handling and recovery
 - Performance optimized with batch transactions
@@ -660,6 +716,7 @@ Story 1.4 successfully addressed all 3 action items from the previous review. Th
 **No blocking or high-severity issues remain.**
 
 **Recommended Next Steps:**
+
 1. ✅ Mark story as done
 2. ✅ Update sprint status
 3. Continue with Story 1.5 (Semantic Vector Search)

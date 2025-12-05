@@ -9,10 +9,10 @@
  * - Search scoring logic
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 /**
  * Create test database with schema
@@ -55,7 +55,13 @@ async function insertTestTools(db: PGliteClient): Promise<void> {
     await db.query(
       `INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding, metadata)
        VALUES ($1, $2, $3, $4, $5)`,
-      [tool.id, tool.server, tool.name, `[${embedding.join(",")}]`, JSON.stringify({ description: `Description for ${tool.name}` })],
+      [
+        tool.id,
+        tool.server,
+        tool.name,
+        `[${embedding.join(",")}]`,
+        JSON.stringify({ description: `Description for ${tool.name}` }),
+      ],
     );
   }
 }
@@ -66,7 +72,12 @@ async function insertTestTools(db: PGliteClient): Promise<void> {
 async function insertTestDependencies(db: PGliteClient): Promise<void> {
   const dependencies = [
     { from: "filesystem:read_file", to: "memory:read_graph", count: 5, confidence: 0.8 },
-    { from: "playwright:browser_click", to: "playwright:browser_navigate", count: 3, confidence: 0.7 },
+    {
+      from: "playwright:browser_click",
+      to: "playwright:browser_navigate",
+      count: 3,
+      confidence: 0.7,
+    },
   ];
 
   for (const dep of dependencies) {

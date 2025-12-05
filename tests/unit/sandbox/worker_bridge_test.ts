@@ -12,10 +12,10 @@
  */
 
 import {
+  assertArrayIncludes,
   assertEquals,
   assertExists,
   assertGreater,
-  assertArrayIncludes,
   assertStringIncludes,
 } from "@std/assert";
 import { WorkerBridge } from "../../../src/sandbox/worker-bridge.ts";
@@ -365,9 +365,12 @@ Deno.test({
   name: "WorkerBridge - single tool call with tracing",
   fn: async () => {
     const mcpClients = new Map<string, MCPClient>();
-    mcpClients.set("test-server", createMockMCPClient("test-server", {
-      echo: { echoed: "hello world" },
-    }));
+    mcpClients.set(
+      "test-server",
+      createMockMCPClient("test-server", {
+        echo: { echoed: "hello world" },
+      }),
+    );
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 10000 });
     const toolDefs: ToolDefinition[] = [{
@@ -392,13 +395,13 @@ Deno.test({
     assertEquals(traces.length, 2); // tool_start + tool_end
 
     // Verify tool_start
-    const startTrace = traces.find(t => t.type === "tool_start");
+    const startTrace = traces.find((t) => t.type === "tool_start");
     assertExists(startTrace);
     assertEquals(startTrace!.tool, "test-server:echo");
     assertExists(startTrace!.trace_id);
 
     // Verify tool_end
-    const endTrace = traces.find(t => t.type === "tool_end");
+    const endTrace = traces.find((t) => t.type === "tool_end");
     assertExists(endTrace);
     assertEquals(endTrace!.success, true);
     assertExists(endTrace!.duration_ms);
@@ -415,10 +418,13 @@ Deno.test({
   name: "WorkerBridge - multiple tool calls traced",
   fn: async () => {
     const mcpClients = new Map<string, MCPClient>();
-    mcpClients.set("test-server", createMockMCPClient("test-server", {
-      echo: { echoed: true },
-      add: { sum: 5 },
-    }));
+    mcpClients.set(
+      "test-server",
+      createMockMCPClient("test-server", {
+        echo: { echoed: true },
+        add: { sum: 5 },
+      }),
+    );
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 10000 });
     const toolDefs: ToolDefinition[] = [
@@ -456,8 +462,18 @@ Deno.test({
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 10000 });
     const toolDefs: ToolDefinition[] = [
-      { server: "server-a", name: "tool_a", description: "Tool A", inputSchema: { type: "object" } },
-      { server: "server-b", name: "tool_b", description: "Tool B", inputSchema: { type: "object" } },
+      {
+        server: "server-a",
+        name: "tool_a",
+        description: "Tool A",
+        inputSchema: { type: "object" },
+      },
+      {
+        server: "server-b",
+        name: "tool_b",
+        description: "Tool B",
+        inputSchema: { type: "object" },
+      },
     ];
 
     const code = `
@@ -485,9 +501,12 @@ Deno.test({
   name: "WorkerBridge - tool call error propagation",
   fn: async () => {
     const mcpClients = new Map<string, MCPClient>();
-    mcpClients.set("test-server", createMockMCPClient("test-server", {}, {}, {
-      failing_tool: "MCP tool failed: connection refused",
-    }));
+    mcpClients.set(
+      "test-server",
+      createMockMCPClient("test-server", {}, {}, {
+        failing_tool: "MCP tool failed: connection refused",
+      }),
+    );
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 10000 });
     const toolDefs: ToolDefinition[] = [{
@@ -516,7 +535,7 @@ Deno.test({
 
     // Verify trace shows failure
     const traces = bridge.getTraces();
-    const endTrace = traces.find(t => t.type === "tool_end");
+    const endTrace = traces.find((t) => t.type === "tool_end");
     assertExists(endTrace);
     assertEquals(endTrace!.success, false);
     assertExists(endTrace!.error);
@@ -611,11 +630,14 @@ Deno.test({
   name: "WorkerBridge - slow tool call within timeout",
   fn: async () => {
     const mcpClients = new Map<string, MCPClient>();
-    mcpClients.set("test-server", createMockMCPClient("test-server", {
-      slow_tool: { result: "done" },
-    }, {
-      slow_tool: 200, // 200ms delay
-    }));
+    mcpClients.set(
+      "test-server",
+      createMockMCPClient("test-server", {
+        slow_tool: { result: "done" },
+      }, {
+        slow_tool: 200, // 200ms delay
+      }),
+    );
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 5000 });
     const toolDefs: ToolDefinition[] = [{
@@ -677,9 +699,12 @@ Deno.test({
   name: "WorkerBridge - context does not override mcp",
   fn: async () => {
     const mcpClients = new Map<string, MCPClient>();
-    mcpClients.set("test-server", createMockMCPClient("test-server", {
-      test: { success: true },
-    }));
+    mcpClients.set(
+      "test-server",
+      createMockMCPClient("test-server", {
+        test: { success: true },
+      }),
+    );
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 5000 });
     const toolDefs: ToolDefinition[] = [{
@@ -746,11 +771,14 @@ Deno.test({
   name: "WorkerBridge - RPC overhead measurement",
   fn: async () => {
     const mcpClients = new Map<string, MCPClient>();
-    mcpClients.set("test-server", createMockMCPClient("test-server", {
-      fast_tool: { result: "done" },
-    }, {
-      fast_tool: 0, // No artificial delay
-    }));
+    mcpClients.set(
+      "test-server",
+      createMockMCPClient("test-server", {
+        fast_tool: { result: "done" },
+      }, {
+        fast_tool: 0, // No artificial delay
+      }),
+    );
 
     const bridge = new WorkerBridge(mcpClients, { timeout: 10000 });
     const toolDefs: ToolDefinition[] = [{
@@ -771,7 +799,7 @@ Deno.test({
 
     // Check RPC overhead from traces
     const traces = bridge.getTraces();
-    const endEvent = traces.find(t => t.type === "tool_end");
+    const endEvent = traces.find((t) => t.type === "tool_end");
 
     assertExists(endEvent);
     assertExists(endEvent!.duration_ms);

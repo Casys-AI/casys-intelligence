@@ -5,7 +5,7 @@
  * Styled with Casys.ai design system
  */
 
-import { useState, useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import GraphVisualization from "./GraphVisualization.tsx";
 
 interface ToolSearchResult {
@@ -62,7 +62,10 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey && e.key === "k") || (e.key === "/" && !e.ctrlKey && document.activeElement?.tagName !== "INPUT")) {
+      if (
+        (e.ctrlKey && e.key === "k") ||
+        (e.key === "/" && !e.ctrlKey && document.activeElement?.tagName !== "INPUT")
+      ) {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
@@ -95,7 +98,9 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
 
     searchTimeoutRef.current = setTimeout(async () => {
       try {
-        const response = await fetch(`${apiBase}/api/tools/search?q=${encodeURIComponent(searchQuery)}&limit=10`);
+        const response = await fetch(
+          `${apiBase}/api/tools/search?q=${encodeURIComponent(searchQuery)}&limit=10`,
+        );
         const data = await response.json();
         setSearchResults(data.results || []);
         setShowResults(true);
@@ -123,7 +128,9 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
     });
 
     try {
-      const response = await fetch(`${apiBase}/api/graph/related?tool_id=${encodeURIComponent(node.id)}&limit=5`);
+      const response = await fetch(
+        `${apiBase}/api/graph/related?tool_id=${encodeURIComponent(node.id)}&limit=5`,
+      );
       const data = await response.json();
       setRelatedTools(data.related || []);
     } catch (error) {
@@ -148,7 +155,11 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
     if (!pathFrom || !pathTo) return;
 
     try {
-      const response = await fetch(`${apiBase}/api/graph/path?from=${encodeURIComponent(pathFrom)}&to=${encodeURIComponent(pathTo)}`);
+      const response = await fetch(
+        `${apiBase}/api/graph/path?from=${encodeURIComponent(pathFrom)}&to=${
+          encodeURIComponent(pathTo)
+        }`,
+      );
       const data: PathResult = await response.json();
 
       if (data.path && data.path.length > 0) {
@@ -177,37 +188,37 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
   // Casys design tokens
   const styles = {
     panel: {
-      background: 'var(--bg-elevated, #12110f)',
-      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
-      backdropFilter: 'blur(12px)',
+      background: "var(--bg-elevated, #12110f)",
+      border: "1px solid var(--border, rgba(255, 184, 111, 0.1))",
+      backdropFilter: "blur(12px)",
     },
     input: {
-      background: 'var(--bg-surface, #1a1816)',
-      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
-      color: 'var(--text, #f5f0ea)',
+      background: "var(--bg-surface, #1a1816)",
+      border: "1px solid var(--border, rgba(255, 184, 111, 0.1))",
+      color: "var(--text, #f5f0ea)",
     },
     inputFocus: {
-      borderColor: 'var(--accent, #FFB86F)',
-      boxShadow: '0 0 0 2px var(--accent-dim, rgba(255, 184, 111, 0.1))',
+      borderColor: "var(--accent, #FFB86F)",
+      boxShadow: "0 0 0 2px var(--accent-dim, rgba(255, 184, 111, 0.1))",
     },
     button: {
-      background: 'var(--bg-surface, #1a1816)',
-      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
-      color: 'var(--text-muted, #d5c3b5)',
+      background: "var(--bg-surface, #1a1816)",
+      border: "1px solid var(--border, rgba(255, 184, 111, 0.1))",
+      color: "var(--text-muted, #d5c3b5)",
     },
     buttonActive: {
-      background: 'var(--accent-dim, rgba(255, 184, 111, 0.1))',
-      borderColor: 'var(--accent, #FFB86F)',
-      color: 'var(--accent, #FFB86F)',
+      background: "var(--accent-dim, rgba(255, 184, 111, 0.1))",
+      borderColor: "var(--accent, #FFB86F)",
+      color: "var(--accent, #FFB86F)",
     },
     buttonPrimary: {
-      background: 'var(--accent, #FFB86F)',
-      color: 'var(--bg, #0a0908)',
+      background: "var(--accent, #FFB86F)",
+      color: "var(--bg, #0a0908)",
     },
     kbd: {
-      background: 'var(--accent-dim, rgba(255, 184, 111, 0.1))',
-      border: '1px solid var(--border, rgba(255, 184, 111, 0.1))',
-      color: 'var(--text-dim, #8a8078)',
+      background: "var(--accent-dim, rgba(255, 184, 111, 0.1))",
+      border: "1px solid var(--border, rgba(255, 184, 111, 0.1))",
+      color: "var(--text-dim, #8a8078)",
     },
   };
 
@@ -222,7 +233,7 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
             class="w-[420px] py-3.5 px-5 pr-[70px] rounded-xl text-[15px] font-medium outline-none transition-all duration-200 placeholder:opacity-50"
             style={{
               ...styles.input,
-              fontFamily: 'var(--font-sans)',
+              fontFamily: "var(--font-sans)",
             }}
             placeholder="Search tools... (/ or Ctrl+K)"
             value={searchQuery}
@@ -233,8 +244,8 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
             }}
             onBlur={(e) => {
               setTimeout(() => setShowResults(false), 200);
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           />
           <span class="absolute right-4 top-1/2 -translate-y-1/2">
@@ -257,23 +268,29 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
               <div
                 key={result.tool_id}
                 class="px-5 py-3.5 cursor-pointer flex justify-between items-center transition-colors"
-                style={{ borderBottom: '1px solid var(--border)' }}
+                style={{ borderBottom: "1px solid var(--border)" }}
                 onClick={() => selectSearchResult(result)}
-                onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-dim)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                onMouseOver={(e) => e.currentTarget.style.background = "var(--accent-dim)"}
+                onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
               >
                 <div class="flex gap-3.5 items-center">
-                  <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: '0.875rem' }}>{result.name}</span>
+                  <span style={{ color: "var(--text)", fontWeight: 600, fontSize: "0.875rem" }}>
+                    {result.name}
+                  </span>
                   <span
                     class="text-xs px-2 py-1 rounded-md font-medium"
-                    style={{ background: 'var(--bg-surface)', color: 'var(--text-dim)' }}
+                    style={{ background: "var(--bg-surface)", color: "var(--text-dim)" }}
                   >
                     {result.server}
                   </span>
                 </div>
                 <div class="flex gap-4 text-xs">
-                  <span style={{ color: 'var(--success)', fontWeight: 600 }}>{(result.score * 100).toFixed(0)}%</span>
-                  <span style={{ color: 'var(--accent)', fontWeight: 600 }}>PR: {result.pagerank.toFixed(3)}</span>
+                  <span style={{ color: "var(--success)", fontWeight: 600 }}>
+                    {(result.score * 100).toFixed(0)}%
+                  </span>
+                  <span style={{ color: "var(--accent)", fontWeight: 600 }}>
+                    PR: {result.pagerank.toFixed(3)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -286,8 +303,10 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
           style={showPathFinder ? styles.buttonActive : styles.button}
           onClick={() => setShowPathFinder(!showPathFinder)}
           title="Find Path (Ctrl+P)"
-          onMouseOver={(e) => !showPathFinder && (e.currentTarget.style.borderColor = 'var(--accent-medium)')}
-          onMouseOut={(e) => !showPathFinder && (e.currentTarget.style.borderColor = 'var(--border)')}
+          onMouseOver={(e) =>
+            !showPathFinder && (e.currentTarget.style.borderColor = "var(--accent-medium)")}
+          onMouseOut={(e) =>
+            !showPathFinder && (e.currentTarget.style.borderColor = "var(--border)")}
         >
           Path
         </button>
@@ -308,9 +327,12 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
               value={pathFrom}
               onInput={(e) => setPathFrom((e.target as HTMLInputElement).value)}
               onFocus={(e) => Object.assign(e.currentTarget.style, styles.inputFocus)}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
-            <span style={{ color: 'var(--accent)', fontSize: '1.25rem' }}>→</span>
+            <span style={{ color: "var(--accent)", fontSize: "1.25rem" }}>→</span>
             <input
               type="text"
               class="w-[200px] py-3 px-4 rounded-lg text-sm font-medium outline-none transition-all"
@@ -319,7 +341,10 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
               value={pathTo}
               onInput={(e) => setPathTo((e.target as HTMLInputElement).value)}
               onFocus={(e) => Object.assign(e.currentTarget.style, styles.inputFocus)}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
             <button
               onClick={findPath}
@@ -333,9 +358,9 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
                 onClick={clearPath}
                 class="py-3 px-4 rounded-lg text-sm font-medium cursor-pointer transition-all"
                 style={{
-                  background: 'rgba(248, 113, 113, 0.1)',
-                  border: '1px solid rgba(248, 113, 113, 0.2)',
-                  color: 'var(--error)',
+                  background: "rgba(248, 113, 113, 0.1)",
+                  border: "1px solid rgba(248, 113, 113, 0.2)",
+                  color: "var(--error)",
                 }}
               >
                 Clear
@@ -343,24 +368,32 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
             )}
           </div>
           {pathNodes && pathNodes.length > 0 && (
-            <div class="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-              <span style={{ color: 'var(--success)', fontSize: '0.875rem', fontWeight: 600 }}>
+            <div class="mt-4 pt-4" style={{ borderTop: "1px solid var(--border)" }}>
+              <span style={{ color: "var(--success)", fontSize: "0.875rem", fontWeight: 600 }}>
                 Path ({pathNodes.length - 1} hops):
               </span>
               <div class="mt-2.5 flex flex-wrap gap-1.5 items-center">
                 {pathNodes.map((nodeId, i) => (
                   <span key={nodeId}>
-                    {i > 0 && <span style={{ color: 'var(--accent)', margin: '0 0.25rem', fontWeight: 600 }}>→</span>}
+                    {i > 0 && (
+                      <span
+                        style={{ color: "var(--accent)", margin: "0 0.25rem", fontWeight: 600 }}
+                      >
+                        →
+                      </span>
+                    )}
                     <span
                       class="cursor-pointer px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all"
                       style={{
-                        color: 'var(--accent)',
-                        background: 'var(--accent-dim)',
-                        border: '1px solid var(--accent-medium)',
+                        color: "var(--accent)",
+                        background: "var(--accent-dim)",
+                        border: "1px solid var(--accent-medium)",
                       }}
                       onClick={() => setHighlightedNode(nodeId)}
-                      onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-medium)'}
-                      onMouseOut={(e) => e.currentTarget.style.background = 'var(--accent-dim)'}
+                      onMouseOver={(e) =>
+                        e.currentTarget.style.background = "var(--accent-medium)"}
+                      onMouseOut={(e) =>
+                        e.currentTarget.style.background = "var(--accent-dim)"}
                     >
                       {nodeId.split(":")[1] || nodeId}
                     </span>
@@ -378,24 +411,30 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
           class="absolute top-20 left-5 z-[80] py-2.5 px-4 rounded-xl flex items-center gap-2.5 text-sm"
           style={styles.panel}
         >
-          <span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>History:</span>
+          <span style={{ color: "var(--text-dim)", fontWeight: 500 }}>History:</span>
           {breadcrumbs.map((item, index) => (
             <span key={item.id}>
-              {index > 0 && <span style={{ color: 'var(--text-dim)', opacity: 0.5 }}>/</span>}
+              {index > 0 && <span style={{ color: "var(--text-dim)", opacity: 0.5 }}>/</span>}
               <span
                 class="cursor-pointer px-2.5 py-1 rounded-md font-medium transition-all"
                 style={{
-                  color: index === breadcrumbs.length - 1 ? 'var(--accent)' : 'var(--text-muted)',
-                  background: index === breadcrumbs.length - 1 ? 'var(--accent-dim)' : 'transparent',
+                  color: index === breadcrumbs.length - 1 ? "var(--accent)" : "var(--text-muted)",
+                  background: index === breadcrumbs.length - 1
+                    ? "var(--accent-dim)"
+                    : "transparent",
                 }}
                 onClick={() => navigateBreadcrumb(item, index)}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'var(--accent-dim)';
-                  e.currentTarget.style.color = 'var(--text)';
+                  e.currentTarget.style.background = "var(--accent-dim)";
+                  e.currentTarget.style.color = "var(--text)";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = index === breadcrumbs.length - 1 ? 'var(--accent-dim)' : 'transparent';
-                  e.currentTarget.style.color = index === breadcrumbs.length - 1 ? 'var(--accent)' : 'var(--text-muted)';
+                  e.currentTarget.style.background = index === breadcrumbs.length - 1
+                    ? "var(--accent-dim)"
+                    : "transparent";
+                  e.currentTarget.style.color = index === breadcrumbs.length - 1
+                    ? "var(--accent)"
+                    : "var(--text-muted)";
                 }}
               >
                 {item.label}
@@ -404,16 +443,16 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
           ))}
           <button
             class="border-none cursor-pointer ml-2 px-2 py-1 rounded transition-all"
-            style={{ background: 'transparent', color: 'var(--text-dim)' }}
+            style={{ background: "transparent", color: "var(--text-dim)" }}
             onClick={() => setBreadcrumbs([])}
             title="Clear history"
             onMouseOver={(e) => {
-              e.currentTarget.style.color = 'var(--error)';
-              e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)';
+              e.currentTarget.style.color = "var(--error)";
+              e.currentTarget.style.background = "rgba(248, 113, 113, 0.1)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.color = 'var(--text-dim)';
-              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = "var(--text-dim)";
+              e.currentTarget.style.background = "transparent";
             }}
           >
             ✕
@@ -429,7 +468,7 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
         >
           <h4
             class="text-xs uppercase tracking-widest mb-3 font-semibold"
-            style={{ color: 'var(--text-dim)' }}
+            style={{ color: "var(--text-dim)" }}
           >
             Related Tools (Adamic-Adar)
           </h4>
@@ -439,24 +478,30 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
                 key={tool.tool_id}
                 class="flex justify-between items-center p-2.5 px-3 rounded-xl cursor-pointer transition-all duration-200"
                 style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid transparent',
+                  background: "var(--bg-surface)",
+                  border: "1px solid transparent",
                 }}
                 onClick={() => setHighlightedNode(tool.tool_id)}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'var(--accent-dim)';
-                  e.currentTarget.style.borderColor = 'var(--accent-medium)';
-                  e.currentTarget.style.transform = 'translateX(4px)';
+                  e.currentTarget.style.background = "var(--accent-dim)";
+                  e.currentTarget.style.borderColor = "var(--accent-medium)";
+                  e.currentTarget.style.transform = "translateX(4px)";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-surface)';
-                  e.currentTarget.style.borderColor = 'transparent';
-                  e.currentTarget.style.transform = 'translateX(0)';
+                  e.currentTarget.style.background = "var(--bg-surface)";
+                  e.currentTarget.style.borderColor = "transparent";
+                  e.currentTarget.style.transform = "translateX(0)";
                 }}
               >
-                <span style={{ color: 'var(--text)', fontSize: '0.875rem', fontWeight: 500 }}>{tool.name}</span>
-                <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginLeft: '0.5rem' }}>{tool.server}</span>
-                <span style={{ color: 'var(--accent)', fontSize: '0.75rem', fontWeight: 600 }}>
+                <span style={{ color: "var(--text)", fontSize: "0.875rem", fontWeight: 500 }}>
+                  {tool.name}
+                </span>
+                <span
+                  style={{ color: "var(--text-dim)", fontSize: "0.75rem", marginLeft: "0.5rem" }}
+                >
+                  {tool.server}
+                </span>
+                <span style={{ color: "var(--accent)", fontSize: "0.75rem", fontWeight: 600 }}>
                   AA: {tool.adamic_adar_score.toFixed(2)}
                 </span>
               </div>
@@ -478,16 +523,20 @@ export default function GraphExplorer({ apiBase: apiBaseProp }: GraphExplorerPro
         class="absolute bottom-5 right-5 z-[80] py-3 px-4 rounded-xl text-xs flex gap-5"
         style={styles.panel}
       >
-        <span style={{ color: 'var(--text-dim)' }}>
+        <span style={{ color: "var(--text-dim)" }}>
           <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>/</kbd>
           Search
         </span>
-        <span style={{ color: 'var(--text-dim)' }}>
-          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>Esc</kbd>
+        <span style={{ color: "var(--text-dim)" }}>
+          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>
+            Esc
+          </kbd>
           Clear
         </span>
-        <span style={{ color: 'var(--text-dim)' }}>
-          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>Ctrl+P</kbd>
+        <span style={{ color: "var(--text-dim)" }}>
+          <kbd class="px-2 py-0.5 rounded mr-1.5 text-[11px] font-medium" style={styles.kbd}>
+            Ctrl+P
+          </kbd>
           Path
         </span>
       </div>

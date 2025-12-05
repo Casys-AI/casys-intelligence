@@ -1,23 +1,22 @@
 # Story 3.4: `agentcards:execute_code` MCP Tool
 
-**Epic:** 3 - Agent Code Execution & Local Processing
-**Story ID:** 3.4
-**Status:** done
-**Estimated Effort:** 6-8 heures
+**Epic:** 3 - Agent Code Execution & Local Processing **Story ID:** 3.4 **Status:** done **Estimated
+Effort:** 6-8 heures
 
 ---
 
 ## User Story
 
-**As a** Epic 2.5 ControlledExecutor,
-**I want** to delegate code execution tasks to an isolated sandbox with DAG integration,
-**So that** I can orchestrate hybrid workflows combining MCP tools and code execution with checkpoint/rollback support.
+**As a** Epic 2.5 ControlledExecutor, **I want** to delegate code execution tasks to an isolated
+sandbox with DAG integration, **So that** I can orchestrate hybrid workflows combining MCP tools and
+code execution with checkpoint/rollback support.
 
 ---
 
 ## Acceptance Criteria
 
 ### Core Tool Implementation
+
 1. ✅ New MCP tool registered: `agentcards:execute_code`
 2. ✅ Input schema: `{ code: string, intent?: string, context?: object, sandbox_config?: object }`
 3. ✅ Intent-based mode: vector search → inject relevant tools → execute code
@@ -27,17 +26,20 @@
 7. ✅ Integration with gateway: Tool appears in `list_tools` response
 
 ### DAG Integration (Epic 2.5 Delegation)
+
 8. ✅ DAG task type: Add `code_execution` type to `src/dag/types.ts`
 9. ✅ ControlledExecutor integration: Execute code_execution tasks via sandbox
 10. ✅ Checkpoint compatible: Results structured for PGlite persistence
 11. ✅ State management: Results integrated into WorkflowState via reducers
 
 ### Isolation & Rollback Foundation
+
 12. ✅ Virtual filesystem hooks: Prepare for isolated FS (or basic implementation)
 13. ✅ Rollback support: Execution can be aborted without side-effects
 14. ✅ Safe-to-fail foundation: Code execution tasks marked as idempotent
 
 ### Documentation & Testing
+
 15. ✅ Example workflow: ControlledExecutor builds DAG → executes code task → checkpoint saved
 16. ✅ Documentation: README updated with Epic 2.5 delegation patterns
 
@@ -98,6 +100,7 @@
 ### MCP Tool Schema
 
 **Schema Definition:**
+
 ```json
 {
   "name": "agentcards:execute_code",
@@ -147,6 +150,7 @@
 ### Example Usage
 
 **Example 1: Epic 2.5 DAG Workflow (Primary Use Case)**
+
 ```typescript
 // ControlledExecutor builds hybrid DAG
 const dag = {
@@ -156,19 +160,19 @@ const dag = {
       id: "fetch_commits",
       type: "mcp_tool",
       tool: "github:list_commits",
-      args: { repo: "anthropics/claude", limit: 1000 }
+      args: { repo: "anthropics/claude", limit: 1000 },
     },
     {
       id: "fetch_issues",
       type: "mcp_tool",
       tool: "github:list_issues",
-      args: { state: "open" }
+      args: { state: "open" },
     },
 
     // Layer 1: Process locally via code execution (depends on Layer 0)
     {
       id: "analyze_activity",
-      type: "code_execution",  // ← New task type
+      type: "code_execution", // ← New task type
       code: `
         const commits = deps.fetch_commits;
         const issues = deps.fetch_issues;
@@ -183,9 +187,9 @@ const dag = {
         };
       `,
       deps: ["fetch_commits", "fetch_issues"],
-      sandbox_config: { timeout: 30000, memoryLimit: 512 }
-    }
-  ]
+      sandbox_config: { timeout: 30000, memoryLimit: 512 },
+    },
+  ],
 };
 
 // Execute DAG with checkpointing
@@ -198,6 +202,7 @@ for await (const event of executor.executeStream(dag)) {
 ```
 
 **Example 2: Intent-Based (Standalone Tool Call)**
+
 ```typescript
 // Claude calls tool directly (not via DAG)
 await mcp.callTool("agentcards:execute_code", {
@@ -209,7 +214,7 @@ await mcp.callTool("agentcards:execute_code", {
       total: lastWeek.length,
       authors: [...new Set(lastWeek.map(c => c.author))]
     };
-  `
+  `,
 });
 
 // AgentCards:
@@ -220,6 +225,7 @@ await mcp.callTool("agentcards:execute_code", {
 ```
 
 **Example 3: Checkpoint & Resume**
+
 ```typescript
 // Execution crashes mid-workflow
 const dag = {
@@ -252,7 +258,7 @@ class ControlledExecutor extends ParallelExecutor {
 
       // Execute layer (parallel for independent tasks)
       const results = await Promise.all(
-        layer.map(task => this.executeTask(task))
+        layer.map((task) => this.executeTask(task)),
       );
 
       // Update state with reducers
@@ -267,7 +273,7 @@ class ControlledExecutor extends ParallelExecutor {
   private async executeTask(task: Task): Promise<TaskResult> {
     // Route based on task type
     if (task.type === "code_execution") {
-      return this.executeCodeTask(task);  // ← Delegate to sandbox
+      return this.executeCodeTask(task); // ← Delegate to sandbox
     } else {
       return this.executeMCPTask(task);
     }
@@ -291,14 +297,15 @@ class ControlledExecutor extends ParallelExecutor {
       taskId: task.id,
       status: result.success ? "success" : "error",
       output: result.result,
-      state: result.state,  // ← For checkpoint persistence
-      executionTimeMs: result.executionTimeMs
+      state: result.state, // ← For checkpoint persistence
+      executionTimeMs: result.executionTimeMs,
     };
   }
 }
 ```
 
 **Gateway Server Tool Registration:**
+
 ```typescript
 // src/mcp/gateway-server.ts
 async listTools() {
@@ -331,6 +338,7 @@ private async handleExecuteCode(args: unknown) {
 ### Project Structure Alignment
 
 **Modified Modules:**
+
 ```
 src/mcp/
 ├── gateway-server.ts      # Add execute_code tool handler (MODIFIED)
@@ -339,6 +347,7 @@ src/mcp/
 ```
 
 **Integration Points:**
+
 - `src/sandbox/executor.ts`: Reused for code execution (Story 3.1)
 - `src/sandbox/context-builder.ts`: Reused for tool injection (Story 3.2)
 - `src/sandbox/data-pipeline.ts`: Available for data processing (Story 3.3)
@@ -347,6 +356,7 @@ src/mcp/
 ### Testing Strategy
 
 **Test Organization:**
+
 ```
 tests/unit/mcp/
 └── execute_code_handler_test.ts          # Unit tests for tool handler
@@ -364,48 +374,47 @@ tests/e2e/
 **Test Scenarios:**
 
 **Unit Tests:**
+
 1. Tool registration: Schema validation, list_tools includes execute_code
 2. Error handling: Syntax error, runtime error, timeout, MCP-compliant responses
 
-**Integration Tests:**
-3. Intent-based mode: intent → vector search → tools injected → execution
-4. Explicit mode: context → execution (no vector search)
-5. DAG task type: ControlledExecutor routes code_execution tasks to sandbox
-6. State integration: Results merged into WorkflowState via reducers
+**Integration Tests:** 3. Intent-based mode: intent → vector search → tools injected → execution 4.
+Explicit mode: context → execution (no vector search) 5. DAG task type: ControlledExecutor routes
+code_execution tasks to sandbox 6. State integration: Results merged into WorkflowState via reducers
 
-**E2E Tests:**
-7. Full delegation workflow: ControlledExecutor → hybrid DAG (MCP + code) → parallel execution → checkpoint
-8. Checkpoint & resume: DAG crash mid-execution → resume from checkpoint → skip completed layers
-9. Rollback: Abort code execution → verify no side-effects → idempotent re-execution
-10. Performance: Intent-based tool discovery <200ms, sandbox startup <100ms
+**E2E Tests:** 7. Full delegation workflow: ControlledExecutor → hybrid DAG (MCP + code) → parallel
+execution → checkpoint 8. Checkpoint & resume: DAG crash mid-execution → resume from checkpoint →
+skip completed layers 9. Rollback: Abort code execution → verify no side-effects → idempotent
+re-execution 10. Performance: Intent-based tool discovery <200ms, sandbox startup <100ms
 
 ### Learnings from Previous Stories
 
 **From Epic 2.5 (Adaptive DAG Feedback Loops):**
+
 - ControlledExecutor with event stream, command queue, checkpoints
 - WorkflowState with reducers (messages, tasks, decisions, context)
 - Checkpoint architecture: PGlite persistence, resume support
 - Epic 2.5 delegates code modifications to Epic 3 sandbox
-- Safe-to-fail pattern: Code execution tasks are idempotent
-[Source: docs/adrs/ADR-007-dag-adaptive-feedback-loops.md]
+- Safe-to-fail pattern: Code execution tasks are idempotent [Source:
+  docs/adrs/ADR-007-dag-adaptive-feedback-loops.md]
 
 **From Story 3.1 (Sandbox):**
+
 - `DenoSandboxExecutor.execute(code, context)` API available
 - Timeout 30s enforced, Memory limit 512MB enforced
-- Sandbox startup <100ms, isolation validated
-[Source: docs/stories/story-3.1.md]
+- Sandbox startup <100ms, isolation validated [Source: docs/stories/story-3.1.md]
 
 **From Story 3.2 (Tools Injection):**
+
 - `ContextBuilder.buildContext(tools)` generates tool wrappers
 - Vector search identifies relevant tools from intent
-- Tool calls routed through existing MCP gateway
-[Source: docs/stories/story-3.2.md]
+- Tool calls routed through existing MCP gateway [Source: docs/stories/story-3.2.md]
 
 **From Story 2.5-3 (AIL/HIL Integration):**
+
 - DAGSuggester.replanDAG() for dynamic workflow modification
 - Multi-turn conversation support via agent-in-loop
-- State management with reducers for accumulation
-[Source: docs/stories/story-2.5-3.md]
+- State management with reducers for accumulation [Source: docs/stories/story-2.5-3.md]
 
 ### Documentation Content
 
@@ -414,30 +423,20 @@ tests/e2e/
 ```markdown
 ## Code Execution Mode
 
-AgentCards integrates code execution into DAG workflows, enabling hybrid orchestration that combines MCP tool calls with local data processing. This is the **primary delegation point** between Epic 2.5 orchestration and Epic 3 sandbox execution.
+AgentCards integrates code execution into DAG workflows, enabling hybrid orchestration that combines
+MCP tool calls with local data processing. This is the **primary delegation point** between Epic 2.5
+orchestration and Epic 3 sandbox execution.
 
 ### Architecture Overview
-
-```
-Epic 2.5 ControlledExecutor
-    ↓
-  DAG Construction (hybrid: MCP tools + code execution)
-    ↓
-┌─────────────────────────────┐
-│ Layer 0: MCP Tools (parallel)│
-├─────────────────────────────┤
-│ Layer 1: code_execution     │ ← Story 3.4
-│  - Vector search (intent)   │
-│  - Tool injection           │
-│  - Sandbox execution        │
-│  - State persistence        │
-├─────────────────────────────┤
-│ Checkpoint → PGlite         │
-└─────────────────────────────┘
-    ↓
-  Resume / Rollback
 ```
 
+Epic 2.5 ControlledExecutor ↓ DAG Construction (hybrid: MCP tools + code execution) ↓
+┌─────────────────────────────┐ │ Layer 0: MCP Tools (parallel)│ ├─────────────────────────────┤ │
+Layer 1: code_execution │ ← Story 3.4 │ - Vector search (intent) │ │ - Tool injection │ │ - Sandbox
+execution │ │ - State persistence │ ├─────────────────────────────┤ │ Checkpoint → PGlite │
+└─────────────────────────────┘ ↓ Resume / Rollback
+
+````
 ### When to Use Code Execution in DAG Workflows
 
 **Use code_execution task type when:**
@@ -481,11 +480,12 @@ for await (const event of executor.executeStream(dag)) {
     console.log("State saved - can resume if crash");
   }
 }
-```
+````
 
 ### Safe-to-Fail Pattern
 
 Code execution tasks are **idempotent** and **isolated**:
+
 - Virtual filesystem (no permanent side-effects)
 - Can be rolled back without corruption
 - Safe for speculative execution (Story 3.5)
@@ -497,8 +497,8 @@ Code execution tasks are **idempotent** and **isolated**:
 - Intent-based tool discovery: <200ms
 - Total execution timeout: 30s (configurable)
 - Memory limit: 512MB (configurable)
-```
 
+````
 ### Security Considerations
 
 **Sandbox Isolation:**
@@ -654,54 +654,60 @@ const vectorSearch = new VectorSearch(db);
 await db.init();
 const embeddingModel = new EmbeddingModel(...);
 const vectorSearch = new VectorSearch(db, embeddingModel);
-```
+````
 
 #### MEDIUM SEVERITY - M-1: Virtual Filesystem Documentation Gap
 
 **Location:** AC #12, Story documentation
 
-**Issue:** Documentation claims "virtual filesystem hooks" but implementation uses subprocess isolation, not explicit hooks.
+**Issue:** Documentation claims "virtual filesystem hooks" but implementation uses subprocess
+isolation, not explicit hooks.
 
 **Evidence:**
+
 - ✅ Isolation works correctly via Deno permissions
 - ❌ No explicit hook interfaces (`FileSystemProvider`, `VirtualFS`)
 - ⚠️ Documentation overpromises capability
 
-**Recommendation:** Either add hook interfaces or clarify documentation to describe "isolation via permissions"
+**Recommendation:** Either add hook interfaces or clarify documentation to describe "isolation via
+permissions"
 
 ### Acceptance Criteria Validation (16/16 ✅)
 
-| AC # | Status | Evidence |
-|------|--------|----------|
-| #1 | ✅ | Tool registered: `src/mcp/gateway-server.ts:202-243` |
-| #2 | ✅ | Schema complete: `src/mcp/types.ts:64-88` |
-| #3 | ✅ | Intent-based mode: `src/mcp/gateway-server.ts:485-504` |
-| #4 | ✅ | Explicit mode: `src/mcp/gateway-server.ts:482` |
-| #5 | ✅ | Output schema: `src/mcp/types.ts:91-117` |
-| #6 | ✅ | Error handling: `src/mcp/gateway-server.ts:520-531` |
-| #7 | ✅ | Gateway integration: `src/mcp/gateway-server.ts:246` |
-| #8 | ✅ | DAG task type: `src/graphrag/types.ts:24` |
-| #9 | ✅ | ControlledExecutor: `src/dag/controlled-executor.ts:1031-1149` |
-| #10 | ✅ | Checkpoint compatible: `src/dag/controlled-executor.ts:1134-1139` |
-| #11 | ✅ | State management: `src/dag/controlled-executor.ts:398-402` |
-| #12 | ⚠️ | Virtual FS: Isolation present, hooks absent (see M-1) |
-| #13 | ✅ | Rollback support: Subprocess isolation guarantees safety |
-| #14 | ✅ | Safe-to-fail: `src/graphrag/types.ts:47` |
-| #15 | ✅ | Example workflow: E2E test validates pattern |
-| #16 | ✅ | Documentation: `README.md:191-309` |
+| AC # | Status | Evidence                                                          |
+| ---- | ------ | ----------------------------------------------------------------- |
+| #1   | ✅     | Tool registered: `src/mcp/gateway-server.ts:202-243`              |
+| #2   | ✅     | Schema complete: `src/mcp/types.ts:64-88`                         |
+| #3   | ✅     | Intent-based mode: `src/mcp/gateway-server.ts:485-504`            |
+| #4   | ✅     | Explicit mode: `src/mcp/gateway-server.ts:482`                    |
+| #5   | ✅     | Output schema: `src/mcp/types.ts:91-117`                          |
+| #6   | ✅     | Error handling: `src/mcp/gateway-server.ts:520-531`               |
+| #7   | ✅     | Gateway integration: `src/mcp/gateway-server.ts:246`              |
+| #8   | ✅     | DAG task type: `src/graphrag/types.ts:24`                         |
+| #9   | ✅     | ControlledExecutor: `src/dag/controlled-executor.ts:1031-1149`    |
+| #10  | ✅     | Checkpoint compatible: `src/dag/controlled-executor.ts:1134-1139` |
+| #11  | ✅     | State management: `src/dag/controlled-executor.ts:398-402`        |
+| #12  | ⚠️     | Virtual FS: Isolation present, hooks absent (see M-1)             |
+| #13  | ✅     | Rollback support: Subprocess isolation guarantees safety          |
+| #14  | ✅     | Safe-to-fail: `src/graphrag/types.ts:47`                          |
+| #15  | ✅     | Example workflow: E2E test validates pattern                      |
+| #16  | ✅     | Documentation: `README.md:191-309`                                |
 
 ### Test Coverage Analysis
 
 **Unit Tests:** ✅ PASSING
+
 - ✅ `DenoSandboxExecutor`: **16/16 passed** (809ms)
 - ✅ `ContextBuilder`: **20/20 passed** (12ms)
 
 **Integration Tests:** ❌ FAILING TYPE-CHECK
+
 - File: `tests/integration/code_execution_tool_test.ts`
 - Issue: API signature mismatches (see H-1)
 - Tests: 6 integration tests (cannot run)
 
 **E2E Tests:** ❌ FAILING TYPE-CHECK
+
 - File: `tests/e2e/controlled_executor_code_exec_test.ts`
 - Issue: API signature mismatches (see H-1)
 - Tests: 4 E2E tests (cannot run)
@@ -709,6 +715,7 @@ const vectorSearch = new VectorSearch(db, embeddingModel);
 ### Code Quality Assessment
 
 **Strengths:**
+
 - ✅ Clean architecture with proper separation of concerns
 - ✅ Strong TypeScript typing throughout
 - ✅ Comprehensive MCP error code usage
@@ -717,6 +724,7 @@ const vectorSearch = new VectorSearch(db, embeddingModel);
 - ✅ Intent-based discovery integrates elegantly
 
 **Improvements Needed:**
+
 - ❌ Integration/E2E tests out of sync with API changes
 - ⚠️ Virtual FS documentation overpromises
 - ⚠️ Need working tests before merge
@@ -725,14 +733,17 @@ const vectorSearch = new VectorSearch(db, embeddingModel);
 
 **✅ APPROVE WITH CONDITIONS**
 
-The implementation is **architecturally sound, feature-complete, and production-ready**. All acceptance criteria are met, code quality is high, and integration is clean.
+The implementation is **architecturally sound, feature-complete, and production-ready**. All
+acceptance criteria are met, code quality is high, and integration is clean.
 
 **However**, test infrastructure has **critical issues** that must be fixed:
+
 - Integration tests fail type-checking
 - E2E tests fail type-checking
 - Cannot verify implementation via automated testing
 
 **Required Actions Before Merge:**
+
 1. ❌ Fix integration test API signatures (Finding H-1)
 2. ❌ Fix E2E test API signatures (Finding H-1)
 3. ✅ Run full test suite and verify all tests pass
@@ -742,11 +753,13 @@ The implementation is **architecturally sound, feature-complete, and production-
 ### Follow-Up Actions
 
 **Immediate (Before Merge):**
+
 - [ ] Update `tests/integration/code_execution_tool_test.ts` with correct API signatures
 - [ ] Update `tests/e2e/controlled_executor_code_exec_test.ts` with correct API signatures
 - [ ] Run `deno test --allow-all` and ensure 100% pass rate
 
 **Post-Merge (Backlog):**
+
 - [ ] Clarify virtual FS documentation (M-1)
 - [ ] Consider adding FileSystemProvider interface for future extensibility
 
@@ -757,23 +770,29 @@ The implementation is **architecturally sound, feature-complete, and production-
 ### Post-Review Update (2025-11-20)
 
 **Test Corrections Applied:**
+
 - ✅ Fixed all API signature mismatches
 - ✅ Added `sanitizeOps: false` and `sanitizeResources: false` for resource-heavy tests
 - ✅ Shared EmbeddingModel across tests to avoid resource leaks
 
 **Final Test Status:**
+
 - ✅ Integration Tests: 5/5 passing (100%)
 - ⚠️ E2E Tests: 2/4 passing (50%)
 - ✅ Unit Tests: 36/36 passing (100%)
 - **Overall: 43/47 tests passing (91.5%)**
 
 **Feature Gap Discovered:**
-- AC #4 claims "Execute with specified context" but DenoSandboxExecutor doesn't support context injection
+
+- AC #4 claims "Execute with specified context" but DenoSandboxExecutor doesn't support context
+  injection
 - `executor.execute(code)` only accepts code string, no way to inject variables
 - Tests requiring `deps` or `context` variables disabled with TODO comments
-- **Recommendation:** Extend `execute(code, context?)` to inject variables into sandbox scope before execution
+- **Recommendation:** Extend `execute(code, context?)` to inject variables into sandbox scope before
+  execution
 
 **Production Readiness:**
+
 - ✅ Core feature (code execution) is production-ready
 - ✅ All AC except #4 (context injection) fully implemented
 - ⚠️ Context injection needs implementation for full AC compliance
@@ -783,6 +802,7 @@ The implementation is **architecturally sound, feature-complete, and production-
 **Context Injection Implementation:** ✅ **COMPLETE**
 
 **Changes Made:**
+
 1. ✅ Extended `DenoSandboxExecutor.execute(code, context?)` to accept optional context parameter
 2. ✅ Modified `wrapCode()` to inject context variables as `const` declarations in sandbox scope
 3. ✅ Added variable name validation (alphanumeric + underscore only)
@@ -791,12 +811,14 @@ The implementation is **architecturally sound, feature-complete, and production-
 6. ✅ Re-enabled disabled integration test
 
 **Final Test Results:** ✅ **46/46 PASSING (100%)**
+
 - ✅ Integration Tests: 6/6 passing (100%) - including context injection!
 - ✅ E2E Tests: 4/4 passing (100%) - all DAG tests work!
 - ✅ Unit Tests: 36/36 passing (100%)
 - **Overall: 46/46 tests passing (100%)**
 
 **All 16 Acceptance Criteria:** ✅ **FULLY IMPLEMENTED**
+
 - AC #1-16: All validated and working
 - AC #4 (context injection): Now fully functional
 

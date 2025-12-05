@@ -4,13 +4,13 @@ Status: done
 
 ## Story
 
-As an AI agent,
-I want DAGSuggester to use past episodes for better predictions,
-so that recommendations improve based on historical success.
+As an AI agent, I want DAGSuggester to use past episodes for better predictions, so that
+recommendations improve based on historical success.
 
 ## Acceptance Criteria
 
-1. DAGSuggester queries similar episodes before suggesting via `EpisodicMemoryStore.retrieveRelevant()`
+1. DAGSuggester queries similar episodes before suggesting via
+   `EpisodicMemoryStore.retrieveRelevant()`
 2. Confidence boost applied when similar historical episodes succeeded (e.g., +0.10-0.15 boost)
 3. Confidence penalty or pattern avoidance when similar episodes failed historically
 4. Integration tests verify context-aware suggestions improve over baseline
@@ -32,13 +32,15 @@ so that recommendations improve based on historical success.
 
 - [x] Task 3: Apply confidence boost for successful patterns (AC: #2)
   - [x] 3.1: For each suggested tool, check if it appears in successful episodes
-  - [x] 3.2: Calculate boost: `boost = min(0.15, successRate * 0.20)` where successRate = successes / total episodes
+  - [x] 3.2: Calculate boost: `boost = min(0.15, successRate * 0.20)` where successRate = successes
+        / total episodes
   - [x] 3.3: Apply boost: `adjustedConfidence = min(1.0, baseConfidence + boost)`
   - [x] 3.4: Log confidence adjustments for observability
 
 - [x] Task 4: Apply penalty for failed patterns (AC: #3)
   - [x] 4.1: For each suggested tool, check if it appears in failed episodes
-  - [x] 4.2: Calculate penalty: `penalty = min(0.15, failureRate * 0.25)` where failureRate = failures / total episodes
+  - [x] 4.2: Calculate penalty: `penalty = min(0.15, failureRate * 0.25)` where failureRate =
+        failures / total episodes
   - [x] 4.3: Apply penalty: `adjustedConfidence = max(0, baseConfidence - penalty)`
   - [x] 4.4: If failureRate > 0.50 for a tool, exclude it entirely from suggestion
 
@@ -58,12 +60,16 @@ so that recommendations improve based on historical success.
 
 ### Architecture Context
 
-Story 4.1e is Phase 2 of Epic 4 (Episodic Memory & Adaptive Learning), completing the DAGSuggester integration. Phase 1 (Stories 4.1a/b/c) implemented:
+Story 4.1e is Phase 2 of Epic 4 (Episodic Memory & Adaptive Learning), completing the DAGSuggester
+integration. Phase 1 (Stories 4.1a/b/c) implemented:
+
 - Migration 007: `episodic_events` + `adaptive_thresholds` tables
 - `EpisodicMemoryStore` class (280 LOC, 9 tests passing)
 - `AdaptiveThresholdManager` persistence (+100 LOC)
 
-Story 4.1d integrated ControlledExecutor with episodic memory, enabling automatic event capture during workflow execution. Story 4.1e extends DAGSuggester to use those captured episodes for improved predictions.
+Story 4.1d integrated ControlledExecutor with episodic memory, enabling automatic event capture
+during workflow execution. Story 4.1e extends DAGSuggester to use those captured episodes for
+improved predictions.
 
 ### Key Components
 
@@ -85,10 +91,12 @@ Story 4.1d integrated ControlledExecutor with episodic memory, enabling automati
 ### Confidence Adjustment Algorithm
 
 **Base Confidence** (from Story 3.5-1):
+
 - Calculated from historical co-occurrence, context similarity, workflow patterns
 - Range: [0.0, 1.0]
 
 **Episode-Based Adjustment**:
+
 ```typescript
 interface EpisodeStats {
   total: number;
@@ -100,7 +108,7 @@ interface EpisodeStats {
 
 function adjustConfidence(
   baseConfidence: number,
-  stats: EpisodeStats
+  stats: EpisodeStats,
 ): number {
   if (stats.total === 0) return baseConfidence;
 
@@ -119,6 +127,7 @@ function adjustConfidence(
 ```
 
 **Exclusion Rule**:
+
 - If `failureRate > 0.50` (more than half of similar workflows failed with this tool)
 - Exclude tool entirely from suggestion
 - Log exclusion reason for debugging
@@ -126,15 +135,18 @@ function adjustConfidence(
 ### Integration with Speculation (Epic 3.5)
 
 From Story 3.5-1, DAGSuggester already implements:
+
 - `predictNextNodes(state: WorkflowState): Promise<PredictedNode[]>`
 - Confidence-based speculation (threshold 0.70)
 - GraphRAG community detection for pattern matching
 
 This story (4.1e) enhances those predictions with historical episode data:
+
 - **Without episodes**: Confidence based on graph patterns only (cold start)
 - **With episodes**: Confidence adjusted by real execution history (warm start, learning)
 
 Example flow:
+
 1. DAGSuggester.suggestDAG(intent) called
 2. Generate context hash from intent
 3. Query episodic memory for similar workflows
@@ -153,6 +165,7 @@ Example flow:
 ### Testing Strategy
 
 Use similar test patterns from Story 4.1d:
+
 - Mock EpisodicMemoryStore with spy on `retrieveRelevant()` method
 - Verify episode queries with correct context hash
 - Test confidence adjustments with synthetic episode data
@@ -163,13 +176,15 @@ Use similar test patterns from Story 4.1d:
 - Integration point: `src/speculation/dag-suggester.ts`
 - Memory store: `src/learning/episodic-memory-store.ts` (already exists)
 - Types: `src/learning/types.ts` (EpisodicEvent already defined)
-- Tests: Add to `tests/unit/speculation/dag-suggester.test.ts` or create `tests/integration/episodic-dag-integration.test.ts`
+- Tests: Add to `tests/unit/speculation/dag-suggester.test.ts` or create
+  `tests/integration/episodic-dag-integration.test.ts`
 
 ### Learnings from Previous Story (4-1d)
 
 **From Story 4-1d-controlledexecutor-integration (Status: done)**
 
-- **New Service Created**: `EpisodicMemoryStore` integration pattern at `src/dag/controlled-executor.ts` (~150 LOC added)
+- **New Service Created**: `EpisodicMemoryStore` integration pattern at
+  `src/dag/controlled-executor.ts` (~150 LOC added)
   - Use `setEpisodicMemoryStore()` method for dependency injection
   - Check `if (!this.episodicMemory) return` for graceful degradation
   - Non-blocking captures with `.catch()` for error logging
@@ -209,7 +224,8 @@ Use similar test patterns from Story 4.1d:
 - [Source: docs/epics.md#story-41e-dagsugggester-integration]
 - [Source: src/learning/episodic-memory-store.ts]
 - [Source: src/speculation/dag-suggester.ts]
-- [Source: docs/stories/4-1d-controlledexecutor-integration.md] (previous story - context continuity)
+- [Source: docs/stories/4-1d-controlledexecutor-integration.md] (previous story - context
+  continuity)
 
 ## Dev Agent Record
 
@@ -224,6 +240,7 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 ### Debug Log References
 
 Implementation completed 2025-12-01. All acceptance criteria validated:
+
 - AC #1: Episode retrieval integrated via `retrieveRelevantEpisodes()` method
 - AC #2: Confidence boost algorithm implemented (up to +0.15 for 100% success rate)
 - AC #3: Failure penalty algorithm implemented with exclusion rule (>50% failure rate)
@@ -276,12 +293,15 @@ Implementation completed 2025-12-01. All acceptance criteria validated:
 ### File List
 
 **Modified:**
+
 - `src/graphrag/dag-suggester.ts` (+~200 LOC)
   - Added episodic memory integration to predictNextNodes()
   - Implemented episode retrieval, parsing, and confidence adjustment
-  - Three new private methods: getContextHash, retrieveRelevantEpisodes, parseEpisodeStatistics, adjustConfidenceFromEpisodes
+  - Three new private methods: getContextHash, retrieveRelevantEpisodes, parseEpisodeStatistics,
+    adjustConfidenceFromEpisodes
 
 **Added:**
+
 - `tests/unit/graphrag/dag_suggester_episodic_test.ts` (+491 LOC)
   - 6 comprehensive integration tests covering all ACs
   - Performance benchmarks with 120+ episodes
@@ -297,16 +317,19 @@ Implementation completed 2025-12-01. All acceptance criteria validated:
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad (Claude Sonnet 4.5)
-**Date:** 2025-12-01
-**Story:** 4.1e - DAGSuggester Integration
-**Outcome:** ✅ **APPROVE**
+**Reviewer:** BMad (Claude Sonnet 4.5) **Date:** 2025-12-01 **Story:** 4.1e - DAGSuggester
+Integration **Outcome:** ✅ **APPROVE**
 
 ### Summary
 
-Story 4.1e successfully integrates episodic memory into DAGSuggester for learning-enhanced predictions. All 6 acceptance criteria are **FULLY IMPLEMENTED** with concrete evidence. All 24 completed tasks have been **VERIFIED** with file:line references. Code quality is excellent with comprehensive test coverage (6 new integration tests, 0 regressions across 78 existing tests). Performance exceeds requirements by 94% (<3ms vs 50ms budget).
+Story 4.1e successfully integrates episodic memory into DAGSuggester for learning-enhanced
+predictions. All 6 acceptance criteria are **FULLY IMPLEMENTED** with concrete evidence. All 24
+completed tasks have been **VERIFIED** with file:line references. Code quality is excellent with
+comprehensive test coverage (6 new integration tests, 0 regressions across 78 existing tests).
+Performance exceeds requirements by 94% (<3ms vs 50ms budget).
 
 **Key Strengths:**
+
 - Systematic implementation following established patterns from Story 4.1d
 - Comprehensive test coverage with all edge cases
 - Excellent performance (<3ms overhead vs 50ms target)
@@ -317,49 +340,53 @@ Story 4.1e successfully integrates episodic memory into DAGSuggester for learnin
 
 ### Acceptance Criteria Coverage
 
-| AC# | Description | Status | Evidence |
-|-----|-------------|--------|----------|
-| #1 | Episode retrieval via EpisodicMemoryStore | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:515,658-694` - `retrieveRelevantEpisodes()` method queries 10 relevant episodes |
-| #2 | Confidence boost for successes | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:810` - Boost formula `min(0.15, successRate * 0.20)` applied |
-| #3 | Penalty/exclusion for failures | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:801-806,813` - Exclusion rule `failureRate > 0.50` + penalty formula |
-| #4 | Integration tests verify improvement | ✅ IMPLEMENTED | `tests/unit/graphrag/dag_suggester_episodic_test.ts:86-497` - 6 comprehensive tests covering all scenarios |
-| #5 | Performance <50ms | ✅ IMPLEMENTED | Test evidence: 2.7ms with 120 episodes (94% under budget) - `dag_suggester_episodic_test.ts:420-497` |
-| #6 | Graceful degradation | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:647,797` - Null checks prevent errors when episodicMemory not set |
+| AC# | Description                               | Status         | Evidence                                                                                                       |
+| --- | ----------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------- |
+| #1  | Episode retrieval via EpisodicMemoryStore | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:515,658-694` - `retrieveRelevantEpisodes()` method queries 10 relevant episodes |
+| #2  | Confidence boost for successes            | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:810` - Boost formula `min(0.15, successRate * 0.20)` applied                    |
+| #3  | Penalty/exclusion for failures            | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:801-806,813` - Exclusion rule `failureRate > 0.50` + penalty formula            |
+| #4  | Integration tests verify improvement      | ✅ IMPLEMENTED | `tests/unit/graphrag/dag_suggester_episodic_test.ts:86-497` - 6 comprehensive tests covering all scenarios     |
+| #5  | Performance <50ms                         | ✅ IMPLEMENTED | Test evidence: 2.7ms with 120 episodes (94% under budget) - `dag_suggester_episodic_test.ts:420-497`           |
+| #6  | Graceful degradation                      | ✅ IMPLEMENTED | `src/graphrag/dag-suggester.ts:647,797` - Null checks prevent errors when episodicMemory not set               |
 
 **Summary:** 6 of 6 acceptance criteria fully implemented ✅
 
 ### Task Completion Validation
 
-| Task | Marked As | Verified As | Evidence |
-|------|-----------|-------------|----------|
-| 1.1: Add setEpisodicMemoryStore() | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:58-61` |
-| 1.2: Private field episodicMemory | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:30` |
-| 1.3: Graceful degradation | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:647,797` |
-| 2.1: Generate context hash | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:637-647` |
-| 2.2: Query retrieveRelevant() | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:659,681` |
-| 2.3: Parse episodes | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:696-762` |
-| 2.4: Measure performance | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:664-667` + test benchmarks |
-| 3.1-3.4: Confidence boost | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:810,819-825` |
-| 4.1-4.4: Failure penalty | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:801-806,813` |
-| 5.1-5.5: Integration tests | ✅ Complete | ✅ VERIFIED | 6 tests in `dag_suggester_episodic_test.ts` |
-| 6.1-6.3: Performance validation | ✅ Complete | ✅ VERIFIED | Performance test shows 2.7ms |
+| Task                              | Marked As   | Verified As | Evidence                                     |
+| --------------------------------- | ----------- | ----------- | -------------------------------------------- |
+| 1.1: Add setEpisodicMemoryStore() | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:58-61`                     |
+| 1.2: Private field episodicMemory | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:30`                        |
+| 1.3: Graceful degradation         | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:647,797`                   |
+| 2.1: Generate context hash        | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:637-647`                   |
+| 2.2: Query retrieveRelevant()     | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:659,681`                   |
+| 2.3: Parse episodes               | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:696-762`                   |
+| 2.4: Measure performance          | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:664-667` + test benchmarks |
+| 3.1-3.4: Confidence boost         | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:810,819-825`               |
+| 4.1-4.4: Failure penalty          | ✅ Complete | ✅ VERIFIED | `dag-suggester.ts:801-806,813`               |
+| 5.1-5.5: Integration tests        | ✅ Complete | ✅ VERIFIED | 6 tests in `dag_suggester_episodic_test.ts`  |
+| 6.1-6.3: Performance validation   | ✅ Complete | ✅ VERIFIED | Performance test shows 2.7ms                 |
 
 **Summary:** 24 of 24 completed tasks verified ✅ (0 questionable, 0 false completions)
 
 ### Test Coverage and Gaps
 
 **Test Files:**
+
 - `tests/unit/graphrag/dag_suggester_episodic_test.ts` (497 LOC, 6 tests)
 
 **Coverage by AC:**
+
 - AC #1 (Retrieval): ✅ Covered by all 6 tests
 - AC #2 (Boost): ✅ Covered by test "AC2 - Confidence boost for successful patterns"
-- AC #3 (Penalty): ✅ Covered by tests "AC3 - Confidence penalty" and "AC3 Task 4.4 - Exclude tool >50%"
+- AC #3 (Penalty): ✅ Covered by tests "AC3 - Confidence penalty" and "AC3 Task 4.4 - Exclude tool
+  > 50%"
 - AC #4 (Integration): ✅ All tests verify integration
 - AC #5 (Performance): ✅ Dedicated performance test with 120 episodes
 - AC #6 (Graceful degradation): ✅ Tests "AC4 - Baseline" and "AC6 - Graceful degradation"
 
 **Test Quality:**
+
 - ✅ Deterministic behavior (no flakiness patterns detected)
 - ✅ Proper fixtures and setup/teardown
 - ✅ Meaningful assertions with specific values
@@ -370,15 +397,18 @@ Story 4.1e successfully integrates episodic memory into DAGSuggester for learnin
 ### Architectural Alignment
 
 **Tech-Spec Compliance:**
+
 - ✅ Follows Story 4.1d ControlledExecutor integration pattern
 - ✅ Dependency injection via `setEpisodicMemoryStore()`
 - ✅ Context hash pattern consistent with ADR-008
 - ✅ Non-blocking retrieval (<3ms measured)
 
 **Architecture Violations:**
+
 - ❌ None detected
 
 **Design Patterns:**
+
 - ✅ Dependency Injection (episodic memory as optional dependency)
 - ✅ Strategy Pattern (confidence adjustment algorithm)
 - ✅ Factory Pattern (episode statistics computation)
@@ -386,6 +416,7 @@ Story 4.1e successfully integrates episodic memory into DAGSuggester for learnin
 ### Security Notes
 
 No security concerns identified. Implementation follows established patterns:
+
 - ✅ No PII stored in episodes (only metadata)
 - ✅ No injection risks (parameterized queries in EpisodicMemoryStore)
 - ✅ Proper error handling with graceful degradation
@@ -393,17 +424,20 @@ No security concerns identified. Implementation follows established patterns:
 ### Best-Practices and References
 
 **Tech Stack:**
+
 - Deno + TypeScript (strict mode)
 - PGlite for episodic storage
 - BGE-M3 embeddings for semantic search
 
 **Standards Applied:**
+
 - TypeScript strict null checks enforced
 - Proper async/await error handling
 - Comprehensive JSDoc documentation
 - Performance monitoring with `performance.now()`
 
 **References:**
+
 - [ADR-008: Episodic Memory & Adaptive Thresholds](https://github.com/anthropics/claude-code/blob/main/docs/adrs/ADR-008-episodic-memory-adaptive-thresholds.md)
 - Story 4.1d pattern (ControlledExecutor integration)
 
@@ -412,5 +446,8 @@ No security concerns identified. Implementation follows established patterns:
 **Aucune action requise** - Code prêt pour production.
 
 **Notes informatives:**
-- Note: Consider monitoring episode database growth in production (current: 10 episodes limit per retrieval, good for performance)
-- Note: Future optimization opportunity: Cache parsed episode statistics if same context queried repeatedly (premature optimization at this stage)
+
+- Note: Consider monitoring episode database growth in production (current: 10 episodes limit per
+  retrieval, good for performance)
+- Note: Future optimization opportunity: Cache parsed episode statistics if same context queried
+  repeatedly (premature optimization at this stage)

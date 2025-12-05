@@ -41,14 +41,18 @@ export function connectToEventsStream(baseUrl: string): EventSource {
   eventSource.addEventListener("graph_synced", (event: MessageEvent) => {
     const data = JSON.parse(event.data);
     console.log(
-      `📊 Graph synced: ${data.node_count} nodes, ${data.edge_count} edges (${data.sync_duration_ms.toFixed(1)}ms)`,
+      `📊 Graph synced: ${data.node_count} nodes, ${data.edge_count} edges (${
+        data.sync_duration_ms.toFixed(1)
+      }ms)`,
     );
   });
 
   eventSource.addEventListener("edge_created", (event: MessageEvent) => {
     const data = JSON.parse(event.data);
     console.log(
-      `➕ New edge: ${data.from_tool_id} → ${data.to_tool_id} (confidence: ${data.confidence_score.toFixed(2)})`,
+      `➕ New edge: ${data.from_tool_id} → ${data.to_tool_id} (confidence: ${
+        data.confidence_score.toFixed(2)
+      })`,
     );
   });
 
@@ -58,7 +62,9 @@ export function connectToEventsStream(baseUrl: string): EventSource {
       `📈 Edge updated: ${data.from_tool_id} → ${data.to_tool_id}`,
     );
     console.log(
-      `   Confidence: ${data.old_confidence.toFixed(2)} → ${data.new_confidence.toFixed(2)} (observed ${data.observed_count}x)`,
+      `   Confidence: ${data.old_confidence.toFixed(2)} → ${
+        data.new_confidence.toFixed(2)
+      } (observed ${data.observed_count}x)`,
     );
   });
 
@@ -66,7 +72,9 @@ export function connectToEventsStream(baseUrl: string): EventSource {
     const data = JSON.parse(event.data);
     const status = data.success ? "✅" : "❌";
     console.log(
-      `${status} Workflow ${data.workflow_id.substring(0, 8)}... (${data.execution_time_ms.toFixed(1)}ms)`,
+      `${status} Workflow ${data.workflow_id.substring(0, 8)}... (${
+        data.execution_time_ms.toFixed(1)
+      }ms)`,
     );
     console.log(`   Tools: ${data.tool_ids.join(" → ")}`);
   });
@@ -83,9 +91,7 @@ export function connectToEventsStream(baseUrl: string): EventSource {
     if (data.pagerank_top_10.length > 0) {
       const topTools = data.pagerank_top_10
         .slice(0, 3)
-        .map((t: { tool_id: string; score: number }) =>
-          `${t.tool_id} (${t.score.toFixed(3)})`
-        )
+        .map((t: { tool_id: string; score: number }) => `${t.tool_id} (${t.score.toFixed(3)})`)
         .join(", ");
       console.log(`   Top PageRank: ${topTools}`);
     }

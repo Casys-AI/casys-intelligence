@@ -436,9 +436,10 @@ export async function generateEmbeddingForTool(
     server_id: row.server_id as string,
     name: row.name as string,
     description: row.description as string || "",
-    input_schema: (typeof row.input_schema === "string"
-      ? JSON.parse(row.input_schema)
-      : row.input_schema) as Record<string, unknown>,
+    input_schema:
+      (typeof row.input_schema === "string"
+        ? JSON.parse(row.input_schema)
+        : row.input_schema) as Record<string, unknown>,
   };
 
   // Generate embedding

@@ -135,7 +135,11 @@ Deno.test("E2E - Simple parallel workflow (3 independent file reads)", async () 
   assertEquals(result.parallelizationLayers, 1); // All parallel
 
   // Should execute in parallel (~50ms), not sequential (~150ms)
-  assertEquals(result.executionTimeMs < 100, true, `Expected <100ms, got ${result.executionTimeMs.toFixed(1)}ms`);
+  assertEquals(
+    result.executionTimeMs < 100,
+    true,
+    `Expected <100ms, got ${result.executionTimeMs.toFixed(1)}ms`,
+  );
 
   // Validate individual results
   const configResult = result.results.find((r) => r.taskId === "read_config");
@@ -444,5 +448,9 @@ Deno.test("E2E - Performance comparison (parallel vs sequential baseline)", asyn
   console.log(`  Sequential execution: ${sequentialTime.toFixed(1)}ms (5 layers)`);
   console.log(`  Speedup: ${actualSpeedup.toFixed(2)}x`);
 
-  assertEquals(actualSpeedup > 3.5, true, `Expected speedup >3.5x, got ${actualSpeedup.toFixed(2)}x`);
+  assertEquals(
+    actualSpeedup > 3.5,
+    true,
+    `Expected speedup >3.5x, got ${actualSpeedup.toFixed(2)}x`,
+  );
 });

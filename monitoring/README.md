@@ -21,17 +21,21 @@ docker-compose down
 ## Services
 
 ### 🎨 Grafana - http://localhost:3000
+
 **Default credentials:** `admin` / `admin`
 
 Unified dashboard for logs, metrics, and visualization.
 
 ### 📝 Loki - http://localhost:3100
+
 Log aggregation system. Automatically receives logs from Promtail.
 
 ### 📈 Prometheus - http://localhost:9090
+
 Metrics collection and time-series database.
 
 ### 🚚 Promtail
+
 Log shipper that reads AgentCards logs and sends them to Loki.
 
 **Monitored logs:** `/home/ubuntu/.agentcards/logs/*.log`
@@ -62,6 +66,7 @@ Log shipper that reads AgentCards logs and sends them to Loki.
 ### Metrics (Future)
 
 When Prometheus exporter is added:
+
 - `agentcards_mcp_requests_total`
 - `agentcards_mcp_request_duration_seconds`
 - `agentcards_tools_called_total`
@@ -96,9 +101,10 @@ ls -la /home/ubuntu/.agentcards/logs/
 ### High memory usage
 
 Adjust retention in `loki-config.yaml`:
+
 ```yaml
 limits_config:
-  retention_period: 168h  # 7 days instead of 31
+  retention_period: 168h # 7 days instead of 31
 ```
 
 ## Next Steps

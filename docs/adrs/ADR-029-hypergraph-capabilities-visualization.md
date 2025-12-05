@@ -6,16 +6,20 @@ Proposed (2025-12-04)
 
 ## Context
 
-Avec Epic 7 (Emergent Capabilities System), AgentCards stocke des **capabilities** qui sont des patterns de code réutilisables connectant **N tools** ensemble. Une capability n'est pas une relation binaire (A → B) mais une relation N-aire (A, B, C, D utilisés ensemble).
+Avec Epic 7 (Emergent Capabilities System), AgentCards stocke des **capabilities** qui sont des
+patterns de code réutilisables connectant **N tools** ensemble. Une capability n'est pas une
+relation binaire (A → B) mais une relation N-aire (A, B, C, D utilisés ensemble).
 
 ### Le Problème
 
 Un graphe classique représente des relations binaires:
+
 ```
 A ←→ B ←→ C
 ```
 
 Mais une capability est une **hyperedge** qui connecte N nodes simultanément:
+
 ```
 ┌─────────────────────────────────┐
 │  Capability "Create Issue"      │
@@ -44,15 +48,19 @@ Mais une capability est une **hyperedge** qui connecte N nodes simultanément:
 - **Performance:** Pas de surcharge pour le graph existant
 - **Simplicité:** Réutiliser l'infrastructure existante (Cytoscape.js)
 - **Évolutivité:** Permettre des visualisations plus riches à l'avenir
-- **Intégration:** Le mode hypergraph DOIT s'intégrer dans le dashboard EXISTANT (Epic 6), pas une nouvelle page
+- **Intégration:** Le mode hypergraph DOIT s'intégrer dans le dashboard EXISTANT (Epic 6), pas une
+  nouvelle page
 
-> **CONSTRAINT:** L'implémentation doit ajouter un toggle de vue au dashboard existant, pas créer une interface séparée. Consultation avec UX Designer requise avant implémentation pour valider l'intégration UI.
+> **CONSTRAINT:** L'implémentation doit ajouter un toggle de vue au dashboard existant, pas créer
+> une interface séparée. Consultation avec UX Designer requise avant implémentation pour valider
+> l'intégration UI.
 
 ## Options Considered
 
 ### Option A: Cytoscape.js Compound Graphs
 
-Utiliser la fonctionnalité native "compound nodes" de Cytoscape.js où un node peut contenir d'autres nodes.
+Utiliser la fonctionnalité native "compound nodes" de Cytoscape.js où un node peut contenir d'autres
+nodes.
 
 ```javascript
 // Capability = parent node
@@ -84,6 +92,7 @@ Utiliser la fonctionnalité native "compound nodes" de Cytoscape.js où un node 
 ```
 
 **Visualisation:**
+
 ```
 ┌─────────────────────────────────────────┐
 │  Capability: "Create Issue from File"  │
@@ -98,12 +107,14 @@ Utiliser la fonctionnalité native "compound nodes" de Cytoscape.js où un node 
 ```
 
 **Pros:**
+
 - On utilise déjà Cytoscape.js (pas de nouvelle dépendance)
 - Compound graphs = fonctionnalité native
 - Visualisation "containment" intuitive
 - Compatible avec les layouts existants
 
 **Cons:**
+
 - Un tool peut appartenir à plusieurs capabilities (duplication visuelle)
 - Compound layout peut devenir complexe avec beaucoup de capabilities
 
@@ -125,6 +136,7 @@ Deux types de nodes (tools et capabilities) avec des edges entre eux.
 ```
 
 **Visualisation:**
+
 ```
 [fs:read]───────┐
                 ├───[Cap: Create Issue]───code_snippet
@@ -132,18 +144,21 @@ Deux types de nodes (tools et capabilities) avec des edges entre eux.
 ```
 
 **Pros:**
+
 - Pas de duplication de nodes
 - Chaque tool reste unique
 - Edges explicites "uses"
 
 **Cons:**
+
 - Graph plus dense (plus d'edges)
 - Moins intuitif que "containment"
 - Besoin de styling différent pour les deux types
 
 ### Option C: Overlay Mode (Toggle)
 
-Le graph principal reste tools-only. Un mode "overlay" affiche les capabilities comme des groupes visuels (convex hulls) sans modifier la structure du graph.
+Le graph principal reste tools-only. Un mode "overlay" affiche les capabilities comme des groupes
+visuels (convex hulls) sans modifier la structure du graph.
 
 ```javascript
 // Graph normal: tools + edges
@@ -151,25 +166,28 @@ Le graph principal reste tools-only. Un mode "overlay" affiche les capabilities 
 ```
 
 **Visualisation:**
+
 ```
-     ┌─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
-     │   Capability 1   │  ← convex hull (dashed)
-     │ ┌───┐     ┌───┐ │
-       │ A │ ←→  │ B │
-     │ └───┘     └───┘ │
-     └ ─ ─ ─ ─ ─ ─ ─ ─ ┘
-            ↕
-          ┌───┐
-          │ C │  (pas dans capability)
-          └───┘
+┌─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+│   Capability 1   │  ← convex hull (dashed)
+│ ┌───┐     ┌───┐ │
+  │ A │ ←→  │ B │
+│ └───┘     └───┘ │
+└ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+       ↕
+     ┌───┐
+     │ C │  (pas dans capability)
+     └───┘
 ```
 
 **Pros:**
+
 - Graph principal non modifié
 - Toggle on/off
 - Visualise les groupements sans changer la structure
 
 **Cons:**
+
 - Overlaps si un tool est dans plusieurs capabilities
 - Moins interactif (pas de "click on capability")
 
@@ -181,17 +199,20 @@ Utiliser ou créer une bibliothèque hypergraph dédiée.
 - Custom: Créer notre propre représentation
 
 **Pros:**
+
 - Représentation mathématiquement correcte
 - Visualisations spécialisées (Venn, Euler)
 
 **Cons:**
+
 - Nouvelle dépendance ou dev custom significatif
 - Intégration avec dashboard existant complexe
 - hypergraphs-plot = projet petit, pas très maintenu
 
 ## Decision
 
-**Option A: Cytoscape.js Compound Graphs** pour le MVP, avec évolution possible vers Option C (Overlay) pour les cas où un tool appartient à plusieurs capabilities.
+**Option A: Cytoscape.js Compound Graphs** pour le MVP, avec évolution possible vers Option C
+(Overlay) pour les cas où un tool appartient à plusieurs capabilities.
 
 ### Rationale
 
@@ -256,13 +277,13 @@ interface CapabilityResponse {
   success_rate: number;
   usage_count: number;
   community_id: number | null;
-  intent_preview: string;  // First 100 chars of intent
+  intent_preview: string; // First 100 chars of intent
 }
 
 // GET /api/graph/hypergraph
 interface HypergraphResponse {
-  nodes: CytoscapeNode[];      // Tools + Capabilities
-  edges: CytoscapeEdge[];      // Tool-Tool + Capability-Tool
+  nodes: CytoscapeNode[]; // Tools + Capabilities
+  edges: CytoscapeEdge[]; // Tool-Tool + Capability-Tool
   capabilities_count: number;
   tools_count: number;
 }
@@ -308,27 +329,32 @@ interface HypergraphResponse {
 ### Epic 8: Hypergraph Capabilities Visualization
 
 **Story 8.1: Capability Data API**
+
 - GET /api/capabilities endpoint
 - GET /api/graph/hypergraph endpoint
 - Filter by community, success_rate, usage
 
 **Story 8.2: Compound Graph Builder**
+
 - HypergraphBuilder class
 - Convert capabilities → Cytoscape compound nodes
 - Handle tools_used[] → parent relationships
 
 **Story 8.3: Hypergraph View Mode**
+
 - Toggle button in dashboard header
 - Compound layout (fcose or cola)
 - Styling: capabilities = violet rounded rectangles
 
 **Story 8.4: Code Panel Integration**
+
 - Click capability → show code_snippet
 - Syntax highlighting (Prism.js or highlight.js)
 - Copy to clipboard button
 - Stats display (success_rate, usage_count)
 
 **Story 8.5: Capability Explorer**
+
 - Search capabilities by intent
 - Filter by success_rate threshold
 - Sort by usage_count
@@ -337,17 +363,20 @@ interface HypergraphResponse {
 ## Consequences
 
 ### Positive
+
 - Visualisation claire de ce que le système a appris
 - Debug facile: "pourquoi cette capability a été suggérée?"
 - Code réutilisable visible et copiable
 - Builds on existing infrastructure
 
 ### Negative
+
 - Compound layouts can be slower with many capabilities
 - Multi-membership needs careful UX design
 - Additional API endpoints to maintain
 
 ### Risks
+
 - Performance with 100+ capabilities: mitigate with pagination/filtering
 - Code snippet security: ensure no secrets in displayed code
 

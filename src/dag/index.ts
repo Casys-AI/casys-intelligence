@@ -17,15 +17,12 @@ export type {
 } from "./types.ts";
 
 // SSE Streaming
-export {
-  StreamingExecutor,
-  BufferedEventStream,
-} from "./streaming.ts";
+export { BufferedEventStream, StreamingExecutor } from "./streaming.ts";
 export type {
-  SSEEvent,
-  TaskStartEvent,
-  TaskCompleteEvent,
-  ExecutionCompleteEvent,
-  ErrorEvent,
   BufferedStreamConfig,
+  ErrorEvent,
+  ExecutionCompleteEvent,
+  SSEEvent,
+  TaskCompleteEvent,
+  TaskStartEvent,
 } from "./streaming.ts";

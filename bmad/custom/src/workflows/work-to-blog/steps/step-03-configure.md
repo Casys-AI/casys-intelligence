@@ -1,24 +1,25 @@
 ---
-name: 'step-03-configure'
-description: 'Configure output format, language, and optionally refine the article angle'
+name: "step-03-configure"
+description: "Configure output format, language, and optionally refine the article angle"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/custom/src/workflows/work-to-blog'
+workflow_path: "{project-root}/bmad/custom/src/workflows/work-to-blog"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-03-configure.md'
-nextStepFile: '{workflow_path}/steps/step-04-generate.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-03-configure.md"
+nextStepFile: "{workflow_path}/steps/step-04-generate.md"
+workflowFile: "{workflow_path}/workflow.md"
 
 # Task References
-advancedElicitationTask: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
+advancedElicitationTask: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
 ---
 
 # Step 3: Configure Output
 
 ## STEP GOAL:
 
-Configure the target format (LinkedIn or Article), language (FR or EN), and optionally use elicitation to refine the article's angle and key message.
+Configure the target format (LinkedIn or Article), language (FR or EN), and optionally use
+elicitation to refine the article's angle and key message.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -44,40 +45,36 @@ Configure the target format (LinkedIn or Article), language (FR or EN), and opti
 
 ### 1. Select Target Format
 
-Display:
-"**Configuration de l'article**
+Display: "**Configuration de l'article**
 
-**Format de sortie:**
-**[L] LinkedIn** - Post court, accrocheur, avec hook et CTA
-**[A] Article detaille** - Structure complete, exemples de code, explications approfondies"
+**Format de sortie:** **[L] LinkedIn** - Post court, accrocheur, avec hook et CTA **[A] Article
+detaille** - Structure complete, exemples de code, explications approfondies"
 
 Wait for selection and store choice.
 
 ### 2. Select Target Language
 
-Display:
-"**Langue:**
-**[FR] Francais**
-**[EN] English**"
+Display: "**Langue:** **[FR] Francais** **[EN] English**"
 
 Wait for selection and store choice.
 
 ### 3. Offer Angle Refinement
 
-Display:
-"**Affiner l'angle ? (optionnel)**
+Display: "**Affiner l'angle ? (optionnel)**
 
 Je peux t'aider a:
+
 - Trouver le hook parfait pour accrocher ton audience
 - Identifier le message cle a faire passer
 - Structurer l'argumentation
 
-**[E] Elicitation** - Quelques questions pour affiner
-**[S] Skip** - Generer directement avec l'input actuel"
+**[E] Elicitation** - Quelques questions pour affiner **[S] Skip** - Generer directement avec
+l'input actuel"
 
 ### 4. Handle Elicitation (if selected)
 
 If E selected, engage in brief elicitation:
+
 - "Quel est LE point que tu veux que les lecteurs retiennent ?"
 - "Qui est ton audience cible ? (devs, managers, tous ?)"
 - "Y a-t-il une action que tu veux qu'ils fassent apres lecture ?"
@@ -86,8 +83,8 @@ Incorporate answers into generation context.
 
 ### 5. Confirm Configuration
 
-Display:
-"**Configuration finale:**
+Display: "**Configuration finale:**
+
 - Format: [LinkedIn/Article]
 - Langue: [FR/EN]
 - Angle: [refined angle or 'based on input']
@@ -101,7 +98,8 @@ Display:
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY proceed when all configuration is confirmed. Pass format, language, and angle context to generation step.
+ONLY proceed when all configuration is confirmed. Pass format, language, and angle context to
+generation step.
 
 ---
 
@@ -120,4 +118,5 @@ ONLY proceed when all configuration is confirmed. Pass format, language, and ang
 - Skipping elicitation when user selected it
 - Not storing configuration for next step
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

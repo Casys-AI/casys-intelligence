@@ -6,6 +6,6 @@
  * @module telemetry
  */
 
-export { setupLogger, getLogger, logger } from "./logger.ts";
+export { getLogger, logger, setupLogger } from "./logger.ts";
 export { TelemetryService } from "./telemetry.ts";
-export type { LogLevel, TelemetryMetric, TelemetryConfig, LoggerConfig } from "./types.ts";
+export type { LoggerConfig, LogLevel, TelemetryConfig, TelemetryMetric } from "./types.ts";

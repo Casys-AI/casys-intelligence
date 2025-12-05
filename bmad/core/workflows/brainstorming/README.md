@@ -6,15 +6,20 @@ last-redoc-date: 2025-09-28
 
 ## Overview
 
-The brainstorming workflow facilitates interactive brainstorming sessions using diverse creative techniques. This workflow acts as an AI facilitator guiding users through various ideation methods to generate and refine creative solutions in a structured, energetic, and highly interactive manner.
+The brainstorming workflow facilitates interactive brainstorming sessions using diverse creative
+techniques. This workflow acts as an AI facilitator guiding users through various ideation methods
+to generate and refine creative solutions in a structured, energetic, and highly interactive manner.
 
 ## Key Features
 
-- **36 Creative Techniques**: Comprehensive library spanning collaborative, structured, creative, deep, theatrical, wild, and introspective approaches
+- **36 Creative Techniques**: Comprehensive library spanning collaborative, structured, creative,
+  deep, theatrical, wild, and introspective approaches
 - **Interactive Facilitation**: AI acts as a skilled facilitator using "Yes, and..." methodology
-- **Flexible Approach Selection**: User-guided, AI-recommended, random, or progressive technique flows
+- **Flexible Approach Selection**: User-guided, AI-recommended, random, or progressive technique
+  flows
 - **Context-Aware Sessions**: Supports domain-specific brainstorming through context document input
-- **Systematic Organization**: Converges ideas into immediate opportunities, future innovations, and moonshots
+- **Systematic Organization**: Converges ideas into immediate opportunities, future innovations, and
+  moonshots
 - **Action Planning**: Prioritizes top ideas with concrete next steps and timelines
 - **Session Documentation**: Comprehensive structured reports capturing all insights and outcomes
 
@@ -67,8 +72,10 @@ The workflow includes 36 techniques organized into 7 categories:
 
 ### Structured Approaches
 
-- **SCAMPER Method**: Systematic creativity through seven lenses (Substitute/Combine/Adapt/Modify/Put/Eliminate/Reverse)
-- **Six Thinking Hats**: Explore through six perspectives (facts/emotions/benefits/risks/creativity/process)
+- **SCAMPER Method**: Systematic creativity through seven lenses
+  (Substitute/Combine/Adapt/Modify/Put/Eliminate/Reverse)
+- **Six Thinking Hats**: Explore through six perspectives
+  (facts/emotions/benefits/risks/creativity/process)
 - **Mind Mapping**: Visual branching from central concepts
 - **Resource Constraints**: Innovation through extreme limitations
 
@@ -171,7 +178,8 @@ The workflow includes 36 techniques organized into 7 categories:
 
 ### Generated Files
 
-- **Primary output**: Structured session report saved to `{output_folder}/brainstorming-session-results-{date}.md`
+- **Primary output**: Structured session report saved to
+  `{output_folder}/brainstorming-session-results-{date}.md`
 - **Context integration**: Links to previous brainstorming sessions if available
 
 ### Output Structure

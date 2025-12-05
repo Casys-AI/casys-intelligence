@@ -1,17 +1,32 @@
 # Epic and Story Creation with Full Technical Context
 
-<critical>The workflow execution engine is governed by: {project-root}/bmad/core/tasks/workflow.xml</critical>
+<critical>The workflow execution engine is governed by:
+{project-root}/bmad/core/tasks/workflow.xml</critical>
 <critical>You MUST have already loaded and processed: {installed_path}/workflow.yaml</critical>
-<critical>PREREQUISITES: PRD.md AND Architecture.md MUST be completed before running this workflow</critical>
+<critical>PREREQUISITES: PRD.md AND Architecture.md MUST be completed before running this
+workflow</critical>
 <critical>UX Design.md is highly recommended if the product has user interfaces</critical>
 <critical>EVERY story must be completable by a single dev agent in one focused session</critical>
-<critical>⚠️ EPIC STRUCTURE PRINCIPLE: Each epic MUST deliver USER VALUE, not just technical capability. Epics are NOT organized by technical layers (database, API, frontend). Each epic should result in something USERS can actually use or benefit from. Exception: Foundation/setup stories at the start of first epic are acceptable.</critical>
-<critical>Communicate all responses in {communication_language} and adapt to {user_skill_level}</critical>
+<critical>⚠️ EPIC STRUCTURE PRINCIPLE: Each epic MUST deliver USER VALUE, not just technical
+capability. Epics are NOT organized by technical layers (database, API, frontend). Each epic should
+result in something USERS can actually use or benefit from. Exception: Foundation/setup stories at
+the start of first epic are acceptable.</critical>
+<critical>Communicate all responses in {communication_language} and adapt to
+{user_skill_level}</critical>
 <critical>Generate all documents in {document_output_language}</critical>
-<critical>LIVING DOCUMENT: Write to epics.md continuously as you work - never wait until the end</critical>
-<critical>Input documents specified in workflow.yaml input_file_patterns - workflow engine handles fuzzy matching, whole vs sharded document discovery automatically</critical>
-<critical>⚠️ ABSOLUTELY NO TIME ESTIMATES - NEVER mention hours, days, weeks, months, or ANY time-based predictions. AI has fundamentally changed development speed - what once took teams weeks/months can now be done by one person in hours. DO NOT give ANY time estimates whatsoever.</critical>
-<critical>⚠️ CHECKPOINT PROTOCOL: After EVERY <template-output> tag, you MUST follow workflow.xml substep 2c: SAVE content to file immediately → SHOW checkpoint separator (━━━━━━━━━━━━━━━━━━━━━━━) → DISPLAY generated content → PRESENT options [a]Advanced Elicitation/[c]Continue/[p]Party-Mode/[y]YOLO → WAIT for user response. Never batch saves or skip checkpoints.</critical>
+<critical>LIVING DOCUMENT: Write to epics.md continuously as you work - never wait until the
+end</critical>
+<critical>Input documents specified in workflow.yaml input_file_patterns - workflow engine handles
+fuzzy matching, whole vs sharded document discovery automatically</critical>
+<critical>⚠️ ABSOLUTELY NO TIME ESTIMATES - NEVER mention hours, days, weeks, months, or ANY
+time-based predictions. AI has fundamentally changed development speed - what once took teams
+weeks/months can now be done by one person in hours. DO NOT give ANY time estimates
+whatsoever.</critical>
+<critical>⚠️ CHECKPOINT PROTOCOL: After EVERY <template-output> tag, you MUST follow workflow.xml
+substep 2c: SAVE content to file immediately → SHOW checkpoint separator (━━━━━━━━━━━━━━━━━━━━━━━) →
+DISPLAY generated content → PRESENT options [a]Advanced
+Elicitation/[c]Continue/[p]Party-Mode/[y]YOLO → WAIT for user response. Never batch saves or skip
+checkpoints.</critical>
 
 <workflow>
 
@@ -64,15 +79,16 @@ Extract ALL functional requirements:
 - Technical constraints
 - Compliance requirements
 
-**FR Inventory Creation:**
-List every functional requirement with description for coverage tracking.
+**FR Inventory Creation:** List every functional requirement with description for coverage tracking.
 </action>
 
 <action>Load and analyze Architecture.md:
 
-Extract ALL technical implementation context relevant to the PRD functional requirements and project needs:
+Extract ALL technical implementation context relevant to the PRD functional requirements and project
+needs:
 
-Scan comprehensively for any technical details needed to create complete user stories, including but not limited to:
+Scan comprehensively for any technical details needed to create complete user stories, including but
+not limited to:
 
 - Technology stack decisions and framework choices
 - API design, contracts, and integration patterns
@@ -83,7 +99,8 @@ Scan comprehensively for any technical details needed to create complete user st
 - Deployment architecture and infrastructure considerations
 - Any other technical decisions, patterns, or constraints that impact implementation
 
-Focus on extracting whatever technical context exists in the Architecture document that will be needed to create comprehensive, actionable user stories for all PRD requirements.
+Focus on extracting whatever technical context exists in the Architecture document that will be
+needed to create comprehensive, actionable user stories for all PRD requirements.
 </action>
 
 <action if="UX Design Exists">
@@ -91,7 +108,8 @@ Load and analyze UX Design.md:
 
 Extract ALL user experience context relevant to the PRD functional requirements and project needs:
 
-Scan comprehensively for any user experience details needed to create complete user stories, including but not limited to:
+Scan comprehensively for any user experience details needed to create complete user stories,
+including but not limited to:
 
 - User flows, journey patterns, and interaction design
 - Screen layouts, components, and visual specifications
@@ -102,7 +120,8 @@ Scan comprehensively for any user experience details needed to create complete u
 - Error states, validation patterns, and user guidance
 - Any other UX/UI decisions, patterns, or specifications that impact implementation
 
-Focus on extracting whatever user experience context exists in the UX document that will be needed to create comprehensive, actionable user stories for all PRD requirements.
+Focus on extracting whatever user experience context exists in the UX document that will be needed
+to create comprehensive, actionable user stories for all PRD requirements.
 </action>
 
 <template-output>context_validation</template-output>
@@ -112,7 +131,8 @@ Focus on extracting whatever user experience context exists in the UX document t
 <step n="1" goal="Design epic structure with full technical context">
 <action>**STRATEGIC EPIC PLANNING WITH COMPLETE CONTEXT:**</action>
 
-<action>Now that you have ALL available context (PRD + Architecture + UX), design epics that deliver incremental user value while leveraging the technical design decisions.
+<action>Now that you have ALL available context (PRD + Architecture + UX), design epics that deliver
+incremental user value while leveraging the technical design decisions.
 
 **EPIC DESIGN PRINCIPLES:**
 
@@ -123,9 +143,9 @@ Focus on extracting whatever user experience context exists in the UX document t
 
 **USE YOUR FULL CONTEXT:**
 
-From PRD: Group related functional requirements that deliver user outcomes
-From Architecture: Respect technical boundaries and integration points
-From UX: Design around user journeys and interaction flows
+From PRD: Group related functional requirements that deliver user outcomes From Architecture:
+Respect technical boundaries and integration points From UX: Design around user journeys and
+interaction flows
 
 **VALID EPIC EXAMPLES:**
 
@@ -174,7 +194,8 @@ This enables all subsequent user-facing epics.
 <step n="2" goal="Create detailed stories with complete implementation context" repeat="for-each-epic">
 <action>**EPIC {{N}} - COMPREHENSIVE STORY CREATION:**</action>
 
-<action>For Epic {{N}}: {{epic_title}}, create bite-sized stories that incorporate ALL available context.
+<action>For Epic {{N}}: {{epic_title}}, create bite-sized stories that incorporate ALL available
+context.
 
 **STORY CREATION WITH FULL CONTEXT:**
 
@@ -186,9 +207,9 @@ For each story, you now have the complete picture:
 
 **TRANSFORM STRATEGIC REQUIREMENTS INTO TACTICAL IMPLEMENTATION:**
 
-PRD says: "Users can create accounts"
-Architecture says: "Use PostgreSQL with bcrypt hashing, JWT tokens, rate limiting"
-UX says: "Modal dialog with email/password fields, real-time validation, loading states"
+PRD says: "Users can create accounts" Architecture says: "Use PostgreSQL with bcrypt hashing, JWT
+tokens, rate limiting" UX says: "Modal dialog with email/password fields, real-time validation,
+loading states"
 
 Your story becomes: Specific implementation details with exact acceptance criteria
 
@@ -237,30 +258,27 @@ Include ALL implementation specifics:
 
 **STORY SIZING PRINCIPLE:**
 
-Each story must be completable by a single dev agent in one focused session. If a story becomes too large, break it down further while maintaining user value.
+Each story must be completable by a single dev agent in one focused session. If a story becomes too
+large, break it down further while maintaining user value.
 
 **EXAMPLE RICH STORY:**
 
 **Story:** User Registration with Email Verification
 
-As a new user, I want to create an account using my email address, So that I can access the platform's features.
+As a new user, I want to create an account using my email address, So that I can access the
+platform's features.
 
-**Acceptance Criteria:**
-Given I am on the landing page
-When I click the "Sign Up" button
-Then the registration modal opens (UX Mockup 3.2)
+**Acceptance Criteria:** Given I am on the landing page When I click the "Sign Up" button Then the
+registration modal opens (UX Mockup 3.2)
 
-And I see email and password fields with proper labels
-And the email field validates RFC 5322 format in real-time
-And the password field shows strength meter (red→yellow→green)
-And I see "Password must be 8+ chars with 1 uppercase, 1 number, 1 special"
+And I see email and password fields with proper labels And the email field validates RFC 5322 format
+in real-time And the password field shows strength meter (red→yellow→green) And I see "Password must
+be 8+ chars with 1 uppercase, 1 number, 1 special"
 
-When I submit valid registration data
-Then POST /api/v1/auth/register is called (Architecture section 4.1)
-And the user record is created in users table with bcrypt hash (Architecture 6.2)
-And a verification email is sent via SendGrid (Architecture 7.3)
-And I see "Check your email for verification link" message
-And I cannot log in until email is verified
+When I submit valid registration data Then POST /api/v1/auth/register is called (Architecture
+section 4.1) And the user record is created in users table with bcrypt hash (Architecture 6.2) And a
+verification email is sent via SendGrid (Architecture 7.3) And I see "Check your email for
+verification link" message And I cannot log in until email is verified
 
 **Technical Notes:**
 
@@ -274,8 +292,8 @@ And I cannot log in until email is verified
 </action>
 
 <action>**Generate all stories for Epic {{N}}**</action>
-<template-output>epic*title*{{N}}</template-output>
-<template-output>epic*goal*{{N}}</template-output>
+<template-output>epic_title_{{N}}</template-output>
+<template-output>epic_goal_{{N}}</template-output>
 
 <action>For each story M in epic {{N}}, generate story content</action>
 <template-output>story*{{N}}*{{M}}</template-output>
@@ -290,9 +308,7 @@ Stories Created: {{count}}
 
 **Technical Context Used:** {{Architecture sections referenced}}
 
-{{if ux_design_content}}
-**UX Patterns Incorporated:** {{UX sections referenced}}
-{{/if}}
+{{if ux_design_content}} **UX Patterns Incorporated:** {{UX sections referenced}} {{/if}}
 
 Ready for checkpoint validation.</output>
 
@@ -302,18 +318,21 @@ Ready for checkpoint validation.</output>
 <step n="3" goal="Final validation and coverage matrix">
 <action>**COMPREHENSIVE VALIDATION WITH FULL CONTEXT:**</action>
 
-<action>Review the complete epic and story breakdown for quality and completeness using ALL available context.
+<action>Review the complete epic and story breakdown for quality and completeness using ALL
+available context.
 
 **FR COVERAGE VALIDATION:**
 
-Create complete FR Coverage Matrix showing every PRD functional requirement mapped to specific stories:
+Create complete FR Coverage Matrix showing every PRD functional requirement mapped to specific
+stories:
 
 - **FR1:** [description] → Epic X, Story X.Y (with implementation details)
 - **FR2:** [description] → Epic Y, Story Y.A (with implementation details)
 - **FR3:** [description] → Epic Z, Story Z.B (with implementation details)
 - ...
 
-**CRITICAL VALIDATION:** Every single FR from the PRD must be covered by at least one story with complete acceptance criteria.
+**CRITICAL VALIDATION:** Every single FR from the PRD must be covered by at least one story with
+complete acceptance criteria.
 
 **ARCHITECTURE INTEGRATION VALIDATION:**
 
@@ -338,8 +357,7 @@ Verify that UX design patterns are properly implemented:
 - Accessibility requirements are met
 - Error states and feedback patterns are implemented
 - Form validation follows UX guidelines
-- Loading states and transitions are implemented
-  {{/if}}
+- Loading states and transitions are implemented {{/if}}
 
 **STORY QUALITY VALIDATION:**
 
@@ -369,13 +387,11 @@ Answer these critical questions:
 **Full Context Incorporated:**
 
 - ✅ PRD functional requirements and scope
-- ✅ Architecture technical decisions and contracts
-  {{if ux_design_content}}
-- ✅ UX Design interaction patterns and specifications
-  {{/if}}
+- ✅ Architecture technical decisions and contracts {{if ux_design_content}}
+- ✅ UX Design interaction patterns and specifications {{/if}}
 
-**FR Coverage:** {{count}} functional requirements mapped to {{story_count}} stories
-**Epic Structure:** {{epic_count}} epics delivering incremental user value
+**FR Coverage:** {{count}} functional requirements mapped to {{story_count}} stories **Epic
+Structure:** {{epic_count}} epics delivering incremental user value
 
 **Ready for Phase 4:** Sprint Planning and Development Implementation
 </output>

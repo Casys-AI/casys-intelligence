@@ -24,7 +24,8 @@
   <ask response="stated_goals">2. Are there any constraints or parameters we should keep in mind?</ask>
   <ask>3. Is the goal broad exploration or focused ideation on specific aspects?</ask>
 
-<critical>Wait for user response before proceeding. This context shapes the entire session.</critical>
+<critical>Wait for user response before proceeding. This context shapes the entire
+session.</critical>
 </check>
 
 <template-output>session_topic, stated_goals</template-output>
@@ -44,7 +45,7 @@ Based on the context from Step 1, present these four approach options:
 Which approach would you prefer? (Enter 1-4)
 </ask>
 
-  <step n="2a" title="User-Selected Techniques" if="selection==1">
+<step n="2a" title="User-Selected Techniques" if="selection==1">
     <action>Load techniques from {brain_techniques} CSV file</action>
     <action>Parse: category, technique_name, description, facilitation_prompts</action>
 
@@ -71,9 +72,9 @@ Which approach would you prefer? (Enter 1-4)
 
     Ask in your own voice: "Which technique(s) interest you? You can choose by name, number, or tell me what you're drawn to."
 
-  </step>
+</step>
 
-  <step n="2b" title="AI-Recommended Techniques" if="selection==2">
+<step n="2b" title="AI-Recommended Techniques" if="selection==2">
     <action>Review {brain_techniques} and select 3-5 techniques that best fit the context</action>
 
     Analysis Framework:
@@ -119,9 +120,9 @@ Which approach would you prefer? (Enter 1-4)
 
     Ready to start? [c] or would you prefer different techniques? [r]"
 
-  </step>
+</step>
 
-  <step n="2c" title="Single Random Technique Selection" if="selection==3">
+<step n="2c" title="Single Random Technique Selection" if="selection==3">
     <action>Load all techniques from {brain_techniques} CSV</action>
     <action>Select random technique using true randomization</action>
     <action>Build excitement about unexpected choice</action>
@@ -131,7 +132,7 @@ Which approach would you prefer? (Enter 1-4)
     </format>
   </step>
 
-  <step n="2d" title="Progressive Flow" if="selection==4">
+<step n="2d" title="Progressive Flow" if="selection==4">
     <action>Design a progressive journey through {brain_techniques} based on session context</action>
     <action>Analyze stated_goals and session_topic from Step 1</action>
     <action>Determine session length (ask if not stated)</action>
@@ -156,7 +157,7 @@ Which approach would you prefer? (Enter 1-4)
 
     Ask in your own voice: "How does this flow sound? We can adjust as we go."
 
-  </step>
+</step>
 
 </step>
 
@@ -252,7 +253,8 @@ Analyze the session to identify deeper patterns:
 
 1. **Identify recurring themes** - What concepts appeared across multiple techniques? -> key_themes
 2. **Surface key insights** - What realizations emerged during the process? -> insights_learnings
-3. **Note surprising connections** - What unexpected relationships were discovered? -> insights_learnings
+3. **Note surprising connections** - What unexpected relationships were discovered? ->
+   insights_learnings
 
 <invoke-task halt="true">{project-root}/bmad/core/tasks/adv-elicit.xml</invoke-task>
 
@@ -277,9 +279,12 @@ For each priority:
 3. Determine resource needs
 4. Set realistic timeline
 
-<template-output>priority_1_name, priority_1_rationale, priority_1_steps, priority_1_resources, priority_1_timeline</template-output>
-<template-output>priority_2_name, priority_2_rationale, priority_2_steps, priority_2_resources, priority_2_timeline</template-output>
-<template-output>priority_3_name, priority_3_rationale, priority_3_steps, priority_3_resources, priority_3_timeline</template-output>
+<template-output>priority_1_name, priority_1_rationale, priority_1_steps, priority_1_resources,
+priority_1_timeline</template-output>
+<template-output>priority_2_name, priority_2_rationale, priority_2_steps, priority_2_resources,
+priority_2_timeline</template-output>
+<template-output>priority_3_name, priority_3_rationale, priority_3_steps, priority_3_resources,
+priority_3_timeline</template-output>
 
 </step>
 
@@ -293,7 +298,8 @@ Conclude with meta-analysis of the session:
 4. **Emergent questions** - What new questions arose that we should address?
 5. **Next session planning** - When and what should we brainstorm next?
 
-<template-output>what_worked, areas_exploration, recommended_techniques, questions_emerged</template-output>
+<template-output>what_worked, areas_exploration, recommended_techniques,
+questions_emerged</template-output>
 <template-output>followup_topics, timeframe, preparation</template-output>
 
 </step>

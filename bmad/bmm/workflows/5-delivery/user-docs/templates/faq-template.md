@@ -83,6 +83,7 @@ See our [Getting Started guide](./getting-started.md) for step-by-step instructi
 {answer_common_error}
 
 **Solution:**
+
 1. {solution_step_1}
 2. {solution_step_2}
 

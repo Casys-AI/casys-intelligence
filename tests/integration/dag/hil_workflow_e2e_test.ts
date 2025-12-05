@@ -18,7 +18,7 @@ import { PGliteClient } from "../../../src/db/client.ts";
 import { ControlledExecutor } from "../../../src/dag/controlled-executor.ts";
 import type { DAGStructure } from "../../../src/graphrag/types.ts";
 import type { ExecutionEvent } from "../../../src/dag/types.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 /**
  * Setup test database with migrations
@@ -88,7 +88,7 @@ Deno.test("E2E HIL Workflow: Human approves continuation", async () => {
       if (event.type === "decision_required" && event.decision_type === "HIL") {
         hilEventReceived = true;
         // Get checkpoint ID from most recent checkpoint event
-        const lastCheckpoint = events.filter(e => e.type === "checkpoint").slice(-1)[0];
+        const lastCheckpoint = events.filter((e) => e.type === "checkpoint").slice(-1)[0];
         if (lastCheckpoint) {
           const checkpointId = (lastCheckpoint as any).checkpoint_id;
           // Send approval
@@ -180,7 +180,7 @@ Deno.test("E2E HIL Workflow: Human rejects and workflow aborts", async () => {
 
         // Human rejects the dangerous operation
         if (event.type === "decision_required" && event.decision_type === "HIL") {
-          const lastCheckpoint = events.filter(e => e.type === "checkpoint").slice(-1)[0];
+          const lastCheckpoint = events.filter((e) => e.type === "checkpoint").slice(-1)[0];
           if (lastCheckpoint) {
             setTimeout(() => {
               executor.enqueueCommand({

@@ -1,25 +1,26 @@
 ---
-name: 'step-07-installation-guidance'
-description: 'Configure installation guidance for tools that require setup'
+name: "step-07-installation-guidance"
+description: "Configure installation guidance for tools that require setup"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-07-installation-guidance.md'
-nextStepFile: '{workflow_path}/steps/step-08-tools-summary.md'
-workflowFile: '{workflow_path}/workflow.md'
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
+thisStepFile: "{workflow_path}/steps/step-07-installation-guidance.md"
+nextStepFile: "{workflow_path}/steps/step-08-tools-summary.md"
+workflowFile: "{workflow_path}/workflow.md"
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
 
 # Documentation References
-commonToolsCsv: '{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv'
+commonToolsCsv: "{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv"
 ---
 
 # Step 7: Installation Guidance Configuration
 
 ## STEP GOAL:
 
-Configure installation guidance for any selected tools that require setup, ensuring users can successfully prepare their environment.
+Configure installation guidance for any selected tools that require setup, ensuring users can
+successfully prepare their environment.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -48,7 +49,8 @@ Configure installation guidance for any selected tools that require setup, ensur
 
 "Configuring **Installation Guidance**
 
-Let's ensure users can successfully set up any tools your workflow requires. This prevents runtime errors and improves user experience."
+Let's ensure users can successfully set up any tools your workflow requires. This prevents runtime
+errors and improves user experience."
 
 ### 2. Identify Installation Requirements
 
@@ -116,16 +118,13 @@ Append to {workflowPlanFile}:
 
 ### Installation Approach
 
-**Selected Approach:** [detailed steps/user instructions/assume pre-installed]
-**Tools Requiring Installation:** [list with URLs]
-**Installation Step Placement:** [early in workflow, after setup]
+**Selected Approach:** [detailed steps/user instructions/assume pre-installed] **Tools Requiring
+Installation:** [list with URLs] **Installation Step Placement:** [early in workflow, after setup]
 
 ### Installation Content
 
-**Prerequisites:** [system requirements]
-**Setup Steps:** [commands and procedures]
-**Verification:** [testing procedures]
-**User Support:** [troubleshooting guidance]
+**Prerequisites:** [system requirements] **Setup Steps:** [commands and procedures]
+**Verification:** [testing procedures] **User Support:** [troubleshooting guidance]
 ```
 
 ### 6. Menu Options
@@ -134,12 +133,14 @@ Display: **Select an Option:** [C] Continue to Tools Summary [M] Modify Installa
 
 #### Menu Handling Logic:
 
-- IF C: Append installation configuration to {workflowPlanFile}, update frontmatter, then load {nextStepFile}
+- IF C: Append installation configuration to {workflowPlanFile}, update frontmatter, then load
+  {nextStepFile}
 - IF M: Refine installation approach
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and installation guidance is documented will you load {nextStepFile} to complete tools configuration.
+ONLY WHEN C is selected and installation guidance is documented will you load {nextStepFile} to
+complete tools configuration.
 
 ---
 

@@ -9,16 +9,16 @@
 
 export {
   EmbeddingModel,
-  generateEmbeddings,
   generateEmbeddingForTool,
+  generateEmbeddings,
   schemaToText,
 } from "./embeddings.ts";
 
 export type {
-  ToolSchema,
-  ToolEmbeddingInput,
   EmbeddingGenerationResult,
   EmbeddingStats,
+  ToolEmbeddingInput,
+  ToolSchema,
 } from "./embeddings.ts";
 
 export { VectorSearch } from "./search.ts";

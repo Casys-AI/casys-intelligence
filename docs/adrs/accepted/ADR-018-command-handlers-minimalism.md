@@ -1,20 +1,23 @@
 # ADR-018: Command Handlers Minimalism - Unified Control Plane
 
 ## Status
+
 **SUPERSEDED** - 2025-11-25 by ADR-020
 
-> This ADR documented initial command handler minimalism decisions.
-> See **ADR-020: AIL Control Protocol** for the consolidated architecture.
+> This ADR documented initial command handler minimalism decisions. See **ADR-020: AIL Control
+> Protocol** for the consolidated architecture.
 
 **History:**
+
 - 2025-11-24: APPROVED
 - 2025-11-24: Updated (Clarified for internal native agents - Level 2 AIL)
 - 2025-11-25: Updated (Commands exposed as MCP meta-tools for Level 1 external agents)
 - 2025-11-25: SUPERSEDED by ADR-020
 
-> **⚠️ ARCHITECTURE UPDATE 2025-11-25:**
-> The 4 command handlers serve **two purposes**:
-> 1. **Level 1 (External MCP agents)**: Exposed as MCP meta-tools (`agentcards:continue`, `agentcards:abort`, `agentcards:replan_dag`, `agentcards:approval_response`)
+> **⚠️ ARCHITECTURE UPDATE 2025-11-25:** The 4 command handlers serve **two purposes**:
+>
+> 1. **Level 1 (External MCP agents)**: Exposed as MCP meta-tools (`agentcards:continue`,
+>    `agentcards:abort`, `agentcards:replan_dag`, `agentcards:approval_response`)
 > 2. **Level 2 (Internal native agents)**: Used via CommandQueue for async control
 
 ## Context
@@ -31,10 +34,13 @@ During implementation of Epic 2.5 (Adaptive DAG Feedback Loops), we discovered:
 ### Use Cases for Commands
 
 **Level 1 - External MCP agents (Claude Code)**:
-- ✅ Via MCP meta-tools: `agentcards:continue`, `agentcards:abort`, `agentcards:replan_dag`, `agentcards:approval_response`
+
+- ✅ Via MCP meta-tools: `agentcards:continue`, `agentcards:abort`, `agentcards:replan_dag`,
+  `agentcards:approval_response`
 - ✅ HTTP Request/Response pattern (MCP compatible)
 
 **Level 2 - Internal native agents (JS/TS in Gateway)**:
+
 - ✅ Via CommandQueue (async message passing)
 - ✅ SSE events + Commands pattern
 - ✅ Multi-agent collaboration
@@ -43,17 +49,20 @@ During implementation of Epic 2.5 (Adaptive DAG Feedback Loops), we discovered:
 - ✅ LLM agents via API directe
 
 **NOT for**:
+
 - ❌ Embedded MCP agents (agent delegation tasks) - use task output (ADR-019 Level 3)
 
 ### Evidence-Based Analysis
 
 **Documents analyzed:**
+
 1. `docs/architecture.md` - Details `replan_dag` as primary mechanism
 2. `docs/spikes/spike-agent-human-dag-feedback-loop.md` - Proposes 6 commands, tests 1
 3. `docs/stories/story-2.5-4.md` - Proposes 8 handlers (4 existing + 4 new)
 4. **Comprehensive discussion 2025-11-24**: Identified internal agent use cases
 
-**Key Insight:** Commands = **internal control plane** for native agents, not external MCP communication.
+**Key Insight:** Commands = **internal control plane** for native agents, not external MCP
+communication.
 
 ---
 
@@ -61,7 +70,8 @@ During implementation of Epic 2.5 (Adaptive DAG Feedback Loops), we discovered:
 
 ### Core Principle: Commands as Internal Control Plane
 
-**We adopt a minimalist command handler set (4 commands) for internal native agent control. Commands enable autonomous agents (Level 2 AIL) to control workflow execution via async message passing.**
+**We adopt a minimalist command handler set (4 commands) for internal native agent control. Commands
+enable autonomous agents (Level 2 AIL) to control workflow execution via async message passing.**
 
 ### Architecture Context
 
@@ -89,13 +99,14 @@ for await (const event of stream) {
     // ✅ Agent enqueues command (internal control plane)
     commandQueue.enqueue({
       type: decision.action,
-      ...decision.params
+      ...decision.params,
     });
   }
 }
 ```
 
 **Key difference from external agents:**
+
 - External MCP agents: Cannot receive SSE → Use Gateway HTTP (Level 1)
 - Internal native agents: Can receive SSE → Use commands (Level 2)
 
@@ -112,14 +123,14 @@ interface ContinueCommand {
 }
 ```
 
-**Purpose**: Internal agent signals workflow should continue
-**Use Case**:
+**Purpose**: Internal agent signals workflow should continue **Use Case**:
+
 - ✅ Internal agent validates layer results → continue
 - ✅ Multi-agent consensus → continue
-- ✅ Rule-based decision engine → conditions met → continue
-**Status**: ✅ Implemented (Story 2.5-3)
+- ✅ Rule-based decision engine → conditions met → continue **Status**: ✅ Implemented (Story 2.5-3)
 
 **Example**:
+
 ```typescript
 // Internal rule-based agent
 class RuleBasedAgent {
@@ -142,14 +153,14 @@ interface AbortCommand {
 }
 ```
 
-**Purpose**: Internal agent signals workflow should terminate
-**Use Case**:
+**Purpose**: Internal agent signals workflow should terminate **Use Case**:
+
 - ✅ Internal agent detects unrecoverable error → abort
 - ✅ Security agent detects threat → abort
-- ✅ Cost agent exceeds budget → abort
-**Status**: ✅ Implemented (Story 2.5-3)
+- ✅ Cost agent exceeds budget → abort **Status**: ✅ Implemented (Story 2.5-3)
 
 **Example**:
+
 ```typescript
 // Multi-agent with security agent
 class SecurityAgent {
@@ -158,7 +169,7 @@ class SecurityAgent {
     if (threat.severity === "critical") {
       return {
         type: "abort",
-        reason: `Security threat detected: ${threat.description}`
+        reason: `Security threat detected: ${threat.description}`,
       };
     }
   }
@@ -172,40 +183,41 @@ class SecurityAgent {
 ```typescript
 interface ReplanDAGCommand {
   type: "replan_dag";
-  new_requirement: string;           // Natural language goal
+  new_requirement: string; // Natural language goal
   available_context: Record<string, unknown>; // Discovered data
 }
 ```
 
-**Purpose**: Internal agent triggers workflow replanning via GraphRAG
-**Use Case**:
+**Purpose**: Internal agent triggers workflow replanning via GraphRAG **Use Case**:
+
 - ✅ Progressive discovery (agent finds XML → replan to add parser)
 - ✅ Error recovery (agent detects API failure → replan with fallback)
-- ✅ Optimization (performance agent suggests better tools)
-**Implementation**: `DAGSuggester.replanDAG()` queries knowledge graph
-**Status**: ✅ Implemented, tested
+- ✅ Optimization (performance agent suggests better tools) **Implementation**:
+  `DAGSuggester.replanDAG()` queries knowledge graph **Status**: ✅ Implemented, tested
 
 **Why This is Better**:
+
 - Intent-based (natural language) not manual task construction
 - Uses GraphRAG intelligence (learns patterns over time)
 - Type-safe (GraphRAG validates tools exist)
 - Optimized paths (PageRank ranking)
 
 **Example**:
+
 ```typescript
 // Internal agent with progressive discovery
 class DiscoveryAgent {
   async decide(context) {
     const files = context.layerResults.files;
-    const hasXML = files.some(f => f.endsWith('.xml'));
+    const hasXML = files.some((f) => f.endsWith(".xml"));
 
     if (hasXML && !this.hasXMLParser(context)) {
       return {
         type: "replan_dag",
         new_requirement: "Parse XML files discovered in directory",
         available_context: {
-          xml_files: files.filter(f => f.endsWith('.xml'))
-        }
+          xml_files: files.filter((f) => f.endsWith(".xml")),
+        },
       };
     }
   }
@@ -225,11 +237,11 @@ interface ApprovalResponseCommand {
 }
 ```
 
-**Purpose**: Human approval/rejection at HIL checkpoints
-**Use Case**: Critical operations (DELETE, WRITE), safety validation
-**Status**: ✅ Implemented, tested
+**Purpose**: Human approval/rejection at HIL checkpoints **Use Case**: Critical operations (DELETE,
+WRITE), safety validation **Status**: ✅ Implemented, tested
 
 **Note**: HIL is hybrid pattern:
+
 - Internal agent can enqueue approval_response for automated HIL
 - Human can also enqueue via admin UI
 - Both use same command interface
@@ -317,7 +329,7 @@ The 4 commands are exposed as MCP meta-tools for external agents (Claude Code):
 // 1. Start workflow with per-layer validation
 let response = await agentcards.execute_workflow({
   intent: "Analyze codebase for security issues",
-  config: { per_layer_validation: true }
+  config: { per_layer_validation: true },
 });
 
 // 2. Loop until complete
@@ -330,19 +342,19 @@ while (response.status === "layer_complete") {
     response = await agentcards.replan_dag({
       workflow_id: response.workflow_id,
       new_requirement: "Add XML parser for config files",
-      available_context: { xml_files: analysis.discoveredFiles }
+      available_context: { xml_files: analysis.discoveredFiles },
     });
   } else if (analysis.criticalIssue) {
     // Abort: Stop execution
     response = await agentcards.abort({
       workflow_id: response.workflow_id,
-      reason: "Critical security issue found"
+      reason: "Critical security issue found",
     });
     break;
   } else {
     // Continue: Proceed to next layer
     response = await agentcards.continue({
-      workflow_id: response.workflow_id
+      workflow_id: response.workflow_id,
     });
   }
 }
@@ -368,6 +380,7 @@ Layer 0 → [Checkpoint sauvegardé] → Layer 1 → [Checkpoint] → CRASH
 ```
 
 **Réponse:** `checkpoint_response`
+
 ```typescript
 {
   type: "checkpoint_response",
@@ -378,6 +391,7 @@ Layer 0 → [Checkpoint sauvegardé] → Layer 1 → [Checkpoint] → CRASH
 ```
 
 **Use cases:**
+
 - `continue` - reprendre l'exécution normalement
 - `rollback` - revenir à un état précédent (ex: layer N-1)
 - `modify` - modifier le state avant de reprendre
@@ -395,6 +409,7 @@ Layer 2 → [PAUSE: "About to DELETE 500 files"] → Humain approuve → Layer 3
 ```
 
 **Réponse:** `approval_response`
+
 ```typescript
 {
   type: "approval_response",
@@ -405,6 +420,7 @@ Layer 2 → [PAUSE: "About to DELETE 500 files"] → Humain approuve → Layer 3
 ```
 
 **Use cases:**
+
 - `approved: true` - oui, continue l'opération
 - `approved: false` - non, abort le workflow
 
@@ -414,13 +430,13 @@ Layer 2 → [PAUSE: "About to DELETE 500 files"] → Humain approuve → Layer 3
 
 ### Différence clé
 
-| Aspect | Fault Tolerance | HIL Approval |
-|--------|-----------------|--------------|
-| **But** | Reprise après crash | Sécurité opérationnelle |
-| **Déclencheur** | Automatique (chaque layer) | Opération critique |
-| **Qui répond** | Système ou agent | Humain (ou agent autorisé) |
-| **Options** | continue/rollback/modify | approved yes/no |
-| **Command** | `checkpoint_response` | `approval_response` |
+| Aspect          | Fault Tolerance            | HIL Approval               |
+| --------------- | -------------------------- | -------------------------- |
+| **But**         | Reprise après crash        | Sécurité opérationnelle    |
+| **Déclencheur** | Automatique (chaque layer) | Opération critique         |
+| **Qui répond**  | Système ou agent           | Humain (ou agent autorisé) |
+| **Options**     | continue/rollback/modify   | approved yes/no            |
+| **Command**     | `checkpoint_response`      | `approval_response`        |
 
 **Ces deux mécanismes ne sont PAS redondants** - ils adressent des besoins différents.
 
@@ -432,12 +448,13 @@ Layer 2 → [PAUSE: "About to DELETE 500 files"] → Humain approuve → Layer 3
 
 **Original reason:** Pensé redondant avec `replan_dag` (intent-based)
 
-**Révision 2025-11-25:** `inject_tasks` n'est PAS redondant - il permet à l'agent de contrôler précisément les tasks à ajouter quand il connaît les tools disponibles.
+**Révision 2025-11-25:** `inject_tasks` n'est PAS redondant - il permet à l'agent de contrôler
+précisément les tasks à ajouter quand il connaît les tools disponibles.
 
-| Command | Qui décide | Use case |
-|---------|------------|----------|
-| `replan_dag` | GraphRAG | Agent dit "j'ai besoin de parser XML" → GraphRAG choisit le tool |
-| `inject_tasks` | Agent | Agent connaît le tool exact et construit la task manuellement |
+| Command        | Qui décide | Use case                                                         |
+| -------------- | ---------- | ---------------------------------------------------------------- |
+| `replan_dag`   | GraphRAG   | Agent dit "j'ai besoin de parser XML" → GraphRAG choisit le tool |
+| `inject_tasks` | Agent      | Agent connaît le tool exact et construit la task manuellement    |
 
 **Status:** Déféré (YAGNI) mais pourrait être ajouté si besoin prouvé.
 
@@ -450,6 +467,7 @@ Layer 2 → [PAUSE: "About to DELETE 500 files"] → Humain approuve → Layer 3
 **Reason**: Safe-to-fail pattern (Epic 3.5) couvre ce use case
 
 **Example**:
+
 ```typescript
 // INSTEAD OF: Explicit skip command
 commandQueue.enqueue({ type: "skip_layer", target: "next" });
@@ -473,12 +491,13 @@ commandQueue.enqueue({ type: "skip_layer", target: "next" });
 **Reason**: Pas de workflow HIL correction prouvé pour le moment
 
 **Use case potentiel:**
+
 ```typescript
 // HIL correction: Human veut modifier les args avant exécution
 commandQueue.enqueue({
   type: "modify_args",
   task_id: "create_issue",
-  new_arguments: { assignee: "correct-username" }
+  new_arguments: { assignee: "correct-username" },
 });
 ```
 
@@ -491,12 +510,13 @@ commandQueue.enqueue({
 **Reason**: Géré automatiquement par l'executor (retry avec backoff)
 
 **Use case potentiel:**
+
 ```typescript
 // Manual retry avec config custom
 commandQueue.enqueue({
   type: "retry_task",
   task_id: "api_call",
-  backoff_ms: 5000
+  backoff_ms: 5000,
 });
 ```
 
@@ -510,12 +530,13 @@ commandQueue.enqueue({
 
 Voir section "Clarification: Two Types of Checkpoints" ci-dessus.
 
-| Command | Type checkpoint | Options |
-|---------|-----------------|---------|
+| Command               | Type checkpoint                  | Options                  |
+| --------------------- | -------------------------------- | ------------------------ |
 | `checkpoint_response` | Fault tolerance (crash recovery) | continue/rollback/modify |
-| `approval_response` | HIL approval (sécurité) | approved yes/no |
+| `approval_response`   | HIL approval (sécurité)          | approved yes/no          |
 
-**Status:** ✅ Types définis dans `src/dag/types.ts` (lines 282-287). Handler à implémenter (Story 2.5-4).
+**Status:** ✅ Types définis dans `src/dag/types.ts` (lines 282-287). Handler à implémenter (Story
+2.5-4).
 
 ---
 
@@ -527,9 +548,9 @@ Voir section "Clarification: Two Types of Checkpoints" ci-dessus.
 // Internal state machine agent
 class RuleBasedAgent {
   decide(context: {
-    layerResults: any[],
-    completedLayers: number,
-    errors: any[]
+    layerResults: any[];
+    completedLayers: number;
+    errors: any[];
   }) {
     // Business logic rules
     if (context.errors.length > 3) {
@@ -540,14 +561,12 @@ class RuleBasedAgent {
       return { type: "abort", reason: "Workflow too long" };
     }
 
-    const hasXML = context.layerResults.some(r =>
-      r.files?.some(f => f.endsWith('.xml'))
-    );
+    const hasXML = context.layerResults.some((r) => r.files?.some((f) => f.endsWith(".xml")));
 
     if (hasXML && !this.hasXMLParser(context)) {
       return {
         type: "replan_dag",
-        new_requirement: "Add XML parser"
+        new_requirement: "Add XML parser",
       };
     }
 
@@ -578,7 +597,7 @@ class MultiAgentWorkflow {
   private agents = {
     security: new SecurityAgent(),
     performance: new PerformanceAgent(),
-    cost: new CostAgent()
+    cost: new CostAgent(),
   };
 
   async execute(dag) {
@@ -590,7 +609,7 @@ class MultiAgentWorkflow {
         const decisions = await Promise.all([
           this.agents.security.review(event),
           this.agents.performance.review(event),
-          this.agents.cost.review(event)
+          this.agents.cost.review(event),
         ]);
 
         // Aggregate decisions
@@ -600,12 +619,12 @@ class MultiAgentWorkflow {
         if (consensus.shouldAbort) {
           commandQueue.enqueue({
             type: "abort",
-            reason: consensus.reasons.join("; ")
+            reason: consensus.reasons.join("; "),
           });
         } else if (consensus.shouldOptimize) {
           commandQueue.enqueue({
             type: "replan_dag",
-            new_requirement: consensus.optimization
+            new_requirement: consensus.optimization,
           });
         } else {
           commandQueue.enqueue({ type: "continue" });
@@ -643,7 +662,7 @@ class BackgroundAutonomousWorkflow {
           // Agent enqueues command autonomously
           commandQueue.enqueue({
             type: decision.action,
-            ...decision.params
+            ...decision.params,
           });
         }
 
@@ -651,7 +670,7 @@ class BackgroundAutonomousWorkflow {
           // Auto-recovery
           commandQueue.enqueue({
             type: "replan_dag",
-            new_requirement: "Recover from error: " + event.error
+            new_requirement: "Recover from error: " + event.error,
           });
         }
       }
@@ -684,8 +703,8 @@ class LLMInternalAgent {
 
         Options: continue, replan (with requirement), abort (with reason)
 
-        Decide:`
-      }]
+        Decide:`,
+      }],
     });
 
     return this.parseDecision(response.content);
@@ -712,26 +731,31 @@ async function executeWithLLM(dag) {
 ### Positive
 
 ✅ **Internal Autonomy Enabled**
+
 - Native agents can control workflow execution
 - Async message passing (actor model pattern)
 - No HTTP interruption (continuous flow)
 
 ✅ **Multi-Agent Collaboration**
+
 - Multiple agents decide in parallel
 - Command queue as message bus
 - Decoupled architecture
 
 ✅ **Background Workflows**
+
 - Long-running autonomous workflows
 - Auto-recovery mechanisms
 - No human supervision required
 
 ✅ **Future-Ready Architecture**
+
 - Actor model pattern
 - Extensible control plane
 - Proven design pattern
 
 ✅ **Replan-First Pattern**
+
 - `replan_dag` as primary mechanism
 - Intent-based (GraphRAG intelligence)
 - Learns patterns over time
@@ -739,11 +763,13 @@ async function executeWithLLM(dag) {
 ### Negative
 
 ⚠️ **Must Fix BUG-001**
+
 - Race condition in CommandQueue.processCommands()
 - Blocking for internal agent use
 - **Resolution**: Story 2.5-4 includes fix
 
 ⚠️ **Complexity**
+
 - Two orchestration modes (HTTP + Commands)
 - Must document clearly which mode for which use case
 - **Mitigation**: ADR-019 clarifies three levels
@@ -751,6 +777,7 @@ async function executeWithLLM(dag) {
 ### Neutral
 
 🔄 **Story 2.5-3 Value Preserved**
+
 - SSE pattern useful for internal agents
 - CommandQueue useful for internal control
 - Not wasted implementation (originally thought incompatible)
@@ -762,17 +789,20 @@ async function executeWithLLM(dag) {
 ### Story 2.5-4 Scope
 
 **Part 1: Fix BUG-001 (2h)**
+
 - Fix race condition in CommandQueue.processCommands()
 - Integration tests (10 commands → verify all processed)
 - Concurrency tests (parallel enqueue/dequeue)
 
 **Part 2: Gateway HTTP (4-6h)**
+
 - Pre-execution confidence check (Level 1 AIL)
 - Per-layer HTTP validation
 - Replanning via HTTP
 - External MCP agent flow (no commands)
 
 **Part 3: Documentation (1h)**
+
 - Update Story 2.5-3 (commands for internal agents)
 - Update ADR-019 (three-level clarification)
 - Examples for both modes (HTTP vs Commands)
@@ -793,9 +823,8 @@ async function executeWithLLM(dag) {
 **Conditions to reconsider deferred handlers:**
 
 **`inject_tasks`**: If >5 use cases where agent needs precise tool control (not GraphRAG)
-**`skip_layer`**: If >5 use cases where safe-to-fail insufficient
-**`modify_args`**: If >3 requests for HIL correction workflow
-**`retry_task`**: If >3 use cases where auto-retry insufficient
+**`skip_layer`**: If >5 use cases where safe-to-fail insufficient **`modify_args`**: If >3 requests
+for HIL correction workflow **`retry_task`**: If >3 use cases where auto-retry insufficient
 
 **Review Date**: 2026-02-24 (3 months post-Epic 2.5 completion)
 
@@ -803,8 +832,7 @@ async function executeWithLLM(dag) {
 
 ## Approval
 
-**Author**: BMad + Claude Sonnet 4.5
-**Date**: 2025-11-24
-**Status**: APPROVED
+**Author**: BMad + Claude Sonnet 4.5 **Date**: 2025-11-24 **Status**: APPROVED
 
-**Decision**: Adopt **4 core command handlers** as internal control plane for native agents (Level 2 AIL). Commands enable autonomous agent orchestration via async message passing.
+**Decision**: Adopt **4 core command handlers** as internal control plane for native agents (Level 2
+AIL). Commands enable autonomous agent orchestration via async message passing.

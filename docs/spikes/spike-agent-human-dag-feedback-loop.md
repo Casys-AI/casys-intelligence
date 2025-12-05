@@ -1,31 +1,42 @@
 # Spike: Agent & Human-in-the-Loop DAG Feedback Loop
 
-**Date:** 2025-11-13
-**Author:** BMad
-**Status:** Exploration
-**Epic:** 2.5 (Agent-Controlled DAG Execution)
-**Reviewers:** Winston (Architect), John (PM)
+**Date:** 2025-11-13 **Author:** BMad **Status:** Exploration **Epic:** 2.5 (Agent-Controlled DAG
+Execution) **Reviewers:** Winston (Architect), John (PM)
 
-> **⚠️ UPDATE 2025-11-24:** This spike initially proposed 6 command handlers and SSE streaming pattern for AIL/HIL. After implementation (Story 2.5-3) and comprehensive analysis, architectural decisions were formalized:
-> - **ADR-018: Command Handlers Minimalism** - Only 4 handlers needed (continue, abort, replan_dag, approval_response), 4 deferred (inject_tasks, skip_layer, modify_args, checkpoint_response) per YAGNI
-> - **ADR-019: Two-Level AIL Architecture** - SSE streaming pattern incompatible with MCP one-shot protocol. Use Gateway HTTP response pattern (Level 1) + Agent Delegation tasks (Level 3) instead.
+> **⚠️ UPDATE 2025-11-24:** This spike initially proposed 6 command handlers and SSE streaming
+> pattern for AIL/HIL. After implementation (Story 2.5-3) and comprehensive analysis, architectural
+> decisions were formalized:
 >
-> **Spike remains valuable** for architectural concepts (3-Loop Learning, Progressive Discovery, Multi-Turn State), but implementation details superseded by ADRs.
+> - **ADR-018: Command Handlers Minimalism** - Only 4 handlers needed (continue, abort, replan_dag,
+>   approval_response), 4 deferred (inject_tasks, skip_layer, modify_args, checkpoint_response) per
+>   YAGNI
+> - **ADR-019: Two-Level AIL Architecture** - SSE streaming pattern incompatible with MCP one-shot
+>   protocol. Use Gateway HTTP response pattern (Level 1) + Agent Delegation tasks (Level 3)
+>   instead.
+>
+> **Spike remains valuable** for architectural concepts (3-Loop Learning, Progressive Discovery,
+> Multi-Turn State), but implementation details superseded by ADRs.
 
 ---
 
 ## Executive Summary
 
-**Problem:** Le DAG executor actuel suit un pattern "fire-and-forget" qui empêche l'agent LLM ET l'utilisateur humain de réagir pendant l'exécution. Une fois le DAG lancé, il s'exécute jusqu'au bout sans possibilité d'intervention, de validation, ou d'ajustement dynamique.
+**Problem:** Le DAG executor actuel suit un pattern "fire-and-forget" qui empêche l'agent LLM ET
+l'utilisateur humain de réagir pendant l'exécution. Une fois le DAG lancé, il s'exécute jusqu'au
+bout sans possibilité d'intervention, de validation, ou d'ajustement dynamique.
 
-**Proposed Solution:** Architecture "Controlled Execution with Multi-Turn Feedback Loop" permettant interactions continues entre Agent ↔ System ↔ Human pendant l'exécution du DAG, avec **Speculative Execution** pour optimiser latence.
+**Proposed Solution:** Architecture "Controlled Execution with Multi-Turn Feedback Loop" permettant
+interactions continues entre Agent ↔ System ↔ Human pendant l'exécution du DAG, avec **Speculative
+Execution** pour optimiser latence.
 
 **Key Benefits:**
+
 - 🤖 **Agent autonomy:** Agent peut adapter le plan selon résultats intermédiaires
 - 👤 **Human oversight:** Utilisateur peut valider, corriger, ou arrêter à tout moment
 - 🔄 **Adaptive workflows:** Plans dynamiques basés sur feedback réel
 - 🛡️ **Safety:** Validation humaine pour opérations critiques
-- ⚡ **Speculative execution:** GraphRAG prédit + execute next nodes pendant agent thinking (23-30% faster)
+- ⚡ **Speculative execution:** GraphRAG prédit + execute next nodes pendant agent thinking (23-30%
+  faster)
 
 ---
 
@@ -63,20 +74,24 @@
 ### Problèmes Identifiés
 
 **1. Agent ne peut pas réagir aux résultats intermédiaires**
+
 - Après `read_f1`: "Ce fichier est 10GB, pas adapté"
 - Trop tard: `read_f2` déjà lancé en parallèle
 
 **2. Utilisateur ne peut pas intervenir**
+
 - Détecte erreur dans Layer 1 mais ne peut pas arrêter
 - Veut valider avant opération dangereuse (DELETE, WRITE)
 - Souhaite voir résultats partiels avant continuer
 
 **3. Plans rigides, pas d'adaptation**
+
 - Agent génère plan complet AVANT d'avoir des infos
 - Découverte progressive impossible (e.g., "besoin d'un parser XML")
 - Pas de conditional branching basé sur résultats
 
 **4. Pas de feedback loop pour apprentissage**
+
 - User corrige résultats mais agent ne voit pas la correction
 - Pas de "verify-then-proceed" workflows
 - Impossible de faire "human-in-the-loop" pour décisions critiques
@@ -185,10 +200,14 @@ SOLUTION DÉSIRÉE:
 ### Le problème de la décision
 
 **Question centrale:** Comment le système décide-t-il entre:
-- **Mode A (Complete):** Générer DAG complet upfront → Execute tout d'un coup (workflow-level speculation)
-- **Mode B (Progressive):** Construire DAG noeud par noeud → Multi-turn avec agent feedback (node-level speculation)
+
+- **Mode A (Complete):** Générer DAG complet upfront → Execute tout d'un coup (workflow-level
+  speculation)
+- **Mode B (Progressive):** Construire DAG noeud par noeud → Multi-turn avec agent feedback
+  (node-level speculation)
 
 **Qui décide?** Il y a 3 acteurs:
+
 1. **GraphRAG** - Analyse patterns historiques → Donne confidence score
 2. **Agent LLM (Claude)** - Auto-évalue sa compréhension → Peut override
 3. **System** - Combine les deux → Décision finale
@@ -209,9 +228,8 @@ interface ExecutionDecision {
 }
 
 async function decideExecutionMode(
-  userIntent: string
+  userIntent: string,
 ): Promise<ExecutionDecision> {
-
   // 1. GraphRAG analyse (patterns historiques)
   const graphRAGAnalysis = await graphRAG.analyzeIntent(userIntent);
   // {
@@ -229,7 +247,7 @@ async function decideExecutionMode(
   // 2. Agent LLM auto-évaluation
   const agentAssessment = await agent.assess({
     intent: userIntent,
-    graphRAGSuggestion: graphRAGAnalysis.suggestion
+    graphRAGSuggestion: graphRAGAnalysis.suggestion,
   });
   // {
   //   confidence: 0.75,
@@ -241,45 +259,41 @@ async function decideExecutionMode(
   // 3. Combined decision (conservative approach)
   const finalConfidence = Math.min(
     graphRAGAnalysis.confidence,
-    agentAssessment.confidence
+    agentAssessment.confidence,
   );
 
   // Decision tree
-  if (finalConfidence >= 0.85
-      && graphRAGAnalysis.hasCompleteSolution
-      && !graphRAGAnalysis.hasConditionalBranching) {  // ← NOUVEAU CRITÈRE!
+  if (
+    finalConfidence >= 0.85 &&
+    graphRAGAnalysis.hasCompleteSolution &&
+    !graphRAGAnalysis.hasConditionalBranching
+  ) { // ← NOUVEAU CRITÈRE!
     return {
       mode: "complete",
       confidence: finalConfidence,
       reasoning: "High confidence in complete workflow with no conditional branches",
-      fallbackAllowed: true // Can fallback to progressive if execution fails
+      fallbackAllowed: true, // Can fallback to progressive if execution fails
     };
-  }
-
-  else if (finalConfidence >= 0.85 && graphRAGAnalysis.hasConditionalBranching) {
+  } else if (finalConfidence >= 0.85 && graphRAGAnalysis.hasConditionalBranching) {
     return {
       mode: "progressive",
       confidence: finalConfidence,
       reasoning: "High confidence BUT conditional branching requires runtime decisions",
-      fallbackAllowed: false
+      fallbackAllowed: false,
     };
-  }
-
-  else if (finalConfidence >= 0.70) {
+  } else if (finalConfidence >= 0.70) {
     return {
       mode: "progressive",
       confidence: finalConfidence,
       reasoning: "Medium confidence, use guided multi-turn",
-      fallbackAllowed: false
+      fallbackAllowed: false,
     };
-  }
-
-  else {
+  } else {
     return {
       mode: "progressive",
       confidence: finalConfidence,
       reasoning: "Low confidence, full exploration needed",
-      fallbackAllowed: false
+      fallbackAllowed: false,
     };
   }
 }
@@ -354,10 +368,9 @@ EXECUTION:
   4️⃣ Continue with create_report...
 ```
 
-**Pourquoi Progressive malgré 0.85 confidence?**
-→ GraphRAG sait que le pattern a des **variations** selon contexte
-→ Il faut exécuter `detect_language` AVANT de décider quel linter
-→ Le DAG ne peut pas être complètement déterminé upfront
+**Pourquoi Progressive malgré 0.85 confidence?** → GraphRAG sait que le pattern a des **variations**
+selon contexte → Il faut exécuter `detect_language` AVANT de décider quel linter → Le DAG ne peut
+pas être complètement déterminé upfront
 
 #### Exemple 3: Format Inconnu → Mode Progressive
 
@@ -480,6 +493,7 @@ Respond in JSON:
 ```
 
 **Agent Response Example:**
+
 ```json
 {
   "confidence": 0.65,
@@ -498,25 +512,28 @@ Respond in JSON:
 
 ### Decision Matrix
 
-| GraphRAG Conf | Agent Conf | Conditional Branch | Unknowns | Safety Risk | Decision | Mode |
-|--------------|------------|-------------------|----------|-------------|----------|------|
-| >0.85 | >0.85 | ❌ None | None | None | **COMPLETE** | Workflow-level spec |
-| >0.85 | >0.85 | ✅ **Yes** | None | None | **PROGRESSIVE** | Conditional decisions |
-| >0.85 | >0.85 | - | None | HIGH | **PROGRESSIVE** | Human checkpoints |
-| >0.85 | <0.70 | - | Some | None | **PROGRESSIVE** | Agent conservative |
-| 0.70-0.85 | >0.70 | - | None | None | **PROGRESSIVE** | Guided multi-turn |
-| 0.70-0.85 | >0.70 | - | Some | None | **PROGRESSIVE** | Guided multi-turn |
-| <0.70 | Any | - | Many | Any | **PROGRESSIVE** | Full exploration |
+| GraphRAG Conf | Agent Conf | Conditional Branch | Unknowns | Safety Risk | Decision        | Mode                  |
+| ------------- | ---------- | ------------------ | -------- | ----------- | --------------- | --------------------- |
+| >0.85         | >0.85      | ❌ None            | None     | None        | **COMPLETE**    | Workflow-level spec   |
+| >0.85         | >0.85      | ✅ **Yes**         | None     | None        | **PROGRESSIVE** | Conditional decisions |
+| >0.85         | >0.85      | -                  | None     | HIGH        | **PROGRESSIVE** | Human checkpoints     |
+| >0.85         | <0.70      | -                  | Some     | None        | **PROGRESSIVE** | Agent conservative    |
+| 0.70-0.85     | >0.70      | -                  | None     | None        | **PROGRESSIVE** | Guided multi-turn     |
+| 0.70-0.85     | >0.70      | -                  | Some     | None        | **PROGRESSIVE** | Guided multi-turn     |
+| <0.70         | Any        | -                  | Many     | Any         | **PROGRESSIVE** | Full exploration      |
 
 **Rules:**
+
 1. Take the **most conservative** (lowest confidence) between GraphRAG and Agent
-2. **Conditional branching override:** Si le DAG contient des IF/ELSE basés sur runtime data → ALWAYS Progressive
+2. **Conditional branching override:** Si le DAG contient des IF/ELSE basés sur runtime data →
+   ALWAYS Progressive
 3. **Safety override:** Si agent détecte safety risk → ALWAYS Progressive avec human checkpoint
 
-**Conditional Branching Detection:**
-GraphRAG détecte conditional branching en analysant:
+**Conditional Branching Detection:** GraphRAG détecte conditional branching en analysant:
+
 - Pattern a **plusieurs variations** dans l'historique (e.g., 60% Python+pylint, 40% JS+eslint)
-- DAG nécessite **runtime data** pour choisir la branche (language detection, file format, API response)
+- DAG nécessite **runtime data** pour choisir la branche (language detection, file format, API
+  response)
 - Succès dépend de **décisions contextuelles** pas prévisibles upfront
 
 ---
@@ -536,7 +553,7 @@ try {
     // Fallback to progressive
     logger.warn("Complete mode failed, falling back to progressive");
     return await executeProgressive(dag, {
-      startFrom: error.lastSuccessfulTask
+      startFrom: error.lastSuccessfulTask,
     });
   } else {
     throw error;
@@ -545,6 +562,7 @@ try {
 ```
 
 **Fallback triggers:**
+
 - Task échoue avec erreur inattendue
 - Dependency manquante non détectée
 - Resource limit exceeded
@@ -560,13 +578,13 @@ L'utilisateur peut override la décision automatique:
 // Force mode complete (même si low confidence)
 await executeWorkflow(intent, {
   mode: "complete",
-  force: true
+  force: true,
 });
 
 // Force mode progressive
 await executeWorkflow(intent, {
   mode: "progressive",
-  checkpoints: "all" // Validate every step
+  checkpoints: "all", // Validate every step
 });
 
 // Auto mode (default - let system decide)
@@ -580,6 +598,7 @@ await executeWorkflow(intent); // Uses decision logic
 ### Option 1: Synchronous Checkpoints (Simple)
 
 **Architecture:**
+
 ```typescript
 async executeWithCheckpoints(
   dag: DAGStructure,
@@ -609,21 +628,16 @@ async executeWithCheckpoints(
 ```
 
 **Flux:**
+
 ```
 Execute Layer 1 → PAUSE → Ask agent/human → Continue/Abort/Modify → Repeat
 ```
 
-**Forces:**
-✅ Simple à implémenter
-✅ État clair entre layers
-✅ Facile à débugger
-✅ Compatible architecture actuelle
+**Forces:** ✅ Simple à implémenter ✅ État clair entre layers ✅ Facile à débugger ✅ Compatible
+architecture actuelle
 
-**Faiblesses:**
-⚠️ Bloque l'exécution pendant validation
-⚠️ Granularité grossière (layer-level seulement)
-⚠️ Latence: +1-3s par checkpoint pour Claude
-⚠️ Pas de contrôle task-by-task
+**Faiblesses:** ⚠️ Bloque l'exécution pendant validation ⚠️ Granularité grossière (layer-level
+seulement) ⚠️ Latence: +1-3s par checkpoint pour Claude ⚠️ Pas de contrôle task-by-task
 
 **Verdict:** Bon pour MVP, mais limité pour cas complexes
 
@@ -632,6 +646,7 @@ Execute Layer 1 → PAUSE → Ask agent/human → Continue/Abort/Modify → Repe
 ### Option 2: Async Event Stream with Command Injection
 
 **Architecture:**
+
 ```typescript
 class ControlledExecutor {
   private commandQueue: AsyncQueue<Command>;
@@ -661,6 +676,7 @@ class ControlledExecutor {
 ```
 
 **Flux:**
+
 ```
 ┌─────────────────────────────────────────┐
 │          DAG Executor Stream            │
@@ -692,6 +708,7 @@ class ControlledExecutor {
 ```
 
 **Command Types:**
+
 ```typescript
 type Command =
   | { type: "abort"; reason: string }
@@ -702,18 +719,12 @@ type Command =
   | { type: "checkpoint_response"; approved: boolean; modifications?: DAGModification[] };
 ```
 
-**Forces:**
-✅ **Asynchrone**: Agent et Executor découplés
-✅ **Contrôle fin**: Commands à tout moment
-✅ **Extensible**: Facile d'ajouter nouveaux commands
-✅ **Multi-agent**: Agent + Human peuvent coexister
-✅ **Observable**: Monitoring naturel via events
+**Forces:** ✅ **Asynchrone**: Agent et Executor découplés ✅ **Contrôle fin**: Commands à tout
+moment ✅ **Extensible**: Facile d'ajouter nouveaux commands ✅ **Multi-agent**: Agent + Human
+peuvent coexister ✅ **Observable**: Monitoring naturel via events
 
-**Faiblesses:**
-⚠️ Complexité implémentation
-⚠️ Race conditions possibles
-⚠️ State management plus difficile
-⚠️ Besoin queue thread-safe
+**Faiblesses:** ⚠️ Complexité implémentation ⚠️ Race conditions possibles ⚠️ State management plus
+difficile ⚠️ Besoin queue thread-safe
 
 **Verdict:** Architecture robuste pour production
 
@@ -722,11 +733,11 @@ type Command =
 ### Option 3: Reactive DAG with Generator Pattern
 
 **Architecture:**
+
 ```typescript
 async function* reactiveExecute(
-  initialTasks: Task[]
+  initialTasks: Task[],
 ): AsyncGenerator<TaskResult, void, AgentDecision> {
-
   let taskQueue = [...initialTasks];
 
   while (taskQueue.length > 0) {
@@ -753,16 +764,11 @@ for await (const result of executor) {
 }
 ```
 
-**Forces:**
-✅ **Pull-based**: Agent contrôle le rythme
-✅ **Construction dynamique**: DAG se construit pendant exécution
-✅ **Simple conceptuellement**: Generator pattern familier
+**Forces:** ✅ **Pull-based**: Agent contrôle le rythme ✅ **Construction dynamique**: DAG se
+construit pendant exécution ✅ **Simple conceptuellement**: Generator pattern familier
 
-**Faiblesses:**
-❌ **Perd parallélisation**: Séquentiel par nature
-❌ **Performance**: 5x plus lent sans parallélisme
-❌ **Incompatible speculative execution**
-❌ **Difficile à visualiser/debugger**
+**Faiblesses:** ❌ **Perd parallélisation**: Séquentiel par nature ❌ **Performance**: 5x plus lent
+sans parallélisme ❌ **Incompatible speculative execution** ❌ **Difficile à visualiser/debugger**
 
 **Verdict:** Trop limitant pour nos objectifs de performance
 
@@ -782,9 +788,8 @@ class MultiAgentExecutor extends ParallelExecutor {
 
   async executeWithControl(
     dag: DAGStructure,
-    config: ExecutionConfig
+    config: ExecutionConfig,
   ): Promise<DAGExecutionResult> {
-
     const eventStream = new TransformStream<ExecutionEvent>();
     const writer = eventStream.writable.getWriter();
 
@@ -803,7 +808,7 @@ class MultiAgentExecutor extends ParallelExecutor {
         await this.checkpoint({
           type: "pre-layer",
           layer: i,
-          remaining: layers.slice(i)
+          remaining: layers.slice(i),
         }, writer);
       }
 
@@ -816,7 +821,7 @@ class MultiAgentExecutor extends ParallelExecutor {
         await this.checkpoint({
           type: "post-layer",
           layer: i,
-          results: this.getLayerResults(i)
+          results: this.getLayerResults(i),
         }, writer);
       }
 
@@ -833,7 +838,7 @@ class MultiAgentExecutor extends ParallelExecutor {
    */
   private async startAgentLoop(
     events: ReadableStream<ExecutionEvent>,
-    agentConfig: AgentConfig
+    agentConfig: AgentConfig,
   ): Promise<void> {
     const reader = events.getReader();
 
@@ -844,7 +849,7 @@ class MultiAgentExecutor extends ParallelExecutor {
       // Agent analyse l'event
       const decision = await this.agent.react(event, {
         confidence: agentConfig.confidence,
-        speculative: agentConfig.speculative
+        speculative: agentConfig.speculative,
       });
 
       // Agent peut injecter commands
@@ -861,7 +866,7 @@ class MultiAgentExecutor extends ParallelExecutor {
    */
   private async startHumanLoop(
     events: ReadableStream<ExecutionEvent>,
-    humanConfig: HumanConfig
+    humanConfig: HumanConfig,
   ): Promise<void> {
     const reader = events.getReader();
 
@@ -885,16 +890,15 @@ class MultiAgentExecutor extends ParallelExecutor {
    */
   private async checkpoint(
     context: CheckpointContext,
-    writer: WritableStreamDefaultWriter<ExecutionEvent>
+    writer: WritableStreamDefaultWriter<ExecutionEvent>,
   ): Promise<void> {
-
     // Emit checkpoint event
     await writer.write({
       type: "checkpoint",
       data: {
         context,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
 
     // Wait for checkpoint resolution (via command queue)
@@ -940,36 +944,39 @@ interface ExecutionConfig {
 ```
 
 **Mode 1: Speculative (Agent autonome, confiance >0.85)**
+
 ```typescript
 const config = {
   mode: "speculative",
   agent: { enabled: true, confidence: 0.9, speculative: true },
   human: { enabled: false, checkpoints: "none" },
-  checkpointPolicy: { preLayer: false, postLayer: false, onError: true }
+  checkpointPolicy: { preLayer: false, postLayer: false, onError: true },
 };
 
 // Résultat: Exécution rapide sans pauses, sauf erreurs
 ```
 
 **Mode 2: Guided (Agent + Human oversight)**
+
 ```typescript
 const config = {
   mode: "guided",
   agent: { enabled: true, confidence: 0.7, speculative: false },
   human: { enabled: true, checkpoints: "critical-only" },
-  checkpointPolicy: { preLayer: false, postLayer: true, onError: true, onCriticalOp: true }
+  checkpointPolicy: { preLayer: false, postLayer: true, onError: true, onCriticalOp: true },
 };
 
 // Résultat: Agent contrôle routine, Human valide opérations critiques
 ```
 
 **Mode 3: Interactive (Human-in-the-loop complet)**
+
 ```typescript
 const config = {
   mode: "interactive",
   agent: { enabled: true, confidence: 0.5, speculative: false },
   human: { enabled: true, checkpoints: "all" },
-  checkpointPolicy: { preLayer: true, postLayer: true, onError: true, onCriticalOp: true }
+  checkpointPolicy: { preLayer: true, postLayer: true, onError: true, onCriticalOp: true },
 };
 
 // Résultat: Validation humaine à chaque étape
@@ -985,7 +992,7 @@ export class ParallelExecutor {
   // Extract method pour permettre extension
   protected async executeLayer(layer: Task[]): Promise<Map<string, TaskResult>> {
     const results = await Promise.allSettled(
-      layer.map(task => this.executeTask(task))
+      layer.map((task) => this.executeTask(task)),
     );
     return this.collectResults(results);
   }
@@ -1031,6 +1038,7 @@ export interface CheckpointContext {
 ### Terminal-Based Interface (MVP)
 
 **Checkpoint Prompt Example:**
+
 ```bash
 ┌─────────────────────────────────────────────────────────┐
 │ 🛑 CHECKPOINT: Critical Operation Detected              │
@@ -1062,6 +1070,7 @@ export interface CheckpointContext {
 ### SSE-Based Web Interface (Future)
 
 **Real-time Dashboard:**
+
 ```
 ┌────────────────────────────────────────────────────┐
 │  DAG Execution: "Analyze GitHub Repository"        │
@@ -1092,6 +1101,7 @@ export interface CheckpointContext {
 ### Sprint 1: MVP - Synchronous Checkpoints (2-3 heures)
 
 **Scope:**
+
 - Refactor `ParallelExecutor.executeLayer()` extraction
 - Add checkpoint callback post-layer
 - Support "continue" | "abort" decisions
@@ -1100,6 +1110,7 @@ export interface CheckpointContext {
 **Story:** Epic 2.5.1 - Checkpoint Infrastructure
 
 **Acceptance Criteria:**
+
 ```typescript
 // Test case
 const executor = new ControlledExecutor(toolExecutor);
@@ -1112,7 +1123,7 @@ const result = await executor.executeWithCheckpoints(
       return { action: "abort", reason: "User stopped" };
     }
     return { action: "continue" };
-  }
+  },
 );
 
 expect(result.aborted).toBe(true);
@@ -1124,6 +1135,7 @@ expect(result.completedLayers).toBe(1);
 ### Sprint 2: Command Queue & Agent Control (2-3 heures)
 
 **Scope:**
+
 - Implement `AsyncQueue<Command>` thread-safe
 - Add command types: abort, inject_task, skip_layer, modify_args
 - Process commands before/after each layer
@@ -1132,6 +1144,7 @@ expect(result.completedLayers).toBe(1);
 **Story:** Epic 2.5.2 - Command Queue & Agent Control
 
 **Acceptance Criteria:**
+
 ```typescript
 const executor = new ControlledExecutor(toolExecutor);
 const eventStream = new TransformStream<ExecutionEvent>();
@@ -1143,7 +1156,7 @@ const agentLoop = async () => {
       // File trop gros, abort
       executor.injectCommand({
         type: "abort",
-        reason: "File size exceeded limit"
+        reason: "File size exceeded limit",
       });
     }
   }
@@ -1160,6 +1173,7 @@ expect(result.aborted).toBe(true);
 ### Sprint 3: Full Event-Driven + Human Loop (2-3 heures)
 
 **Scope:**
+
 - Async generator pattern pour `executeStream()`
 - Integration agent.react() avec Claude API
 - Terminal UI pour human checkpoints
@@ -1169,13 +1183,14 @@ expect(result.aborted).toBe(true);
 **Story:** Epic 2.5.3 - Event-Driven Agent Loop
 
 **Acceptance Criteria:**
+
 ```typescript
 // Full multi-turn test
 const config: ExecutionConfig = {
   mode: "guided",
   agent: { enabled: true, confidence: 0.7 },
   human: { enabled: true, checkpoints: "critical-only" },
-  checkpointPolicy: { onCriticalOp: true }
+  checkpointPolicy: { onCriticalOp: true },
 };
 
 const executor = new ControlledExecutor(toolExecutor, config);
@@ -1183,7 +1198,7 @@ const executor = new ControlledExecutor(toolExecutor, config);
 // Mock agent decisions
 const agentDecisions = [
   { action: "inject_task", task: newParserTask },
-  { action: "continue" }
+  { action: "continue" },
 ];
 
 // Mock human approvals
@@ -1203,6 +1218,7 @@ expect(result.agentModifications).toBe(1);
 ### Sprint 4: Speculative Execution avec GraphRAG (3-4 heures)
 
 **Scope:**
+
 - GraphRAG next-node prediction basé sur patterns historiques
 - Speculative task execution pendant agent thinking time
 - Speculation resolution (keep/discard)
@@ -1229,7 +1245,8 @@ Avec speculation, on peut réduire ça à ~1700ms (gain de 23%)
 
 **Solution: Speculative Next-Node Execution**
 
-Pendant que l'agent réfléchit, on **exécute spéculativement** le(s) noeud(s) suivant(s) le(s) plus probable(s) basé sur GraphRAG predictions:
+Pendant que l'agent réfléchit, on **exécute spéculativement** le(s) noeud(s) suivant(s) le(s) plus
+probable(s) basé sur GraphRAG predictions:
 
 ```
 Task A complete (200ms)
@@ -1258,9 +1275,8 @@ class SpeculativeExecutor extends ControlledExecutor {
 
   async executeWithSpeculation(
     dag: DAGStructure,
-    config: ExecutionConfig
+    config: ExecutionConfig,
   ): Promise<DAGExecutionResult> {
-
     const layers = this.topologicalSort(dag);
 
     for (let i = 0; i < layers.length; i++) {
@@ -1268,7 +1284,7 @@ class SpeculativeExecutor extends ControlledExecutor {
       const results = await executeLayer(layers[i]);
 
       // 2. Start speculation while agent thinks
-      const speculationPromise = this.speculateNextNodes(results, layers.slice(i+1));
+      const speculationPromise = this.speculateNextNodes(results, layers.slice(i + 1));
 
       // 3. Agent decides (runs in parallel with speculation)
       const agentDecisionPromise = this.agent.decide(results);
@@ -1276,7 +1292,7 @@ class SpeculativeExecutor extends ControlledExecutor {
       // 4. Wait for both to complete
       const [speculation, decision] = await Promise.all([
         speculationPromise,
-        agentDecisionPromise
+        agentDecisionPromise,
       ]);
 
       // 5. Resolve speculation
@@ -1306,9 +1322,8 @@ class SpeculativeExecutor extends ControlledExecutor {
    */
   private async speculateNextNodes(
     currentResults: TaskResult[],
-    remainingLayers: Task[][]
+    remainingLayers: Task[][],
   ): Promise<Speculation | null> {
-
     if (!this.speculationEnabled) return null;
 
     // 1. Use GraphRAG to predict next nodes
@@ -1316,7 +1331,7 @@ class SpeculativeExecutor extends ControlledExecutor {
       completed: currentResults,
       remaining: remainingLayers.flat(),
       topK: 3,
-      confidenceThreshold: 0.7
+      confidenceThreshold: 0.7,
     });
 
     // predictions = [
@@ -1343,7 +1358,7 @@ class SpeculativeExecutor extends ControlledExecutor {
 
     const speculationPromise = this.executeTask(topPrediction.task, {
       speculative: true,
-      timeout: 5000 // Max 5s speculation
+      timeout: 5000, // Max 5s speculation
     });
 
     return {
@@ -1351,7 +1366,7 @@ class SpeculativeExecutor extends ControlledExecutor {
       confidence: topPrediction.confidence,
       resultsPromise: speculationPromise,
       startTime,
-      cleanup: () => speculationPromise.cancel()
+      cleanup: () => speculationPromise.cancel(),
     };
   }
 
@@ -1360,13 +1375,19 @@ class SpeculativeExecutor extends ControlledExecutor {
    */
   private isSafeToSpeculate(task: Task): boolean {
     const UNSAFE_OPERATIONS = [
-      "delete", "remove", "write", "update",
-      "exec", "run", "execute", "modify"
+      "delete",
+      "remove",
+      "write",
+      "update",
+      "exec",
+      "run",
+      "execute",
+      "modify",
     ];
 
     const toolName = task.tool.toLowerCase();
 
-    return !UNSAFE_OPERATIONS.some(op => toolName.includes(op));
+    return !UNSAFE_OPERATIONS.some((op) => toolName.includes(op));
   }
 
   /**
@@ -1374,8 +1395,8 @@ class SpeculativeExecutor extends ControlledExecutor {
    */
   private isMatch(speculatedTask: Task, decidedTask: Task): boolean {
     return speculatedTask.id === decidedTask.id &&
-           speculatedTask.tool === decidedTask.tool &&
-           JSON.stringify(speculatedTask.arguments) === JSON.stringify(decidedTask.arguments);
+      speculatedTask.tool === decidedTask.tool &&
+      JSON.stringify(speculatedTask.arguments) === JSON.stringify(decidedTask.arguments);
   }
 }
 ```
@@ -1391,9 +1412,9 @@ GraphRAG utilise 3 sources d'information pour prédire le prochain noeud:
 ```typescript
 class GraphRAGPredictor {
   async predictNextNodes(context: PredictionContext): Promise<Prediction[]> {
-
     // Analyze historical task sequences
-    const patterns = await this.db.query(`
+    const patterns = await this.db.query(
+      `
       SELECT
         next_task_id,
         next_task_tool,
@@ -1406,7 +1427,9 @@ class GraphRAGPredictor {
       GROUP BY next_task_id, next_task_tool
       ORDER BY frequency DESC
       LIMIT 5
-    `, [context.completed[0].taskId, context.completed[0].output.type]);
+    `,
+      [context.completed[0].taskId, context.completed[0].output.type],
+    );
 
     // Example result:
     // [
@@ -1445,10 +1468,8 @@ const nextNodePatterns = this.extractNextNodes(similarWorkflows);
 
 ```typescript
 // Analyze what tasks are actually available (dependencies satisfied)
-const availableTasks = context.remaining.filter(task =>
-  task.depends_on.every(dep =>
-    context.completed.some(r => r.taskId === dep)
-  )
+const availableTasks = context.remaining.filter((task) =>
+  task.depends_on.every((dep) => context.completed.some((r) => r.taskId === dep))
 );
 
 // availableTasks = [parse_xml, validate_xml, skip, create_report]
@@ -1465,14 +1486,18 @@ const availableTasks = context.remaining.filter(task =>
 const predictions = this.combineSignals({
   historical: { parse_xml: 0.85, validate_xml: 0.10 },
   similarity: { parse_xml: 0.90, validate_xml: 0.70 },
-  available: { parse_xml: true, validate_xml: true, create_report: true }
+  available: { parse_xml: true, validate_xml: true, create_report: true },
 });
 
 // Final predictions with confidence:
 return [
-  { task: "parse_xml", confidence: 0.88, reasoning: "High historical frequency + vector similarity" },
+  {
+    task: "parse_xml",
+    confidence: 0.88,
+    reasoning: "High historical frequency + vector similarity",
+  },
   { task: "validate_xml", confidence: 0.65, reasoning: "Medium historical pattern" },
-  { task: "create_report", confidence: 0.30, reasoning: "Available but premature" }
+  { task: "create_report", confidence: 0.30, reasoning: "Available but premature" },
 ];
 ```
 
@@ -1548,7 +1573,7 @@ const SPECULATION_POLICY = {
     "database:query",
     "api:get_*",
     "xml:parse",
-    "json:parse"
+    "json:parse",
   ],
 
   // ❌ UNSAFE: Write/Delete/Execute operations
@@ -1561,11 +1586,11 @@ const SPECULATION_POLICY = {
     "api:post_*",
     "api:put_*",
     "api:delete_*",
-    "exec:run_command"
+    "exec:run_command",
   ],
 
   // Default: Conservative (deny unknown operations)
-  default: "deny"
+  default: "deny",
 };
 ```
 
@@ -1601,8 +1626,8 @@ const executor = new SpeculativeExecutor(toolExecutor, {
   speculation: {
     enabled: true,
     confidenceThreshold: 0.75,
-    maxConcurrent: 1
-  }
+    maxConcurrent: 1,
+  },
 });
 ```
 
@@ -1644,17 +1669,17 @@ interface SpeculationMetrics {
 ```typescript
 // Test: Speculation hit
 const executor = new SpeculativeExecutor(toolExecutor, {
-  speculation: { enabled: true, confidenceThreshold: 0.7 }
+  speculation: { enabled: true, confidenceThreshold: 0.7 },
 });
 
 // Mock GraphRAG to predict "parse_xml" with 0.85 confidence
 mockGraphRAG.predictNextNodes.mockResolvedValue([
-  { task: { id: "parse_xml", tool: "xml:parse" }, confidence: 0.85 }
+  { task: { id: "parse_xml", tool: "xml:parse" }, confidence: 0.85 },
 ]);
 
 // Mock agent to decide "parse_xml" (match!)
 mockAgent.decide.mockResolvedValue({
-  task: { id: "parse_xml", tool: "xml:parse" }
+  task: { id: "parse_xml", tool: "xml:parse" },
 });
 
 const result = await executor.executeWithSpeculation(dag);
@@ -1664,7 +1689,7 @@ expect(result.metrics.timeSaved).toBeGreaterThan(0);
 
 // Test: Speculation miss
 mockAgent.decide.mockResolvedValue({
-  task: { id: "parse_json", tool: "json:parse" } // Different!
+  task: { id: "parse_json", tool: "json:parse" }, // Different!
 });
 
 const result2 = await executor.executeWithSpeculation(dag);
@@ -1675,7 +1700,7 @@ expect(result2.metrics.wastedCompute).toBeGreaterThan(0);
 
 // Test: Safety - forbidden operations
 mockGraphRAG.predictNextNodes.mockResolvedValue([
-  { task: { id: "delete_files", tool: "filesystem:delete_file" }, confidence: 0.90 }
+  { task: { id: "delete_files", tool: "filesystem:delete_file" }, confidence: 0.90 },
 ]);
 
 const result3 = await executor.executeWithSpeculation(dag);
@@ -1720,6 +1745,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Risk:** Chaque checkpoint = 1-3s pour Claude → workflows 10x plus lents
 
 **Mitigation:**
+
 - Mode speculative par défaut (skip checkpoints si confiance >0.85)
 - Checkpoint policies configurables
 - Batch multiple checkpoints en une seule requête Claude
@@ -1729,6 +1755,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Risk:** Agent et Human injectent commands simultanément → état incohérent
 
 **Mitigation:**
+
 - Thread-safe AsyncQueue avec locks
 - Command versioning et conflict detection
 - Last-write-wins policy pour modifications conflictuelles
@@ -1738,6 +1765,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Risk:** Architecture trop complexe → difficile à maintenir
 
 **Mitigation:**
+
 - Implémentation progressive (4 sprints)
 - Fallback vers mode simple si erreurs
 - Documentation exhaustive + tests end-to-end
@@ -1747,6 +1775,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Risk:** Trop de checkpoints → user ignore ou désactive
 
 **Mitigation:**
+
 - Checkpoint policies intelligentes (critical-only par défaut)
 - Learn from user behavior (ML-based checkpoint prediction future)
 - Clear checkpoint messaging (pourquoi ce checkpoint?)
@@ -1756,6 +1785,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Risk:** Speculation misses → compute gaspillé sans bénéfice
 
 **Mitigation:**
+
 - Confidence threshold >0.7 (only speculate sur high-confidence predictions)
 - Track net benefit metric (timeSaved - wastedCompute > 0)
 - Feature flag OFF par défaut (opt-in)
@@ -1766,6 +1796,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Risk:** Speculation task a side effects (cache invalidation, logs pollution)
 
 **Mitigation:**
+
 - Strict read-only policy pour speculation
 - Blacklist toutes operations avec side effects (WRITE, DELETE, EXEC)
 - Timeout 5s max pour speculation
@@ -1780,6 +1811,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Question:** Checkpoints au niveau layer ou task?
 
 **Options:**
+
 - A) Layer-level: Simple mais granularité grossière
 - B) Task-level: Contrôle fin mais overhead important
 - C) Hybrid: Critical tasks seulement (DELETE, WRITE, EXEC)
@@ -1791,6 +1823,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Question:** Quel threshold pour mode speculative?
 
 **Options:**
+
 - 0.75: Conservatif, beaucoup de checkpoints
 - 0.85: Équilibré (recommended)
 - 0.95: Aggressif, très peu de checkpoints
@@ -1802,6 +1835,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Question:** Que faire si human ne répond pas à checkpoint?
 
 **Options:**
+
 - A) Timeout after 5min → auto-abort
 - B) Timeout → continue (assume approved)
 - C) Timeout → ask agent to decide
@@ -1821,6 +1855,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 **Selected Architecture:** Hybrid Event-Driven with Multi-Agent Control (Option 2)
 
 **Rationale:**
+
 - ✅ Balance performance (parallélisme) et contrôle (checkpoints)
 - ✅ Supporte agent autonomy ET human oversight
 - ✅ Extensible pour futurs use cases (multi-agent collaboration)
@@ -1829,6 +1864,7 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 - ✅ **Speculative execution** réduit latence 23-30% sans risques
 
 **Next Steps:**
+
 1. Create Epic 2.5 dans sprint-status.yaml
 2. Draft 4 stories (2.5.1, 2.5.2, 2.5.3, 2.5.4)
 3. Create ADR-007 pour tracer cette décision
@@ -1842,9 +1878,11 @@ expect(result3.metrics.speculationAttempts).toBe(0);
 
 **See:** `docs/spikes/spike-episodic-memory-adaptive-thresholds.md`
 
-This spike extends the speculation mechanism (Sprint 4, lines 1197-1680) with meta-learning capabilities:
+This spike extends the speculation mechanism (Sprint 4, lines 1197-1680) with meta-learning
+capabilities:
 
 **What this spike covers (Stories 2.5-1 to 2.5-4):**
+
 - ✅ Event Stream + Command Queue (Loop 1 execution)
 - ✅ Checkpoints & Resume
 - ✅ AIL/HIL Integration (Loop 2 adaptation)
@@ -1852,6 +1890,7 @@ This spike extends the speculation mechanism (Sprint 4, lines 1197-1680) with me
 - ✅ GraphRAG predictions
 
 **What the Episodic Memory spike adds (Stories 2.5-5 to 2.5-6):**
+
 - 🆕 **Episodic Memory**: Storage of speculation outcomes for learning
 - 🆕 **Adaptive Thresholds**: Self-adjusting confidence thresholds (replacing fixed 0.7)
 - 🆕 **Loop 3 Meta-Learning Details**: How speculation success rates improve over time
@@ -1871,7 +1910,8 @@ This Spike (Execution & Control)          Episodic Spike (Learning & Improvement
 └─────────────────────────────┘          └──────────────────────────────┘
 ```
 
-Together, these spikes implement the complete **3-loop learning architecture** inspired by the CoALA framework comparison.
+Together, these spikes implement the complete **3-loop learning architecture** inspired by the CoALA
+framework comparison.
 
 ---
 
@@ -1890,11 +1930,9 @@ Together, these spikes implement the complete **3-loop learning architecture** i
 
 ---
 
-**Status:** ✅ Ready for Review
-**Reviewers:** Winston (Architect), John (PM)
-**Approval Required:** BMad
+**Status:** ✅ Ready for Review **Reviewers:** Winston (Architect), John (PM) **Approval Required:**
+BMad
 
 ---
 
-*Generated: 2025-11-13*
-*Last Updated: 2025-11-13*
+_Generated: 2025-11-13_ _Last Updated: 2025-11-13_

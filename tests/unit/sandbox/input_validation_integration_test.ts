@@ -127,7 +127,11 @@ Deno.test({
     const result = await sandbox.execute(code, context);
 
     assertEquals(result.success, true);
-    const output = result.result as { userId: number; doubled: number; config: { timeout: number } };
+    const output = result.result as {
+      userId: number;
+      doubled: number;
+      config: { timeout: number };
+    };
     assertEquals(output.userId, 42);
     assertEquals(output.doubled, 84);
     assertEquals(output.config.timeout, 5000);

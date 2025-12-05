@@ -19,7 +19,7 @@
 
 import * as log from "@std/log";
 import { DenoSandboxExecutor } from "../sandbox/executor.ts";
-import type { SpeculationCache, PredictedNode } from "../graphrag/types.ts";
+import type { PredictedNode, SpeculationCache } from "../graphrag/types.ts";
 import type { SpeculationManager, SpeculationOutcome } from "./speculation-manager.ts";
 
 /**
@@ -160,7 +160,9 @@ export class SpeculativeExecutor {
     }, this.config.timeout);
 
     log.debug(
-      `[SpeculativeExecutor] Executing speculation: ${prediction.toolId} (confidence: ${prediction.confidence.toFixed(2)}, timeout: ${this.config.timeout}ms)`,
+      `[SpeculativeExecutor] Executing speculation: ${prediction.toolId} (confidence: ${
+        prediction.confidence.toFixed(2)
+      }, timeout: ${this.config.timeout}ms)`,
     );
 
     try {
@@ -200,7 +202,9 @@ export class SpeculativeExecutor {
         });
 
         log.info(
-          `[SpeculativeExecutor] Cached speculation result: ${prediction.toolId} (${executionTimeMs.toFixed(1)}ms)`,
+          `[SpeculativeExecutor] Cached speculation result: ${prediction.toolId} (${
+            executionTimeMs.toFixed(1)
+          }ms)`,
         );
       } else {
         log.debug(
@@ -209,7 +213,10 @@ export class SpeculativeExecutor {
       }
     } catch (error) {
       // Check if this was an abort error
-      if (abortController.signal.aborted || (error instanceof Error && error.message.includes("aborted"))) {
+      if (
+        abortController.signal.aborted ||
+        (error instanceof Error && error.message.includes("aborted"))
+      ) {
         log.debug(
           `[SpeculativeExecutor] Speculation aborted for ${prediction.toolId} (timeout reached)`,
         );
@@ -306,7 +313,9 @@ export class SpeculativeExecutor {
     if (cached) {
       // HIT: Prediction was correct
       log.info(
-        `[SpeculativeExecutor] SPECULATION HIT: ${toolId} (saved ${cached.executionTimeMs.toFixed(1)}ms)`,
+        `[SpeculativeExecutor] SPECULATION HIT: ${toolId} (saved ${
+          cached.executionTimeMs.toFixed(1)
+        }ms)`,
       );
 
       // Remove from cache (consumed)

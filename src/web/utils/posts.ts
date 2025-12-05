@@ -1,6 +1,15 @@
 import { extract } from "@std/front-matter/yaml";
-import { render } from "$gfm";
-import { join, dirname } from "@std/path";
+import { render } from "@deno/gfm";
+import { dirname, join } from "@std/path";
+
+// Import Prism language support for syntax highlighting
+import "npm:prismjs@1.29.0/components/prism-typescript.js";
+import "npm:prismjs@1.29.0/components/prism-javascript.js";
+import "npm:prismjs@1.29.0/components/prism-bash.js";
+import "npm:prismjs@1.29.0/components/prism-json.js";
+import "npm:prismjs@1.29.0/components/prism-yaml.js";
+import "npm:prismjs@1.29.0/components/prism-jsx.js";
+import "npm:prismjs@1.29.0/components/prism-tsx.js";
 
 export interface PostFrontmatter {
   title: string;
@@ -116,12 +125,8 @@ async function getPostByFilename(filename: string, content?: string): Promise<Po
       console.warn(`Post ${filename}: Slug contains non-URL-safe characters: ${slug}`);
     }
 
-    const html = render(body, {
-      allowedTags: ["iframe"],
-      allowedAttributes: {
-        iframe: ["src", "width", "height", "frameborder", "allowfullscreen"],
-      },
-    });
+    // Render markdown to HTML with GFM (includes sanitization)
+    const html = render(body);
 
     return {
       slug,

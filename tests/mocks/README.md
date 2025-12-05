@@ -5,9 +5,11 @@ Mock MCP servers for testing AgentCards without real dependencies.
 ## Available Mocks
 
 ### 1. Filesystem Mock (`filesystem-mock.ts`)
+
 Simulates a filesystem MCP server with file operations.
 
 **Tools:**
+
 - `read_file` - Read file contents
 - `write_file` - Write to file
 - `list_directory` - List directory contents
@@ -15,33 +17,36 @@ Simulates a filesystem MCP server with file operations.
 **Speed:** Fast (~0ms delay)
 
 ### 2. Database Mock (`database-mock.ts`)
+
 Simulates a database MCP server with SQL operations.
 
 **Tools:**
+
 - `query` - Execute SQL query
 - `insert` - Insert record
 - `update` - Update records
 - `schema` - Get database schema
 
-**Speed:** Slow (~100ms delay)
-**Purpose:** Tests parallel extraction timing
+**Speed:** Slow (~100ms delay) **Purpose:** Tests parallel extraction timing
 
 ### 3. API Mock (`api-mock.ts`)
+
 Simulates an API client MCP server with HTTP operations.
 
 **Tools:**
+
 - `get` - GET request
 - `post` - POST request
 - `webhook` - Register webhook
 
-**Speed:** Medium (~50ms delay)
-**Purpose:** Tests complex nested schemas
+**Speed:** Medium (~50ms delay) **Purpose:** Tests complex nested schemas
 
 ## Usage
 
 ### Manual Testing
 
 Test individual mock:
+
 ```bash
 # Test filesystem mock
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | deno task mock:fs
@@ -53,11 +58,13 @@ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n{"jsonrpc":"
 ### Integration Testing
 
 Test with dry-run:
+
 ```bash
 deno task cli:init:dry:mocks
 ```
 
 Test end-to-end (creates files, downloads model):
+
 ```bash
 deno task test:e2e
 ```
@@ -92,20 +99,24 @@ The mocks are configured in `tests/fixtures/mcp-config-mocks.json`:
 ## What Gets Tested
 
 ✅ **Parallel Extraction**
+
 - 3 servers extracted concurrently
 - Timing: max(100ms, 50ms, 0ms) ≈ 100ms
 - Total: 10 tools (3 + 4 + 3)
 
 ✅ **Schema Complexity**
+
 - Simple schemas (filesystem)
 - Nested objects (API)
 - Optional fields (database)
 
 ✅ **Environment Variables**
+
 - Database mock has env vars
 - Tests dependency detection
 
 ✅ **Full Workflow**
+
 - Config parsing
 - Server discovery
 - Schema extraction
@@ -115,6 +126,7 @@ The mocks are configured in `tests/fixtures/mcp-config-mocks.json`:
 ## Expected Results
 
 ### Dry-Run
+
 ```
 📊 Migration Preview:
   Servers to migrate: 3
@@ -125,6 +137,7 @@ The mocks are configured in `tests/fixtures/mcp-config-mocks.json`:
 ```
 
 ### Full Migration (E2E)
+
 ```
 ✓ Discovered 3 MCP servers
 ✓ Extracted 10 tools from 3/3 servers
@@ -148,6 +161,7 @@ To add a new mock server:
 Each mock must implement:
 
 **initialize:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -158,6 +172,7 @@ Each mock must implement:
 ```
 
 **tools/list:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -168,6 +183,7 @@ Each mock must implement:
 ```
 
 **Response format:**
+
 ```json
 {
   "jsonrpc": "2.0",

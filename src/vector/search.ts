@@ -115,7 +115,9 @@ export class VectorSearch {
 
       const searchTime = performance.now() - startSearch;
       log.info(
-        `Found ${results.length} results in ${searchTime.toFixed(2)}ms (embedding: ${embeddingTime.toFixed(2)}ms, search: ${(searchTime - embeddingTime).toFixed(2)}ms)`,
+        `Found ${results.length} results in ${searchTime.toFixed(2)}ms (embedding: ${
+          embeddingTime.toFixed(2)
+        }ms, search: ${(searchTime - embeddingTime).toFixed(2)}ms)`,
       );
 
       // AC3: Parse and return results with tool_ids + scores
@@ -124,7 +126,7 @@ export class VectorSearch {
         serverId: row.server_id as string,
         toolName: row.tool_name as string,
         score: parseFloat(row.score as string),
-        schema: (typeof row.schema_json === 'string'
+        schema: (typeof row.schema_json === "string"
           ? JSON.parse(row.schema_json)
           : row.schema_json) as MCPTool,
       }));
@@ -140,7 +142,7 @@ export class VectorSearch {
         // Both methods failed - throw VectorSearchError
         throw new VectorSearchError(
           `Both vector and keyword search failed: ${error}`,
-          query
+          query,
         );
       }
     }
@@ -191,9 +193,10 @@ export class VectorSearch {
       serverId: row.server_id as string,
       toolName: row.tool_name as string,
       score: 0.5, // Fixed score for keyword matches
-      schema: (typeof row.schema_json === 'string'
-        ? JSON.parse(row.schema_json)
-        : row.schema_json) as MCPTool,
+      schema:
+        (typeof row.schema_json === "string"
+          ? JSON.parse(row.schema_json)
+          : row.schema_json) as MCPTool,
     }));
   }
 }

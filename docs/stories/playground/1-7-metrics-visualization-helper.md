@@ -4,14 +4,14 @@ Status: done
 
 ## Story
 
-As a **notebook author**,
-I want **helpers to display metrics visually**,
-so that **users can see performance gains clearly in the notebooks**.
+As a **notebook author**, I want **helpers to display metrics visually**, so that **users can see
+performance gains clearly in the notebooks**.
 
 ## Acceptance Criteria
 
 1. `playground/lib/metrics.ts` exporte `progressBar(current, total, label)` - ASCII progress bar
-2. `playground/lib/metrics.ts` exporte `compareMetrics(before, after, labels)` - Side-by-side comparison
+2. `playground/lib/metrics.ts` exporte `compareMetrics(before, after, labels)` - Side-by-side
+   comparison
 3. `playground/lib/metrics.ts` exporte `speedupChart(sequential, parallel)` - Visualize speedup
 4. Output compatible Jupyter (texte formaté)
 5. Couleurs ANSI optionnelles (détection terminal vs notebook)
@@ -20,7 +20,8 @@ so that **users can see performance gains clearly in the notebooks**.
 
 - [x] Task 1: Create metrics module structure (AC: #1-3)
   - [x] Create `playground/lib/metrics.ts`
-  - [x] Define types for metric inputs (ProgressBarOptions, CompareMetricsOptions, SpeedupChartOptions)
+  - [x] Define types for metric inputs (ProgressBarOptions, CompareMetricsOptions,
+        SpeedupChartOptions)
   - [x] Export all three main functions + bonus helpers (metricLine, reductionSummary)
 
 - [x] Task 2: Implement progressBar (AC: #1, #4)
@@ -30,7 +31,8 @@ so that **users can see performance gains clearly in the notebooks**.
   - [x] Configurable width option
 
 - [x] Task 3: Implement compareMetrics (AC: #2, #4)
-  - [x] Accept `before: Record<string, number>, after: Record<string, number>, labels?: { before: string, after: string }`
+  - [x] Accept
+        `before: Record<string, number>, after: Record<string, number>, labels?: { before: string, after: string }`
   - [x] Return formatted side-by-side comparison table
   - [x] Show delta (absolute and percentage)
   - [x] Highlight improvements vs regressions (with colors option)
@@ -59,11 +61,13 @@ so that **users can see performance gains clearly in the notebooks**.
 ### Requirements Context
 
 **From epics-playground.md (Story 1.7):**
+
 - Helpers pour afficher métriques visuellement
 - Output compatible Jupyter (texte formaté)
 - Couleurs ANSI optionnelles
 
 **From PRD-playground.md:**
+
 - Notebooks doivent montrer les gains de performance clairement
 - Notebook 03 (DAG Execution) utilisera `speedupChart()`
 - Notebook 02 (Context Optimization) utilisera `compareMetrics()`
@@ -71,11 +75,13 @@ so that **users can see performance gains clearly in the notebooks**.
 ### Architecture Constraints
 
 **Module Pattern:**
+
 - Suivre le même pattern que `playground/lib/viz.ts` et `playground/lib/init.ts`
 - Exports at top, types, implementation
 - Support `import.meta.main` pour test CLI
 
 **Jupyter Compatibility:**
+
 - ASCII output (pas de HTML)
 - Désactiver ANSI par défaut dans Jupyter
 - Détecter via `Deno.jupyter` existence
@@ -94,6 +100,7 @@ so that **users can see performance gains clearly in the notebooks**.
 ### Testing Strategy
 
 **Unit Tests:**
+
 1. progressBar returns correct format for 0%, 50%, 100%
 2. progressBar handles overflow (>100%)
 3. compareMetrics formats table correctly
@@ -133,18 +140,21 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### File List
 
 **Created:**
+
 - `playground/lib/metrics.ts` - Main metrics module
 - `playground/lib/metrics_test.ts` - Unit tests (26 tests)
 
 ## Change Log
 
 **2025-12-05** - Story drafted
+
 - Created from Epic 1 requirements in epics-playground.md
 - 6 tasks with subtasks mapped to 5 ACs
 - Based on patterns from Story 1-5
 - Status: backlog → drafted
 
 **2025-12-05** - Story completed
+
 - Implemented all 6 tasks with full test coverage
 - Added bonus helpers (metricLine, reductionSummary)
 - 26/26 tests passing

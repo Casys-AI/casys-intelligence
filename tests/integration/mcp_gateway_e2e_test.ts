@@ -9,7 +9,7 @@
 
 import { assert, assertEquals, assertExists } from "@std/assert";
 import { createDefaultClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { AgentCardsGatewayServer } from "../../src/mcp/gateway-server.ts";
 import { EmbeddingModel } from "../../src/vector/embeddings.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
@@ -43,12 +43,8 @@ async function setupTestDatabase(db: PGliteClient): Promise<void> {
   await db.exec(`
     INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding, metadata)
     VALUES
-      ('test-server:test_tool', 'test-server', 'test_tool', '[${
-    embedding.join(",")
-  }]', '{}'),
-      ('mock-server:mock_action', 'mock-server', 'mock_action', '[${
-    embedding.join(",")
-  }]', '{}')
+      ('test-server:test_tool', 'test-server', 'test_tool', '[${embedding.join(",")}]', '{}'),
+      ('mock-server:mock_action', 'mock-server', 'mock_action', '[${embedding.join(",")}]', '{}')
     ON CONFLICT (tool_id) DO UPDATE SET
       embedding = EXCLUDED.embedding,
       metadata = EXCLUDED.metadata

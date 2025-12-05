@@ -1,24 +1,33 @@
 # ADR-021: Workflow Sync Missing Node Creation
 
 ## Status
+
 **RESOLVED** - Implemented comprehensive fix
 
 ## Context
-During Story 6.2 (Interactive Graph Visualization Dashboard) testing, we discovered that the workflow sync command (`deno task cli workflows sync`) creates edges in `tool_dependency` table but does NOT create corresponding node entries in `tool_embedding` table.
+
+During Story 6.2 (Interactive Graph Visualization Dashboard) testing, we discovered that the
+workflow sync command (`deno task cli workflows sync`) creates edges in `tool_dependency` table but
+does NOT create corresponding node entries in `tool_embedding` table.
 
 ## Problem Analysis
 
 ### Root Cause
+
 `GraphRAGEngine.syncFromDatabase()` loads the graph in two steps:
+
 1. Load nodes from `tool_embedding` table
 2. Load edges from `tool_dependency` table (only if both nodes exist)
 
-The workflow sync (`WorkflowSyncService.upsertEdges()`) only writes to `tool_dependency`, resulting in:
+The workflow sync (`WorkflowSyncService.upsertEdges()`) only writes to `tool_dependency`, resulting
+in:
+
 - 0 nodes loaded (empty `tool_embedding`)
 - 0 edges loaded (nodes don't exist, so edges are skipped)
 - Empty graph in dashboard
 
 ### Evidence
+
 ```
 # Sync reports success
 [WorkflowSync] Sync complete: 0 created, 13 updated, 3 workflows
@@ -29,13 +38,16 @@ curl http://localhost:3001/api/graph/snapshot
 ```
 
 ### Deeper Issue Discovered
-The original ADR proposed a simple fix (insert minimal rows into `tool_embedding`), but this was insufficient because:
+
+The original ADR proposed a simple fix (insert minimal rows into `tool_embedding`), but this was
+insufficient because:
 
 1. **`tool_embedding.embedding` is NOT NULL** - requires a real 1024-dimensional vector
 2. **Zero vectors don't work for semantic search** - breaks the VectorSearch functionality
 3. **`tool_schema` must be populated first** - embeddings are generated from schema text
 
 ### Data Flow Dependencies
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │  MCP Servers    │───▶│  tool_schema    │───▶│ tool_embedding  │
@@ -68,7 +80,9 @@ Changed unknown tool handling from WARNING to ERROR:
 // workflow-loader.ts - validateSteps() and validateEdges()
 // Before: warnings.push(`Unknown tool ID '${step}'...`);
 // After:
-errors.push(`Unknown tool ID '${step}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
+errors.push(
+  `Unknown tool ID '${step}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`,
+);
 ```
 
 ### 2. Load Known Tools Before Validation (WorkflowSyncService)
@@ -136,6 +150,7 @@ This ensures bootstrap runs when nodes are missing, not just when edges are miss
 ## Affected Files
 
 ### Modified
+
 - `src/graphrag/workflow-sync.ts`
   - Added `loadKnownTools()` method
   - Added `ensureEmbeddingsExist()` method (replaces `ensureToolsExist()`)
@@ -152,6 +167,7 @@ This ensures bootstrap runs when nodes are missing, not just when edges are miss
   - Ensures `tool_schema` is populated before workflow validation
 
 ### Unchanged (reference only)
+
 - `src/graphrag/graph-engine.ts:92` - `syncFromDatabase()` expects nodes in `tool_embedding`
 - `src/vector/embeddings.ts` - Provides `EmbeddingModel` and `schemaToText`
 - `src/mcp/schema-extractor.ts` - Populates `tool_schema` during init
@@ -159,12 +175,15 @@ This ensures bootstrap runs when nodes are missing, not just when edges are miss
 ## Usage Requirements
 
 ### Prerequisites
+
 Before running workflow sync, ensure:
+
 1. MCP servers are configured in `agentcards.json`
 2. Run `agentcards init` to discover tools and populate `tool_schema`
 3. Workflow templates reference valid tool IDs
 
 ### Command Flow
+
 ```bash
 # 1. Initialize (populates tool_schema)
 agentcards init
@@ -177,12 +196,15 @@ agentcards serve
 ```
 
 ### Error Messages
+
 If tools are missing from `tool_schema`:
+
 ```
 [WorkflowSync] No tools found in tool_schema. Run 'agentcards serve' first to discover tools.
 ```
 
 If workflow references unknown tool:
+
 ```
 Unknown tool ID 'filesystem:read_file' in workflow 'my_workflow'. Tool must exist in tool_schema.
 ```
@@ -205,9 +227,12 @@ graphEngine.syncFromDatabase() ← Graph loads correctly
 ```
 
 ### Modified File
-- `src/cli/commands/serve.ts` - Moved `bootstrapIfEmpty()` after MCP connection and embedding model load
+
+- `src/cli/commands/serve.ts` - Moved `bootstrapIfEmpty()` after MCP connection and embedding model
+  load
 
 ## Related
+
 - Story 5.2: Workflow Templates Sync Service
 - Story 6.2: Interactive Graph Visualization Dashboard
 - `setKnownTools()` mechanism in WorkflowLoader (was unused, now activated)

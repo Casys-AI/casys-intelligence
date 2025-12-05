@@ -1,17 +1,14 @@
 # Story 3.8: End-to-End Code Execution Tests & Documentation
 
-**Epic:** 3 - Agent Code Execution & Local Processing
-**Story ID:** 3.8
-**Status:** ready-for-dev
+**Epic:** 3 - Agent Code Execution & Local Processing **Story ID:** 3.8 **Status:** ready-for-dev
 **Estimated Effort:** 6-8 heures
 
 ---
 
 ## User Story
 
-**As a** developer adopting code execution,
-**I want** comprehensive tests and documentation,
-**So that** I understand how to use the feature effectively.
+**As a** developer adopting code execution, **I want** comprehensive tests and documentation, **So
+that** I understand how to use the feature effectively.
 
 ---
 
@@ -129,6 +126,7 @@
 ### E2E Test Suite Structure
 
 **Test Organization:**
+
 ```
 tests/e2e/code-execution/
 ├── 01-sandbox-isolation.test.ts       # Security tests
@@ -141,6 +139,7 @@ tests/e2e/code-execution/
 ```
 
 **Test Helpers:**
+
 ```typescript
 // tests/fixtures/code-execution-helpers.ts
 export async function setupCodeExecutionTest() {
@@ -167,7 +166,8 @@ Deno.test("E2E: GitHub commits analysis", async () => {
   mockGitHub.setCommits(commits);
 
   // Execute code in sandbox
-  const result = await sandbox.execute(`
+  const result = await sandbox.execute(
+    `
     const commits = await github.listCommits({ limit: 1000 });
     const lastWeek = commits.filter(c =>
       new Date(c.date) > Date.now() - 7*24*3600*1000
@@ -176,15 +176,17 @@ Deno.test("E2E: GitHub commits analysis", async () => {
       total: lastWeek.length,
       authors: [...new Set(lastWeek.map(c => c.author))]
     };
-  `, { github: mockGitHub });
+  `,
+    { github: mockGitHub },
+  );
 
   // Validate results
   assertEquals(result.result.total, 42);
   assertEquals(result.result.authors.length, 5);
 
   // Validate context savings
-  const inputSize = Buffer.byteLength(JSON.stringify(commits), 'utf8');
-  const outputSize = Buffer.byteLength(JSON.stringify(result.result), 'utf8');
+  const inputSize = Buffer.byteLength(JSON.stringify(commits), "utf8");
+  const outputSize = Buffer.byteLength(JSON.stringify(result.result), "utf8");
   assert(inputSize > 1_000_000); // >1MB input
   assert(outputSize < 1_000); // <1KB output
   const savings = ((inputSize - outputSize) / inputSize) * 100;
@@ -198,12 +200,13 @@ Deno.test("E2E: GitHub commits analysis", async () => {
 
 **README.md Section: Code Execution Mode**
 
-```markdown
+````markdown
 ## Code Execution Mode
 
 ### Overview
 
 AgentCards allows agents to write and execute TypeScript code locally in a secure sandbox, enabling:
+
 - **Context savings**: Process large datasets (MB) locally, return summaries (KB)
 - **Performance**: Parallel processing, streaming support
 - **Privacy**: PII detection and tokenization
@@ -219,18 +222,19 @@ await mcp.callTool("agentcards:execute_code", {
     const commits = await github.listCommits({ limit: 1000 });
     const lastWeek = commits.filter(c => isLastWeek(c.date));
     return { count: lastWeek.length };
-  `
+  `,
 });
 ```
+````
 
 ### When to Use Code Execution
 
-| Scenario | Use Code Execution? | Rationale |
-|----------|---------------------|-----------|
-| Process >100 items | ✅ Yes | Save context tokens |
-| Complex transformations | ✅ Yes | Full TypeScript support |
-| Single tool, small result | ❌ No | Direct tool call faster |
-| Real-time (<100ms) | ❌ No | Use DAG parallel execution |
+| Scenario                  | Use Code Execution? | Rationale                  |
+| ------------------------- | ------------------- | -------------------------- |
+| Process >100 items        | ✅ Yes              | Save context tokens        |
+| Complex transformations   | ✅ Yes              | Full TypeScript support    |
+| Single tool, small result | ❌ No               | Direct tool call faster    |
+| Real-time (<100ms)        | ❌ No               | Use DAG parallel execution |
 
 ### Security & Privacy
 
@@ -241,48 +245,41 @@ await mcp.callTool("agentcards:execute_code", {
 
 ### Performance Benchmarks
 
-| Metric | Direct Tool Call | Code Execution | Improvement |
-|--------|------------------|----------------|-------------|
-| Latency (1000 items) | 5s | 2s | 2.5x faster |
-| Context usage | 2MB | 500 bytes | 99.98% savings |
-| Cache hit rate | N/A | 70% | 10x faster (cached) |
-```
+| Metric               | Direct Tool Call | Code Execution | Improvement         |
+| -------------------- | ---------------- | -------------- | ------------------- |
+| Latency (1000 items) | 5s               | 2s             | 2.5x faster         |
+| Context usage        | 2MB              | 500 bytes      | 99.98% savings      |
+| Cache hit rate       | N/A              | 70%            | 10x faster (cached) |
 
+```
 ### Migration Guide Content
 
 **Decision Tree:**
 ```
-Need to process data?
-├─ Small dataset (<100 items)?
-│  └─ Use: Direct tool call
-│
-├─ Large dataset (>100 items)?
-│  ├─ Complex processing needed?
-│  │  └─ Use: Code execution
-│  │
-│  └─ Simple aggregation?
-│     └─ Use: Code execution OR DAG
-│
-└─ Multiple independent tools?
-   └─ Use: DAG parallel execution
-```
 
+Need to process data? ├─ Small dataset (<100 items)? │ └─ Use: Direct tool call │ ├─ Large dataset
+(>100 items)? │ ├─ Complex processing needed? │ │ └─ Use: Code execution │ │ │ └─ Simple
+aggregation? │ └─ Use: Code execution OR DAG │ └─ Multiple independent tools? └─ Use: DAG parallel
+execution
+
+````
 **Example Migrations:**
 
 **Before (Direct tool call):**
 ```typescript
 const commits = await github.listCommits({ limit: 1000 });
 // Problem: 2MB data loaded into LLM context
-```
+````
 
 **After (Code execution):**
+
 ```typescript
 await agentcards.executeCode({
   intent: "Get commit count",
   code: `
     const commits = await github.listCommits({ limit: 1000 });
     return { count: commits.length };
-  `
+  `,
 });
 // Solution: Only 20 bytes in context
 ```
@@ -290,6 +287,7 @@ await agentcards.executeCode({
 ### Security Documentation
 
 **Sandbox Security Model:**
+
 ```
 Deno Sandbox Permissions:
 ✅ --allow-env                 (Environment variables)
@@ -301,6 +299,7 @@ Deno Sandbox Permissions:
 ```
 
 **PII Protection:**
+
 - Automatically detects: emails, phones, credit cards, SSNs, API keys
 - Replaces with tokens: `[EMAIL_1]`, `[PHONE_2]`, etc.
 - Opt-out: `--no-pii-protection` flag
@@ -308,12 +307,13 @@ Deno Sandbox Permissions:
 ### Learnings from Previous Stories
 
 **From Story 2.7 (E2E Tests):**
+
 - E2E test structure patterns
 - Mock MCP servers utilities
-- Performance benchmarking approaches
-[Source: stories/story-2.7.md]
+- Performance benchmarking approaches [Source: stories/story-2.7.md]
 
 **From Stories 3.1-3.6:**
+
 - Complete code execution infrastructure
 - All features implemented and tested
 - Ready for E2E integration testing
@@ -321,11 +321,13 @@ Deno Sandbox Permissions:
 ### Testing Strategy
 
 **Coverage Goals:**
+
 - E2E tests: 100% of user workflows
 - Performance tests: All critical paths benchmarked
 - Security tests: All isolation mechanisms validated
 
 **Test Execution:**
+
 ```bash
 # Run E2E suite
 deno test tests/e2e/code-execution/
@@ -378,6 +380,7 @@ _Key completion notes for next story (patterns, services, deviations) go here_
 ### File List
 
 **Files to be Created (NEW):**
+
 - `tests/e2e/code-execution/01-sandbox-isolation.test.ts`
 - `tests/e2e/code-execution/02-github-commits-analysis.test.ts`
 - `tests/e2e/code-execution/03-multi-server-aggregation.test.ts`
@@ -391,10 +394,12 @@ _Key completion notes for next story (patterns, services, deviations) go here_
 - `docs/guides/code-execution-security.md`
 
 **Files to be Modified (MODIFIED):**
+
 - `README.md` (add Code Execution Mode section)
 - `.github/workflows/ci.yml` (add E2E code-execution tests)
 
 **Files to be Deleted (DELETED):**
+
 - None
 
 ---

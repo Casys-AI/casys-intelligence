@@ -12,14 +12,14 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 import {
-  saveWorkflowDAG,
-  getWorkflowDAG,
-  deleteWorkflowDAG,
-  updateWorkflowDAG,
   cleanupExpiredDAGs,
+  deleteWorkflowDAG,
+  getWorkflowDAG,
   getWorkflowDAGRecord,
+  saveWorkflowDAG,
+  updateWorkflowDAG,
 } from "../../../src/mcp/workflow-dag-store.ts";
 import type { DAGStructure } from "../../../src/graphrag/types.ts";
 
@@ -275,7 +275,7 @@ Deno.test("Per-layer validation: Replan updates DAG in database", async () => {
     assertEquals(
       dagForContinue!.tasks[2].tool,
       "xml:parse",
-      "New task should be XML parser"
+      "New task should be XML parser",
     );
   } finally {
     await db.close();
@@ -359,9 +359,7 @@ Deno.test("WorkflowDAGStore: multiple concurrent workflows", async () => {
 
     // Save all workflows
     await Promise.all(
-      workflows.map((w) =>
-        saveWorkflowDAG(db, w.id, createTestDAG(w.tasks), `intent-${w.id}`)
-      )
+      workflows.map((w) => saveWorkflowDAG(db, w.id, createTestDAG(w.tasks), `intent-${w.id}`)),
     );
 
     // Verify all exist independently

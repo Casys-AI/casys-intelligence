@@ -4,10 +4,10 @@
  * Coverage: AC1-AC7 - Full workflow integration
  */
 
-import { assertEquals, assert, assertExists } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { ContextOptimizer } from "../../../src/context/optimizer.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
-import type { VectorSearch, SearchResult } from "../../../src/vector/search.ts";
+import type { SearchResult, VectorSearch } from "../../../src/vector/search.ts";
 import type { MCPTool } from "../../../src/mcp/types.ts";
 
 // Mock VectorSearch for testing
@@ -95,7 +95,7 @@ Deno.test("ContextOptimizer - measures context usage below 5% (AC4)", async () =
 
   // Verify metric was logged
   const metrics = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'context_usage_pct'"
+    "SELECT * FROM metrics WHERE metric_name = 'context_usage_pct'",
   );
   assertEquals(metrics.length, 1);
   assertEquals(parseFloat(metrics[0].value as string), 1.25);
@@ -144,7 +144,7 @@ Deno.test("ContextOptimizer - tracks query latency (AC7)", async () => {
 
   // Verify latency metric was logged
   const metrics = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'query_latency_ms'"
+    "SELECT * FROM metrics WHERE metric_name = 'query_latency_ms'",
   );
   assertEquals(metrics.length, 1);
   assert(parseFloat(metrics[0].value as string) > 0);
@@ -164,7 +164,7 @@ Deno.test("ContextOptimizer - showContextComparison displays before/after (AC5)"
 
   // Verify savings metric was logged
   const metrics = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'context_savings_pct'"
+    "SELECT * FROM metrics WHERE metric_name = 'context_savings_pct'",
   );
   assertEquals(metrics.length, 1);
 
@@ -249,7 +249,7 @@ Deno.test("ContextOptimizer - logs cache hit rate metric", async () => {
 
   // Verify cache hit rate metric was logged (once per query)
   const metrics = await db.query(
-    "SELECT * FROM metrics WHERE metric_name = 'cache_hit_rate' ORDER BY timestamp"
+    "SELECT * FROM metrics WHERE metric_name = 'cache_hit_rate' ORDER BY timestamp",
   );
 
   // Should have 2 entries: first query (0% hit rate), second query (100% hit rate)

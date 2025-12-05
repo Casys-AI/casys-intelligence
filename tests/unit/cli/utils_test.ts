@@ -9,8 +9,8 @@ import {
   detectMCPConfigPath,
   getAgentCardsConfigDir,
   getAgentCardsConfigPath,
-  getLegacyConfigPath,
   getAgentCardsDatabasePath,
+  getLegacyConfigPath,
   getWorkflowTemplatesPath,
 } from "../../../src/cli/utils.ts";
 

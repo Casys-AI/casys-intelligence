@@ -18,13 +18,13 @@
 
 import type { MCPClient } from "../mcp/client.ts";
 import type {
+  ExecutionCompleteMessage,
   ExecutionResult,
-  ToolDefinition,
-  TraceEvent,
+  InitMessage,
   RPCCallMessage,
   RPCResultMessage,
-  InitMessage,
-  ExecutionCompleteMessage,
+  ToolDefinition,
+  TraceEvent,
   WorkerToBridgeMessage,
 } from "./types.ts";
 import type { CapabilityStore } from "../capabilities/capability-store.ts";

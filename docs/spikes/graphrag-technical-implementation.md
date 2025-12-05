@@ -1,9 +1,8 @@
 # GraphRAG Technical Implementation Guide (with Graphology)
 
-**Date:** 2025-11-03 (Updated)
-**Author:** BMad
-**Stack:** Deno 2.5, PGlite 0.3.11 + pgvector, **Graphology 0.25**, BGE-Large-EN-v1.5
-**Approach:** True GraphRAG with Graphology (PageRank, Louvain, path finding)
+**Date:** 2025-11-03 (Updated) **Author:** BMad **Stack:** Deno 2.5, PGlite 0.3.11 + pgvector,
+**Graphology 0.25**, BGE-Large-EN-v1.5 **Approach:** True GraphRAG with Graphology (PageRank,
+Louvain, path finding)
 
 ---
 
@@ -27,6 +26,7 @@
 ```
 
 **Division of Responsibility:**
+
 - **PGlite:** Persist data, vector search (pgvector)
 - **Graphology:** Graph algorithms (PageRank, Louvain, paths)
 
@@ -58,6 +58,7 @@
 ### No More Complex SQL!
 
 **Before (pseudo-GraphRAG SQL):**
+
 ```sql
 -- ❌ Complex recursive CTEs
 WITH RECURSIVE tool_paths AS (...);
@@ -69,6 +70,7 @@ CREATE VIEW tool_importance AS ...;
 ```
 
 **After (Graphology):**
+
 ```sql
 -- ✅ Simple storage only (no calculations)
 CREATE TABLE tool_dependency (
@@ -216,7 +218,9 @@ export class GraphRAGEngine {
 
     const syncTime = performance.now() - startTime;
     console.log(
-      `✓ Graph synced: ${this.graph.order} nodes, ${this.graph.size} edges (${syncTime.toFixed(1)}ms)`
+      `✓ Graph synced: ${this.graph.order} nodes, ${this.graph.size} edges (${
+        syncTime.toFixed(1)
+      }ms)`,
     );
 
     // 3. Precompute graph metrics
@@ -361,7 +365,7 @@ export class GraphRAGEngine {
           observed_count = $3,
           confidence_score = $4
       `,
-        [from, to, attrs.count, attrs.weight]
+        [from, to, attrs.count, attrs.weight],
       );
     }
   }
@@ -374,8 +378,7 @@ export class GraphRAGEngine {
       nodeCount: this.graph.order,
       edgeCount: this.graph.size,
       communities: new Set(Object.values(this.communities)).size,
-      avgPageRank:
-        Object.values(this.pageRanks).reduce((a, b) => a + b, 0) / this.graph.order,
+      avgPageRank: Object.values(this.pageRanks).reduce((a, b) => a + b, 0) / this.graph.order,
     };
   }
 }
@@ -395,7 +398,7 @@ interface GraphStats {
 export class DAGSuggester {
   constructor(
     private graphEngine: GraphRAGEngine,
-    private vectorSearch: VectorSearch
+    private vectorSearch: VectorSearch,
   ) {}
 
   async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null> {
@@ -415,7 +418,7 @@ export class DAGSuggester {
 
     // 3. Build DAG using graph topology (Graphology)
     const dagStructure = this.graphEngine.buildDAG(
-      rankedCandidates.map((c) => c.toolId)
+      rankedCandidates.map((c) => c.toolId),
     );
 
     // 4. Calculate confidence
@@ -446,7 +449,9 @@ export class DAGSuggester {
 
   private generateRationale(candidates: any[], dag: DAGStructure): string {
     const topTool = candidates[0];
-    return `Based on semantic similarity (${(topTool.score * 100).toFixed(0)}%) and PageRank importance (${(topTool.pageRank * 100).toFixed(2)}%).`;
+    return `Based on semantic similarity (${
+      (topTool.score * 100).toFixed(0)
+    }%) and PageRank importance (${(topTool.pageRank * 100).toFixed(2)}%).`;
   }
 }
 ```
@@ -458,13 +463,13 @@ export class DAGSuggester {
 export class PatternStore {
   constructor(
     private db: PGlite,
-    private embeddingModel: EmbeddingModel
+    private embeddingModel: EmbeddingModel,
   ) {}
 
   async storePattern(
     intent: WorkflowIntent,
     dagStructure: DAGStructure,
-    executionResult: { success: boolean; executionTimeMs: number }
+    executionResult: { success: boolean; executionTimeMs: number },
   ): Promise<void> {
     // 1. Store execution history
     const executionId = await this.storeExecution(intent, dagStructure, executionResult);
@@ -485,7 +490,7 @@ export class PatternStore {
         success_count = workflow_pattern.success_count + ${executionResult.success ? 1 : 0},
         last_used = NOW()
     `,
-      [patternHash, JSON.stringify(dagStructure), `[${intentEmbedding.join(",")}]`]
+      [patternHash, JSON.stringify(dagStructure), `[${intentEmbedding.join(",")}]`],
     );
 
     // 5. Update dependencies (will be synced to Graphology later)
@@ -509,7 +514,7 @@ export class PatternStore {
               ELSE tool_dependency.confidence_score * 0.9
             END
         `,
-          [depTask.tool, task.tool, success]
+          [depTask.tool, task.tool, success],
         );
       }
     }
@@ -649,11 +654,15 @@ Deno.test("GraphRAGEngine - shortest path", async () => {
 
 ### Overview
 
-**Vision:** The gateway should perform actions BEFORE Claude's response, not just suggest them. Have results ready immediately when user confirms.
+**Vision:** The gateway should perform actions BEFORE Claude's response, not just suggest them. Have
+results ready immediately when user confirms.
 
-**User Insight:** "et donc les algo graph aident la gateway a performer l action avant meme l appel de claude non ? cetait l idee" (so the graph algorithms help the gateway perform the action even before Claude's call, right? That was the idea)
+**User Insight:** "et donc les algo graph aident la gateway a performer l action avant meme l appel
+de claude non ? cetait l idee" (so the graph algorithms help the gateway perform the action even
+before Claude's call, right? That was the idea)
 
-**Design Philosophy:** Speculative execution is THE feature - the core differentiator. Not optional, not opt-in. Default mode with smart safeguards.
+**Design Philosophy:** Speculative execution is THE feature - the core differentiator. Not optional,
+not opt-in. Default mode with smart safeguards.
 
 ### Three Execution Modes
 
@@ -669,7 +678,8 @@ interface ExecutionMode {
 
 **Mode Selection Logic:**
 
-- **`explicit_required`** (confidence < 0.70): No pattern found, Claude must provide explicit workflow
+- **`explicit_required`** (confidence < 0.70): No pattern found, Claude must provide explicit
+  workflow
 - **`suggestion`** (0.70-0.85): Good pattern found, suggest DAG to Claude
 - **`speculative_execution`** (>0.85): High confidence, execute immediately and have results ready
 
@@ -678,16 +688,22 @@ interface ExecutionMode {
 ```typescript
 export class GatewayHandler {
   private thresholds = {
-    speculative: 0.85,    // High confidence = execute immediately
-    suggestion: 0.70,     // Medium confidence = suggest to Claude
-    explicit: 0.70,       // Low confidence = require explicit workflow
+    speculative: 0.85, // High confidence = execute immediately
+    suggestion: 0.70, // Medium confidence = suggest to Claude
+    explicit: 0.70, // Low confidence = require explicit workflow
   };
 
   private dangerousOperations = new Set([
-    "delete", "remove", "destroy",
-    "deploy", "publish",
-    "payment", "charge", "bill",
-    "send_email", "send_message"
+    "delete",
+    "remove",
+    "destroy",
+    "deploy",
+    "publish",
+    "payment",
+    "charge",
+    "bill",
+    "send_email",
+    "send_message",
   ]);
 
   async handleWorkflowRequest(request: {
@@ -708,7 +724,7 @@ export class GatewayHandler {
         return {
           mode: "explicit_required",
           confidence: suggestion?.confidence || 0,
-          explanation: "No workflow pattern found for this intent. Please provide explicit DAG."
+          explanation: "No workflow pattern found for this intent. Please provide explicit DAG.",
         };
       }
 
@@ -719,7 +735,7 @@ export class GatewayHandler {
           confidence: suggestion.confidence,
           dagStructure: suggestion.dagStructure,
           explanation: suggestion.explanation,
-          warning: "⚠️  Dangerous operations detected - review required before execution"
+          warning: "⚠️  Dangerous operations detected - review required before execution",
         };
       }
 
@@ -733,7 +749,7 @@ export class GatewayHandler {
         mode: "suggestion",
         confidence: suggestion.confidence,
         dagStructure: suggestion.dagStructure,
-        explanation: suggestion.explanation
+        explanation: suggestion.explanation,
       };
     }
 
@@ -742,7 +758,7 @@ export class GatewayHandler {
 
   private async executeSpeculatively(
     suggestion: SuggestedDAG,
-    intent: WorkflowIntent
+    intent: WorkflowIntent,
   ): Promise<ExecutionMode> {
     const startTime = performance.now();
 
@@ -756,7 +772,7 @@ export class GatewayHandler {
         success: true,
         confidence: suggestion.confidence,
         executionTime,
-        dagSize: suggestion.dagStructure.tasks.length
+        dagSize: suggestion.dagStructure.tasks.length,
       });
 
       return {
@@ -765,14 +781,16 @@ export class GatewayHandler {
         dagStructure: suggestion.dagStructure,
         results: result.results,
         explanation: suggestion.explanation,
-        note: `✨ Results prepared speculatively in ${executionTime.toFixed(0)}ms - ready immediately`
+        note: `✨ Results prepared speculatively in ${
+          executionTime.toFixed(0)
+        }ms - ready immediately`,
       };
     } catch (error) {
       // Speculative execution failed - graceful fallback to suggestion
       await this.trackSpeculativeExecution({
         success: false,
         confidence: suggestion.confidence,
-        error: error.message
+        error: error.message,
       });
 
       return {
@@ -780,17 +798,15 @@ export class GatewayHandler {
         confidence: suggestion.confidence,
         dagStructure: suggestion.dagStructure,
         explanation: suggestion.explanation,
-        error: `Speculative execution failed: ${error.message}. Review and retry?`
+        error: `Speculative execution failed: ${error.message}. Review and retry?`,
       };
     }
   }
 
   private isDangerous(dag: DAGStructure): boolean {
-    return dag.tasks.some(task => {
+    return dag.tasks.some((task) => {
       const toolName = task.tool.split(":")[1]?.toLowerCase() || "";
-      return Array.from(this.dangerousOperations).some(op =>
-        toolName.includes(op)
-      );
+      return Array.from(this.dangerousOperations).some((op) => toolName.includes(op));
     });
   }
 }
@@ -804,8 +820,8 @@ export class AdaptiveThresholdManager {
   private config = {
     thresholds: {
       speculative: 0.85,
-      suggestion: 0.70
-    }
+      suggestion: 0.70,
+    },
   };
 
   async recordExecution(record: {
@@ -817,7 +833,7 @@ export class AdaptiveThresholdManager {
   }): Promise<void> {
     this.history.push({
       ...record,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Adjust thresholds after collecting enough data
@@ -830,19 +846,27 @@ export class AdaptiveThresholdManager {
     const recent = this.history.slice(-100);
 
     // Analyze speculative execution performance
-    const highConfidence = recent.filter(r => r.confidence >= this.config.thresholds.speculative);
-    const successRate = highConfidence.filter(r => r.success).length / highConfidence.length;
+    const highConfidence = recent.filter((r) => r.confidence >= this.config.thresholds.speculative);
+    const successRate = highConfidence.filter((r) => r.success).length / highConfidence.length;
 
     // If success rate is very high, become more aggressive
     if (successRate > 0.95) {
       this.config.thresholds.speculative *= 0.95; // Lower threshold (more speculation)
-      console.log(`📊 Adaptive learning: Lowering speculative threshold to ${this.config.thresholds.speculative.toFixed(2)}`);
+      console.log(
+        `📊 Adaptive learning: Lowering speculative threshold to ${
+          this.config.thresholds.speculative.toFixed(2)
+        }`,
+      );
     }
 
     // If success rate is too low, become more conservative
     if (successRate < 0.80) {
       this.config.thresholds.speculative *= 1.05; // Raise threshold (less speculation)
-      console.log(`📊 Adaptive learning: Raising speculative threshold to ${this.config.thresholds.speculative.toFixed(2)}`);
+      console.log(
+        `📊 Adaptive learning: Raising speculative threshold to ${
+          this.config.thresholds.speculative.toFixed(2)
+        }`,
+      );
     }
 
     // Persist updated config
@@ -863,24 +887,24 @@ export class DAGExplainer {
     // Extract dependency chains
     for (const task of dag.tasks) {
       if (task.depends_on.length > 0) {
-        const deps = task.depends_on.map(depId => {
-          const depTask = dag.tasks.find(t => t.id === depId);
+        const deps = task.depends_on.map((depId) => {
+          const depTask = dag.tasks.find((t) => t.id === depId);
           return depTask?.tool || depId;
         });
 
         explanations.push(
-          `${task.tool} depends on: ${deps.join(", ")}`
+          `${task.tool} depends on: ${deps.join(", ")}`,
         );
 
         // Find graph paths for each dependency
         for (const depId of task.depends_on) {
-          const depTask = dag.tasks.find(t => t.id === depId);
+          const depTask = dag.tasks.find((t) => t.id === depId);
           if (!depTask) continue;
 
           const path = this.graphEngine.findShortestPath(depTask.tool, task.tool);
           if (path && path.length > 2) {
             explanations.push(
-              `  → Transitive path (${path.length - 1} hops): ${path.join(" → ")}`
+              `  → Transitive path (${path.length - 1} hops): ${path.join(" → ")}`,
             );
           }
         }
@@ -888,9 +912,9 @@ export class DAGExplainer {
     }
 
     // Add PageRank scores
-    const toolScores = dag.tasks.map(task => ({
+    const toolScores = dag.tasks.map((task) => ({
       tool: task.tool,
-      pagerank: this.graphEngine.getPageRank(task.tool)
+      pagerank: this.graphEngine.getPageRank(task.tool),
     })).sort((a, b) => b.pagerank - a.pagerank);
 
     explanations.push("\nTool Importance (PageRank):");
@@ -920,8 +944,8 @@ interface SpeculativeMetrics {
   failedExecutions: number;
   avgExecutionTime: number;
   avgConfidence: number;
-  wastedComputeCost: number;  // Cost of failed speculations
-  savedLatency: number;        // Total latency saved vs sequential
+  wastedComputeCost: number; // Cost of failed speculations
+  savedLatency: number; // Total latency saved vs sequential
 }
 ```
 
@@ -932,6 +956,7 @@ interface SpeculativeMetrics {
 ### Story 2.1: GraphRAG Engine with Graphology + Speculative Execution
 
 **Part 1: Core GraphRAG (4-5 hours)**
+
 - [ ] Add Graphology dependencies to deno.json
 - [ ] Implement `GraphRAGEngine` class
 - [ ] Implement graph sync from PGlite
@@ -942,6 +967,7 @@ interface SpeculativeMetrics {
 - [ ] Update `DAGSuggester` to use GraphRAGEngine
 
 **Part 2: Speculative Execution (2-3 hours) - THE FEATURE**
+
 - [ ] Implement three execution modes (explicit/suggestion/speculative)
 - [ ] Implement `GatewayHandler` with mode selection logic
 - [ ] Implement safety checks for dangerous operations
@@ -950,11 +976,13 @@ interface SpeculativeMetrics {
 - [ ] Track speculative execution metrics
 
 **Part 3: Explainability (1 hour)**
+
 - [ ] Implement `DAGExplainer` with dependency paths
 - [ ] Add PageRank scores to explanations
 - [ ] Format explanations for Claude consumption
 
 **Part 4: Testing & Documentation**
+
 - [ ] Write unit tests (sync, PageRank, paths, communities)
 - [ ] Write speculative execution tests (success, failure, dangerous ops)
 - [ ] Benchmark performance (<300ms total including execution)
@@ -967,29 +995,34 @@ interface SpeculativeMetrics {
 ## 🎯 Benefits of Graphology Approach
 
 ### 1. Simplicity ✅
+
 - **90% less SQL complexity**
 - No recursive CTEs
 - No complex views
 - Just simple storage
 
 ### 2. True Graph Algorithms ✅
+
 - Real PageRank (not pseudo)
 - Real Louvain community detection
 - Real shortest path algorithms
 - Proven, optimized implementations
 
 ### 3. Performance ⚡
+
 - In-memory graph operations (<1ms for paths)
 - Precomputed metrics (PageRank, communities)
 - 3-5x faster than SQL approach
 
 ### 4. Maintainability 📝
+
 - Simple, readable code
 - Well-documented library
 - Active community
 - Easy to debug
 
 ### 5. Extensibility 🚀
+
 - Easy to add more graph algorithms
 - Betweenness centrality
 - Closeness centrality
@@ -1000,6 +1033,7 @@ interface SpeculativeMetrics {
 ## 🔮 Future Enhancements (v1.1+)
 
 ### 1. Graph Visualization
+
 ```typescript
 import { serializeGraph } from "npm:graphology-utils";
 
@@ -1011,6 +1045,7 @@ await Deno.writeTextFile("graph.json", JSON.stringify(serialized));
 ```
 
 ### 2. Advanced Centrality Measures
+
 ```typescript
 import { betweenness } from "npm:graphology-metrics/centrality/betweenness";
 
@@ -1019,6 +1054,7 @@ const bridgeTools = betweenness(this.graph);
 ```
 
 ### 3. Temporal Graphs
+
 ```typescript
 // Track how graph evolves over time
 const snapshot = this.graph.copy();
@@ -1037,7 +1073,6 @@ await this.storeGraphSnapshot(snapshot, Date.now());
 
 ---
 
-**Status:** 🟢 READY FOR IMPLEMENTATION
-**Complexity:** Medium → **Low** (Graphology simplifies everything!)
-**Innovation:** High (True GraphRAG in MCP space)
-**Dependencies:** PGlite + Graphology (~100KB total)
+**Status:** 🟢 READY FOR IMPLEMENTATION **Complexity:** Medium → **Low** (Graphology simplifies
+everything!) **Innovation:** High (True GraphRAG in MCP space) **Dependencies:** PGlite + Graphology
+(~100KB total)

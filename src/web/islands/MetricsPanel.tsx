@@ -5,7 +5,7 @@
  * Styled with Casys.ai design system
  */
 
-import { useEffect, useState, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 interface MetricsPanelProps {
   apiBase: string;
@@ -42,7 +42,9 @@ interface GraphMetricsResponse {
   };
 }
 
-export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar" }: MetricsPanelProps) {
+export default function MetricsPanel(
+  { apiBase: apiBaseProp, position = "sidebar" }: MetricsPanelProps,
+) {
   const apiBase = apiBaseProp || "http://localhost:3003";
 
   const [metrics, setMetrics] = useState<GraphMetricsResponse | null>(null);
@@ -140,7 +142,9 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
     chartInstanceRef.current = new Chart(ctx, {
       type: activeChart === "workflows" ? "bar" : "line",
       data: {
-        labels: chartData.map((p) => new Date(p.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })),
+        labels: chartData.map((p) =>
+          new Date(p.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        ),
         datasets: [{
           label,
           data: chartData.map((p) => p.value),
@@ -155,8 +159,15 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: "rgba(255, 184, 111, 0.1)" }, ticks: { color: "#8a8078", maxRotation: 45 } },
-          y: { grid: { color: "rgba(255, 184, 111, 0.1)" }, ticks: { color: "#8a8078" }, beginAtZero: true },
+          x: {
+            grid: { color: "rgba(255, 184, 111, 0.1)" },
+            ticks: { color: "#8a8078", maxRotation: 45 },
+          },
+          y: {
+            grid: { color: "rgba(255, 184, 111, 0.1)" },
+            ticks: { color: "#8a8078" },
+            beginAtZero: true,
+          },
         },
       },
     });
@@ -175,7 +186,7 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
     const maxLen = Math.max(
       metrics.timeseries.edge_count.length,
       metrics.timeseries.avg_confidence.length,
-      metrics.timeseries.workflow_rate.length
+      metrics.timeseries.workflow_rate.length,
     );
     const rows: string[][] = [];
     for (let i = 0; i < maxLen; i++) {
@@ -219,23 +230,23 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
   // Casys design tokens
   const styles = {
     sidebar: {
-      background: 'linear-gradient(to bottom, var(--bg-elevated), var(--bg))',
-      borderLeft: '1px solid var(--border)',
-      fontFamily: 'var(--font-sans)',
+      background: "linear-gradient(to bottom, var(--bg-elevated), var(--bg))",
+      borderLeft: "1px solid var(--border)",
+      fontFamily: "var(--font-sans)",
     },
     card: {
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
+      background: "var(--bg-surface)",
+      border: "1px solid var(--border)",
     },
     button: {
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      color: 'var(--text-muted)',
+      background: "var(--bg-surface)",
+      border: "1px solid var(--border)",
+      color: "var(--text-muted)",
     },
     buttonActive: {
-      background: 'var(--accent)',
-      border: '1px solid var(--accent)',
-      color: 'var(--bg)',
+      background: "var(--accent)",
+      border: "1px solid var(--accent)",
+      color: "var(--bg)",
     },
   };
 
@@ -244,23 +255,34 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
       <div
         class="fixed right-5 top-1/2 -translate-y-1/2 p-3.5 rounded-xl cursor-pointer z-20 transition-all duration-300"
         style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-          backdropFilter: 'blur(12px)',
+          background: "var(--bg-elevated)",
+          border: "1px solid var(--border)",
+          backdropFilter: "blur(12px)",
         }}
         onClick={() => setCollapsed(false)}
         title="Expand metrics panel"
         onMouseOver={(e) => {
-          e.currentTarget.style.borderColor = 'var(--accent-medium)';
-          e.currentTarget.style.background = 'var(--accent-dim)';
+          e.currentTarget.style.borderColor = "var(--accent-medium)";
+          e.currentTarget.style.background = "var(--accent-dim)";
         }}
         onMouseOut={(e) => {
-          e.currentTarget.style.borderColor = 'var(--border)';
-          e.currentTarget.style.background = 'var(--bg-elevated)';
+          e.currentTarget.style.borderColor = "var(--border)";
+          e.currentTarget.style.background = "var(--bg-elevated)";
         }}
       >
-        <svg class="w-5 h-5" style={{ color: 'var(--text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        <svg
+          class="w-5 h-5"
+          style={{ color: "var(--text-muted)" }}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
         </svg>
       </div>
     );
@@ -268,12 +290,14 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
 
   return (
     <div
-      class={`w-[340px] p-5 overflow-y-auto flex flex-col gap-4 ${position === "overlay" ? "absolute right-0 top-0 h-full z-20" : ""}`}
+      class={`w-[340px] p-5 overflow-y-auto flex flex-col gap-4 ${
+        position === "overlay" ? "absolute right-0 top-0 h-full z-20" : ""
+      }`}
       style={styles.sidebar}
     >
       {/* Header */}
       <div class="flex justify-between items-center">
-        <h2 class="text-xl font-bold" style={{ color: 'var(--text)' }}>
+        <h2 class="text-xl font-bold" style={{ color: "var(--text)" }}>
           Metrics
         </h2>
         <div class="flex gap-1.5">
@@ -283,16 +307,21 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
             onClick={exportMetricsCSV}
             title="Download CSV"
             onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent-medium)';
-              e.currentTarget.style.color = 'var(--accent)';
+              e.currentTarget.style.borderColor = "var(--accent-medium)";
+              e.currentTarget.style.color = "var(--accent)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--text-muted)";
             }}
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
             </svg>
           </button>
           <button
@@ -301,23 +330,31 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
             onClick={() => setCollapsed(true)}
             title="Collapse panel"
             onMouseOver={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent-medium)';
-              e.currentTarget.style.color = 'var(--accent)';
+              e.currentTarget.style.borderColor = "var(--accent-medium)";
+              e.currentTarget.style.color = "var(--accent)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)';
-              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--text-muted)";
             }}
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
       </div>
 
       {/* Date Range Selector */}
-      <div class="flex gap-1 p-1 rounded-xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+      <div
+        class="flex gap-1 p-1 rounded-xl"
+        style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+      >
         {(["1h", "24h", "7d"] as MetricsTimeRange[]).map((range) => (
           <button
             key={range}
@@ -332,10 +369,13 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
 
       {/* Loading State */}
       {loading && (
-        <div class="flex flex-col items-center justify-center gap-3 py-8" style={{ color: 'var(--text-dim)' }}>
+        <div
+          class="flex flex-col items-center justify-center gap-3 py-8"
+          style={{ color: "var(--text-dim)" }}
+        >
           <div
             class="w-8 h-8 rounded-full animate-spin"
-            style={{ border: '3px solid var(--accent-dim)', borderTopColor: 'var(--accent)' }}
+            style={{ border: "3px solid var(--accent-dim)", borderTopColor: "var(--accent)" }}
           />
           <span>Loading metrics...</span>
         </div>
@@ -343,14 +383,17 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
 
       {/* Error State */}
       {error && (
-        <div class="flex flex-col items-center justify-center gap-3 py-8" style={{ color: 'var(--error)' }}>
+        <div
+          class="flex flex-col items-center justify-center gap-3 py-8"
+          style={{ color: "var(--error)" }}
+        >
           <span>Error: {error}</span>
           <button
             class="mt-3 px-5 py-2.5 rounded-lg transition-all"
             style={{
-              background: 'rgba(248, 113, 113, 0.1)',
-              border: '1px solid rgba(248, 113, 113, 0.2)',
-              color: 'var(--error)',
+              background: "rgba(248, 113, 113, 0.1)",
+              border: "1px solid rgba(248, 113, 113, 0.2)",
+              color: "var(--error)",
             }}
             onClick={fetchMetrics}
           >
@@ -375,22 +418,28 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
                 class="relative p-4 rounded-xl transition-all duration-300 overflow-hidden group"
                 style={styles.card}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-medium)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.borderColor = "var(--accent-medium)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
                 <div
                   class="absolute top-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'var(--accent)' }}
+                  style={{ background: "var(--accent)" }}
                 />
-                <span class="block text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: 'var(--text-dim)' }}>
+                <span
+                  class="block text-[11px] uppercase tracking-wider mb-2 font-medium"
+                  style={{ color: "var(--text-dim)" }}
+                >
                   {metric.label}
                 </span>
-                <span class="block text-2xl font-bold tabular-nums" style={{ color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>
+                <span
+                  class="block text-2xl font-bold tabular-nums"
+                  style={{ color: "var(--text)", fontFamily: "var(--font-mono)" }}
+                >
                   {metric.value}
                 </span>
               </div>
@@ -400,23 +449,29 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
           {/* Alpha Indicator */}
           <div class="p-4 rounded-xl" style={styles.card}>
             <div class="flex justify-between items-center mb-3">
-              <span class="text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-dim)' }}>
+              <span
+                class="text-[11px] uppercase tracking-wider font-medium"
+                style={{ color: "var(--text-dim)" }}
+              >
                 Adaptive Alpha
               </span>
               <span style={{ color: getAlphaIndicator(metrics.current.adaptive_alpha).color }}>
                 {getAlphaIndicator(metrics.current.adaptive_alpha).label}
               </span>
             </div>
-            <div class="h-2 rounded overflow-hidden" style={{ background: 'var(--bg)' }}>
+            <div class="h-2 rounded overflow-hidden" style={{ background: "var(--bg)" }}>
               <div
                 class="h-full rounded transition-all duration-500"
                 style={{
                   width: `${metrics.current.adaptive_alpha * 100}%`,
-                  background: 'linear-gradient(to right, var(--accent), var(--warning))',
+                  background: "linear-gradient(to right, var(--accent), var(--warning))",
                 }}
               />
             </div>
-            <div class="text-sm text-right mt-2 font-medium tabular-nums" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <div
+              class="text-sm text-right mt-2 font-medium tabular-nums"
+              style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}
+            >
               {metrics.current.adaptive_alpha.toFixed(3)}
             </div>
           </div>
@@ -425,16 +480,23 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
           <div class="p-4 rounded-xl" style={styles.card}>
             {[
               { label: `Workflows (${dateRange})`, value: metrics.period.workflows_executed },
-              { label: "Success Rate", value: `${metrics.period.workflows_success_rate.toFixed(1)}%`, color: getSuccessRateColor(metrics.period.workflows_success_rate) },
+              {
+                label: "Success Rate",
+                value: `${metrics.period.workflows_success_rate.toFixed(1)}%`,
+                color: getSuccessRateColor(metrics.period.workflows_success_rate),
+              },
               { label: "New Edges", value: metrics.period.new_edges_created },
             ].map((stat, i, arr) => (
               <div
                 key={stat.label}
                 class="flex justify-between py-2.5"
-                style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}
+                style={{ borderBottom: i < arr.length - 1 ? "1px solid var(--border)" : "none" }}
               >
-                <span class="text-sm" style={{ color: 'var(--text-dim)' }}>{stat.label}</span>
-                <span class="text-sm font-semibold tabular-nums" style={{ color: stat.color || 'var(--text)', fontFamily: 'var(--font-mono)' }}>
+                <span class="text-sm" style={{ color: "var(--text-dim)" }}>{stat.label}</span>
+                <span
+                  class="text-sm font-semibold tabular-nums"
+                  style={{ color: stat.color || "var(--text)", fontFamily: "var(--font-mono)" }}
+                >
                   {stat.value}
                 </span>
               </div>
@@ -443,34 +505,47 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
 
           {/* PageRank Top 10 */}
           <div class="p-4 rounded-xl" style={styles.card}>
-            <h3 class="text-[11px] uppercase tracking-widest mb-3 font-semibold" style={{ color: 'var(--text-dim)' }}>
+            <h3
+              class="text-[11px] uppercase tracking-widest mb-3 font-semibold"
+              style={{ color: "var(--text-dim)" }}
+            >
               Top Tools (PageRank)
             </h3>
-            <div class={metrics.current.pagerank_top_10.length > 6 ? "max-h-60 overflow-y-auto" : ""}>
+            <div
+              class={metrics.current.pagerank_top_10.length > 6 ? "max-h-60 overflow-y-auto" : ""}
+            >
               {metrics.current.pagerank_top_10.map((tool, idx) => (
                 <div
                   key={tool.tool_id}
                   class="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg transition-colors"
-                  onMouseOver={(e) => e.currentTarget.style.background = 'var(--accent-dim)'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                  onMouseOver={(e) => e.currentTarget.style.background = "var(--accent-dim)"}
+                  onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
                 >
-                  <span class="w-7 text-center font-semibold text-xs" style={{ color: 'var(--text-dim)' }}>
+                  <span
+                    class="w-7 text-center font-semibold text-xs"
+                    style={{ color: "var(--text-dim)" }}
+                  >
                     #{idx + 1}
                   </span>
                   <span
                     class="flex-1 truncate font-medium text-sm"
                     title={tool.tool_id}
-                    style={{ color: 'var(--text)' }}
+                    style={{ color: "var(--text)" }}
                   >
                     {tool.tool_id.split("__").pop() || tool.tool_id}
                   </span>
-                  <span class="text-xs" style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
+                  <span
+                    class="text-xs"
+                    style={{ color: "var(--accent)", fontFamily: "var(--font-mono)" }}
+                  >
                     {tool.score.toFixed(4)}
                   </span>
                 </div>
               ))}
               {metrics.current.pagerank_top_10.length === 0 && (
-                <div class="text-sm py-3 text-center" style={{ color: 'var(--text-dim)' }}>No tools yet</div>
+                <div class="text-sm py-3 text-center" style={{ color: "var(--text-dim)" }}>
+                  No tools yet
+                </div>
               )}
             </div>
           </div>
@@ -496,7 +571,10 @@ export default function MetricsPanel({ apiBase: apiBaseProp, position = "sidebar
 
           {/* Last Updated */}
           {lastUpdated && (
-            <div class="text-xs text-center py-2 rounded-lg" style={{ color: 'var(--text-dim)', background: 'var(--bg-surface)' }}>
+            <div
+              class="text-xs text-center py-2 rounded-lg"
+              style={{ color: "var(--text-dim)", background: "var(--bg-surface)" }}
+            >
               Updated: {lastUpdated.toLocaleTimeString()}
             </div>
           )}

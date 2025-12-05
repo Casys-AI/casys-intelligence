@@ -53,7 +53,7 @@ export class HealthChecker {
         const health = await this.checkServer(serverId, client);
         this.healthMap.set(serverId, health);
         return health;
-      }
+      },
     );
 
     const results = await Promise.all(checks);
@@ -62,7 +62,7 @@ export class HealthChecker {
     for (const health of results) {
       const icon = this.getStatusIcon(health.status);
       console.error(
-        `${icon} ${health.serverName} (${health.serverId}): ${health.status}`
+        `${icon} ${health.serverName} (${health.serverId}): ${health.status}`,
       );
 
       if (health.errorMessage) {
@@ -85,7 +85,7 @@ export class HealthChecker {
 
     if (summary.down > 0) {
       console.warn(
-        `⚠️  Warning: ${summary.down} server(s) are down. Some tools may be unavailable.`
+        `⚠️  Warning: ${summary.down} server(s) are down. Some tools may be unavailable.`,
       );
     }
   }
@@ -143,7 +143,7 @@ export class HealthChecker {
    */
   private async checkServer(
     serverId: string,
-    client: MCPClient
+    client: MCPClient,
   ): Promise<ServerHealth> {
     const serverName = client.serverName || serverId;
     let consecutiveFailures = 0;
@@ -250,11 +250,11 @@ export class HealthChecker {
 
   private logStatusChange(
     previous: ServerHealth,
-    current: ServerHealth
+    current: ServerHealth,
   ): void {
     const icon = this.getStatusIcon(current.status);
     console.warn(
-      `${icon} ${current.serverName}: ${previous.status} → ${current.status}`
+      `${icon} ${current.serverName}: ${previous.status} → ${current.status}`,
     );
 
     if (current.errorMessage) {

@@ -4,7 +4,7 @@
  * Tests parallel DAG execution with mock MCP servers.
  */
 
-import { assertEquals, assert } from "jsr:@std/assert@1";
+import { assert, assertEquals } from "jsr:@std/assert@1";
 import { MockMCPServer } from "../fixtures/mock-mcp-server.ts";
 import { ParallelExecutor } from "../../src/dag/executor.ts";
 import type { DAGStructure } from "../../src/graphrag/types.ts";
@@ -147,7 +147,11 @@ Deno.test("E2E 06: DAG parallel execution", async (t) => {
       assertEquals(result.errors.length, 0, "Should have no errors");
       assertEquals(result.parallelizationLayers, 3, "Should have 3 layers");
 
-      console.log(`  Complex DAG: ${result.parallelizationLayers} layers, ${result.executionTimeMs.toFixed(1)}ms`);
+      console.log(
+        `  Complex DAG: ${result.parallelizationLayers} layers, ${
+          result.executionTimeMs.toFixed(1)
+        }ms`,
+      );
     });
 
     await t.step("6. Test partial failure handling", async () => {

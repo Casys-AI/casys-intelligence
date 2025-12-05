@@ -58,13 +58,13 @@ class MockMCPClient {
 
 function createHandler(
   mcpClients: Map<string, MCPClient>,
-  executionMode: ToolExecutionMode = "real"
+  executionMode: ToolExecutionMode = "real",
 ): GatewayHandler {
   return new GatewayHandler(
     new MockGraphEngine() as unknown as GraphRAGEngine,
     new MockDAGSuggester() as unknown as DAGSuggester,
     mcpClients,
-    { executionMode }
+    { executionMode },
   );
 }
 
@@ -126,7 +126,7 @@ Deno.test("ADR-030: executeToolReal - handles mcp__server__tool format", async (
 });
 
 Deno.test("ADR-030: executeToolReal - throws on missing server", async () => {
-  const clients = new Map<string, MCPClient>();  // Empty
+  const clients = new Map<string, MCPClient>(); // Empty
 
   const handler = createHandler(clients, "real");
   const executeToolReal = (handler as any).executeToolReal.bind(handler);
@@ -266,7 +266,7 @@ Deno.test("ADR-030: executeTask routes based on executionMode config", async () 
 
 Deno.test("ADR-030: default executionMode is 'real'", () => {
   const clients = new Map<string, MCPClient>();
-  const handler = createHandler(clients);  // No explicit mode
+  const handler = createHandler(clients); // No explicit mode
 
   // Access config
   const config = (handler as any).config;

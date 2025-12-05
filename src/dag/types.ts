@@ -121,80 +121,80 @@ export type ToolExecutor = (
  */
 export type ExecutionEvent =
   | {
-      type: "workflow_start";
-      timestamp: number;
-      workflow_id: string;
-      total_layers: number;
-    }
+    type: "workflow_start";
+    timestamp: number;
+    workflow_id: string;
+    total_layers: number;
+  }
   | {
-      type: "layer_start";
-      timestamp: number;
-      workflow_id: string;
-      layer_index: number;
-      tasks_count: number;
-    }
+    type: "layer_start";
+    timestamp: number;
+    workflow_id: string;
+    layer_index: number;
+    tasks_count: number;
+  }
   | {
-      type: "task_start";
-      timestamp: number;
-      workflow_id: string;
-      task_id: string;
-      tool: string;
-    }
+    type: "task_start";
+    timestamp: number;
+    workflow_id: string;
+    task_id: string;
+    tool: string;
+  }
   | {
-      type: "task_complete";
-      timestamp: number;
-      workflow_id: string;
-      task_id: string;
-      execution_time_ms: number;
-    }
+    type: "task_complete";
+    timestamp: number;
+    workflow_id: string;
+    task_id: string;
+    execution_time_ms: number;
+  }
   | {
-      type: "task_error";
-      timestamp: number;
-      workflow_id: string;
-      task_id: string;
-      error: string;
-    }
+    type: "task_error";
+    timestamp: number;
+    workflow_id: string;
+    task_id: string;
+    error: string;
+  }
   | {
-      type: "task_warning";
-      timestamp: number;
-      workflow_id: string;
-      task_id: string;
-      error: string;
-      message: string;
-    }
+    type: "task_warning";
+    timestamp: number;
+    workflow_id: string;
+    task_id: string;
+    error: string;
+    message: string;
+  }
   | {
-      type: "state_updated";
-      timestamp: number;
-      workflow_id: string;
-      updates: {
-        messages_added?: number;
-        tasks_added?: number;
-        decisions_added?: number;
-        context_keys?: string[];
-      };
-    }
-  | {
-      type: "checkpoint";
-      timestamp: number;
-      workflow_id: string;
-      checkpoint_id: string;
-      layer_index: number;
-    }
-  | {
-      type: "decision_required";
-      timestamp: number;
-      workflow_id: string;
-      decision_type: "AIL" | "HIL";
-      description: string;
-    }
-  | {
-      type: "workflow_complete";
-      timestamp: number;
-      workflow_id: string;
-      total_time_ms: number;
-      successful_tasks: number;
-      failed_tasks: number;
+    type: "state_updated";
+    timestamp: number;
+    workflow_id: string;
+    updates: {
+      messages_added?: number;
+      tasks_added?: number;
+      decisions_added?: number;
+      context_keys?: string[];
     };
+  }
+  | {
+    type: "checkpoint";
+    timestamp: number;
+    workflow_id: string;
+    checkpoint_id: string;
+    layer_index: number;
+  }
+  | {
+    type: "decision_required";
+    timestamp: number;
+    workflow_id: string;
+    decision_type: "AIL" | "HIL";
+    description: string;
+  }
+  | {
+    type: "workflow_complete";
+    timestamp: number;
+    workflow_id: string;
+    total_time_ms: number;
+    successful_tasks: number;
+    failed_tasks: number;
+  };
 
 // ============================================================================
 // Story 2.5-2: Checkpoint & Resume Types
@@ -245,48 +245,48 @@ export interface Checkpoint {
  */
 export type Command =
   | {
-      type: "continue";
-      /** Optional: Reason why agent chose to continue (for logging/audit) */
-      reason?: string;
-    }
+    type: "continue";
+    /** Optional: Reason why agent chose to continue (for logging/audit) */
+    reason?: string;
+  }
   | {
-      type: "abort";
-      reason: string;
-    }
+    type: "abort";
+    reason: string;
+  }
   | {
-      type: "inject_tasks";
-      tasks: Array<{
-        id: string;
-        tool: string;
-        arguments: Record<string, unknown>;
-        depends_on: string[];
-      }>;
-      target_layer: number;
-    }
+    type: "inject_tasks";
+    tasks: Array<{
+      id: string;
+      tool: string;
+      arguments: Record<string, unknown>;
+      depends_on: string[];
+    }>;
+    target_layer: number;
+  }
   | {
-      type: "replan_dag";
-      new_requirement: string; // Natural language description of new requirement
-      available_context: Record<string, unknown>; // Current execution context
-    }
+    type: "replan_dag";
+    new_requirement: string; // Natural language description of new requirement
+    available_context: Record<string, unknown>; // Current execution context
+  }
   | {
-      type: "skip_layer";
-      layer_index: number;
-      reason: string;
-    }
+    type: "skip_layer";
+    layer_index: number;
+    reason: string;
+  }
   | {
-      type: "modify_args";
-      task_id: string;
-      updates: Record<string, unknown>;
-    }
+    type: "modify_args";
+    task_id: string;
+    updates: Record<string, unknown>;
+  }
   | {
-      type: "checkpoint_response";
-      checkpoint_id: string;
-      decision: "continue" | "rollback" | "modify";
-      modifications?: Record<string, unknown>;
-    }
+    type: "checkpoint_response";
+    checkpoint_id: string;
+    decision: "continue" | "rollback" | "modify";
+    modifications?: Record<string, unknown>;
+  }
   | {
-      type: "approval_response";
-      checkpoint_id: string; // References the checkpoint being approved/rejected
-      approved: boolean; // true = continue, false = abort
-      feedback?: string; // Optional human feedback
-    };
+    type: "approval_response";
+    checkpoint_id: string; // References the checkpoint being approved/rejected
+    approved: boolean; // true = continue, false = abort
+    feedback?: string; // Optional human feedback
+  };

@@ -1,32 +1,33 @@
 ---
-name: 'step-01-init'
-description: 'Initialize workflow creation session by detecting continuation state and setting up project'
+name: "step-01-init"
+description: "Initialize workflow creation session by detecting continuation state and setting up project"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-01-init.md'
-nextStepFile: '{workflow_path}/steps/step-02-gather.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-01-init.md"
+nextStepFile: "{workflow_path}/steps/step-02-gather.md"
+workflowFile: "{workflow_path}/workflow.md"
 # Output files for workflow creation process
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
-targetWorkflowPath: '{custom_workflow_location}/{new_workflow_name}'
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
+targetWorkflowPath: "{custom_workflow_location}/{new_workflow_name}"
 
 # Task References
-advancedElicitationTask: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/bmad/core/workflows/party-mode/workflow.md"
 
 # Template References
-projectInfoTemplate: '{workflow_path}/templates/project-info.md'
-workflowPlanTemplate: '{workflow_path}/templates/workflow-plan.md'
+projectInfoTemplate: "{workflow_path}/templates/project-info.md"
+workflowPlanTemplate: "{workflow_path}/templates/workflow-plan.md"
 ---
 
 # Step 1: Workflow Creation Initialization
 
 ## STEP GOAL:
 
-To initialize the workflow creation process by detecting continuation state, understanding project context, and preparing for collaborative workflow design.
+To initialize the workflow creation process by detecting continuation state, understanding project
+context, and preparing for collaborative workflow design.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -40,7 +41,8 @@ To initialize the workflow creation process by detecting continuation state, und
 ### Role Reinforcement:
 
 - ✅ You are a workflow architect and systems designer
-- ✅ If you already have been given communication or persona patterns, continue to use those while playing this new role
+- ✅ If you already have been given communication or persona patterns, continue to use those while
+  playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
 - ✅ You bring workflow design expertise, user brings their specific requirements
 - ✅ Together we will create a structured, repeatable workflow
@@ -98,8 +100,8 @@ If the workflow folder exists AND is complete:
 
 #### A. Project Discovery
 
-Welcome the user and understand their needs:
-"Welcome! I'm excited to help you create a new workflow. Let's start by understanding what you want to build."
+Welcome the user and understand their needs: "Welcome! I'm excited to help you create a new
+workflow. Let's start by understanding what you want to build."
 
 Ask conversationally:
 
@@ -111,8 +113,8 @@ Ask conversationally:
 
 #### B. Create Workflow Plan Document
 
-Create the workflow plan document at `{workflowPlanFile}` using the workflow plan template `{workflowPlanTemplate}`.
-Initialize frontmatter with:
+Create the workflow plan document at `{workflowPlanFile}` using the workflow plan template
+`{workflowPlanTemplate}`. Initialize frontmatter with:
 
 ```yaml
 ---
@@ -131,7 +133,8 @@ This plan will capture all requirements and design details before building the a
 
 ### 5. Welcome Message
 
-"Great! I'm ready to help you create a structured workflow using our step-based architecture. We'll work together to design a workflow that's collaborative, maintainable, and follows best practices."
+"Great! I'm ready to help you create a structured workflow using our step-based architecture. We'll
+work together to design a workflow that's collaborative, maintainable, and follows best practices."
 
 ### 6. Present MENU OPTIONS
 
@@ -145,7 +148,8 @@ Display: **Proceeding to requirements gathering...**
 
 #### Menu Handling Logic:
 
-- After setup completion, immediately load, read entire file, then execute `{workflow_path}/step-02-gather.md` to begin requirements gathering
+- After setup completion, immediately load, read entire file, then execute
+  `{workflow_path}/step-02-gather.md` to begin requirements gathering
 
 ---
 
@@ -165,4 +169,5 @@ Display: **Proceeding to requirements gathering...**
 - Not determining target location properly
 - Skipping welcome message
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

@@ -5,13 +5,13 @@
  * This is the comprehensive integration test that validates the entire system.
  */
 
-import { assertEquals, assert, assertExists } from "jsr:@std/assert@1";
+import { assert, assertEquals, assertExists } from "jsr:@std/assert@1";
 import {
   cleanupTestDatabase,
-  initializeTestDatabase,
-  storeSchemas,
-  loadEmbeddingModel,
   generateEmbeddings,
+  initializeTestDatabase,
+  loadEmbeddingModel,
+  storeSchemas,
 } from "../fixtures/test-helpers.ts";
 import {
   createMockFilesystemServer,
@@ -235,7 +235,10 @@ Deno.test("E2E 09: Complete user journey", async (t) => {
 
       // Validate against NFRs
       assert(p95 < 100, `Search P95 too high: ${p95.toFixed(1)}ms`);
-      assert(metrics.executionTime < 3000, `Execution too slow: ${metrics.executionTime.toFixed(1)}ms`);
+      assert(
+        metrics.executionTime < 3000,
+        `Execution too slow: ${metrics.executionTime.toFixed(1)}ms`,
+      );
     });
 
     // =================================================================

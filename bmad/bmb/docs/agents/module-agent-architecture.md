@@ -1,6 +1,7 @@
 # Module Agent Architecture
 
-Full integration agents with workflow orchestration, module-specific paths, and professional tooling.
+Full integration agents with workflow orchestration, module-specific paths, and professional
+tooling.
 
 ## When to Use
 
@@ -27,44 +28,44 @@ Compiles to:
 ```yaml
 agent:
   metadata:
-    id: 'bmad/{module-code}/agents/{agent-name}.md'
-    name: 'Persona Name'
-    title: 'Professional Title'
-    icon: 'emoji'
-    module: '{module-code}'
+    id: "bmad/{module-code}/agents/{agent-name}.md"
+    name: "Persona Name"
+    title: "Professional Title"
+    icon: "emoji"
+    module: "{module-code}"
 
   persona:
-    role: 'Primary expertise and function'
-    identity: 'Background, experience, specializations'
-    communication_style: 'Interaction approach, tone, methodology'
-    principles: 'Core beliefs and methodology'
+    role: "Primary expertise and function"
+    identity: "Background, experience, specializations"
+    communication_style: "Interaction approach, tone, methodology"
+    principles: "Core beliefs and methodology"
 
   menu:
     - trigger: workflow-action
-      workflow: '{project-root}/bmad/{module-code}/workflows/{workflow-name}/workflow.yaml'
-      description: 'Execute module workflow'
+      workflow: "{project-root}/bmad/{module-code}/workflows/{workflow-name}/workflow.yaml"
+      description: "Execute module workflow"
 
     - trigger: another-workflow
-      workflow: '{project-root}/bmad/core/workflows/{workflow-name}/workflow.yaml'
-      description: 'Execute core workflow'
+      workflow: "{project-root}/bmad/core/workflows/{workflow-name}/workflow.yaml"
+      description: "Execute core workflow"
 
     - trigger: task-action
-      exec: '{project-root}/bmad/{module-code}/tasks/{task-name}.xml'
-      description: 'Execute module task'
+      exec: "{project-root}/bmad/{module-code}/tasks/{task-name}.xml"
+      description: "Execute module task"
 
     - trigger: cross-module
-      workflow: '{project-root}/bmad/other-module/workflows/{workflow-name}/workflow.yaml'
-      description: 'Execute workflow from another module'
+      workflow: "{project-root}/bmad/other-module/workflows/{workflow-name}/workflow.yaml"
+      description: "Execute workflow from another module"
 
     - trigger: with-template
-      exec: '{project-root}/bmad/core/tasks/create-doc.xml'
-      tmpl: '{project-root}/bmad/{module-code}/templates/{template-name}.md'
-      description: 'Create document from template'
+      exec: "{project-root}/bmad/core/tasks/create-doc.xml"
+      tmpl: "{project-root}/bmad/{module-code}/templates/{template-name}.md"
+      description: "Create document from template"
 
     - trigger: with-data
-      exec: '{project-root}/bmad/{module-code}/tasks/{task-name}.xml'
-      data: '{project-root}/bmad/_cfg/agent-manifest.csv'
-      description: 'Execute task with data file'
+      exec: "{project-root}/bmad/{module-code}/tasks/{task-name}.xml"
+      data: "{project-root}/bmad/_cfg/agent-manifest.csv"
+      description: "Execute task with data file"
 ```
 
 ## Key Components
@@ -92,7 +93,8 @@ persona:
   principles: Every business challenge has root causes waiting to be discovered. Ground findings in verifiable evidence. Articulate requirements with absolute precision.
 ```
 
-**Note:** Module agents usually don't use Handlebars templating since they're not user-customized - they're professional tools with fixed personalities.
+**Note:** Module agents usually don't use Handlebars templating since they're not user-customized -
+they're professional tools with fixed personalities.
 
 ### Menu Handlers
 
@@ -101,8 +103,8 @@ persona:
 ```yaml
 menu:
   - trigger: create-prd
-    workflow: '{project-root}/bmad/bmm/workflows/prd/workflow.yaml'
-    description: 'Create Product Requirements Document'
+    workflow: "{project-root}/bmad/bmm/workflows/prd/workflow.yaml"
+    description: "Create Product Requirements Document"
 ```
 
 Invokes BMAD workflow engine to execute multi-step processes.
@@ -112,8 +114,8 @@ Invokes BMAD workflow engine to execute multi-step processes.
 ```yaml
 menu:
   - trigger: validate
-    exec: '{project-root}/bmad/core/tasks/validate-workflow.xml'
-    description: 'Validate document structure'
+    exec: "{project-root}/bmad/core/tasks/validate-workflow.xml"
+    description: "Validate document structure"
 ```
 
 Executes single-operation tasks.
@@ -123,9 +125,9 @@ Executes single-operation tasks.
 ```yaml
 menu:
   - trigger: create-brief
-    exec: '{project-root}/bmad/core/tasks/create-doc.xml'
-    tmpl: '{project-root}/bmad/bmm/templates/brief.md'
-    description: 'Create a Product Brief from template'
+    exec: "{project-root}/bmad/core/tasks/create-doc.xml"
+    tmpl: "{project-root}/bmad/bmm/templates/brief.md"
+    description: "Create a Product Brief from template"
 ```
 
 Combines task execution with template file.
@@ -135,9 +137,9 @@ Combines task execution with template file.
 ```yaml
 menu:
   - trigger: team-standup
-    exec: '{project-root}/bmad/bmm/tasks/standup.xml'
-    data: '{project-root}/bmad/_cfg/agent-manifest.csv'
-    description: 'Run team standup with agent roster'
+    exec: "{project-root}/bmad/bmm/tasks/standup.xml"
+    data: "{project-root}/bmad/_cfg/agent-manifest.csv"
+    description: "Run team standup with agent roster"
 ```
 
 Provides data file to task.
@@ -147,8 +149,8 @@ Provides data file to task.
 ```yaml
 menu:
   - trigger: future-feature
-    workflow: 'todo'
-    description: 'Feature planned but not yet implemented'
+    workflow: "todo"
+    description: "Feature planned but not yet implemented"
 ```
 
 Marks unimplemented features - compiler handles gracefully.
@@ -160,13 +162,13 @@ Control visibility based on platform:
 ```yaml
 menu:
   - trigger: advanced-elicitation
-    exec: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
-    description: 'Advanced elicitation techniques'
+    exec: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
+    description: "Advanced elicitation techniques"
     web-only: true # Only shows in web bundle
 
   - trigger: git-operations
-    exec: '{project-root}/bmad/bmm/tasks/git-flow.xml'
-    description: 'Git workflow operations'
+    exec: "{project-root}/bmad/bmm/tasks/git-flow.xml"
+    description: "Git workflow operations"
     ide-only: true # Only shows in IDE environments
 ```
 
@@ -237,10 +239,10 @@ Each module has `config.yaml` providing:
 
 ```yaml
 # src/modules/{module}/config.yaml
-user_name: 'User Name'
-communication_language: 'English'
-output_folder: '{project-root}/docs'
-custom_settings: 'module-specific values'
+user_name: "User Name"
+communication_language: "English"
+output_folder: "{project-root}/docs"
+custom_settings: "module-specific values"
 ```
 
 Agents load this at activation for consistent behavior.
@@ -252,16 +254,16 @@ Agents load this at activation for consistent behavior.
 ```yaml
 menu:
   - trigger: init
-    workflow: '{project-root}/bmad/bmm/workflows/workflow-init/workflow.yaml'
-    description: 'Initialize workflow path (START HERE)'
+    workflow: "{project-root}/bmad/bmm/workflows/workflow-init/workflow.yaml"
+    description: "Initialize workflow path (START HERE)"
 
   - trigger: status
-    workflow: '{project-root}/bmad/bmm/workflows/workflow-status/workflow.yaml'
-    description: 'Check current workflow status'
+    workflow: "{project-root}/bmad/bmm/workflows/workflow-status/workflow.yaml"
+    description: "Check current workflow status"
 
   - trigger: next-step
-    workflow: '{project-root}/bmad/bmm/workflows/next-step/workflow.yaml'
-    description: 'Execute next workflow in sequence'
+    workflow: "{project-root}/bmad/bmm/workflows/next-step/workflow.yaml"
+    description: "Execute next workflow in sequence"
 ```
 
 ### Phase-Based Organization
@@ -270,21 +272,21 @@ menu:
 menu:
   # Phase 1: Analysis
   - trigger: brainstorm
-    workflow: '{project-root}/bmad/bmm/workflows/1-analysis/brainstorm/workflow.yaml'
-    description: 'Guided brainstorming session'
+    workflow: "{project-root}/bmad/bmm/workflows/1-analysis/brainstorm/workflow.yaml"
+    description: "Guided brainstorming session"
 
   - trigger: research
-    workflow: '{project-root}/bmad/bmm/workflows/1-analysis/research/workflow.yaml'
-    description: 'Market and technical research'
+    workflow: "{project-root}/bmad/bmm/workflows/1-analysis/research/workflow.yaml"
+    description: "Market and technical research"
 
   # Phase 2: Planning
   - trigger: prd
-    workflow: '{project-root}/bmad/bmm/workflows/2-planning/prd/workflow.yaml'
-    description: 'Create PRD'
+    workflow: "{project-root}/bmad/bmm/workflows/2-planning/prd/workflow.yaml"
+    description: "Create PRD"
 
   - trigger: architecture
-    workflow: '{project-root}/bmad/bmm/workflows/2-planning/architecture/workflow.yaml'
-    description: 'Design architecture'
+    workflow: "{project-root}/bmad/bmm/workflows/2-planning/architecture/workflow.yaml"
+    description: "Design architecture"
 ```
 
 ### Cross-Module Access
@@ -292,12 +294,12 @@ menu:
 ```yaml
 menu:
   - trigger: party-mode
-    workflow: '{project-root}/bmad/core/workflows/party-mode/workflow.yaml'
-    description: 'Bring all agents together'
+    workflow: "{project-root}/bmad/core/workflows/party-mode/workflow.yaml"
+    description: "Bring all agents together"
 
   - trigger: brainstorm
-    workflow: '{project-root}/bmad/cis/workflows/brainstorming/workflow.yaml'
-    description: 'Use CIS brainstorming techniques'
+    workflow: "{project-root}/bmad/cis/workflows/brainstorming/workflow.yaml"
+    description: "Use CIS brainstorming techniques"
 ```
 
 ## Best Practices
@@ -318,8 +320,8 @@ menu:
 ```yaml
 menu:
   - trigger: start
-    workflow: '{project-root}/bmad/{module}/workflows/init/workflow.yaml'
-    description: 'Start new project (BEGIN HERE)'
+    workflow: "{project-root}/bmad/{module}/workflows/init/workflow.yaml"
+    description: "Start new project (BEGIN HERE)"
 ```
 
 ### Status Tracking
@@ -327,8 +329,8 @@ menu:
 ```yaml
 menu:
   - trigger: status
-    workflow: '{project-root}/bmad/{module}/workflows/status/workflow.yaml'
-    description: 'Check workflow progress'
+    workflow: "{project-root}/bmad/{module}/workflows/status/workflow.yaml"
+    description: "Check workflow progress"
 ```
 
 ### Team Coordination
@@ -336,20 +338,20 @@ menu:
 ```yaml
 menu:
   - trigger: party
-    workflow: '{project-root}/bmad/core/workflows/party-mode/workflow.yaml'
-    description: 'Multi-agent discussion'
+    workflow: "{project-root}/bmad/core/workflows/party-mode/workflow.yaml"
+    description: "Multi-agent discussion"
 ```
 
 ## Module Agent vs Simple/Expert
 
-| Aspect        | Module Agent                     | Simple/Expert Agent             |
-| ------------- | -------------------------------- | ------------------------------- |
-| Location      | `bmad/{module}/agents/` | `bmad/custom/agents/`  |
-| Persona       | Fixed, professional              | Customizable via install_config |
-| Handlebars    | No templating                    | Yes, extensive                  |
-| Menu actions  | Workflows, tasks, templates      | Prompts, inline actions         |
-| Configuration | Module config.yaml               | Core config or none             |
-| Purpose       | Professional tooling             | Personal utilities              |
+| Aspect        | Module Agent                | Simple/Expert Agent             |
+| ------------- | --------------------------- | ------------------------------- |
+| Location      | `bmad/{module}/agents/`     | `bmad/custom/agents/`           |
+| Persona       | Fixed, professional         | Customizable via install_config |
+| Handlebars    | No templating               | Yes, extensive                  |
+| Menu actions  | Workflows, tasks, templates | Prompts, inline actions         |
+| Configuration | Module config.yaml          | Core config or none             |
+| Purpose       | Professional tooling        | Personal utilities              |
 
 ## Validation Checklist
 

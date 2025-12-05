@@ -81,9 +81,7 @@ export class EpisodicMemoryStore {
 
     // Trigger async flush if buffer is full (non-blocking)
     if (this.buffer.length >= this.config.bufferSize) {
-      this.flush().catch((err) =>
-        log.error(`[EpisodicMemory] Flush error: ${err}`)
-      );
+      this.flush().catch((err) => log.error(`[EpisodicMemory] Flush error: ${err}`));
     }
 
     return fullEvent.id;
@@ -125,7 +123,9 @@ export class EpisodicMemoryStore {
     } catch (error) {
       // On error, restore events to buffer for retry
       this.buffer = [...toFlush, ...this.buffer];
-      log.error(`[EpisodicMemory] Flush failed, ${toFlush.length} events restored to buffer: ${error}`);
+      log.error(
+        `[EpisodicMemory] Flush failed, ${toFlush.length} events restored to buffer: ${error}`,
+      );
       throw error;
     }
   }
@@ -360,9 +360,7 @@ export class EpisodicMemoryStore {
 
     this.flushTimer = setInterval(() => {
       if (!this.isShuttingDown && this.buffer.length > 0) {
-        this.flush().catch((err) =>
-          log.error(`[EpisodicMemory] Auto-flush error: ${err}`)
-        );
+        this.flush().catch((err) => log.error(`[EpisodicMemory] Auto-flush error: ${err}`));
       }
     }, this.config.flushIntervalMs);
   }

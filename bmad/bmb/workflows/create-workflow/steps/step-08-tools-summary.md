@@ -1,18 +1,18 @@
 ---
-name: 'step-08-tools-summary'
-description: 'Summarize tools configuration and proceed to workflow design'
+name: "step-08-tools-summary"
+description: "Summarize tools configuration and proceed to workflow design"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-08-tools-summary.md'
-nextStepFile: '{workflow_path}/steps/step-09-design.md'
-workflowFile: '{workflow_path}/workflow.md'
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
+thisStepFile: "{workflow_path}/steps/step-08-tools-summary.md"
+nextStepFile: "{workflow_path}/steps/step-09-design.md"
+workflowFile: "{workflow_path}/workflow.md"
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
 
 # Documentation References
-commonToolsCsv: '{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv'
+commonToolsCsv: "{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv"
 ---
 
 # Step 8: Tools Configuration Summary
@@ -48,7 +48,8 @@ Summarize the complete tools configuration and confirm readiness to proceed to w
 
 "**Tools Configuration Summary**
 
-Let's review your complete tools configuration before proceeding to workflow design. This ensures all integrations are properly planned."
+Let's review your complete tools configuration before proceeding to workflow design. This ensures
+all integrations are properly planned."
 
 ### 2. Present Complete Configuration
 
@@ -116,18 +117,15 @@ Append to {workflowPlanFile}:
 
 ### Tools Inventory
 
-**Core BMAD Tools:** [count and list]
-**LLM Features:** [count and list]
-**Memory Implementation:** [type and use case]
-**External Tools:** [count and list with URLs]
-**Installation Required:** [tools and setup complexity]
+**Core BMAD Tools:** [count and list] **LLM Features:** [count and list] **Memory Implementation:**
+[type and use case] **External Tools:** [count and list with URLs] **Installation Required:** [tools
+and setup complexity]
 
 ### Integration Strategy
 
-**User Experience:** [how tools enhance workflow]
-**Checkpoint Approach:** [when tools are offered]
-**Performance Optimization:** [efficiency improvements]
-**Installation Strategy:** [how users prepare environment]
+**User Experience:** [how tools enhance workflow] **Checkpoint Approach:** [when tools are offered]
+**Performance Optimization:** [efficiency improvements] **Installation Strategy:** [how users
+prepare environment]
 
 ### Ready for Design
 
@@ -140,12 +138,14 @@ Display: **Select an Option:** [C] Continue to Workflow Design [M] Modify Config
 
 #### Menu Handling Logic:
 
-- IF C: Save final summary, update frontmatter stepsCompleted: [3, 4, 5, 6, 7, 8], then load {nextStepFile}
+- IF C: Save final summary, update frontmatter stepsCompleted: [3, 4, 5, 6, 7, 8], then load
+  {nextStepFile}
 - IF M: Return to specific configuration step
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and summary is saved will you load {nextStepFile} to begin workflow design phase.
+ONLY WHEN C is selected and summary is saved will you load {nextStepFile} to begin workflow design
+phase.
 
 ---
 

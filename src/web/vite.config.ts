@@ -11,5 +11,8 @@ export default defineConfig(({ mode }) => {
       port: parseInt(env.PORT_DASHBOARD || "8081"),
       allowedHosts: ["intelligence.casys.ai", "localhost"],
     },
+    build: {
+      sourcemap: false, // Suppress sourcemap warnings
+    },
   };
 });

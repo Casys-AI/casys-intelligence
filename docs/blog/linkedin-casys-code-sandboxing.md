@@ -1,8 +1,6 @@
 # MCP Gateway Architecture (Part 3): Code Sandboxing + MCP Tools Injection
 
-**Author:** Erwan Lee Pesle
-**Date:** November 2025
-**Series:** MCP Gateway Architecture
+**Author:** Erwan Lee Pesle **Date:** November 2025 **Series:** MCP Gateway Architecture
 
 ---
 
@@ -49,11 +47,14 @@ You ask: "Analyze last week's commits in the foo repo"
 
 ## Anthropic Code Execution: The Concept
 
-Anthropic proposed this solution in ["Code execution with MCP"](https://www.anthropic.com/engineering/code-execution-with-mcp):
+Anthropic proposed this solution in
+["Code execution with MCP"](https://www.anthropic.com/engineering/code-execution-with-mcp):
 
-> "Running agent-generated code requires a secure execution environment with appropriate sandboxing, resource limits, and monitoring."
+> "Running agent-generated code requires a secure execution environment with appropriate sandboxing,
+> resource limits, and monitoring."
 
 **Their approach:**
+
 - The agent generates TypeScript code instead of making multiple tool calls
 - MCP servers are exposed as importable files (`./servers/github/`)
 - The agent explores the filesystem and uses `search_tools` to discover tools
@@ -66,20 +67,21 @@ Anthropic proposed this solution in ["Code execution with MCP"](https://www.anth
 
 This is where our exploration comes in. We propose a **tested implementation** of the concept:
 
-| Aspect | Anthropic (concept) | Our implementation |
-|--------|---------------------|----------------------|
-| **Sandbox** | "A sandbox is needed" | Deno with granular permissions |
-| **Technology** | Not specified | `--deny-write`, `--deny-net`, `--deny-run` |
-| **MCP tools access** | Filesystem imports | Direct injection |
-| **Security tests** | Not detailed | 200+ tests (isolation, timeout, memory) |
-| **Benchmarks** | Not provided | 71ms execution, 99.99% context savings |
-| **Architectural pattern** | Context reduction | + Speculative Resilience |
+| Aspect                    | Anthropic (concept)   | Our implementation                         |
+| ------------------------- | --------------------- | ------------------------------------------ |
+| **Sandbox**               | "A sandbox is needed" | Deno with granular permissions             |
+| **Technology**            | Not specified         | `--deny-write`, `--deny-net`, `--deny-run` |
+| **MCP tools access**      | Filesystem imports    | Direct injection                           |
+| **Security tests**        | Not detailed          | 200+ tests (isolation, timeout, memory)    |
+| **Benchmarks**            | Not provided          | 71ms execution, 99.99% context savings     |
+| **Architectural pattern** | Context reduction     | + Speculative Resilience                   |
 
 ### What the Sandbox Unlocks: Speculative Resilience
 
 Beyond context reduction, the sandbox enables a powerful architectural pattern.
 
 **The problem with direct MCP tools:**
+
 - External side effects (create GitHub issue, write file)
 - Failure = potentially irreversible consequences
 - Retry = risk of duplication
@@ -114,9 +116,11 @@ Beyond context reduction, the sandbox enables a powerful architectural pattern.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**1. Safe-to-fail branches**: Sandbox code is isolated. Branches can fail without compromising the workflow.
+**1. Safe-to-fail branches**: Sandbox code is isolated. Branches can fail without compromising the
+workflow.
 
-**2. Aggressive speculation**: Execute multiple approaches in parallel, keep successes, ignore failures.
+**2. Aggressive speculation**: Execute multiple approaches in parallel, keep successes, ignore
+failures.
 
 **3. Risk-free retry**: Re-execute without effect duplication.
 
@@ -170,6 +174,7 @@ We chose **Deno** for its secure-by-default model:
 ```
 
 **Multi-layered security:**
+
 - Layer 1: OS process isolation (separate subprocess)
 - Layer 2: Granular Deno permissions
 - Layer 3: Resource limits (RAM, timeout)
@@ -179,11 +184,11 @@ We chose **Deno** for its secure-by-default model:
 
 **Two approaches compared:**
 
-| | Anthropic (filesystem) | Our exploration (injection) |
-|---|------------------------|-------------------------------|
+|                | Anthropic (filesystem)                           | Our exploration (injection)       |
+| -------------- | ------------------------------------------------ | --------------------------------- |
 | **Agent code** | `import { listCommits } from './servers/github'` | `await github.listCommits({...})` |
-| **Discovery** | Explore filesystem + `search_tools` | Vector search (similarity > 0.6) |
-| **Advantage** | Familiar (standard imports) | No imports, already injected |
+| **Discovery**  | Explore filesystem + `search_tools`              | Vector search (similarity > 0.6)  |
+| **Advantage**  | Familiar (standard imports)                      | No imports, already injected      |
 
 **Open question:** Which approach offers the best DX? Comparative benchmarks to be done.
 
@@ -196,6 +201,7 @@ We chose **Deno** for its secure-by-default model:
 **Goal:** Analyze 10MB of logs to identify top 10 errors
 
 **Traditional approach (tool calls):**
+
 ```
 Turn 1: Read file → 10MB in context (!)
 Turn 2: Agent filters ERRORs
@@ -205,15 +211,16 @@ Total: 4 turns, context saturated
 ```
 
 **Code execution approach:**
+
 ```typescript
 // SINGLE turn - the agent generates this code
-const logs = await filesystem.readFile('/var/log/app.log');
-const lines = logs.split('\n');
+const logs = await filesystem.readFile("/var/log/app.log");
+const lines = logs.split("\n");
 
 const errorsByType = lines
-  .filter(line => line.includes('ERROR'))
+  .filter((line) => line.includes("ERROR"))
   .reduce((acc, line) => {
-    const type = line.match(/ERROR: (\w+)/)?.[1] || 'Unknown';
+    const type = line.match(/ERROR: (\w+)/)?.[1] || "Unknown";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
@@ -230,16 +237,16 @@ return Object.entries(errorsByType)
 ```typescript
 // 3 MCP calls in parallel (instead of 3 sequential turns)
 const [commits, issues, prs] = await Promise.all([
-  github.listCommits({ repo: 'foo', since: '2024-01-01' }),
-  github.listIssues({ repo: 'foo', state: 'closed' }),
-  github.listPullRequests({ repo: 'foo', state: 'merged' })
+  github.listCommits({ repo: "foo", since: "2024-01-01" }),
+  github.listIssues({ repo: "foo", state: "closed" }),
+  github.listPullRequests({ repo: "foo", state: "merged" }),
 ]);
 
 return {
   commits: commits.length,
   issues_closed: issues.length,
   prs_merged: prs.length,
-  top_contributors: getTopContributors(commits, prs)
+  top_contributors: getTopContributors(commits, prs),
 };
 ```
 
@@ -251,13 +258,13 @@ return {
 
 Tests on Ubuntu Linux (Deno 2.x) - run on publication day:
 
-| Metric | Measured | Target | Status |
-|----------|--------|--------|--------|
-| Simple execution (`return 1+1`) | **71ms** | <500ms | ✅ |
-| Cache hit latency | **<0.01ms** | <50ms | ✅ |
-| 1000 items (filter + aggregate) | **74ms** | <3s | ✅ |
-| 5 concurrent executions | **40ms** | - | ✅ |
-| Context savings (537KB → 38 bytes) | **99.99%** | >99% | ✅ |
+| Metric                             | Measured    | Target | Status |
+| ---------------------------------- | ----------- | ------ | ------ |
+| Simple execution (`return 1+1`)    | **71ms**    | <500ms | ✅     |
+| Cache hit latency                  | **<0.01ms** | <50ms  | ✅     |
+| 1000 items (filter + aggregate)    | **74ms**    | <3s    | ✅     |
+| 5 concurrent executions            | **40ms**    | -      | ✅     |
+| Context savings (537KB → 38 bytes) | **99.99%**  | >99%   | ✅     |
 
 **Note:** Synthetic data (items generated in memory), no real network calls.
 
@@ -265,10 +272,10 @@ Tests on Ubuntu Linux (Deno 2.x) - run on publication day:
 
 The following gains are **theoretical estimates** based on the concept:
 
-| Scenario | Tool Calls (estimated) | Code Execution (estimated) |
-|----------|---------------------|-------------------------|
-| 1000 commits → top 5 authors | ~8-12s, 4 turns | ~2s, 1 turn |
-| 10MB logs → top 10 errors | Context saturated | ~500 bytes return |
+| Scenario                     | Tool Calls (estimated) | Code Execution (estimated) |
+| ---------------------------- | ---------------------- | -------------------------- |
+| 1000 commits → top 5 authors | ~8-12s, 4 turns        | ~2s, 1 turn                |
+| 10MB logs → top 10 errors    | Context saturated      | ~500 bytes return          |
 
 **To be validated** with end-to-end benchmarks on real cases.
 
@@ -279,29 +286,32 @@ The following gains are **theoretical estimates** based on the concept:
 ### Isolation Tests
 
 **Filesystem:**
+
 ```typescript
 // ❌ Blocked
-await Deno.readFile('/etc/passwd');
+await Deno.readFile("/etc/passwd");
 // Error: PermissionDenied
 
 // ✅ Allowed (if whitelist configured)
-await Deno.readFile('/workspace/codebase/config.json');
+await Deno.readFile("/workspace/codebase/config.json");
 ```
 
 **Network:**
+
 ```typescript
 // ❌ Blocked
-await fetch('https://evil.com');
+await fetch("https://evil.com");
 // Error: PermissionDenied
 
 // ✅ Allowed (via MCP gateway)
-await github.listCommits({ repo: 'foo' });
+await github.listCommits({ repo: "foo" });
 ```
 
 **Subprocess:**
+
 ```typescript
 // ❌ Blocked
-new Deno.Command('rm', { args: ['-rf', '/'] });
+new Deno.Command("rm", { args: ["-rf", "/"] });
 // Error: PermissionDenied
 ```
 
@@ -314,12 +324,14 @@ new Deno.Command('rm', { args: ['-rf', '/'] });
 ### When to Use Code Sandboxing
 
 **✅ Excellent for:**
+
 - Large datasets (1MB+) → compact summary
 - Multi-step transformations on the same data
 - Complex filtering/aggregation logic
 - Parallelizable workflows
 
 **❌ Not optimal for:**
+
 - Simple operations (read 1 file, return as-is)
 - Tasks requiring complex semantic reasoning
 - Workflows where the agent must decide strategy mid-stream
@@ -339,7 +351,8 @@ Agent discovers large dataset
 
 ## Conclusion
 
-Anthropic laid out a powerful concept: execute generated code to reduce context. But they leave the sandbox implementation open.
+Anthropic laid out a powerful concept: execute generated code to reduce context. But they leave the
+sandbox implementation open.
 
 **Our contribution**: a concrete implementation with Deno that we share.
 
@@ -365,7 +378,9 @@ Anthropic laid out a powerful concept: execute generated code to reduce context.
 ---
 
 **About this series:**
-- **Part 1:** [Semantic Discovery and Parallel Execution](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-1-semantic-discovery-erwan-lee-pesle-kiczf/)
-- **Part 2:** [Adaptive Workflows with AIL/HIL](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-2-adaptive-workflows-erwan-lee-pesle/)
-- **Part 3:** Code Sandboxing + MCP Tools Injection (this article)
 
+- **Part 1:**
+  [Semantic Discovery and Parallel Execution](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-1-semantic-discovery-erwan-lee-pesle-kiczf/)
+- **Part 2:**
+  [Adaptive Workflows with AIL/HIL](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-2-adaptive-workflows-erwan-lee-pesle/)
+- **Part 3:** Code Sandboxing + MCP Tools Injection (this article)

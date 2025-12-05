@@ -8,7 +8,7 @@
  */
 
 import type { DAGStructure } from "../graphrag/types.ts";
-import type { DAGExecutionResult, TaskResult, TaskError } from "./types.ts";
+import type { DAGExecutionResult, TaskError, TaskResult } from "./types.ts";
 import { ParallelExecutor } from "./executor.ts";
 import { getLogger } from "../telemetry/logger.ts";
 
@@ -228,8 +228,7 @@ export class StreamingExecutor extends ParallelExecutor {
                 taskId: task.id,
                 tool: task.tool,
                 status: "error",
-                error:
-                  error instanceof Error ? error.message : String(error),
+                error: error instanceof Error ? error.message : String(error),
                 executionTimeMs: executionTime,
                 timestamp: new Date().toISOString(),
               },

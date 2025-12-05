@@ -1,30 +1,35 @@
 # Recherche Technique: Agent comme Orchestrateur de Haut Niveau
 
-**Date:** 2025-12-03
-**Auteur:** BMad
-**Projet:** AgentCards - Dynamic MCP Composition & Emergent Capabilities
+**Date:** 2025-12-03 **Auteur:** BMad **Projet:** AgentCards - Dynamic MCP Composition & Emergent
+Capabilities
 
 ---
 
 ## Executive Summary
 
-Cette recherche explore comment transformer AgentCards en un système où l'agent LLM devient un **orchestrateur de haut niveau** qui génère, compose et apprend du code exécutable - créant un nouveau paradigme où les **"capabilities" émergent de l'usage** plutôt que d'être pré-définies.
+Cette recherche explore comment transformer AgentCards en un système où l'agent LLM devient un
+**orchestrateur de haut niveau** qui génère, compose et apprend du code exécutable - créant un
+nouveau paradigme où les **"capabilities" émergent de l'usage** plutôt que d'être pré-définies.
 
 ### Recommandation Principale
 
-**AgentCards possède déjà la fondation la plus avancée du marché** pour ce paradigme. Les gaps identifiés sont mineurs (~70 lignes de code pour le "Quick Win") et débloqueraient un apprentissage réel des patterns d'exécution.
+**AgentCards possède déjà la fondation la plus avancée du marché** pour ce paradigme. Les gaps
+identifiés sont mineurs (~70 lignes de code pour le "Quick Win") et débloqueraient un apprentissage
+réel des patterns d'exécution.
 
 **Différenciateur clé proposé:**
-> "AgentCards apprend de chaque exécution et suggère des capabilities optimisées - comme un pair-programmer qui se souvient de tout."
+
+> "AgentCards apprend de chaque exécution et suggère des capabilities optimisées - comme un
+> pair-programmer qui se souvient de tout."
 
 ### Bénéfices Clés
 
-| Bénéfice | Impact |
-|----------|--------|
-| **Code Reuse** | Skip génération Claude (~2-5 secondes) |
-| **Execution Reuse** | Cache hit (~200-500ms → instant) |
+| Bénéfice                   | Impact                                 |
+| -------------------------- | -------------------------------------- |
+| **Code Reuse**             | Skip génération Claude (~2-5 secondes) |
+| **Execution Reuse**        | Cache hit (~200-500ms → instant)       |
 | **Suggestions Proactives** | UX différenciante, réduction cognitive |
-| **Learning Continu** | Le système s'améliore avec l'usage |
+| **Learning Continu**       | Le système s'améliore avec l'usage     |
 
 ---
 
@@ -32,7 +37,9 @@ Cette recherche explore comment transformer AgentCards en un système où l'agen
 
 ### Question Technique
 
-> Comment concevoir un système où l'agent LLM devient un orchestrateur de haut niveau qui génère, compose et apprend du code exécutable - créant un nouveau paradigme où les "capabilities" émergent de l'usage plutôt que d'être pré-définies?
+> Comment concevoir un système où l'agent LLM devient un orchestrateur de haut niveau qui génère,
+> compose et apprend du code exécutable - créant un nouveau paradigme où les "capabilities" émergent
+> de l'usage plutôt que d'être pré-définies?
 
 ### Contexte Projet
 
@@ -70,13 +77,16 @@ Cette recherche explore comment transformer AgentCards en un système où l'agen
 
 **Approche:** Discovery PENDANT l'exécution - l'agent peut demander des MCPs au runtime.
 
-**Source:** [Docker Blog - Dynamic MCPs](https://www.docker.com/blog/dynamic-mcps-stop-hardcoding-your-agents-world/)
+**Source:**
+[Docker Blog - Dynamic MCPs](https://www.docker.com/blog/dynamic-mcps-stop-hardcoding-your-agents-world/)
 
 ### Option 2: Anthropic Programmatic Tool Calling
 
-**Approche:** Claude génère du code Python qui orchestre les tools, seul le résultat final entre dans le contexte.
+**Approche:** Claude génère du code Python qui orchestre les tools, seul le résultat final entre
+dans le contexte.
 
-**Source:** [Anthropic Engineering - Advanced Tool Use](https://www.anthropic.com/engineering/advanced-tool-use)
+**Source:**
+[Anthropic Engineering - Advanced Tool Use](https://www.anthropic.com/engineering/advanced-tool-use)
 
 ### Option 3: AgentCards Intent-Based + Graph-Augmented (Actuel)
 
@@ -84,7 +94,8 @@ Cette recherche explore comment transformer AgentCards en un système où l'agen
 
 ### Option 4: AgentCards + Emergent Capabilities (Proposé)
 
-**Approche:** Extension de l'Option 3 avec tracking, capabilities cristallisées, et suggestions proactives.
+**Approche:** Extension de l'Option 3 avec tracking, capabilities cristallisées, et suggestions
+proactives.
 
 ---
 
@@ -93,11 +104,13 @@ Cette recherche explore comment transformer AgentCards en un système où l'agen
 ### Option 1: Docker Dynamic MCPs
 
 #### Overview
+
 - **Maturité:** Experimental (beta, décembre 2025)
 - **Philosophie:** "Agent discovers at runtime"
 - **Composants:** mcp-find, mcp-add, MCP Gateway, Catalog
 
 #### Caractéristiques Techniques
+
 ```
 Agent ──"I need GitHub"──► mcp-find(GitHub)
                                │
@@ -112,18 +125,21 @@ Agent ──"I need GitHub"──► mcp-find(GitHub)
 ```
 
 #### Points Forts
+
 - Flexibilité maximale pour l'agent
 - 270+ serveurs dans le catalog Docker
 - Isolation container (gVisor)
 - Session-scoped (sécurité)
 
 #### Points Faibles
+
 - **Récursion possible:** Code peut demander des tools indéfiniment
 - **Pas de learning:** Aucune persistence entre sessions
 - **Tracking complexe:** Events mid-run difficiles à suivre
 - **Cold start:** ~500ms par nouveau MCP
 
 #### Coûts
+
 - Docker Desktop requis
 - Compute pour containers
 
@@ -132,11 +148,13 @@ Agent ──"I need GitHub"──► mcp-find(GitHub)
 ### Option 2: Anthropic Programmatic Tool Calling
 
 #### Overview
+
 - **Maturité:** Production (disponible via API)
 - **Philosophie:** "Code orchestrates tools"
 - **Bénéfice principal:** 37% réduction tokens
 
 #### Caractéristiques Techniques
+
 ```python
 # Claude génère ce code
 commits = await github.list_commits()
@@ -146,22 +164,25 @@ return {"count": len(commits)}  # SEUL CECI entre dans le context
 ```
 
 #### Points Forts
+
 - Réduction drastique des tokens (37%)
 - Logique explicite (loops, conditionals)
 - Latence réduite (moins de round-trips)
 - Accuracy améliorée (code vs natural language)
 
 #### Points Faibles
+
 - **Pas de learning:** Aucun pattern stocké
 - **Tools pré-définis:** Pas de discovery
 - **Python only:** Sandbox limité
 
 #### Métriques Officielles
-| Métrique | Avant | Après |
-|----------|-------|-------|
-| Token usage | 100% | 63% |
+
+| Métrique                     | Avant | Après |
+| ---------------------------- | ----- | ----- |
+| Token usage                  | 100%  | 63%   |
 | Internal knowledge retrieval | 25.6% | 28.5% |
-| GIA benchmark | 46.5% | 51.2% |
+| GIA benchmark                | 46.5% | 51.2% |
 
 **Source:** [Anthropic Engineering Blog](https://www.anthropic.com/engineering/advanced-tool-use)
 
@@ -170,10 +191,12 @@ return {"count": len(commits)}  # SEUL CECI entre dans le context
 ### Option 3: AgentCards Actuel
 
 #### Overview
+
 - **Maturité:** Production (implémenté)
 - **Philosophie:** "Intent-based discovery BEFORE execution"
 
 #### Architecture Actuelle
+
 ```
 execute_code(intent, code)
        ↓
@@ -190,24 +213,25 @@ execute_code(intent, code)
 
 #### Composants Implémentés
 
-| Composant | Fichier | Lignes | Status |
-|-----------|---------|--------|--------|
-| GraphRAG Engine | `graph-engine.ts` | 1339 | ✅ Production |
-| Context Builder | `context-builder.ts` | 555 | ✅ Production |
-| Code Cache | `cache.ts` | 552 | ✅ Production |
-| Vector Search | `search.ts` | ~400 | ✅ Production |
-| Sandbox Executor | `executor.ts` | ~300 | ✅ Production |
+| Composant        | Fichier              | Lignes | Status        |
+| ---------------- | -------------------- | ------ | ------------- |
+| GraphRAG Engine  | `graph-engine.ts`    | 1339   | ✅ Production |
+| Context Builder  | `context-builder.ts` | 555    | ✅ Production |
+| Code Cache       | `cache.ts`           | 552    | ✅ Production |
+| Vector Search    | `search.ts`          | ~400   | ✅ Production |
+| Sandbox Executor | `executor.ts`        | ~300   | ✅ Production |
 
 #### Algorithmes Graph Implémentés
 
-| Algorithme | Usage | Ligne |
-|------------|-------|-------|
-| **PageRank** | Importance des tools | `graph-engine.ts:176` |
-| **Louvain** | Community detection | `graph-engine.ts:182` |
-| **Adamic-Adar** | Similarité 2-hop | `graph-engine.ts:588` |
-| **Bidirectional Path** | Dépendances DAG | `graph-engine.ts:241` |
+| Algorithme             | Usage                | Ligne                 |
+| ---------------------- | -------------------- | --------------------- |
+| **PageRank**           | Importance des tools | `graph-engine.ts:176` |
+| **Louvain**            | Community detection  | `graph-engine.ts:182` |
+| **Adamic-Adar**        | Similarité 2-hop     | `graph-engine.ts:588` |
+| **Bidirectional Path** | Dépendances DAG      | `graph-engine.ts:241` |
 
 #### Points Forts Existants
+
 - Semantic search avant exécution (pas de récursion)
 - GraphRAG avec 4 algorithmes
 - Hybrid search avec α adaptatif
@@ -215,6 +239,7 @@ execute_code(intent, code)
 - Sécurité: validation noms, no prototype pollution
 
 #### Gaps Identifiés
+
 - Pas de tracking des tools RÉELLEMENT appelés
 - `workflow_pattern` table existe mais inutilisée
 - Pas de capability matching
@@ -290,28 +315,28 @@ Les capabilities ne sont pas pré-définies, elles **ÉMERGENT de l'usage**.
 
 ### Matrice de Comparaison
 
-| Critère | Docker MCP | Anthropic PTC | AgentCards Actuel | AgentCards Proposé |
-|---------|------------|---------------|-------------------|-------------------|
-| **Discovery** | Runtime | Pre-config | Pre-exec | Pre-exec + Capability |
-| **Learning** | ❌ | ❌ | Partiel (edges) | ✅ Complet |
-| **Suggestions** | ❌ | ❌ | Related tools | ✅ Proactives |
-| **Code Reuse** | ❌ | ❌ | ❌ | ✅ Capabilities |
-| **Cache** | Session | ❌ | ✅ LRU | ✅ LRU + Capability |
-| **Sécurité** | Container | Sandbox | Sandbox | Sandbox |
-| **Récursion** | Possible | N/A | Impossible | Impossible |
-| **Complexité** | Haute | Moyenne | Moyenne | Moyenne+ |
+| Critère         | Docker MCP | Anthropic PTC | AgentCards Actuel | AgentCards Proposé    |
+| --------------- | ---------- | ------------- | ----------------- | --------------------- |
+| **Discovery**   | Runtime    | Pre-config    | Pre-exec          | Pre-exec + Capability |
+| **Learning**    | ❌         | ❌            | Partiel (edges)   | ✅ Complet            |
+| **Suggestions** | ❌         | ❌            | Related tools     | ✅ Proactives         |
+| **Code Reuse**  | ❌         | ❌            | ❌                | ✅ Capabilities       |
+| **Cache**       | Session    | ❌            | ✅ LRU            | ✅ LRU + Capability   |
+| **Sécurité**    | Container  | Sandbox       | Sandbox           | Sandbox               |
+| **Récursion**   | Possible   | N/A           | Impossible        | Impossible            |
+| **Complexité**  | Haute      | Moyenne       | Moyenne           | Moyenne+              |
 
 ### Scores Pondérés
 
-| Critère (Poids) | Docker | Anthropic | AgentCards Proposé |
-|-----------------|--------|-----------|-------------------|
-| Learning (25%) | 0 | 0 | **10** |
-| Performance (20%) | 6 | 8 | **9** |
-| Sécurité (20%) | 8 | 7 | **9** |
-| Flexibilité (15%) | 9 | 5 | **7** |
-| Simplicité (10%) | 5 | 8 | **7** |
-| Différenciation (10%) | 6 | 4 | **10** |
-| **TOTAL** | **5.3** | **5.2** | **8.7** |
+| Critère (Poids)       | Docker  | Anthropic | AgentCards Proposé |
+| --------------------- | ------- | --------- | ------------------ |
+| Learning (25%)        | 0       | 0         | **10**             |
+| Performance (20%)     | 6       | 8         | **9**              |
+| Sécurité (20%)        | 8       | 7         | **9**              |
+| Flexibilité (15%)     | 9       | 5         | **7**              |
+| Simplicité (10%)      | 5       | 8         | **7**              |
+| Différenciation (10%) | 6       | 4         | **10**             |
+| **TOTAL**             | **5.3** | **5.2**   | **8.7**            |
 
 ---
 
@@ -319,25 +344,26 @@ Les capabilities ne sont pas pré-définies, elles **ÉMERGENT de l'usage**.
 
 ### AgentCards Proposé vs Docker Dynamic MCPs
 
-| Gain avec AgentCards | Sacrifice |
-|---------------------|-----------|
-| Learning persistant | Pas de discovery runtime |
-| Pas de récursion | Moins flexible mid-session |
-| Suggestions proactives | Scope fixé à l'avance |
-| Performance (cache) | Complexité code légèrement + |
+| Gain avec AgentCards   | Sacrifice                    |
+| ---------------------- | ---------------------------- |
+| Learning persistant    | Pas de discovery runtime     |
+| Pas de récursion       | Moins flexible mid-session   |
+| Suggestions proactives | Scope fixé à l'avance        |
+| Performance (cache)    | Complexité code légèrement + |
 
-**Quand choisir Docker:** Agent autonome qui doit explorer un espace inconnu.
-**Quand choisir AgentCards:** Tâches répétitives où l'apprentissage apporte de la valeur.
+**Quand choisir Docker:** Agent autonome qui doit explorer un espace inconnu. **Quand choisir
+AgentCards:** Tâches répétitives où l'apprentissage apporte de la valeur.
 
 ### AgentCards Proposé vs Anthropic PTC
 
-| Gain avec AgentCards | Sacrifice |
-|---------------------|-----------|
+| Gain avec AgentCards  | Sacrifice            |
+| --------------------- | -------------------- |
 | Learning des patterns | N/A (complémentaire) |
-| Suggestions | N/A |
-| Capability reuse | N/A |
+| Suggestions           | N/A                  |
+| Capability reuse      | N/A                  |
 
-**Note:** Anthropic PTC et AgentCards sont **complémentaires**. AgentCards pourrait utiliser PTC comme mécanisme d'exécution tout en ajoutant le learning layer.
+**Note:** Anthropic PTC et AgentCards sont **complémentaires**. AgentCards pourrait utiliser PTC
+comme mécanisme d'exécution tout en ajoutant le learning layer.
 
 ---
 
@@ -345,9 +371,11 @@ Les capabilities ne sont pas pré-définies, elles **ÉMERGENT de l'usage**.
 
 ### Anthropic Multi-Agent Research System
 
-> "The system employs an orchestrator-worker pattern where a lead agent (Claude Opus 4) coordinates multiple specialized subagents (Claude Sonnet 4) working in parallel."
+> "The system employs an orchestrator-worker pattern where a lead agent (Claude Opus 4) coordinates
+> multiple specialized subagents (Claude Sonnet 4) working in parallel."
 
-**Source:** [Anthropic Engineering - Multi-Agent Research](https://www.anthropic.com/engineering/multi-agent-research-system)
+**Source:**
+[Anthropic Engineering - Multi-Agent Research](https://www.anthropic.com/engineering/multi-agent-research-system)
 
 **Relevance:** Valide le pattern orchestrateur + workers spécialisés.
 
@@ -361,17 +389,23 @@ Les capabilities ne sont pas pré-définies, elles **ÉMERGENT de l'usage**.
 
 ### Emergent Capabilities in LLMs
 
-> "When memory and context converge, AI undergoes a phase transition into persistent, emergent intelligence."
+> "When memory and context converge, AI undergoes a phase transition into persistent, emergent
+> intelligence."
 
-**Source:** [Towards Data Science - Emergent Capabilities](https://towardsdatascience.com/understanding-emergent-capabilities-in-llms-lessons-from-biological-systems-d59b67ea0379/)
+**Source:**
+[Towards Data Science - Emergent Capabilities](https://towardsdatascience.com/understanding-emergent-capabilities-in-llms-lessons-from-biological-systems-d59b67ea0379/)
 
-**Relevance:** Justifie le concept de "capabilities émergentes" - le système devient plus intelligent avec l'accumulation de données.
+**Relevance:** Justifie le concept de "capabilities émergentes" - le système devient plus
+intelligent avec l'accumulation de données.
 
 ### MCP Security Concerns
 
-> "In April 2025, security researchers released analysis that there are multiple outstanding security issues with MCP, including prompt injection, tool permissions where combining tools can exfiltrate files."
+> "In April 2025, security researchers released analysis that there are multiple outstanding
+> security issues with MCP, including prompt injection, tool permissions where combining tools can
+> exfiltrate files."
 
-**Source:** [Wikipedia - Model Context Protocol](https://en.wikipedia.org/wiki/Model_Context_Protocol)
+**Source:**
+[Wikipedia - Model Context Protocol](https://en.wikipedia.org/wiki/Model_Context_Protocol)
 
 **Relevance:** Valide l'approche AgentCards de ne PAS permettre discovery runtime.
 
@@ -440,9 +474,8 @@ Exécutions répétées ──► Pattern détecté ──► Capability explici
 
 ### Phase 1: Quick Win - Activer le Learning Réel
 
-**Durée estimée:** 1-2 jours
-**Complexité:** ~70 lignes de code
-**Impact:** Débloque tout le learning
+**Durée estimée:** 1-2 jours **Complexité:** ~70 lignes de code **Impact:** Débloque tout le
+learning
 
 #### Gap 1: Tracking dans wrappers (context-builder.ts)
 
@@ -453,34 +486,40 @@ wrapped[methodName] = async (args: Record<string, unknown>): Promise<unknown> =>
   const startTs = Date.now();
 
   // Emit start event
-  console.log(`__TRACE__${JSON.stringify({
-    type: "tool_start",
-    tool: `${client.serverId}:${toolName}`,
-    trace_id: traceId,
-    ts: startTs
-  })}`);
+  console.log(`__TRACE__${
+    JSON.stringify({
+      type: "tool_start",
+      tool: `${client.serverId}:${toolName}`,
+      trace_id: traceId,
+      ts: startTs,
+    })
+  }`);
 
   try {
     const result = await client.callTool(toolName, args);
 
     // Emit end event
-    console.log(`__TRACE__${JSON.stringify({
-      type: "tool_end",
-      tool: `${client.serverId}:${toolName}`,
-      trace_id: traceId,
-      success: true,
-      duration_ms: Date.now() - startTs
-    })}`);
+    console.log(`__TRACE__${
+      JSON.stringify({
+        type: "tool_end",
+        tool: `${client.serverId}:${toolName}`,
+        trace_id: traceId,
+        success: true,
+        duration_ms: Date.now() - startTs,
+      })
+    }`);
 
     return result;
   } catch (error) {
-    console.log(`__TRACE__${JSON.stringify({
-      type: "tool_end",
-      tool: `${client.serverId}:${toolName}`,
-      trace_id: traceId,
-      success: false,
-      duration_ms: Date.now() - startTs
-    })}`);
+    console.log(`__TRACE__${
+      JSON.stringify({
+        type: "tool_end",
+        tool: `${client.serverId}:${toolName}`,
+        trace_id: traceId,
+        success: false,
+        duration_ms: Date.now() - startTs,
+      })
+    }`);
     throw error;
   }
 };
@@ -491,17 +530,17 @@ wrapped[methodName] = async (args: Record<string, unknown>): Promise<unknown> =>
 ```typescript
 // Après exécution sandbox, parser stdout
 function parseTraces(stdout: string): string[] {
-  const traces = stdout.split('\n')
-    .filter(l => l.startsWith('__TRACE__'))
-    .map(l => JSON.parse(l.slice(9)));
+  const traces = stdout.split("\n")
+    .filter((l) => l.startsWith("__TRACE__"))
+    .map((l) => JSON.parse(l.slice(9)));
 
   return traces
-    .filter(t => t.type === 'tool_end' && t.success)
-    .map(t => t.tool);
+    .filter((t) => t.type === "tool_end" && t.success)
+    .map((t) => t.tool);
 }
 
 // Dans handleExecuteCode, après succès
-const toolsUsed = parseTraces(result.stdout || '');
+const toolsUsed = parseTraces(result.stdout || "");
 
 if (result.success && request.intent && toolsUsed.length > 0) {
   await this.graphEngine.updateFromExecution({
@@ -524,8 +563,7 @@ if (result.success && request.intent && toolsUsed.length > 0) {
 
 ### Phase 2: Capabilities Émergentes
 
-**Durée estimée:** 1 semaine
-**Dépendance:** Phase 1 complétée
+**Durée estimée:** 1 semaine **Dépendance:** Phase 1 complétée
 
 #### Migration: Activer workflow_pattern
 
@@ -552,7 +590,8 @@ export class CapabilityMatcher {
   async findMatch(intent: string, threshold = 0.85): Promise<Capability | null> {
     const embedding = await this.embedder.embed(intent);
 
-    const result = await this.db.query(`
+    const result = await this.db.query(
+      `
       SELECT
         pattern_id as id,
         name,
@@ -565,7 +604,9 @@ export class CapabilityMatcher {
         AND success_rate > 0.7
       ORDER BY score DESC, usage_count DESC
       LIMIT 1
-    `, [JSON.stringify(embedding), threshold]);
+    `,
+      [JSON.stringify(embedding), threshold],
+    );
 
     return result[0] || null;
   }
@@ -574,12 +615,13 @@ export class CapabilityMatcher {
     intent: string,
     code: string,
     toolsUsed: string[],
-    executionId: string
+    executionId: string,
   ): Promise<void> {
     const embedding = await this.embedder.embed(intent);
     const hash = this.hashCode(code);
 
-    await this.db.query(`
+    await this.db.query(
+      `
       INSERT INTO workflow_pattern
         (pattern_hash, intent_embedding, dag_structure, code_snippet, usage_count, success_count)
       VALUES ($1, $2, $3, $4, 1, 1)
@@ -587,36 +629,37 @@ export class CapabilityMatcher {
         usage_count = workflow_pattern.usage_count + 1,
         success_count = workflow_pattern.success_count + 1,
         last_used = NOW()
-    `, [hash, JSON.stringify(embedding), JSON.stringify({ tasks: toolsUsed }), code]);
+    `,
+      [hash, JSON.stringify(embedding), JSON.stringify({ tasks: toolsUsed }), code],
+    );
   }
 }
 ```
 
 ### Phase 3: Suggestion Engine
 
-**Durée estimée:** 1 semaine
-**Dépendance:** Phase 2 complétée
+**Durée estimée:** 1 semaine **Dépendance:** Phase 2 complétée
 
 ```typescript
 // Nouveau fichier: src/capabilities/suggestions.ts
 export class SuggestionEngine {
   constructor(
     private graph: GraphRAGEngine,
-    private capabilityMatcher: CapabilityMatcher
+    private capabilityMatcher: CapabilityMatcher,
   ) {}
 
   async suggest(contextTools: string[]): Promise<Suggestion[]> {
     const suggestions: Suggestion[] = [];
 
     // 1. Capabilities de la même community (Louvain)
-    const communities = contextTools.map(t => this.graph.getCommunity(t));
+    const communities = contextTools.map((t) => this.graph.getCommunity(t));
     const dominantCommunity = this.mode(communities);
 
     if (dominantCommunity) {
       const communityCapabilities = await this.getCapabilitiesForCommunity(dominantCommunity);
       for (const cap of communityCapabilities.slice(0, 3)) {
         suggestions.push({
-          type: 'capability',
+          type: "capability",
           id: cap.id,
           name: cap.name,
           reason: `Souvent utilisé avec ${contextTools[0]}`,
@@ -631,7 +674,7 @@ export class SuggestionEngine {
       for (const r of related) {
         if (!contextTools.includes(r.toolId)) {
           suggestions.push({
-            type: 'tool',
+            type: "tool",
             toolId: r.toolId,
             reason: `Souvent utilisé avec ${tool}`,
             confidence: Math.min(r.score / 2, 1),
@@ -642,10 +685,10 @@ export class SuggestionEngine {
 
     // 3. Next likely tool (PageRank + out-neighbors)
     const lastTool = contextTools[contextTools.length - 1];
-    const outNeighbors = this.graph.getNeighbors(lastTool, 'out');
+    const outNeighbors = this.graph.getNeighbors(lastTool, "out");
     for (const neighbor of outNeighbors.slice(0, 2)) {
       suggestions.push({
-        type: 'next_tool',
+        type: "next_tool",
         toolId: neighbor,
         reason: `Souvent appelé après ${lastTool}`,
         confidence: this.graph.getPageRank(neighbor),
@@ -665,52 +708,63 @@ export class SuggestionEngine {
 # ADR-028: Emergent Capabilities System
 
 ## Status
+
 Proposed
 
 ## Context
-AgentCards dispose d'un GraphRAG fonctionnel avec PageRank, Louvain, et Adamic-Adar.
-Cependant, les patterns d'exécution de code ne sont pas appris car:
+
+AgentCards dispose d'un GraphRAG fonctionnel avec PageRank, Louvain, et Adamic-Adar. Cependant, les
+patterns d'exécution de code ne sont pas appris car:
+
 1. Les tools RÉELLEMENT appelés ne sont pas trackés
 2. La table workflow_pattern existe mais n'est pas utilisée
 3. Aucun système de suggestion proactive n'existe
 
 ## Decision Drivers
+
 - Différenciation vs Docker Dynamic MCPs et Anthropic PTC
 - Valeur ajoutée par l'apprentissage continu
 - Réutilisation de code pour réduire latence et tokens
 - UX améliorée via suggestions proactives
 
 ## Considered Options
+
 1. **Docker-style:** Runtime discovery avec mcp-find/mcp-add
 2. **Status quo:** Garder l'architecture actuelle
 3. **Emergent Capabilities:** Tracking + Capabilities + Suggestions
 
 ## Decision
+
 Option 3: Implémenter le système de Capabilities Émergentes en 3 phases.
 
 ## Consequences
 
 ### Positive
+
 - Learning réel des patterns d'exécution
 - Réutilisation de code (skip génération Claude)
 - Suggestions proactives basées sur usage
 - Différenciation marché unique
 
 ### Negative
+
 - Complexité code légèrement accrue
 - Stockage supplémentaire (code snippets)
 - Maintenance table capabilities
 
 ### Neutral
+
 - Pas de changement au modèle de sécurité (scope fixe maintenu)
 - Compatible avec architecture existante
 
 ## Implementation Notes
+
 - Phase 1 (Quick Win): ~70 lignes, 1-2 jours
 - Phase 2 (Capabilities): ~200 lignes, 1 semaine
 - Phase 3 (Suggestions): ~150 lignes, 1 semaine
 
 ## References
+
 - ADR-027: Execute Code Graph Learning
 - Spike: 2025-12-03-dynamic-mcp-composition.md
 - Docker Blog: Dynamic MCPs
@@ -722,6 +776,7 @@ Option 3: Implémenter le système de Capabilities Émergentes en 3 phases.
 ## 10. Références et Ressources
 
 ### Documentation Officielle
+
 - [Anthropic - Advanced Tool Use](https://www.anthropic.com/engineering/advanced-tool-use)
 - [Anthropic - Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system)
 - [Anthropic - Claude Agent SDK](https://www.anthropic.com/engineering/building-agents-with-the-claude-agent-sdk)
@@ -730,21 +785,25 @@ Option 3: Implémenter le système de Capabilities Émergentes en 3 phases.
 - [MCP Specification - Tools](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
 
 ### Benchmarks et Case Studies
+
 - [E2B - Sandbox Performance](https://e2b.dev/docs)
 - [Koyeb - Top Sandbox Platforms 2025](https://www.koyeb.com/blog/top-sandbox-code-execution-platforms-for-ai-code-execution-2025)
 - [Cased - Universal Sandbox API](https://cased.com/blog/2025-10-05-sandboxes)
 
 ### Ressources Communautaires
+
 - [Spring AI - Dynamic Tool Updates](https://spring.io/blog/2025/05/04/spring-ai-dynamic-tool-updates-with-mcp/)
 - [Keywords AI - MCP Guide 2025](https://www.keywordsai.co/blog/introduction-to-mcp)
 - [DEV.to - Multi-Agent Orchestration](https://dev.to/bredmond1019/multi-agent-orchestration-running-10-claude-instances-in-parallel-part-3-29da)
 
 ### Lectures Additionnelles
+
 - [Quanta Magazine - Emergent Abilities in LLMs](https://www.quantamagazine.org/the-unpredictable-abilities-emerging-from-large-ai-models-20230316/)
 - [Towards Data Science - Emergent Capabilities](https://towardsdatascience.com/understanding-emergent-capabilities-in-llms-lessons-from-biological-systems-d59b67ea0379/)
 - [Atlassian - AI Agentic Workflows](https://www.atlassian.com/blog/artificial-intelligence/ai-agentic-workflows)
 
 ### Code Interne Référencé
+
 - `src/graphrag/graph-engine.ts` - GraphRAG avec Graphology
 - `src/sandbox/context-builder.ts` - Injection tools
 - `src/sandbox/cache.ts` - Cache LRU
@@ -758,30 +817,30 @@ Option 3: Implémenter le système de Capabilities Émergentes en 3 phases.
 
 ### Appendix A: Matrice de Comparaison Complète
 
-| Fonctionnalité | Docker MCP | Anthropic PTC | AgentCards Actuel | AgentCards Proposé |
-|----------------|------------|---------------|-------------------|-------------------|
-| **DISCOVERY** |
-| Timing | Runtime | Pre-config | Pre-exec | Pre-exec + Match |
-| Method | Catalog | Static | Semantic+Graph | Semantic+Graph+Cap |
-| Dynamic add | ✅ | ❌ | ❌ | ❌ |
-| **EXECUTION** |
-| Sandbox | Container | Python | Deno | Deno |
-| Cold start | ~500ms | ~200ms | ~150ms | ~150ms |
-| IPC | stdio | API | stdout | stdout+events |
-| **LEARNING** |
-| Edges | ❌ | ❌ | ✅ | ✅ |
-| Patterns | ❌ | ❌ | ⚠️ | ✅ |
-| Capabilities | ❌ | ❌ | ❌ | ✅ |
-| **ALGORITHMS** |
-| PageRank | ❌ | ❌ | ✅ | ✅ |
-| Louvain | ❌ | ❌ | ✅ | ✅ |
-| Adamic-Adar | ❌ | ❌ | ✅ | ✅ |
-| **CACHE** |
-| Code results | ❌ | ❌ | ✅ | ✅ |
-| Capabilities | ❌ | ❌ | ❌ | ✅ |
-| **SUGGESTIONS** |
-| Related tools | ❌ | ❌ | ✅ | ✅ |
-| Proactive | ❌ | ❌ | ❌ | ✅ |
+| Fonctionnalité  | Docker MCP | Anthropic PTC | AgentCards Actuel | AgentCards Proposé |
+| --------------- | ---------- | ------------- | ----------------- | ------------------ |
+| **DISCOVERY**   |            |               |                   |                    |
+| Timing          | Runtime    | Pre-config    | Pre-exec          | Pre-exec + Match   |
+| Method          | Catalog    | Static        | Semantic+Graph    | Semantic+Graph+Cap |
+| Dynamic add     | ✅         | ❌            | ❌                | ❌                 |
+| **EXECUTION**   |            |               |                   |                    |
+| Sandbox         | Container  | Python        | Deno              | Deno               |
+| Cold start      | ~500ms     | ~200ms        | ~150ms            | ~150ms             |
+| IPC             | stdio      | API           | stdout            | stdout+events      |
+| **LEARNING**    |            |               |                   |                    |
+| Edges           | ❌         | ❌            | ✅                | ✅                 |
+| Patterns        | ❌         | ❌            | ⚠️                | ✅                 |
+| Capabilities    | ❌         | ❌            | ❌                | ✅                 |
+| **ALGORITHMS**  |            |               |                   |                    |
+| PageRank        | ❌         | ❌            | ✅                | ✅                 |
+| Louvain         | ❌         | ❌            | ✅                | ✅                 |
+| Adamic-Adar     | ❌         | ❌            | ✅                | ✅                 |
+| **CACHE**       |            |               |                   |                    |
+| Code results    | ❌         | ❌            | ✅                | ✅                 |
+| Capabilities    | ❌         | ❌            | ❌                | ✅                 |
+| **SUGGESTIONS** |            |               |                   |                    |
+| Related tools   | ❌         | ❌            | ✅                | ✅                 |
+| Proactive       | ❌         | ❌            | ❌                | ✅                 |
 
 ### Appendix B: Diagramme de Flux Complet
 
@@ -848,23 +907,23 @@ Option 3: Implémenter le système de Capabilities Émergentes en 3 phases.
 
 ### Appendix C: Estimation des Coûts
 
-| Composant | Stockage | Compute | Notes |
-|-----------|----------|---------|-------|
-| workflow_pattern | ~1KB/capability | N/A | ~1000 caps = 1MB |
-| Code snippets | ~2KB/snippet | N/A | ~1000 = 2MB |
-| Embeddings | 4KB/embedding | ~50ms/embed | BGE-M3 1024 dims |
-| Cache results | ~10KB/entry | N/A | LRU max 100 = 1MB |
-| **Total** | **~5MB** | **Négligeable** | Pour 1000 capabilities |
+| Composant        | Stockage        | Compute         | Notes                  |
+| ---------------- | --------------- | --------------- | ---------------------- |
+| workflow_pattern | ~1KB/capability | N/A             | ~1000 caps = 1MB       |
+| Code snippets    | ~2KB/snippet    | N/A             | ~1000 = 2MB            |
+| Embeddings       | 4KB/embedding   | ~50ms/embed     | BGE-M3 1024 dims       |
+| Cache results    | ~10KB/entry     | N/A             | LRU max 100 = 1MB      |
+| **Total**        | **~5MB**        | **Négligeable** | Pour 1000 capabilities |
 
 ---
 
 ## Document Information
 
-**Workflow:** BMad Research Workflow - Technical Research v2.0
-**Generated:** 2025-12-03
-**Research Type:** Technical/Architecture Research
-**Next Review:** Après implémentation Phase 1
+**Workflow:** BMad Research Workflow - Technical Research v2.0 **Generated:** 2025-12-03 **Research
+Type:** Technical/Architecture Research **Next Review:** Après implémentation Phase 1
 
 ---
 
-_Ce rapport de recherche technique a été généré en utilisant le BMad Method Research Workflow, combinant une évaluation systématique des technologies avec une recherche en temps réel et une analyse du code existant._
+_Ce rapport de recherche technique a été généré en utilisant le BMad Method Research Workflow,
+combinant une évaluation systématique des technologies avec une recherche en temps réel et une
+analyse du code existant._

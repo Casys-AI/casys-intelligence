@@ -38,7 +38,8 @@
         <title>Intégrer avec GraphRAG</title>
         <subtasks>
           <subtask id="3.1">Modifier handler execute_code pour appeler parseTraces()</subtask>
-          <subtask id="3.2">Appeler graphEngine.updateFromExecution(toolsCalled) si tools > 0</subtask>
+          <subtask id="3.2"
+          >Appeler graphEngine.updateFromExecution(toolsCalled) si tools > 0</subtask>
           <subtask id="3.3">Vérifier que les edges sont créés entre tools co-utilisés</subtask>
         </subtasks>
       </task>
@@ -80,12 +81,17 @@
   </story>
 
   <acceptanceCriteria>
-    <criterion id="AC1">Wrappers __TRACE__ ajoutés dans context-builder.ts:wrapMCPClient() (~30 LOC)</criterion>
-    <criterion id="AC2">Event types émis: tool_start (avec trace_id, ts) et tool_end (avec success, duration_ms)</criterion>
-    <criterion id="AC3">Parser parseTraces(stdout) dans gateway-server.ts extrait les traces</criterion>
-    <criterion id="AC4">Appel graphEngine.updateFromExecution() avec tools réellement appelés</criterion>
+    <criterion id="AC1"
+    >Wrappers __TRACE__ ajoutés dans context-builder.ts:wrapMCPClient() (~30 LOC)</criterion>
+    <criterion id="AC2"
+    >Event types émis: tool_start (avec trace_id, ts) et tool_end (avec success, duration_ms)</criterion>
+    <criterion id="AC3"
+    >Parser parseTraces(stdout) dans gateway-server.ts extrait les traces</criterion>
+    <criterion id="AC4"
+    >Appel graphEngine.updateFromExecution() avec tools réellement appelés</criterion>
     <criterion id="AC5">Traces filtrées du stdout retourné (user ne voit pas __TRACE__)</criterion>
-    <criterion id="AC6">Tests: exécuter code avec 2 tools puis vérifier edges créés dans GraphRAG</criterion>
+    <criterion id="AC6"
+    >Tests: exécuter code avec 2 tools puis vérifier edges créés dans GraphRAG</criterion>
     <criterion id="AC7">Performance: overhead moins de 5ms par tool call</criterion>
     <criterion id="AC8">Backward compatible: code sans traces fonctionne toujours</criterion>
   </acceptanceCriteria>
@@ -96,31 +102,36 @@
         <path>docs/adrs/ADR-027-execute-code-graph-learning.md</path>
         <title>ADR-027: Execute Code Graph Learning Integration</title>
         <section>Decision - Option B (Accurate Tracking)</section>
-        <snippet>IPC via __TRACE__ prefix on stdout. Code execution tracking worth implementation complexity. Emit tool_start/tool_end events with trace_id, timestamp, success, duration_ms.</snippet>
+        <snippet
+        >IPC via __TRACE__ prefix on stdout. Code execution tracking worth implementation complexity. Emit tool_start/tool_end events with trace_id, timestamp, success, duration_ms.</snippet>
       </doc>
       <doc>
         <path>docs/adrs/ADR-028-emergent-capabilities-system.md</path>
         <title>ADR-028: Emergent Capabilities System</title>
         <section>IPC: Communication Sandbox to Parent</section>
-        <snippet>stdout avec prefix __TRACE__ avec parsing cote Gateway. Event types: tool_start, tool_end, progress, log, capability_hint. Architecture 3 couches: Orchestration / Capability Engine / Execution.</snippet>
+        <snippet
+        >stdout avec prefix __TRACE__ avec parsing cote Gateway. Event types: tool_start, tool_end, progress, log, capability_hint. Architecture 3 couches: Orchestration / Capability Engine / Execution.</snippet>
       </doc>
       <doc>
         <path>docs/architecture.md</path>
         <title>Decision Architecture - AgentCards</title>
         <section>Pattern 5: Agent Code Execution</section>
-        <snippet>DenoSandboxExecutor with subprocess isolation. ContextBuilder with vector search integration. execute_code MCP tool in gateway-server.ts. Safe-to-fail pattern with sandbox isolation.</snippet>
+        <snippet
+        >DenoSandboxExecutor with subprocess isolation. ContextBuilder with vector search integration. execute_code MCP tool in gateway-server.ts. Safe-to-fail pattern with sandbox isolation.</snippet>
       </doc>
       <doc>
         <path>docs/PRD.md</path>
         <title>Product Requirements Document</title>
         <section>Epic 7: Emergent Capabilities</section>
-        <snippet>Story 7.1: IPC Tracking - capture actual tool usage via __TRACE__ events in sandbox stdout. Foundation for learning system.</snippet>
+        <snippet
+        >Story 7.1: IPC Tracking - capture actual tool usage via __TRACE__ events in sandbox stdout. Foundation for learning system.</snippet>
       </doc>
       <doc>
         <path>docs/epics.md</path>
         <title>Epic Breakdown</title>
         <section>Epic 7 Overview</section>
-        <snippet>Layer 3 (Execution) implements wrappers traces in sandbox. Traces parsed by Layer 2 (Capability Engine) for GraphRAG updates.</snippet>
+        <snippet
+        >Layer 3 (Execution) implements wrappers traces in sandbox. Traces parsed by Layer 2 (Capability Engine) for GraphRAG updates.</snippet>
       </doc>
     </docs>
     <code>
@@ -129,95 +140,112 @@
         <kind>module</kind>
         <symbol>wrapMCPClient</symbol>
         <lines>355-408</lines>
-        <reason>Point d'injection pour le tracing. Fonction qui wrappe les MCP tools - ajouter emission __TRACE__ ici</reason>
+        <reason
+        >Point d'injection pour le tracing. Fonction qui wrappe les MCP tools - ajouter emission __TRACE__ ici</reason>
       </artifact>
       <artifact>
         <path>src/mcp/gateway-server.ts</path>
         <kind>handler</kind>
         <symbol>handleExecuteCode</symbol>
         <lines>1019-1148</lines>
-        <reason>Handler execute_code ou ajouter parseTraces() et appel graphEngine.updateFromExecution()</reason>
+        <reason
+        >Handler execute_code ou ajouter parseTraces() et appel graphEngine.updateFromExecution()</reason>
       </artifact>
       <artifact>
         <path>src/graphrag/graph-engine.ts</path>
         <kind>method</kind>
         <symbol>updateFromExecution</symbol>
         <lines>325-390</lines>
-        <reason>Methode existante pour mettre a jour GraphRAG avec execution. A appeler avec tools reellement appeles</reason>
+        <reason
+        >Methode existante pour mettre a jour GraphRAG avec execution. A appeler avec tools reellement appeles</reason>
       </artifact>
       <artifact>
         <path>src/graphrag/types.ts</path>
         <kind>interface</kind>
         <symbol>WorkflowExecution</symbol>
         <lines>69-77</lines>
-        <reason>Interface pour les donnees d'execution. dag_structure.tasks contient les tools</reason>
+        <reason
+        >Interface pour les donnees d'execution. dag_structure.tasks contient les tools</reason>
       </artifact>
     </code>
     <dependencies>
       <ecosystem name="deno">
-        <package name="deno" version="2.5/2.2 LTS" note="Runtime - crypto.randomUUID() natif"/>
-        <package name="@std/log" version="0.224.14" note="Logging structure"/>
+        <package name="deno" version="2.5/2.2 LTS" note="Runtime - crypto.randomUUID() natif" />
+        <package name="@std/log" version="0.224.14" note="Logging structure" />
       </ecosystem>
       <ecosystem name="npm">
-        <package name="graphology" version="0.25.4" note="Graph algorithms pour GraphRAG"/>
-        <package name="@electric-sql/pglite" version="0.3.11" note="PGlite pour persistance"/>
+        <package name="graphology" version="0.25.4" note="Graph algorithms pour GraphRAG" />
+        <package name="@electric-sql/pglite" version="0.3.11" note="PGlite pour persistance" />
       </ecosystem>
       <builtins>
-        <builtin name="crypto.randomUUID()" note="Generation trace_id - natif Deno"/>
-        <builtin name="Date.now()" note="Timestamps pour tool_start/tool_end"/>
-        <builtin name="console.log()" note="Emission traces via stdout"/>
-        <builtin name="JSON.stringify()" note="Serialisation traces"/>
-        <builtin name="String.startsWith()" note="Detection prefix __TRACE__"/>
-        <builtin name="JSON.parse()" note="Parsing traces JSON"/>
+        <builtin name="crypto.randomUUID()" note="Generation trace_id - natif Deno" />
+        <builtin name="Date.now()" note="Timestamps pour tool_start/tool_end" />
+        <builtin name="console.log()" note="Emission traces via stdout" />
+        <builtin name="JSON.stringify()" note="Serialisation traces" />
+        <builtin name="String.startsWith()" note="Detection prefix __TRACE__" />
+        <builtin name="JSON.parse()" note="Parsing traces JSON" />
       </builtins>
     </dependencies>
   </artifacts>
 
   <constraints>
     <constraint type="performance">Overhead tracing moins de 5ms par tool call (AC7)</constraint>
-    <constraint type="compatibility">Backward compatible - code sans traces doit fonctionner (AC8)</constraint>
-    <constraint type="security">Traces filtrees du stdout - user ne voit pas __TRACE__ (AC5)</constraint>
-    <constraint type="architecture">Layer 3 (Sandbox) emet traces, Layer 2 (Gateway) parse et filtre</constraint>
-    <constraint type="pattern">Utiliser prefix __TRACE__ sur stdout pour IPC sandbox vers parent</constraint>
-    <constraint type="format">JSON traces: tool_start (tool, trace_id, ts) et tool_end (trace_id, success, duration_ms)</constraint>
+    <constraint type="compatibility"
+    >Backward compatible - code sans traces doit fonctionner (AC8)</constraint>
+    <constraint type="security"
+    >Traces filtrees du stdout - user ne voit pas __TRACE__ (AC5)</constraint>
+    <constraint type="architecture"
+    >Layer 3 (Sandbox) emet traces, Layer 2 (Gateway) parse et filtre</constraint>
+    <constraint type="pattern"
+    >Utiliser prefix __TRACE__ sur stdout pour IPC sandbox vers parent</constraint>
+    <constraint type="format"
+    >JSON traces: tool_start (tool, trace_id, ts) et tool_end (trace_id, success, duration_ms)</constraint>
   </constraints>
   <interfaces>
     <interface>
       <name>TraceEvent</name>
       <kind>TypeScript interface</kind>
-      <signature>type TraceEvent = { type: "tool_start"; tool: string; trace_id: string; ts: number } | { type: "tool_end"; trace_id: string; success: boolean; duration_ms: number; error?: string }</signature>
+      <signature
+      >type TraceEvent = { type: "tool_start"; tool: string; trace_id: string; ts: number } | { type: "tool_end"; trace_id: string; success: boolean; duration_ms: number; error?: string }</signature>
       <path>src/mcp/gateway-server.ts (nouveau)</path>
     </interface>
     <interface>
       <name>ParsedTraces</name>
       <kind>TypeScript interface</kind>
-      <signature>interface ParsedTraces { cleanOutput: string; toolsCalled: string[]; traces: TraceEvent[] }</signature>
+      <signature
+      >interface ParsedTraces { cleanOutput: string; toolsCalled: string[]; traces: TraceEvent[] }</signature>
       <path>src/mcp/gateway-server.ts (nouveau)</path>
     </interface>
     <interface>
       <name>WorkflowExecution</name>
       <kind>TypeScript interface (existant)</kind>
-      <signature>interface WorkflowExecution { execution_id: string; executed_at: Date; intent_text: string; dag_structure: DAGStructure; success: boolean; execution_time_ms: number }</signature>
+      <signature
+      >interface WorkflowExecution { execution_id: string; executed_at: Date; intent_text: string; dag_structure: DAGStructure; success: boolean; execution_time_ms: number }</signature>
       <path>src/graphrag/types.ts:69-77</path>
     </interface>
     <interface>
       <name>graphEngine.updateFromExecution</name>
       <kind>Method (existant)</kind>
-      <signature>async updateFromExecution(execution: WorkflowExecution): Promise&lt;void&gt;</signature>
+      <signature
+      >async updateFromExecution(execution: WorkflowExecution): Promise&lt;void&gt;</signature>
       <path>src/graphrag/graph-engine.ts:325</path>
     </interface>
   </interfaces>
   <tests>
-    <standards>
+    <standards
+    >
       Deno.test() pour tous les tests. Assertions via @std/assert (assertEquals, assertExists, assertStringIncludes).
       Pattern Mock: Classes MockMCPClient implementant Partial&lt;MCPClient&gt;. Tests unitaires isoles, tests integration avec vraies deps.
       Performance: Benchmarks via Deno.bench(). Coverage cible &gt;80%. Tasks: deno task test:unit, deno task test:integration.
     </standards>
     <locations>
-      <location>tests/unit/sandbox/ - Tests unitaires sandbox (context_builder_test.ts existe)</location>
+      <location
+      >tests/unit/sandbox/ - Tests unitaires sandbox (context_builder_test.ts existe)</location>
       <location>tests/unit/mcp/ - Tests unitaires gateway</location>
-      <location>tests/integration/ - Tests integration (graphrag_feedback_e2e_test.ts existe)</location>
-      <location>tests/benchmarks/ - Tests performance (sandbox_performance_test.ts existe)</location>
+      <location
+      >tests/integration/ - Tests integration (graphrag_feedback_e2e_test.ts existe)</location>
+      <location
+      >tests/benchmarks/ - Tests performance (sandbox_performance_test.ts existe)</location>
     </locations>
     <ideas>
       <idea ac="AC1,AC2">Test: wrapToolCall() emet tool_start et tool_end avec format correct</idea>

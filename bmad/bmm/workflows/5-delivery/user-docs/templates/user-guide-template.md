@@ -6,8 +6,8 @@
 
 ### Key Concepts
 
-| Term | Definition |
-|------|------------|
+| Term     | Definition     |
+| -------- | -------------- |
 | {term_1} | {definition_1} |
 | {term_2} | {definition_2} |
 | {term_3} | {definition_3} |
@@ -33,6 +33,7 @@
 ```
 
 **Tips:**
+
 - {feature_1_tip_1}
 - {feature_1_tip_2}
 
@@ -60,8 +61,8 @@
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
+| Option            | Type     | Default     | Description     |
+| ----------------- | -------- | ----------- | --------------- |
 | {config_option_1} | {type_1} | {default_1} | {config_desc_1} |
 | {config_option_2} | {type_2} | {default_2} | {config_desc_2} |
 | {config_option_3} | {type_3} | {default_3} | {config_desc_3} |
@@ -69,7 +70,7 @@
 ### Example Configuration
 
 ```yaml
-{example_configuration}
+{ example_configuration }
 ```
 
 ---

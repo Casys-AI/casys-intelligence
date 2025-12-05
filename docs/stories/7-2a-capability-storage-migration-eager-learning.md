@@ -1,28 +1,28 @@
 # Story 7.2a: Capability Storage - Migration & Eager Learning
 
-> **Epic:** 7 - Emergent Capabilities & Learning System
-> **ADRs:** ADR-027 (Execute Code Graph Learning), ADR-028 (Emergent Capabilities System)
-> **Prerequisites:** Story 7.1b (Worker RPC Bridge - DONE)
-> **Status:** Ready for Review
+> **Epic:** 7 - Emergent Capabilities & Learning System **ADRs:** ADR-027 (Execute Code Graph
+> Learning), ADR-028 (Emergent Capabilities System) **Prerequisites:** Story 7.1b (Worker RPC
+> Bridge - DONE) **Status:** Done
 
 ## User Story
 
-As a system persisting learned patterns,
-I want to store capabilities immediately after first successful execution,
-So that learning happens instantly without waiting for repeated patterns.
+As a system persisting learned patterns, I want to store capabilities immediately after first
+successful execution, So that learning happens instantly without waiting for repeated patterns.
 
 ## Context
 
 ### Eager Learning Philosophy
 
 **Key Principle:** Storage dès la 1ère exécution réussie (pas d'attente de 3+ exécutions)
+
 - ON CONFLICT → UPDATE usage_count++ (deduplication par code_hash)
 - Storage is cheap (~2KB/capability), on garde tout
 - Le filtrage se fait au moment des suggestions, pas du stockage (Story 7.4)
 
 ### Existing Schema (Migration 010)
 
-Les tables `workflow_pattern` et `workflow_execution` existent déjà dans `src/db/migrations/010_graphrag_tables_migration.ts`:
+Les tables `workflow_pattern` et `workflow_execution` existent déjà dans
+`src/db/migrations/010_graphrag_tables_migration.ts`:
 
 ```sql
 -- workflow_pattern (existing columns)
@@ -49,6 +49,7 @@ error_message TEXT
 Cette story étend ces tables pour supporter les **capabilities** (code exécutable appris):
 
 **workflow_pattern extensions:**
+
 - `code_snippet TEXT` - Le code TypeScript exécuté
 - `code_hash TEXT UNIQUE` - Hash pour déduplication (alternative à pattern_hash pour code)
 - `parameters_schema JSONB` - Schema JSON des paramètres (rempli par Story 7.2b)
@@ -61,6 +62,7 @@ Cette story étend ces tables pour supporter les **capabilities** (code exécuta
 - `source TEXT` - 'emergent' ou 'manual'
 
 **workflow_execution extensions:**
+
 - `code_snippet TEXT` - Code exécuté pour cette execution
 - `code_hash TEXT` - Hash du code pour liaison avec workflow_pattern
 
@@ -122,10 +124,11 @@ Cette story étend ces tables pour supporter les **capabilities** (code exécuta
     avgDurationMs: number;
     createdAt: Date;
     lastUsed: Date;
-    source: 'emergent' | 'manual';
+    source: "emergent" | "manual";
   }
   ```
-- [x] Method `saveCapability(code: string, intent: string, duration_ms: number): Promise<Capability>`
+- [x] Method
+      `saveCapability(code: string, intent: string, duration_ms: number): Promise<Capability>`
 - [x] Method `findByCodeHash(codeHash: string): Promise<Capability | null>`
 - [x] Method `updateUsage(codeHash: string, success: boolean, duration_ms: number): Promise<void>`
 
@@ -185,12 +188,12 @@ import { crypto } from "std/crypto";
 
 export async function hashCode(code: string): Promise<string> {
   // Normalize: trim, collapse whitespace, remove comments (optional)
-  const normalized = code.trim().replace(/\s+/g, ' ');
+  const normalized = code.trim().replace(/\s+/g, " ");
   const encoder = new TextEncoder();
   const data = encoder.encode(normalized);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 ```
 
@@ -269,11 +272,11 @@ private async executeWithTimeout<T>(
 
 ### Files Modified by 7.1b (Reference)
 
-| File | Relevance for 7.2a |
-|------|-------------------|
+| File                           | Relevance for 7.2a                       |
+| ------------------------------ | ---------------------------------------- |
 | `src/sandbox/worker-bridge.ts` | Integration point for capability storage |
-| `src/sandbox/types.ts` | May need TraceEvent → Capability mapping |
-| `src/mcp/gateway-server.ts` | Already uses bridge traces |
+| `src/sandbox/types.ts`         | May need TraceEvent → Capability mapping |
+| `src/mcp/gateway-server.ts`    | Already uses bridge traces               |
 
 ## Dev Notes
 
@@ -333,7 +336,7 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Debug Log References
 
-- Tests passing: 27/27 capability tests, 15/15 db tests
+- Tests passing: 32/32 (20 capability_store + 12 hash tests)
 
 ### Completion Notes List
 
@@ -346,19 +349,36 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### Change Log
 
 - 2025-12-05: Story implementation complete - all tests passing
+- 2025-12-05: Code Review fixes applied:
+  - Fixed SQL injection vulnerability in updateUsage (HIGH)
+  - Added embedding generation error handling (MEDIUM)
+  - Added searchByIntent tests (MEDIUM)
+  - Added concurrent operations test (MEDIUM)
+  - Removed unused WorkflowPatternRow type (LOW)
+  - Unexported hashCodeSync from module (LOW)
+  - Total tests: 32 passing
 
 ### File List
 
 **New Files:**
+
 - `src/db/migrations/011_capability_storage_migration.ts` - Migration extending tables
-- `src/capabilities/capability-store.ts` - CapabilityStore class (~280 LOC)
+- `src/capabilities/capability-store.ts` - CapabilityStore class (~290 LOC)
 - `src/capabilities/types.ts` - Type definitions (Capability, CacheConfig, etc.)
 - `src/capabilities/hash.ts` - hashCode and normalizeCode functions
 - `src/capabilities/mod.ts` - Module exports
-- `tests/unit/capabilities/capability_store_test.ts` - 15 tests for CapabilityStore
+- `tests/unit/capabilities/capability_store_test.ts` - 20 tests for CapabilityStore
 - `tests/unit/capabilities/hash_test.ts` - 12 tests for hash functions
 
 **Modified Files:**
+
 - `src/db/migrations.ts` - Added import and registration for migration 011
 - `src/sandbox/worker-bridge.ts` - Added optional CapabilityStore integration for eager learning
 
+**Code Review Fixes (2025-12-05):**
+
+- `src/capabilities/capability-store.ts` - Fixed SQL injection in updateUsage (parameterized query)
+- `src/capabilities/capability-store.ts` - Added error handling for embedding generation failure
+- `src/capabilities/types.ts` - Removed unused WorkflowPatternRow type
+- `src/capabilities/mod.ts` - Unexported hashCodeSync (internal use only)
+- `tests/unit/capabilities/capability_store_test.ts` - Added 5 new tests (searchByIntent, concurrent, embedding error)

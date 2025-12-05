@@ -4,9 +4,9 @@
  * Tests the metrics API endpoint served by the AgentCards gateway server.
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { GraphRAGEngine } from "../../src/graphrag/graph-engine.ts";
 
 const TEST_PORT_BASE = 3100; // Use different port range to avoid conflicts
@@ -223,11 +223,11 @@ Deno.test("GET /api/metrics - adaptive_alpha in valid range", async () => {
 
     assert(
       metrics.current.adaptive_alpha >= 0.5,
-      `Alpha should be >= 0.5, got ${metrics.current.adaptive_alpha}`
+      `Alpha should be >= 0.5, got ${metrics.current.adaptive_alpha}`,
     );
     assert(
       metrics.current.adaptive_alpha <= 1.0,
-      `Alpha should be <= 1.0, got ${metrics.current.adaptive_alpha}`
+      `Alpha should be <= 1.0, got ${metrics.current.adaptive_alpha}`,
     );
   }
 
@@ -242,11 +242,11 @@ Deno.test("GET /api/metrics - success_rate is percentage (0-100)", async () => {
 
   assert(
     metrics.period.workflows_success_rate >= 0,
-    "Success rate should be >= 0"
+    "Success rate should be >= 0",
   );
   assert(
     metrics.period.workflows_success_rate <= 100,
-    "Success rate should be <= 100"
+    "Success rate should be <= 100",
   );
 
   await db.close();

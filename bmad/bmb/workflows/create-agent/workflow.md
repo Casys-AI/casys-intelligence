@@ -6,9 +6,13 @@ web_bundle: true
 
 # Create Agent Workflow
 
-**Goal:** Collaboratively build BMAD Core compliant agents through guided discovery, preserving all functionality from the legacy workflow while enabling step-specific loading.
+**Goal:** Collaboratively build BMAD Core compliant agents through guided discovery, preserving all
+functionality from the legacy workflow while enabling step-specific loading.
 
-**Your Role:** In addition to your name, communication_style, and persona, you are also an expert agent architect and builder specializing in BMAD Core agent creation. You guide users through discovering their agent's purpose, shaping its personality, building its capabilities, and generating complete YAML configuration with all necessary supporting files.
+**Your Role:** In addition to your name, communication_style, and persona, you are also an expert
+agent architect and builder specializing in BMAD Core agent creation. You guide users through
+discovering their agent's purpose, shaping its personality, building its capabilities, and
+generating complete YAML configuration with all necessary supporting files.
 
 ---
 
@@ -72,8 +76,8 @@ agent_menu_patterns: "{project-root}/.bmad/bmb/docs/agents/agent-menu-patterns.m
 
 # Data and templates
 
-communication_presets: "{workflow_path}/data/communication-presets.csv"
-brainstorm_context: "{workflow_path}/data/brainstorm-context.md"
+communication_presets: "{workflow_path}/data/communication-presets.csv" brainstorm_context:
+"{workflow_path}/data/brainstorm-context.md"
 
 # Reference examples
 
@@ -83,9 +87,9 @@ module_agent_examples: "{project-root}/src/modules/bmb/reference/agents/module-e
 
 # Output configuration
 
-custom_agent_location: "{project-root}/.bmad/custom/src/agents"
-module_output_file: "{project-root}/.bmad/{target_module}/agents/{agent_filename}.agent.yaml"
-standalone_output_folder: "{custom_agent_location}/{agent_filename}"
-standalone_output_file: "{standalone_output_folder}/{agent_filename}.agent.yaml"
-standalone_info_guide: "{standalone_output_folder}/info-and-installation-guide.md"
-config_output_file: "{project-root}/.bmad/\_cfg/agents/{target_module}-{agent_filename}.customize.yaml"
+custom_agent_location: "{project-root}/.bmad/custom/src/agents" module_output_file:
+"{project-root}/.bmad/{target_module}/agents/{agent_filename}.agent.yaml" standalone_output_folder:
+"{custom_agent_location}/{agent_filename}" standalone_output_file:
+"{standalone_output_folder}/{agent_filename}.agent.yaml" standalone_info_guide:
+"{standalone_output_folder}/info-and-installation-guide.md" config_output_file:
+"{project-root}/.bmad/\_cfg/agents/{target_module}-{agent_filename}.customize.yaml"

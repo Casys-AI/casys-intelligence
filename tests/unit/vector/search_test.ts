@@ -11,7 +11,7 @@
  * - AC7: Performance P95 <100ms
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { VectorSearch } from "../../../src/vector/search.ts";
 import { EmbeddingModel } from "../../../src/vector/embeddings.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
@@ -223,8 +223,7 @@ Deno.test(
 
     // All scores should be between 0 and 1
     for (const result of results) {
-      assert(result.score >= 0 && result.score <= 1,
-        `Score ${result.score} out of range [0, 1]`);
+      assert(result.score >= 0 && result.score <= 1, `Score ${result.score} out of range [0, 1]`);
     }
 
     await db.close();

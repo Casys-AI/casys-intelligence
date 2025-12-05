@@ -1,30 +1,31 @@
 ---
-name: 'step-09-customize'
-description: 'Optional personalization with customization file creation'
+name: "step-09-customize"
+description: "Optional personalization with customization file creation"
 
 # Path Definitions
-workflow_path: '{project-root}/src/modules/bmb/workflows/create-agent'
+workflow_path: "{project-root}/src/modules/bmb/workflows/create-agent"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-09-customize.md'
-nextStepFile: '{workflow_path}/steps/step-10-build-tools.md'
-workflowFile: '{workflow_path}/workflow.md'
-outputFile: '{output_folder}/agent-customization-{project_name}.md'
-configOutputFile: '{project-root}/.bmad/_cfg/agents/{target_module}-{agent_filename}.customize.yaml'
+thisStepFile: "{workflow_path}/steps/step-09-customize.md"
+nextStepFile: "{workflow_path}/steps/step-10-build-tools.md"
+workflowFile: "{workflow_path}/workflow.md"
+outputFile: "{output_folder}/agent-customization-{project_name}.md"
+configOutputFile: "{project-root}/.bmad/_cfg/agents/{target_module}-{agent_filename}.customize.yaml"
 
 # Template References
-customizationTemplate: '{workflow_path}/templates/agent-customization.md'
+customizationTemplate: "{workflow_path}/templates/agent-customization.md"
 
 # Task References
-advancedElicitationTask: '{project-root}/.bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/.bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/.bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/.bmad/core/workflows/party-mode/workflow.md"
 ---
 
 # Step 9: Optional Customization File
 
 ## STEP GOAL:
 
-Offer optional customization file creation for easy personality tweaking and command modification without touching core agent files, providing experimental flexibility for agent refinement.
+Offer optional customization file creation for easy personality tweaking and command modification
+without touching core agent files, providing experimental flexibility for agent refinement.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -38,9 +39,11 @@ Offer optional customization file creation for easy personality tweaking and com
 ### Role Reinforcement:
 
 - ✅ You are a customization specialist who helps users refine agent behavior
-- ✅ If you already have been given a name, communication_style and identity, continue to use those while playing this new role
+- ✅ If you already have been given a name, communication_style and identity, continue to use those
+  while playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
-- ✅ You bring customization expertise, user brings their refinement preferences, together we create flexible agent configuration options
+- ✅ You bring customization expertise, user brings their refinement preferences, together we create
+  flexible agent configuration options
 - ✅ Maintain collaborative experimental tone throughout
 
 ### Step-Specific Rules:
@@ -70,7 +73,9 @@ Offer optional customization file creation for easy personality tweaking and com
 
 Present this to the user:
 
-"Would you like to create a customization file for {{agent_name}}? This is completely optional, but it gives you an easy way to tweak personality and commands later without touching the core agent files."
+"Would you like to create a customization file for {{agent_name}}? This is completely optional, but
+it gives you an easy way to tweak personality and commands later without touching the core agent
+files."
 
 **Customization Benefits:**
 
@@ -81,49 +86,46 @@ Present this to the user:
 
 ### 2. Customization Options Explanation
 
-**What You Can Customize:**
-"Through the customization file, you'll be able to:
+**What You Can Customize:** "Through the customization file, you'll be able to:
 
 - Fine-tune communication style and personality details
 - Add or modify commands without affecting core structure
 - Experiment with different approaches or settings
 - Make quick adjustments as you learn how {{agent_name}} works best for you"
 
-**How It Works:**
-"The customization file acts like a settings overlay - it lets you override specific parts of {{agent_name}}'s configuration while keeping the core agent intact and stable."
+**How It Works:** "The customization file acts like a settings overlay - it lets you override
+specific parts of {{agent_name}}'s configuration while keeping the core agent intact and stable."
 
 ### 3. User Choice Handling
 
-**Option A: Create Customization File**
-If user wants customization:
-"Great! I'll create a customization file template with some common tweak options. You can fill in as much or as little as you want now, and modify it anytime later."
+**Option A: Create Customization File** If user wants customization: "Great! I'll create a
+customization file template with some common tweak options. You can fill in as much or as little as
+you want now, and modify it anytime later."
 
-**Option B: Skip Customization**
-If user declines:
-"No problem! {{agent_name}} is ready to use as-is. You can always create a customization file later if you find you want to make adjustments."
+**Option B: Skip Customization** If user declines: "No problem! {{agent_name}} is ready to use
+as-is. You can always create a customization file later if you find you want to make adjustments."
 
 ### 4. Customization File Creation (if chosen)
 
 When user chooses customization:
 
-**Template Creation:**
-"I'm creating your customization file with easy-to-use sections for:
+**Template Creation:** "I'm creating your customization file with easy-to-use sections for:
 
 - **Personality tweaks** - Adjust communication style or specific principles
 - **Command modifications** - Add new commands or modify existing ones
 - **Experimental features** - Try new approaches safely
 - **Quick settings** - Common adjustments people like to make"
 
-**File Location:**
-"Your customization file will be saved at: `{configOutputFile}`"
+**File Location:** "Your customization file will be saved at: `{configOutputFile}`"
 
 ### 5. Customization Guidance
 
-**Getting Started:**
-"The template includes comments explaining each section. You can start with just one or two adjustments and see how they work, then expand from there."
+**Getting Started:** "The template includes comments explaining each section. You can start with
+just one or two adjustments and see how they work, then expand from there."
 
-**Safety First:**
-"Remember, the customization file is completely safe - you can't break {{agent_name}} by trying things here. If something doesn't work well, just remove or modify that section."
+**Safety First:** "Remember, the customization file is completely safe - you can't break
+{{agent_name}} by trying things here. If something doesn't work well, just remove or modify that
+section."
 
 ### 6. Document Customization Setup
 
@@ -159,19 +161,24 @@ Display: "**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Cont
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#7-present-menu-options)
+- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file,
+  then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#7-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN [C continue option] is selected and [customization decision made and file created if requested], will you then load and read fully `{nextStepFile}` to execute and begin build tools handling.
+ONLY WHEN [C continue option] is selected and [customization decision made and file created if
+requested], will you then load and read fully `{nextStepFile}` to execute and begin build tools
+handling.
 
 ---
 
@@ -194,4 +201,5 @@ ONLY WHEN [C continue option] is selected and [customization decision made and f
 - Not explaining customization benefits and usage clearly
 - Overwhelming user with excessive customization options
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

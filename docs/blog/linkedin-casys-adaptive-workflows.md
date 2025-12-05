@@ -1,12 +1,13 @@
 # MCP Gateway Architecture (Part 2): Adaptive Workflows with AIL/HIL
 
-**Author:** Erwan Lee Pesle
-**Date:** November 2025
-**Series:** MCP Gateway Architecture
+**Author:** Erwan Lee Pesle **Date:** November 2025 **Series:** MCP Gateway Architecture
 
 ---
 
-*In [Part 1](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-1-semantic-discovery-erwan-lee-pesle-kiczf/), we saw how semantic discovery and parallel execution solve MCP scalability issues. Today, we tackle a more fundamental problem: workflow rigidity in the face of unexpected discoveries.*
+_In
+[Part 1](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-1-semantic-discovery-erwan-lee-pesle-kiczf/),
+we saw how semantic discovery and parallel execution solve MCP scalability issues. Today, we tackle
+a more fundamental problem: workflow rigidity in the face of unexpected discoveries._
 
 ---
 
@@ -42,19 +43,22 @@ Turn 4: Discovers YAML → Processes 2 files
 
 The concept: **make ad-hoc adaptation observable and controllable**.
 
-LLMs already adapt naturally, but it happens in a black box. AIL formalizes this process through structured decision points and command injection.
+LLMs already adapt naturally, but it happens in a black box. AIL formalizes this process through
+structured decision points and command injection.
 
 ### How the formalization works
 
 Instead of invisible reasoning, adaptation becomes explicit:
 
 **Traditional LLM (invisible):**
+
 ```
 Agent thinks: "I need XML parsers" → next turn uses them
 (no visibility, no control, no logging)
 ```
 
 **AIL formalized (observable):**
+
 ```
 Agent executes: list_directory("/config")
   ↓ Result: 8 JSON, 5 XML, 2 YAML
@@ -76,7 +80,8 @@ DAG Executor rebuilds:
 📡 Event emitted: {type: "dag_updated", new_nodes: 2}
 ```
 
-**Key insight:** This doesn't enable new capabilities—it **structures and exposes** what LLMs already do, enabling observability, control, and learning.
+**Key insight:** This doesn't enable new capabilities—it **structures and exposes** what LLMs
+already do, enabling observability, control, and learning.
 
 ---
 
@@ -111,6 +116,7 @@ Human responds:
 ```
 
 **Modification example:**
+
 ```json
 {
   "decision": "modify",
@@ -161,31 +167,42 @@ The real power emerges when combining **three learning loops** operating at diff
 
 ### Loop 1: Real-Time Observability and Control
 
-**Event Stream:** Every workflow step emits events (`workflow_start`, `task_complete`, `checkpoint`, `error`). Complete real-time observability.
+**Event Stream:** Every workflow step emits events (`workflow_start`, `task_complete`, `checkpoint`,
+`error`). Complete real-time observability.
 
-**Command Queue:** The agent (or human) can inject commands **during** execution: `{type: "replan_dag"}`, `{type: "abort"}`, `{type: "pause"}`. Non-blocking, processed between DAG layers.
+**Command Queue:** The agent (or human) can inject commands **during** execution:
+`{type: "replan_dag"}`, `{type: "abort"}`, `{type: "pause"}`. Non-blocking, processed between DAG
+layers.
 
-**State Management:** Automatic reducers (inspired by LangGraph MessagesState) maintain state: messages, tasks, decisions, context. Automatic append/merge.
+**State Management:** Automatic reducers (inspired by LangGraph MessagesState) maintain state:
+messages, tasks, decisions, context. Automatic append/merge.
 
-**Checkpoint/Resume:** The workflow can be interrupted and resumed. State is saved, allowing crash survival or asynchronous HIL validation.
+**Checkpoint/Resume:** The workflow can be interrupted and resumed. State is saved, allowing crash
+survival or asynchronous HIL validation.
 
 ### Loop 2: Adaptive Decisions During Execution
 
-**Agent-in-the-Loop (AIL):** The agent can replan dynamically. XML file discovery → Agent injects `{replan_dag: "parse XML"}` → GraphRAG query → New nodes added to DAG → Execution continues.
+**Agent-in-the-Loop (AIL):** The agent can replan dynamically. XML file discovery → Agent injects
+`{replan_dag: "parse XML"}` → GraphRAG query → New nodes added to DAG → Execution continues.
 
-**Human-in-the-Loop (HIL):** Human validation for critical operations. Checkpoint → Summary generated → Human review (Approve/Reject/Modify) → Commands injected → Workflow continues.
+**Human-in-the-Loop (HIL):** Human validation for critical operations. Checkpoint → Summary
+generated → Human review (Approve/Reject/Modify) → Commands injected → Workflow continues.
 
-**DAG Replanning:** Unlike fixed DAGs, Casys rebuilds the DAG **during execution** via GraphRAG queries. Preserves completed tasks, adds new branches in parallel.
+**DAG Replanning:** Unlike fixed DAGs, Casys rebuilds the DAG **during execution** via GraphRAG
+queries. Preserves completed tasks, adds new branches in parallel.
 
 ### Loop 3: Continuous Learning
 
 **GraphRAG Updates:** After each workflow, the system enriches the knowledge graph.
 
-Example: If `list_directory` and `parse_xml` are used together, the knowledge graph strengthens this relationship (weight +1). PageRank is recalculated. Future similar workflows benefit from learned patterns.
+Example: If `list_directory` and `parse_xml` are used together, the knowledge graph strengthens this
+relationship (weight +1). PageRank is recalculated. Future similar workflows benefit from learned
+patterns.
 
 **Co-occurrence Learning:** The system learns which tools go together.
 
 After 50 workflows on configuration files:
+
 - `parse_json` co-occurs 95% with `list_directory`
 - `parse_xml` co-occurs 60%
 - `parse_yaml` co-occurs 30%
@@ -239,10 +256,12 @@ Let's compare LLM ad-hoc adaptation vs Casys structured approach on a real scena
 ```
 
 **Concrete results:**
+
 - LLM ad-hoc: 4 turns, 8-12s, sequential, no learning
 - Casys structured: 1 turn, 2.1s, parallel, learns pattern
 
 **And on the 10th similar workflow:**
+
 - LLM ad-hoc: Still 4 turns, still discovers tools one-by-one
 - Casys: GraphRAG learned the pattern → suggests all 3 parsers upfront in workflow #11
 
@@ -267,6 +286,7 @@ Claude's natural approach (ad-hoc adaptation):
 ```
 
 **The problem isn't lack of adaptation—it's inefficiency:**
+
 - ❌ Manual decision-making at each turn (latency overhead)
 - ❌ Sequential execution (no parallelization)
 - ❌ No memory across sessions (repeats the same discoveries)
@@ -316,27 +336,29 @@ Claude (ad-hoc):          Casys (formalized):
 
 ### Comparison Matrix
 
-| Capability | Claude Code (LLM) | Anthropic Code Exec | Casys |
-|-----------|-------------------|---------------------|-------|
-| **Adaptation** | ✅ Ad-hoc (inefficient) | ❌ Fixed code execution | ✅ Pre-configured + adaptive |
-| **Tool discovery** | 🔄 Turn-by-turn | ⚠️ Manual | ✅ Vector search upfront |
-| **Execution mode** | ⏸️ Sequential | ⏸️ Sequential | ⚡ Parallel DAG |
-| **Code execution** | ❌ | ✅ Sandbox | ✅ Sandbox + MCP tools |
-| **Meta-learning** | ❌ Forgets each session | ❌ | ✅ GraphRAG |
-| **Observability** | ❌ Black box | ⚠️ Basic | ✅ Event stream |
-| **Human control (HIL)** | ❌ | ❌ | ✅ Checkpoint validation |
+| Capability              | Claude Code (LLM)       | Anthropic Code Exec     | Casys                        |
+| ----------------------- | ----------------------- | ----------------------- | ---------------------------- |
+| **Adaptation**          | ✅ Ad-hoc (inefficient) | ❌ Fixed code execution | ✅ Pre-configured + adaptive |
+| **Tool discovery**      | 🔄 Turn-by-turn         | ⚠️ Manual               | ✅ Vector search upfront     |
+| **Execution mode**      | ⏸️ Sequential           | ⏸️ Sequential           | ⚡ Parallel DAG              |
+| **Code execution**      | ❌                      | ✅ Sandbox              | ✅ Sandbox + MCP tools       |
+| **Meta-learning**       | ❌ Forgets each session | ❌                      | ✅ GraphRAG                  |
+| **Observability**       | ❌ Black box            | ⚠️ Basic                | ✅ Event stream              |
+| **Human control (HIL)** | ❌                      | ❌                      | ✅ Checkpoint validation     |
 
 ### The Real Innovation
 
 **Casys doesn't enable adaptation—LLMs already do that.**
 
 **Casys makes adaptation efficient:**
+
 - **Proactive** (vector search predicts tools) vs **Reactive** (discover turn-by-turn)
 - **Parallel** (DAG layers execute simultaneously) vs **Sequential** (wait for each result)
 - **Learning** (patterns improve over time) vs **Amnesic** (restart from scratch)
 - **Observable** (event stream + control) vs **Black-box** (hope for the best)
 
 **Example impact:**
+
 - LLM natural approach: 4 turns, 8-12s, sequential
 - Casys approach: 1 turn, 2.1s, parallel
 - Speedup: 4-6x, with learning for next time
@@ -350,21 +372,25 @@ Claude (ad-hoc):          Casys (formalized):
 Adaptive loops are implemented through several components working together:
 
 **Event Stream:**
+
 - 9 event types (workflow_start, task_complete, checkpoint, error, etc.)
 - Real-time emission via observers
 - Used for logging, debugging, monitoring
 
 **Command Queue:**
+
 - Non-blocking command queue
 - Injection possible during execution (replan_dag, pause, abort, modify)
 - Processing between DAG layers
 
 **State Management:**
+
 - Reducers inspired by LangGraph
 - Workflow state: messages, tasks, decisions, context
 - Automatic update merging
 
 **DAG Replanning:**
+
 - GraphRAG query based on discoveries
 - Dynamic construction of new nodes
 - Preservation of completed tasks (no re-execution)
@@ -374,10 +400,12 @@ Adaptive loops are implemented through several components working together:
 Real benchmarks comparing approaches:
 
 **Structured vs ad-hoc replanning:** 5x speedup
+
 - LLM ad-hoc with multiple turns: 23.4s
 - Formalized AIL with DAG replanning: 4.7s
 
 **Infrastructure overhead (formalization cost):**
+
 - State update latency: 3ms (target <10ms) ✅
 - Event emission overhead: <5ms P95 ✅
 - Command injection latency: <10ms P95 ✅
@@ -437,7 +465,9 @@ Loop 3: Next time, suggests all 3 parsers upfront
 This article introduced three complementary concepts for making LLM agent workflows more efficient:
 
 ### Loop 1: Execution Infrastructure
+
 **Concept:** Make workflow state observable and controllable.
+
 - Event streams for real-time visibility
 - Command queues for external control
 - State reducers for automatic merging
@@ -446,7 +476,9 @@ This article introduced three complementary concepts for making LLM agent workfl
 **Value:** Black-box reasoning becomes transparent and debuggable.
 
 ### Loop 2: Formalized Adaptation
+
 **Concept:** Structure what LLMs do naturally.
+
 - **AIL:** Agent replanning through explicit decision points
 - **HIL:** Human validation at critical checkpoints
 - **DAG replanning:** Dynamic workflow modification with preserved state
@@ -454,7 +486,9 @@ This article introduced three complementary concepts for making LLM agent workfl
 **Value:** Ad-hoc adaptation becomes efficient, observable, and controllable.
 
 ### Loop 3: Meta-Learning
+
 **Concept:** Learn patterns across workflow executions.
+
 - GraphRAG enrichment from tool co-occurrence
 - Pattern recognition for proactive suggestions
 - Continuous improvement without manual tuning
@@ -468,6 +502,7 @@ This article introduced three complementary concepts for making LLM agent workfl
 **LLMs already adapt—they're just inefficient at it.**
 
 The architectural contribution isn't enabling adaptation, but **making it:**
+
 - ⚡ **Proactive** (vector search predicts needs)
 - 🔀 **Parallel** (DAG execution eliminates sequential waits)
 - 🧠 **Learning** (GraphRAG remembers patterns)
@@ -478,8 +513,13 @@ The architectural contribution isn't enabling adaptation, but **making it:**
 ---
 
 **This series:**
-- **Part 1:** [Semantic Discovery and Parallel Execution](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-1-semantic-discovery-erwan-lee-pesle-kiczf/) - Vector search + DAG execution
-- **Part 2:** Adaptive Workflows with AIL/HIL (this article) - Formalized adaptation + meta-learning
-- **Part 3:** Code Sandboxing + MCP Tools Injection (coming soon) - Local execution + context reduction
 
-**These concepts** are explored in the Casys MCP Gateway project, demonstrating how to structure and optimize LLM agent workflows at scale.
+- **Part 1:**
+  [Semantic Discovery and Parallel Execution](https://www.linkedin.com/pulse/mcp-gateway-architecture-part-1-semantic-discovery-erwan-lee-pesle-kiczf/) -
+  Vector search + DAG execution
+- **Part 2:** Adaptive Workflows with AIL/HIL (this article) - Formalized adaptation + meta-learning
+- **Part 3:** Code Sandboxing + MCP Tools Injection (coming soon) - Local execution + context
+  reduction
+
+**These concepts** are explored in the Casys MCP Gateway project, demonstrating how to structure and
+optimize LLM agent workflows at scale.

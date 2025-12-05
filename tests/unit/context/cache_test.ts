@@ -4,7 +4,7 @@
  * Coverage: AC6 - Cache hit pour frequently used tools
  */
 
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { SchemaCache } from "../../../src/context/cache.ts";
 import type { MCPTool } from "../../../src/mcp/types.ts";
 

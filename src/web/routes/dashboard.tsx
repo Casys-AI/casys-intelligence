@@ -27,7 +27,8 @@ export default function Dashboard({ data }: { data: { apiBase: string } }) {
         />
         <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-        <style>{`
+        <style>
+          {`
           :root {
             --bg: #0a0908;
             --bg-elevated: #12110f;
@@ -71,14 +72,15 @@ export default function Dashboard({ data }: { data: { apiBase: string } }) {
           *::-webkit-scrollbar-thumb:hover {
             background: var(--accent-medium);
           }
-        `}</style>
+        `}
+        </style>
       </Head>
 
       <div
         class="flex w-screen h-screen overflow-hidden font-sans"
         style={{
-          background: 'var(--bg)',
-          fontFamily: 'var(--font-sans)',
+          background: "var(--bg)",
+          fontFamily: "var(--font-sans)",
         }}
       >
         {/* Back to Home */}
@@ -86,21 +88,28 @@ export default function Dashboard({ data }: { data: { apiBase: string } }) {
           href="/"
           class="absolute top-5 left-5 z-[200] flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
           style={{
-            background: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
+            background: "var(--bg-elevated)",
+            border: "1px solid var(--border)",
+            color: "var(--text-muted)",
           }}
           onMouseOver={(e) => {
-            e.currentTarget.style.borderColor = 'var(--accent-medium)';
-            e.currentTarget.style.color = 'var(--accent)';
+            e.currentTarget.style.borderColor = "var(--accent-medium)";
+            e.currentTarget.style.color = "var(--accent)";
           }}
           onMouseOut={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)';
-            e.currentTarget.style.color = 'var(--text-muted)';
+            e.currentTarget.style.borderColor = "var(--border)";
+            e.currentTarget.style.color = "var(--text-muted)";
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
           CAI
         </a>
@@ -109,7 +118,8 @@ export default function Dashboard({ data }: { data: { apiBase: string } }) {
         <div
           class="flex-1 relative min-w-0"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(255, 184, 111, 0.02) 0%, transparent 70%)',
+            background:
+              "radial-gradient(ellipse at center, rgba(255, 184, 111, 0.02) 0%, transparent 70%)",
           }}
         >
           <GraphExplorer apiBase={apiBase} />

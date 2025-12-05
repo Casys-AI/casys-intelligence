@@ -1,11 +1,13 @@
 # Analyse des MCP Servers pour Playground Pédagogique
 
-**Date**: 2025-11-28
-**Objectif**: Identifier les MCP servers sans clé API externe pour démontrer la parallélisation DAG et la spéculation GraphRAG
+**Date**: 2025-11-28 **Objectif**: Identifier les MCP servers sans clé API externe pour démontrer la
+parallélisation DAG et la spéculation GraphRAG
 
 ## Résumé Exécutif
 
-Cette recherche a identifié **14 MCP servers officiels** et **20+ servers communautaires** fonctionnant sans clé API externe, parfaitement adaptés pour un playground pédagogique démontrant les workflows DAG parallèles et les patterns GraphRAG.
+Cette recherche a identifié **14 MCP servers officiels** et **20+ servers communautaires**
+fonctionnant sans clé API externe, parfaitement adaptés pour un playground pédagogique démontrant
+les workflows DAG parallèles et les patterns GraphRAG.
 
 ---
 
@@ -13,43 +15,44 @@ Cette recherche a identifié **14 MCP servers officiels** et **20+ servers commu
 
 ### 1.1 Servers Activement Maintenus (npm)
 
-| Serveur | Package NPM | Version | Description | API Key |
-|---------|-------------|---------|-------------|---------|
-| **SDK** | `@modelcontextprotocol/sdk` | Current | SDK complet pour créer serveurs/clients MCP | ❌ Non |
-| **Everything** | `@modelcontextprotocol/server-everything` | 2025.11.25 | Serveur de test avec toutes les features MCP | ❌ Non |
-| **Memory** | `@modelcontextprotocol/server-memory` | 2025.11.25 | Knowledge graph persistant local | ❌ Non |
-| **Filesystem** | `@modelcontextprotocol/server-filesystem` | 2025.8.21 | Opérations fichiers sécurisées | ❌ Non |
-| **Sequential Thinking** | `@modelcontextprotocol/server-sequential-thinking` | 2025.11.25 | Résolution de problèmes structurée | ❌ Non |
-| **Inspector** | `@modelcontextprotocol/inspector` | 0.17.2 | Outil de débogage MCP | ❌ Non |
+| Serveur                 | Package NPM                                        | Version    | Description                                  | API Key |
+| ----------------------- | -------------------------------------------------- | ---------- | -------------------------------------------- | ------- |
+| **SDK**                 | `@modelcontextprotocol/sdk`                        | Current    | SDK complet pour créer serveurs/clients MCP  | ❌ Non  |
+| **Everything**          | `@modelcontextprotocol/server-everything`          | 2025.11.25 | Serveur de test avec toutes les features MCP | ❌ Non  |
+| **Memory**              | `@modelcontextprotocol/server-memory`              | 2025.11.25 | Knowledge graph persistant local             | ❌ Non  |
+| **Filesystem**          | `@modelcontextprotocol/server-filesystem`          | 2025.8.21  | Opérations fichiers sécurisées               | ❌ Non  |
+| **Sequential Thinking** | `@modelcontextprotocol/server-sequential-thinking` | 2025.11.25 | Résolution de problèmes structurée           | ❌ Non  |
+| **Inspector**           | `@modelcontextprotocol/inspector`                  | 0.17.2     | Outil de débogage MCP                        | ❌ Non  |
 
 ### 1.2 Servers en Archive (Python - PyPI)
 
-| Serveur | Package | Description | API Key |
-|---------|---------|-------------|---------|
-| **Git** | `mcp-server-git` | Manipulation de repos Git | ❌ Non |
-| **SQLite** | `mcp-server-sqlite` | BD SQLite avec insights BI | ❌ Non |
-| **Time** | `mcp-server-time` | Conversions timezone | ❌ Non |
-| **Fetch** | `mcp-server-fetch` | Fetch web + HTML→Markdown | ❌ Non |
+| Serveur    | Package             | Description                | API Key |
+| ---------- | ------------------- | -------------------------- | ------- |
+| **Git**    | `mcp-server-git`    | Manipulation de repos Git  | ❌ Non  |
+| **SQLite** | `mcp-server-sqlite` | BD SQLite avec insights BI | ❌ Non  |
+| **Time**   | `mcp-server-time`   | Conversions timezone       | ❌ Non  |
+| **Fetch**  | `mcp-server-fetch`  | Fetch web + HTML→Markdown  | ❌ Non  |
 
 ### 1.3 Servers Dépréciés
 
-| Serveur | Package | Raison | Alternative |
-|---------|---------|--------|-------------|
-| **Puppeteer** | `@modelcontextprotocol/server-puppeteer` | Plus supporté (0.6.2) | playwright-mcp |
-| **Postgres** | `@modelcontextprotocol/server-postgres` | Plus supporté (0.6.2) | Autres DB servers |
+| Serveur       | Package                                  | Raison                | Alternative       |
+| ------------- | ---------------------------------------- | --------------------- | ----------------- |
+| **Puppeteer** | `@modelcontextprotocol/server-puppeteer` | Plus supporté (0.6.2) | playwright-mcp    |
+| **Postgres**  | `@modelcontextprotocol/server-postgres`  | Plus supporté (0.6.2) | Autres DB servers |
 
 ---
 
 ## 2. Analyse Détaillée des Outils
 
 ### 2.1 Filesystem Server
-**Package**: `@modelcontextprotocol/server-filesystem`
-**Langage**: TypeScript/Node.js
+
+**Package**: `@modelcontextprotocol/server-filesystem` **Langage**: TypeScript/Node.js
 **Installation**: `npx -y @modelcontextprotocol/server-filesystem /path/to/allowed/files`
 
 #### Outils Disponibles (9 outils)
 
 **Lecture (readOnlyHint: true)**:
+
 - `read_text_file` - Lire fichier texte (UTF-8), avec options head/tail
 - `read_media_file` - Lire image/audio en base64
 - `read_multiple_files` - Lire plusieurs fichiers en parallèle
@@ -58,6 +61,7 @@ Cette recherche a identifié **14 MCP servers officiels** et **20+ servers commu
 - `list_allowed_directories` - Lister répertoires accessibles
 
 **Écriture**:
+
 - `write_file` - Écrire contenu dans fichier
 - `move_file` - Déplacer/renommer fichiers
 - `create_directory` - Créer répertoires
@@ -65,6 +69,7 @@ Cette recherche a identifié **14 MCP servers officiels** et **20+ servers commu
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Analyser projet
 ├─ [Parallèle] read_multiple_files(package.json, tsconfig.json, README.md)
@@ -73,41 +78,50 @@ Tâche: Analyser projet
 ```
 
 **Pattern GraphRAG**:
+
 - Lecture fichiers récurrente → Apprendre structure projet
 - Pattern: "Lire config → Identifier dépendances → Lire code source"
 
 ---
 
 ### 2.2 Memory Server (Knowledge Graph)
-**Package**: `@modelcontextprotocol/server-memory`
-**Langage**: TypeScript/Node.js
-**Installation**: `npx -y @modelcontextprotocol/server-memory`
+
+**Package**: `@modelcontextprotocol/server-memory` **Langage**: TypeScript/Node.js **Installation**:
+`npx -y @modelcontextprotocol/server-memory`
 
 #### Outils Disponibles (9 outils)
 
 **Création**:
+
 - `create_entities` - Créer entités (organisations, personnes, événements)
 - `create_relations` - Créer relations dirigées entre entités
 - `add_observations` - Ajouter observations à entités existantes
 
 **Lecture**:
+
 - `read_graph` - Lire graphe complet
 - `search_nodes` - Recherche sémantique dans nœuds
 - `open_nodes` - Ouvrir nœuds spécifiques
 
 **Suppression**:
+
 - `delete_entities` - Supprimer entités
 - `delete_relations` - Supprimer relations
 - `delete_observations` - Supprimer observations
 
 #### Structure de Données
+
 ```json
 {
   "entities": [
-    {"name": "AgentCards", "entityType": "project", "observations": ["TypeScript project", "Uses Deno"]}
+    {
+      "name": "AgentCards",
+      "entityType": "project",
+      "observations": ["TypeScript project", "Uses Deno"]
+    }
   ],
   "relations": [
-    {"from": "AgentCards", "to": "Deno", "relationType": "uses"}
+    { "from": "AgentCards", "to": "Deno", "relationType": "uses" }
   ]
 }
 ```
@@ -115,6 +129,7 @@ Tâche: Analyser projet
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Construire knowledge graph projet
 ├─ [Parallèle] create_entities(projet, développeurs, dépendances)
@@ -123,14 +138,15 @@ Tâche: Construire knowledge graph projet
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern récurrent: "Créer entité → Créer relations → Ajouter observations"
 - Spéculation: Si entité "User" → Probablement besoin de relations "knows", "works_with"
 
 ---
 
 ### 2.3 Sequential Thinking Server
-**Package**: `@modelcontextprotocol/server-sequential-thinking`
-**Langage**: TypeScript/Node.js
+
+**Package**: `@modelcontextprotocol/server-sequential-thinking` **Langage**: TypeScript/Node.js
 **Installation**: `npx -y @modelcontextprotocol/server-sequential-thinking`
 
 #### Outils Disponibles (1 outil)
@@ -138,6 +154,7 @@ Tâche: Construire knowledge graph projet
 **`sequentialthinking`** - Résolution de problèmes structurée
 
 **Paramètres**:
+
 - `thought` (string, required) - Pensée actuelle
 - `nextThoughtNeeded` (boolean) - Plus de pensées nécessaires?
 - `thoughtNumber` (number) - Numéro de pensée actuel
@@ -150,6 +167,7 @@ Tâche: Construire knowledge graph projet
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG avec Branchement**:
+
 ```
 Problème: Optimiser performance
 ├─ Pensée 1: Identifier goulots
@@ -163,15 +181,16 @@ Problème: Optimiser performance
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern: Problème complexe → Toujours brancher pour explorer alternatives
 - Spéculation: Si branchFromThought=2 → Probablement besoin de fusion des résultats
 
 ---
 
 ### 2.4 Git Server
-**Package**: `mcp-server-git` (Python/PyPI)
-**Langage**: Python
-**Installation**: `uvx mcp-server-git --repository /path/to/repo`
+
+**Package**: `mcp-server-git` (Python/PyPI) **Langage**: Python **Installation**:
+`uvx mcp-server-git --repository /path/to/repo`
 
 #### Outils Disponibles (5+ outils)
 
@@ -184,6 +203,7 @@ Problème: Optimiser performance
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Analyser commits récents
 ├─ [Parallèle] git_log(start="1 week ago", end="now")
@@ -192,39 +212,46 @@ Tâche: Analyser commits récents
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern: git_status → git_diff → git_commit (workflow standard)
 - Spéculation: Si git_diff non vide → Probablement besoin de git_commit
 
 ---
 
 ### 2.5 SQLite Server
-**Package**: `mcp-server-sqlite` (Python/PyPI)
-**Langage**: Python
-**Installation**: `uvx mcp-server-sqlite --db-path /path/to/database.db`
+
+**Package**: `mcp-server-sqlite` (Python/PyPI) **Langage**: Python **Installation**:
+`uvx mcp-server-sqlite --db-path /path/to/database.db`
 
 #### Outils Disponibles (6 outils)
 
 **Query**:
+
 - `read_query` - SELECT queries
 - `write_query` - INSERT/UPDATE/DELETE
 - `create_table` - Créer tables
 
 **Schema**:
+
 - `list_tables` - Lister tables
 - `describe_table` - Structure table
 
 **Insights**:
+
 - `append_insight` - Ajouter insight au memo
 
 #### Ressources
+
 - `memo://insights` - Memo insights BI auto-mis à jour
 
 #### Prompts
+
 - `mcp-demo` - Guide interactif pour opérations DB
 
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Analyser données ventes
 ├─ [Parallèle] list_tables()
@@ -235,15 +262,16 @@ Tâche: Analyser données ventes
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern: list_tables → describe_table → read_query (exploration DB)
 - Spéculation: Si nouvelle table détectée → Auto-suggérer describe_table
 
 ---
 
 ### 2.6 Time Server
-**Package**: `mcp-server-time` (Python/PyPI)
-**Langage**: Python
-**Installation**: `uvx mcp-server-time`
+
+**Package**: `mcp-server-time` (Python/PyPI) **Langage**: Python **Installation**:
+`uvx mcp-server-time`
 
 #### Outils Disponibles (2 outils)
 
@@ -256,6 +284,7 @@ Tâche: Analyser données ventes
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Planifier réunion mondiale
 ├─ [Parallèle] get_current_time("America/New_York")
@@ -265,15 +294,16 @@ Tâche: Planifier réunion mondiale
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern: get_current_time → convert_time (workflow timezone)
 - Spéculation: Si 3+ timezones → Probablement besoin de tableau comparatif
 
 ---
 
 ### 2.7 Fetch Server
-**Package**: `mcp-server-fetch` (Python/PyPI)
-**Langage**: Python
-**Installation**: `uvx mcp-server-fetch`
+
+**Package**: `mcp-server-fetch` (Python/PyPI) **Langage**: Python **Installation**:
+`uvx mcp-server-fetch`
 
 #### Outils Disponibles (1+ outil)
 
@@ -284,6 +314,7 @@ Tâche: Planifier réunion mondiale
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Analyser docs concurrents
 ├─ [Parallèle] fetch("https://docs.competitor1.com")
@@ -292,15 +323,16 @@ Tâche: Analyser docs concurrents
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern: fetch → parse markdown → extract links → fetch suivants
 - Spéculation: Si URL contient "docs" → Probablement multi-page, crawler
 
 ---
 
 ### 2.8 Puppeteer Server (Déprécié mais utile)
-**Package**: `@modelcontextprotocol/server-puppeteer` (DÉPRÉCIÉ)
-**Alternative**: `@microsoft/playwright-mcp`
-**Installation**: `npx -y @modelcontextprotocol/server-puppeteer`
+
+**Package**: `@modelcontextprotocol/server-puppeteer` (DÉPRÉCIÉ) **Alternative**:
+`@microsoft/playwright-mcp` **Installation**: `npx -y @modelcontextprotocol/server-puppeteer`
 
 #### Outils Disponibles (3 outils)
 
@@ -312,6 +344,7 @@ Tâche: Analyser docs concurrents
 #### Cas d'Usage Playground
 
 **Workflow Parallèle DAG**:
+
 ```
 Tâche: Tester interface utilisateur
 ├─ [Séquentiel] puppeteer_navigate("http://localhost:3000")
@@ -321,6 +354,7 @@ Tâche: Tester interface utilisateur
 ```
 
 **Pattern GraphRAG**:
+
 - Pattern: navigate → screenshot → click → screenshot (testing UI)
 - Spéculation: Si click() → Toujours screenshot après pour validation
 
@@ -330,42 +364,42 @@ Tâche: Tester interface utilisateur
 
 ### 3.1 Browser & Automation
 
-| Serveur | Repository | Description | Intérêt Pédagogique |
-|---------|-----------|-------------|---------------------|
-| **browsermcp** | browsermcp/mcp | Automatise Chrome local | ⭐⭐⭐ Démo visuelle |
+| Serveur            | Repository               | Description                        | Intérêt Pédagogique     |
+| ------------------ | ------------------------ | ---------------------------------- | ----------------------- |
+| **browsermcp**     | browsermcp/mcp           | Automatise Chrome local            | ⭐⭐⭐ Démo visuelle    |
 | **playwright-mcp** | microsoft/playwright-mcp | Alternative officielle à Puppeteer | ⭐⭐⭐ Production-ready |
 
 ### 3.2 Code & Développement
 
-| Serveur | Repository | Description | Intérêt Pédagogique |
-|---------|-----------|-------------|---------------------|
-| **codemcp** | ezyang/codemcp | Read/write/CLI tools | ⭐⭐⭐ Workflows simples |
-| **code-assistant** | stippi/code-assistant | Fichiers + web search local | ⭐⭐ Multi-fonctions |
-| **code-to-tree** | micl2e2/code-to-tree | AST parsing | ⭐ Analyse code |
-| **vscode-mcp-server** | juehang/vscode-mcp-server | Workspace VS Code | ⭐⭐ IDE integration |
+| Serveur               | Repository                | Description                 | Intérêt Pédagogique      |
+| --------------------- | ------------------------- | --------------------------- | ------------------------ |
+| **codemcp**           | ezyang/codemcp            | Read/write/CLI tools        | ⭐⭐⭐ Workflows simples |
+| **code-assistant**    | stippi/code-assistant     | Fichiers + web search local | ⭐⭐ Multi-fonctions     |
+| **code-to-tree**      | micl2e2/code-to-tree      | AST parsing                 | ⭐ Analyse code          |
+| **vscode-mcp-server** | juehang/vscode-mcp-server | Workspace VS Code           | ⭐⭐ IDE integration     |
 
 ### 3.3 Commandes & Shell
 
-| Serveur | Repository | Description | Intérêt Pédagogique |
-|---------|-----------|-------------|---------------------|
-| **mcp-server-commands** | g0t4/mcp-server-commands | Scripts/commandes locales | ⭐⭐ Automation |
-| **mcp-shell** | sonirico/mcp-shell | Shell isolé (Docker) | ⭐⭐⭐ Sécurité |
+| Serveur                 | Repository               | Description               | Intérêt Pédagogique |
+| ----------------------- | ------------------------ | ------------------------- | ------------------- |
+| **mcp-server-commands** | g0t4/mcp-server-commands | Scripts/commandes locales | ⭐⭐ Automation     |
+| **mcp-shell**           | sonirico/mcp-shell       | Shell isolé (Docker)      | ⭐⭐⭐ Sécurité     |
 
 ### 3.4 GraphRAG Avancé
 
-| Serveur | Repository | Description | Intérêt Pédagogique |
-|---------|-----------|-------------|---------------------|
-| **graph-rag-mcp-server** | @zrald/graph-rag-mcp-server | DAG workflows + GraphRAG | ⭐⭐⭐⭐ EXCELLENT |
-| **graphrag_mcp** | rileylemm/graphrag_mcp | Neo4j + Qdrant hybrid | ⭐⭐⭐ Advanced |
-| **mcp-knowledge-graph** | shaneholloman/mcp-knowledge-graph | Fork local du memory server | ⭐⭐ Alternative |
-| **memento-mcp** | gannonh/memento-mcp | Neo4j knowledge graph | ⭐⭐ Nécessite Neo4j |
+| Serveur                  | Repository                        | Description                 | Intérêt Pédagogique  |
+| ------------------------ | --------------------------------- | --------------------------- | -------------------- |
+| **graph-rag-mcp-server** | @zrald/graph-rag-mcp-server       | DAG workflows + GraphRAG    | ⭐⭐⭐⭐ EXCELLENT   |
+| **graphrag_mcp**         | rileylemm/graphrag_mcp            | Neo4j + Qdrant hybrid       | ⭐⭐⭐ Advanced      |
+| **mcp-knowledge-graph**  | shaneholloman/mcp-knowledge-graph | Fork local du memory server | ⭐⭐ Alternative     |
+| **memento-mcp**          | gannonh/memento-mcp               | Neo4j knowledge graph       | ⭐⭐ Nécessite Neo4j |
 
 ### 3.5 Sequential Thinking Amélioré
 
-| Serveur | Repository | Description | Intérêt Pédagogique |
-|---------|-----------|-------------|---------------------|
-| **mcp-sequentialthinking-tools** | spences10/mcp-sequentialthinking-tools | Sequential + suggestions outils | ⭐⭐⭐ Smart routing |
-| **mcp-server-mas-sequential-thinking** | FradSer/mcp-server-mas-sequential-thinking | Multi-Agent System parallèle | ⭐⭐⭐⭐ Advanced |
+| Serveur                                | Repository                                 | Description                     | Intérêt Pédagogique  |
+| -------------------------------------- | ------------------------------------------ | ------------------------------- | -------------------- |
+| **mcp-sequentialthinking-tools**       | spences10/mcp-sequentialthinking-tools     | Sequential + suggestions outils | ⭐⭐⭐ Smart routing |
+| **mcp-server-mas-sequential-thinking** | FradSer/mcp-server-mas-sequential-thinking | Multi-Agent System parallèle    | ⭐⭐⭐⭐ Advanced    |
 
 ---
 
@@ -380,7 +414,11 @@ Tâche: Tester interface utilisateur
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/ubuntu/CascadeProjects/AgentCards"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/ubuntu/CascadeProjects/AgentCards"
+      ]
     },
     "memory": {
       "command": "npx",
@@ -395,6 +433,7 @@ Tâche: Tester interface utilisateur
 ```
 
 **Workflow Démo**:
+
 ```
 Tâche: Analyser projet + connaissances
 ├─ [Parallèle] filesystem.read_multiple_files([package.json, README.md])
@@ -403,6 +442,7 @@ Tâche: Analyser projet + connaissances
 ```
 
 **Avantages**:
+
 - ✅ 3 servers, 3 domaines différents
 - ✅ Aucune dépendance externe
 - ✅ Parallélisation évidente (domaines indépendants)
@@ -418,7 +458,11 @@ Tâche: Analyser projet + connaissances
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/ubuntu/CascadeProjects/AgentCards"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/ubuntu/CascadeProjects/AgentCards"
+      ]
     },
     "memory": {
       "command": "npx",
@@ -437,6 +481,7 @@ Tâche: Analyser projet + connaissances
 ```
 
 **Workflow Démo GraphRAG**:
+
 ```
 Pattern 1: Analyse projet
   filesystem.list_directory(src/) →
@@ -454,6 +499,7 @@ Pattern 2: Historique Git
 ```
 
 **Avantages**:
+
 - ✅ Patterns récurrents clairs
 - ✅ Démonstration branchement (sequential-thinking)
 - ✅ Multi-domaines (code, version, mémoire)
@@ -469,7 +515,11 @@ Pattern 2: Historique Git
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/ubuntu/CascadeProjects/AgentCards"]
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/ubuntu/CascadeProjects/AgentCards"
+      ]
     },
     "memory": {
       "command": "npx",
@@ -500,6 +550,7 @@ Pattern 2: Historique Git
 ```
 
 **Workflow Démo Complet**:
+
 ```
 Tâche: Veille technologique + documentation
 ├─ [Parallèle] fetch(docs URLs) pour récupérer docs
@@ -511,6 +562,7 @@ Tâche: Veille technologique + documentation
 ```
 
 **Avantages**:
+
 - ✅ Workflow réaliste production
 - ✅ GraphRAG avancé avec DAG explicite
 - ✅ Persistance multi-niveaux (SQLite + Memory + Git)
@@ -521,24 +573,24 @@ Tâche: Veille technologique + documentation
 
 ### 5.1 Patterns de Workflows Récurrents
 
-| Pattern | Séquence d'Outils | Fréquence | Spéculation Possible |
-|---------|-------------------|-----------|---------------------|
+| Pattern                | Séquence d'Outils                                        | Fréquence   | Spéculation Possible                             |
+| ---------------------- | -------------------------------------------------------- | ----------- | ------------------------------------------------ |
 | **Exploration Projet** | `list_directory → read_multiple_files → create_entities` | Très élevée | Si list_directory → Préparer read_multiple_files |
-| **Commit Workflow** | `git_status → git_diff → git_commit` | Élevée | Si git_diff non vide → Suggérer git_commit |
-| **DB Analysis** | `list_tables → describe_table → read_query` | Élevée | Si list_tables → Pré-charger describe_table |
-| **Web Research** | `fetch → parse → fetch(links) → parse` | Moyenne | Si fetch HTML → Probablement crawler multi-page |
-| **Timezone Workflow** | `get_current_time(tz1, tz2, ...) → convert_time` | Moyenne | Si 3+ timezones → Créer tableau comparatif |
+| **Commit Workflow**    | `git_status → git_diff → git_commit`                     | Élevée      | Si git_diff non vide → Suggérer git_commit       |
+| **DB Analysis**        | `list_tables → describe_table → read_query`              | Élevée      | Si list_tables → Pré-charger describe_table      |
+| **Web Research**       | `fetch → parse → fetch(links) → parse`                   | Moyenne     | Si fetch HTML → Probablement crawler multi-page  |
+| **Timezone Workflow**  | `get_current_time(tz1, tz2, ...) → convert_time`         | Moyenne     | Si 3+ timezones → Créer tableau comparatif       |
 
 ### 5.2 Opportunités de Parallélisation
 
-| Scénario | Indépendant? | Parallélisable? | Gain Temporel Estimé |
-|----------|--------------|-----------------|----------------------|
-| `read_multiple_files([...])` | ✅ Oui | ✅ Oui | ~70% (si 3+ fichiers) |
-| `git_log() + git_diff() + git_status()` | ✅ Oui | ✅ Oui | ~65% |
-| `fetch(url1) + fetch(url2) + fetch(url3)` | ✅ Oui | ✅ Oui | ~80% (I/O bound) |
-| `get_current_time(tz1) + ... + get_current_time(tzN)` | ✅ Oui | ✅ Oui | ~90% (si N>5) |
-| `list_tables() + describe_table(t1) + ... + describe_table(tN)` | ⚠️ Partiel | ⚠️ Partiel | ~40% (describe dépend de list) |
-| `create_entities() + create_relations()` | ❌ Non | ❌ Non | 0% (relations dépendent d'entités) |
+| Scénario                                                        | Indépendant? | Parallélisable? | Gain Temporel Estimé               |
+| --------------------------------------------------------------- | ------------ | --------------- | ---------------------------------- |
+| `read_multiple_files([...])`                                    | ✅ Oui       | ✅ Oui          | ~70% (si 3+ fichiers)              |
+| `git_log() + git_diff() + git_status()`                         | ✅ Oui       | ✅ Oui          | ~65%                               |
+| `fetch(url1) + fetch(url2) + fetch(url3)`                       | ✅ Oui       | ✅ Oui          | ~80% (I/O bound)                   |
+| `get_current_time(tz1) + ... + get_current_time(tzN)`           | ✅ Oui       | ✅ Oui          | ~90% (si N>5)                      |
+| `list_tables() + describe_table(t1) + ... + describe_table(tN)` | ⚠️ Partiel   | ⚠️ Partiel      | ~40% (describe dépend de list)     |
+| `create_entities() + create_relations()`                        | ❌ Non       | ❌ Non          | 0% (relations dépendent d'entités) |
 
 ### 5.3 Dépendances DAG Typiques
 
@@ -563,50 +615,54 @@ Niveau 3 (Séquentiel - Synthèse)
 
 ### 6.1 Critères d'Évaluation
 
-| Critère | Poids | Description |
-|---------|-------|-------------|
-| **Sans API Key** | ⭐⭐⭐⭐ | Essentiel pour playground autonome |
-| **Parallélisation** | ⭐⭐⭐⭐ | Démontre DAG workflows |
-| **Patterns GraphRAG** | ⭐⭐⭐ | Apprend séquences récurrentes |
-| **Visibilité Résultats** | ⭐⭐⭐ | Pédagogique (résultats clairs) |
-| **Complexité Setup** | ⭐⭐ | Facilité installation |
-| **Maintenance** | ⭐⭐ | Activement maintenu? |
+| Critère                  | Poids    | Description                        |
+| ------------------------ | -------- | ---------------------------------- |
+| **Sans API Key**         | ⭐⭐⭐⭐ | Essentiel pour playground autonome |
+| **Parallélisation**      | ⭐⭐⭐⭐ | Démontre DAG workflows             |
+| **Patterns GraphRAG**    | ⭐⭐⭐   | Apprend séquences récurrentes      |
+| **Visibilité Résultats** | ⭐⭐⭐   | Pédagogique (résultats clairs)     |
+| **Complexité Setup**     | ⭐⭐     | Facilité installation              |
+| **Maintenance**          | ⭐⭐     | Activement maintenu?               |
 
 ### 6.2 Scoring des Servers Recommandés
 
-| Server | API-Free | Parallel | GraphRAG | Visible | Setup | Maint. | **Total** | Rang |
-|--------|----------|----------|----------|---------|-------|--------|-----------|------|
-| **filesystem** | 4 | 4 | 3 | 3 | 2 | 2 | **18/24** | 🥇 |
-| **memory** | 4 | 3 | 4 | 3 | 2 | 2 | **18/24** | 🥇 |
-| **git** | 4 | 4 | 3 | 2 | 2 | 1 | **16/24** | 🥈 |
-| **sequential-thinking** | 4 | 4 | 4 | 2 | 2 | 2 | **18/24** | 🥇 |
-| **sqlite** | 4 | 3 | 3 | 3 | 1 | 1 | **15/24** | 🥈 |
-| **time** | 4 | 4 | 2 | 2 | 2 | 1 | **15/24** | 🥈 |
-| **fetch** | 4 | 4 | 3 | 2 | 2 | 1 | **16/24** | 🥈 |
-| **graph-rag (@zrald)** | 4 | 4 | 4 | 2 | 1 | 2 | **17/24** | 🥈 |
-| **playwright-mcp** | 4 | 2 | 2 | 4 | 1 | 2 | **15/24** | 🥈 |
-| **mas-sequential-thinking** | 4 | 4 | 4 | 2 | 1 | 2 | **17/24** | 🥈 |
+| Server                      | API-Free | Parallel | GraphRAG | Visible | Setup | Maint. | **Total** | Rang |
+| --------------------------- | -------- | -------- | -------- | ------- | ----- | ------ | --------- | ---- |
+| **filesystem**              | 4        | 4        | 3        | 3       | 2     | 2      | **18/24** | 🥇   |
+| **memory**                  | 4        | 3        | 4        | 3       | 2     | 2      | **18/24** | 🥇   |
+| **git**                     | 4        | 4        | 3        | 2       | 2     | 1      | **16/24** | 🥈   |
+| **sequential-thinking**     | 4        | 4        | 4        | 2       | 2     | 2      | **18/24** | 🥇   |
+| **sqlite**                  | 4        | 3        | 3        | 3       | 1     | 1      | **15/24** | 🥈   |
+| **time**                    | 4        | 4        | 2        | 2       | 2     | 1      | **15/24** | 🥈   |
+| **fetch**                   | 4        | 4        | 3        | 2       | 2     | 1      | **16/24** | 🥈   |
+| **graph-rag (@zrald)**      | 4        | 4        | 4        | 2       | 1     | 2      | **17/24** | 🥈   |
+| **playwright-mcp**          | 4        | 2        | 2        | 4       | 1     | 2      | **15/24** | 🥈   |
+| **mas-sequential-thinking** | 4        | 4        | 4        | 2       | 1     | 2      | **17/24** | 🥈   |
 
 ---
 
 ## 7. Plan d'Implémentation Playground
 
 ### Phase 1: Configuration de Base (Semaine 1)
+
 - [ ] Installer top 3 servers (filesystem, memory, sequential-thinking)
 - [ ] Créer notebook démo "01-parallel-dag-basics.ipynb"
 - [ ] Workflow exemple: Analyse projet en parallèle
 
 ### Phase 2: GraphRAG Patterns (Semaine 2)
+
 - [ ] Ajouter git + sqlite servers
 - [ ] Créer notebook "02-graphrag-patterns.ipynb"
 - [ ] Démonstration patterns récurrents
 
 ### Phase 3: Advanced Features (Semaine 3)
+
 - [ ] Intégrer @zrald/graph-rag-mcp-server
 - [ ] Créer notebook "03-advanced-dag-graphrag.ipynb"
 - [ ] Benchmark parallélisation vs séquentiel
 
 ### Phase 4: Documentation (Semaine 4)
+
 - [ ] Guide installation pour chaque server
 - [ ] Documentation patterns GraphRAG
 - [ ] Cas d'usage réels (exemples production)
@@ -616,22 +672,27 @@ Niveau 3 (Séquentiel - Synthèse)
 ## 8. Ressources et Références
 
 ### 8.1 Repositories Officiels
+
 - [MCP Servers Official](https://github.com/modelcontextprotocol/servers) - Servers de référence
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) - SDK officiel
 - [MCP Examples](https://modelcontextprotocol.io/examples) - Documentation exemples
 
 ### 8.2 Registres et Catalogues
+
 - [Smithery.ai](https://smithery.ai) - Registry avec 2,200+ servers
 - [MCP.so](https://mcp.so) - Marketplace communautaire (17,089 servers)
 - [Awesome MCP Servers](https://github.com/punkpeye/awesome-mcp-servers) - Liste curatée
 - [Awesome MCP Servers (wong2)](https://github.com/wong2/awesome-mcp-servers) - Alternative
 
 ### 8.3 Serveurs GraphRAG Avancés
-- [@zrald/graph-rag-mcp-server (npm)](https://www.npmjs.com/package/@zrald/graph-rag-mcp-server) - DAG workflows
+
+- [@zrald/graph-rag-mcp-server (npm)](https://www.npmjs.com/package/@zrald/graph-rag-mcp-server) -
+  DAG workflows
 - [Riley Lemm's GraphRAG MCP](https://github.com/rileylemm/graphrag_mcp) - Neo4j + Qdrant
 - [Neo4j GraphRAG MCP Blog](https://neo4j.com/blog/developer/neo4j-graphrag-retrievers-as-mcp-server/)
 
 ### 8.4 Documentation Technique
+
 - [MCP Specification (2025-11-25)](http://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/)
 - [MCP Inspector Tool](https://modelcontextprotocol.io/docs/tools/inspector)
 - [Building MCP Servers (TypeScript)](https://dev.to/shadid12/how-to-build-mcp-servers-with-typescript-sdk-1c28)
@@ -662,19 +723,21 @@ Niveau 3 (Séquentiel - Synthèse)
 ### 9.2 Workflows Pédagogiques Suggérés
 
 **Notebook 1: Parallélisation DAG de Base**
+
 ```typescript
 // Démo: 3 tâches indépendantes en parallèle
 const dag = {
   tasks: [
     { id: "fs", tool: "filesystem.list_directory", args: ["src/"] },
     { id: "mem", tool: "memory.read_graph", args: [] },
-    { id: "time", tool: "time.get_current_time", args: ["UTC"] }
+    { id: "time", tool: "time.get_current_time", args: ["UTC"] },
   ],
-  dependencies: [] // Aucune dépendance = parallèle total
-}
+  dependencies: [], // Aucune dépendance = parallèle total
+};
 ```
 
 **Notebook 2: GraphRAG Pattern Learning**
+
 ```typescript
 // Démo: Système apprend séquence "Analyse Projet"
 const pattern = {
@@ -682,35 +745,37 @@ const pattern = {
   sequence: [
     "filesystem.list_directory",
     "filesystem.read_multiple_files",
-    "memory.create_entities"
+    "memory.create_entities",
   ],
   frequency: 42, // Observé 42 fois
-  confidence: 0.87
-}
+  confidence: 0.87,
+};
 // → Spéculation: Si list_directory → Préparer read_multiple_files
 ```
 
 **Notebook 3: DAG Multi-Niveaux**
+
 ```typescript
 const complexDag = {
   level1: [
     { id: "git_status", parallel: true },
     { id: "git_log", parallel: true },
-    { id: "fs_list", parallel: true }
+    { id: "fs_list", parallel: true },
   ],
   level2: [ // Dépendent de level1
     { id: "git_diff", depends: ["git_status"] },
-    { id: "fs_read", depends: ["fs_list"] }
+    { id: "fs_read", depends: ["fs_list"] },
   ],
   level3: [ // Synthèse
-    { id: "mem_create", depends: ["git_diff", "fs_read"] }
-  ]
-}
+    { id: "mem_create", depends: ["git_diff", "fs_read"] },
+  ],
+};
 ```
 
 ### 9.3 Métriques de Succès
 
 **KPIs Playground**:
+
 - ✅ Temps parallèle vs séquentiel (objectif: -60%)
 - ✅ Patterns GraphRAG appris (objectif: 10+ patterns)
 - ✅ Précision spéculation (objectif: >75%)
@@ -735,6 +800,5 @@ const complexDag = {
 
 ---
 
-**Document généré le**: 2025-11-28
-**Sources**: 40+ références (GitHub, npm, PyPI, blogs techniques)
+**Document généré le**: 2025-11-28 **Sources**: 40+ références (GitHub, npm, PyPI, blogs techniques)
 **Recherche effectuée par**: Claude Code (Deep Research Agent)

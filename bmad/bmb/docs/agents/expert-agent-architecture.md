@@ -28,13 +28,13 @@ Domain-specific agents with persistent memory, sidecar files, and restricted acc
 ```yaml
 agent:
   metadata:
-    name: 'Persona Name'
-    title: 'Agent Title'
-    icon: 'emoji'
-    type: 'expert'
+    name: "Persona Name"
+    title: "Agent Title"
+    icon: "emoji"
+    type: "expert"
 
   persona:
-    role: 'Domain Expert with specialized capability'
+    role: "Domain Expert with specialized capability"
 
     identity: |
       Background and expertise in first-person voice.
@@ -57,12 +57,12 @@ agent:
       - My approach to memory and learning
 
   critical_actions:
-    - 'Load COMPLETE file {agent-folder}/{agent-name}-sidecar/memories.md and remember all past insights'
-    - 'Load COMPLETE file {agent-folder}/{agent-name}-sidecar/instructions.md and follow ALL protocols'
-    - 'ONLY read/write files in {agent-folder}/{agent-name}-sidecar/ - this is our private space'
-    - 'Address user as {{greeting_name}}'
-    - 'Track patterns, themes, and important moments'
-    - 'Reference past interactions naturally to show continuity'
+    - "Load COMPLETE file {agent-folder}/{agent-name}-sidecar/memories.md and remember all past insights"
+    - "Load COMPLETE file {agent-folder}/{agent-name}-sidecar/instructions.md and follow ALL protocols"
+    - "ONLY read/write files in {agent-folder}/{agent-name}-sidecar/ - this is our private space"
+    - "Address user as {{greeting_name}}"
+    - "Track patterns, themes, and important moments"
+    - "Reference past interactions naturally to show continuity"
 
   prompts:
     - id: main-function
@@ -90,42 +90,42 @@ agent:
 
   menu:
     - trigger: action1
-      action: '#main-function'
-      description: 'Primary agent function'
+      action: "#main-function"
+      description: "Primary agent function"
 
     - trigger: remember
-      action: 'Update {agent-folder}/{agent-name}-sidecar/memories.md with session insights'
-      description: 'Save what we discussed today'
+      action: "Update {agent-folder}/{agent-name}-sidecar/memories.md with session insights"
+      description: "Save what we discussed today"
 
     - trigger: patterns
-      action: '#memory-recall'
-      description: 'Recall patterns from past interactions'
+      action: "#memory-recall"
+      description: "Recall patterns from past interactions"
 
     - trigger: insight
-      action: 'Document breakthrough in {agent-folder}/{agent-name}-sidecar/breakthroughs.md'
-      description: 'Record a significant insight'
+      action: "Document breakthrough in {agent-folder}/{agent-name}-sidecar/breakthroughs.md"
+      description: "Record a significant insight"
 
   install_config:
     compile_time_only: true
-    description: 'Personalize your expert agent'
+    description: "Personalize your expert agent"
     questions:
       - var: greeting_name
-        prompt: 'What should the agent call you?'
+        prompt: "What should the agent call you?"
         type: text
-        default: 'friend'
+        default: "friend"
 
       - var: tone_style
-        prompt: 'Preferred communication tone?'
+        prompt: "Preferred communication tone?"
         type: choice
         options:
-          - label: 'Gentle - Supportive and nurturing'
-            value: 'gentle'
-          - label: 'Direct - Clear and efficient'
-            value: 'direct'
-        default: 'gentle'
+          - label: "Gentle - Supportive and nurturing"
+            value: "gentle"
+          - label: "Direct - Clear and efficient"
+            value: "direct"
+        default: "gentle"
 
       - var: user_preference
-        prompt: 'Enable personalized features?'
+        prompt: "Enable personalized features?"
         type: boolean
         default: true
 ```
@@ -184,9 +184,9 @@ Add domain-specific documentation here.
 
 ```yaml
 critical_actions:
-  - 'Load COMPLETE file {agent-folder}/{sidecar}/memories.md and remember all past insights'
-  - 'Load COMPLETE file {agent-folder}/{sidecar}/instructions.md and follow ALL protocols'
-  - 'ONLY read/write files in {agent-folder}/{sidecar}/ - this is our private space'
+  - "Load COMPLETE file {agent-folder}/{sidecar}/memories.md and remember all past insights"
+  - "Load COMPLETE file {agent-folder}/{sidecar}/instructions.md and follow ALL protocols"
+  - "ONLY read/write files in {agent-folder}/{sidecar}/ - this is our private space"
 ```
 
 **Key patterns:**
@@ -261,7 +261,7 @@ The installer:
 menu:
   - trigger: save
     action: "Update {agent-folder}/sidecar/memories.md with today's session insights"
-    description: 'Save session to memory'
+    description: "Save session to memory"
 ```
 
 ### Reference Memory
@@ -281,8 +281,8 @@ prompts:
 ```yaml
 menu:
   - trigger: insight
-    action: 'Document in {agent-folder}/sidecar/breakthroughs.md with date, context, significance'
-    description: 'Record meaningful insight'
+    action: "Document in {agent-folder}/sidecar/breakthroughs.md with date, context, significance"
+    description: "Record meaningful insight"
 ```
 
 ## Domain Restriction Patterns
@@ -291,22 +291,22 @@ menu:
 
 ```yaml
 critical_actions:
-  - 'ONLY read/write files in {agent-folder}/sidecar/ - NO OTHER FOLDERS'
+  - "ONLY read/write files in {agent-folder}/sidecar/ - NO OTHER FOLDERS"
 ```
 
 ### User Space Access
 
 ```yaml
 critical_actions:
-  - 'ONLY access files in {user-folder}/journals/ - private space'
+  - "ONLY access files in {user-folder}/journals/ - private space"
 ```
 
 ### Read-Only Access
 
 ```yaml
 critical_actions:
-  - 'Load knowledge from {agent-folder}/knowledge/ but NEVER modify'
-  - 'Write ONLY to {agent-folder}/sessions/'
+  - "Load knowledge from {agent-folder}/knowledge/ but NEVER modify"
+  - "Write ONLY to {agent-folder}/sessions/"
 ```
 
 ## Best Practices
@@ -333,8 +333,8 @@ communication_style: |
 
 ```yaml
 critical_actions:
-  - 'Track mood patterns, recurring themes, and breakthrough moments'
-  - 'Cross-reference current session with historical patterns'
+  - "Track mood patterns, recurring themes, and breakthrough moments"
+  - "Cross-reference current session with historical patterns"
 ```
 
 ### Adaptive Responses

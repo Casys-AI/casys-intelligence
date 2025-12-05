@@ -6,7 +6,7 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 import { CodeExecutionCache } from "../../../src/sandbox/cache.ts";
-import type { CacheEntry, CacheConfig } from "../../../src/sandbox/cache.ts";
+import type { CacheConfig, CacheEntry } from "../../../src/sandbox/cache.ts";
 import type { ExecutionResult } from "../../../src/sandbox/types.ts";
 
 /**

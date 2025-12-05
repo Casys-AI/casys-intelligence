@@ -156,7 +156,11 @@ Deno.test({
 
     assertEquals(result.success, false);
     // Error exists
-    assertEquals(result.error !== null && result.error !== undefined, true, "Should report syntax error");
+    assertEquals(
+      result.error !== null && result.error !== undefined,
+      true,
+      "Should report syntax error",
+    );
   },
 });
 
@@ -173,6 +177,10 @@ Deno.test({
     `);
 
     assertEquals(result.success, false);
-    assertEquals(result.error !== null && result.error !== undefined, true, "Should report runtime error");
+    assertEquals(
+      result.error !== null && result.error !== undefined,
+      true,
+      "Should report runtime error",
+    );
   },
 });

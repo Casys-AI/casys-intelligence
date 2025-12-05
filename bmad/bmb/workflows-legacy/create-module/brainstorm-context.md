@@ -4,13 +4,15 @@ _Context provided to brainstorming workflow when creating a new BMAD module_
 
 ## Session Focus
 
-You are brainstorming ideas for a **complete BMAD module** - a self-contained package that extends the BMAD Method with specialized domain expertise and capabilities.
+You are brainstorming ideas for a **complete BMAD module** - a self-contained package that extends
+the BMAD Method with specialized domain expertise and capabilities.
 
 ## What is a BMAD Module?
 
 A module is a cohesive package that provides:
 
-- **Domain Expertise**: Specialized knowledge in a specific area (RPG, DevOps, Content Creation, etc.)
+- **Domain Expertise**: Specialized knowledge in a specific area (RPG, DevOps, Content Creation,
+  etc.)
 - **Agent Team**: Multiple AI personas with complementary skills
 - **Workflows**: Guided processes for common tasks in the domain
 - **Templates**: Document structures for consistent outputs

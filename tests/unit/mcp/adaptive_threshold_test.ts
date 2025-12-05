@@ -4,7 +4,7 @@
  * Tests adaptive threshold learning functionality
  */
 
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { AdaptiveThresholdManager } from "../../../src/mcp/adaptive-threshold.ts";
 
 Deno.test("AdaptiveThresholdManager - initializes with default thresholds", () => {

@@ -8,7 +8,7 @@
 
 import { ContextOptimizer } from "../../src/context/optimizer.ts";
 import { PGliteClient } from "../../src/db/client.ts";
-import type { VectorSearch, SearchResult } from "../../src/vector/search.ts";
+import type { SearchResult, VectorSearch } from "../../src/vector/search.ts";
 import type { MCPTool } from "../../src/mcp/types.ts";
 
 // Mock VectorSearch for reproducible benchmarks

@@ -9,7 +9,7 @@
  * 5. Async code support
  */
 
-import { assertEquals, assert, assertStringIncludes } from "@std/assert";
+import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { DenoSandboxExecutor } from "./deno-sandbox-executor.ts";
 
 Deno.test("POC: Basic code execution - simple return", async () => {
@@ -77,7 +77,7 @@ Deno.test("POC: Permission isolation - filesystem access denied", async () => {
   assertStringIncludes(
     result.error.message.toLowerCase(),
     "permission",
-    "Error message should mention permission"
+    "Error message should mention permission",
   );
 });
 

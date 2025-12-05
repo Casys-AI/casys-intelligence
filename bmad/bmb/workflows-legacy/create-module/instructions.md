@@ -1,10 +1,15 @@
 # Build Module - Interactive Module Builder Instructions
 
-<critical>The workflow execution engine is governed by: {project-root}/bmad/core/tasks/workflow.xml</critical>
-<critical>You MUST have already loaded and processed: {project-root}/bmad/bmb/workflows/create-module/workflow.yaml</critical>
+<critical>The workflow execution engine is governed by:
+{project-root}/bmad/core/tasks/workflow.xml</critical>
+<critical>You MUST have already loaded and processed:
+{project-root}/bmad/bmb/workflows/create-module/workflow.yaml</critical>
 <critical>Study existing modules in: {project-root}/bmad/ for patterns</critical>
 <critical>Communicate in {communication_language} throughout the module creation process</critical>
-<critical>⚠️ ABSOLUTELY NO TIME ESTIMATES - NEVER mention hours, days, weeks, months, or ANY time-based predictions. AI has fundamentally changed development speed - what once took teams weeks/months can now be done by one person in hours. DO NOT give ANY time estimates whatsoever.</critical>
+<critical>⚠️ ABSOLUTELY NO TIME ESTIMATES - NEVER mention hours, days, weeks, months, or ANY
+time-based predictions. AI has fundamentally changed development speed - what once took teams
+weeks/months can now be done by one person in hours. DO NOT give ANY time estimates
+whatsoever.</critical>
 
 <workflow>
 
@@ -53,9 +58,11 @@
 <action>Review directory structures and component guidelines</action>
 <action>Study the installation infrastructure patterns</action>
 
-<action>If brainstorming or module brief was completed, reference those results to guide the conversation</action>
+<action>If brainstorming or module brief was completed, reference those results to guide the
+conversation</action>
 
-<action>Guide user to articulate their module's vision, exploring its purpose, what it will help with, and who will use it</action>
+<action>Guide user to articulate their module's vision, exploring its purpose, what it will help
+with, and who will use it</action>
 
 <action>Based on their description, intelligently propose module details:</action>
 
@@ -91,7 +98,8 @@
 
 **Agents Planning:**
 
-<action>Suggest agents based on module purpose, considering agent types (Simple/Expert/Module) appropriate to each role</action>
+<action>Suggest agents based on module purpose, considering agent types (Simple/Expert/Module)
+appropriate to each role</action>
 
 **Example Agent Patterns by Domain:**
 
@@ -99,7 +107,8 @@
 - Gaming/Creative: Game Master, Generator, Storytelling roles
 - Team/Business: Manager, Facilitator, Documentation roles
 
-<action>Present suggested agent list with types, explaining we can start with core ones and add others later</action>
+<action>Present suggested agent list with types, explaining we can start with core ones and add
+others later</action>
 <action>Confirm which agents resonate with their vision</action>
 
 **Workflows Planning:**
@@ -119,7 +128,8 @@
 **Tasks Planning (optional):**
 <ask>Any special tasks that don't warrant full workflows?</ask>
 
-<action if="tasks needed">For each task, capture name, purpose, and whether standalone or supporting</action>
+<action if="tasks needed">For each task, capture name, purpose, and whether standalone or
+supporting</action>
 
 <template-output>module_components</template-output>
 </step>
@@ -346,28 +356,21 @@ prompt:
 - @param {Object} options.logger - Logger instance (log, warn, error methods)
 - @returns {boolean} - true if successful, false to abort installation
 
-  async function install(options) {
-  const { projectRoot, config, installedIDEs, logger } = options;
+  async function install(options) { const { projectRoot, config, installedIDEs, logger } = options;
 
   logger.log('Running {{module_name}} custom installer...');
 
-  // TODO: Add custom installation logic here
-  // Examples:
-  // - Create database tables
-  // - Download external assets
-  // - Configure API connections
-  // - Initialize data files
-  // - Set up webhooks or integrations
+  // TODO: Add custom installation logic here // Examples: // - Create database tables // - Download
+  external assets // - Configure API connections // - Initialize data files // - Set up webhooks or
+  integrations
 
-  logger.log('{{module_name}} custom installation complete!');
-  return true;
+  logger.log('{{module_name}} custom installation complete!'); return true;
 
 }
 
 module.exports = { install };
 
 `````
-
 <critical>Save location:</critical>
 
 - Save to {{module_path}}/module-installer/installer.js
@@ -400,7 +403,6 @@ bmad install {{module_code}}
 `````
 
 ````
-
 ## Components
 
 ### Agents ({{agent_count}})
@@ -470,7 +472,6 @@ To extend this module:
 ## Author
 
 Created by {{user_name}} on {{date}}
-
 ````
 
 <template-output>module_readme</template-output>
@@ -504,14 +505,12 @@ Create new agent:
 workflow create-agent
 
 ```
-
 Create new workflow:
 ```
 
 workflow create-workflow
 
 ```
-
 ## Notes
 {{development_notes}}
 ```

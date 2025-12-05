@@ -2,9 +2,7 @@
 
 ### Step Structure
 
-**Total Steps**: {{totalSteps}}
-**Step Overview**:
-{{stepOverview}}
+**Total Steps**: {{totalSteps}} **Step Overview**: {{stepOverview}}
 
 ### Detailed Step Plan
 

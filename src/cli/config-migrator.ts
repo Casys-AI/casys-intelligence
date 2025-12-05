@@ -10,7 +10,7 @@
 import * as log from "@std/log";
 import { ensureDir } from "@std/fs";
 import { PGliteClient } from "../db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../db/migrations.ts";
 import { MCPServerDiscovery } from "../mcp/discovery.ts";
 import { SchemaExtractor } from "../mcp/schema-extractor.ts";
 import { EmbeddingModel, generateEmbeddings } from "../vector/embeddings.ts";
@@ -117,12 +117,12 @@ export class ConfigMigrator {
         }, {} as Record<string, any>),
         context: {
           topK: 10,
-          similarityThreshold: 0.7
+          similarityThreshold: 0.7,
         },
         execution: {
           maxConcurrency: 10,
-          timeout: 30000
-        }
+          timeout: 30000,
+        },
       };
 
       // Write JSON with pretty-printing (2-space indent)
@@ -146,7 +146,9 @@ export class ConfigMigrator {
       const extractor = new SchemaExtractor(agentCardsConfigPath, db);
       const discoveryStats = await extractor.extractAndStore();
 
-      console.log(`\n✓ Extracted ${discoveryStats.totalToolsExtracted} tools from ${discoveryStats.successfulServers}/${discoveryStats.totalServers} servers`);
+      console.log(
+        `\n✓ Extracted ${discoveryStats.totalToolsExtracted} tools from ${discoveryStats.successfulServers}/${discoveryStats.totalServers} servers`,
+      );
 
       // Step 5: Generate embeddings
       console.log("\n🧠 Generating embeddings...");
@@ -154,7 +156,9 @@ export class ConfigMigrator {
       const model = new EmbeddingModel();
       const embeddingStats = await generateEmbeddings(db, model);
 
-      console.log(`✓ Generated ${embeddingStats.newlyGenerated} new embeddings (${embeddingStats.cachedCount} cached)`);
+      console.log(
+        `✓ Generated ${embeddingStats.newlyGenerated} new embeddings (${embeddingStats.cachedCount} cached)`,
+      );
 
       // Step 6: Display new MCP config template
       console.log("\n✅ Migration complete!\n");

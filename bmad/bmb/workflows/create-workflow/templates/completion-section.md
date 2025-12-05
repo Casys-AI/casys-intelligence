@@ -2,10 +2,9 @@
 
 ### Final Deliverables
 
-✅ **Main Workflow**: {{targetWorkflowPath}}/workflow.md
-✅ **Step Files**: {{stepCount}} step files created
-✅ **Templates**: {{templateCount}} templates created
-✅ **Documentation**: Complete documentation provided
+✅ **Main Workflow**: {{targetWorkflowPath}}/workflow.md ✅ **Step Files**: {{stepCount}} step files
+created ✅ **Templates**: {{templateCount}} templates created ✅ **Documentation**: Complete
+documentation provided
 
 ### Deployment Instructions
 
@@ -32,7 +31,8 @@ workflow {{customWorkflowLocation}}/{{workflowName}}
 
 ### Thank You!
 
-Thank you for using the Standalone Workflow Builder. Your workflow has been created following best practices for step-file architecture and collaborative design principles.
+Thank you for using the Standalone Workflow Builder. Your workflow has been created following best
+practices for step-file architecture and collaborative design principles.
 
 ---
 

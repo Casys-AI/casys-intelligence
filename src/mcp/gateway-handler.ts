@@ -13,11 +13,11 @@ import * as log from "@std/log";
 import type { DAGSuggester } from "../graphrag/dag-suggester.ts";
 import type { GraphRAGEngine } from "../graphrag/graph-engine.ts";
 import type {
+  DAGStructure,
   ExecutionMode,
   ExecutionResult,
-  WorkflowIntent,
-  DAGStructure,
   Task,
+  WorkflowIntent,
 } from "../graphrag/types.ts";
 import { AdaptiveThresholdManager } from "./adaptive-threshold.ts";
 import type { MCPClient } from "./client.ts";
@@ -80,7 +80,7 @@ export class GatewayHandler {
   constructor(
     private graphEngine: GraphRAGEngine,
     private dagSuggester: DAGSuggester,
-    private mcpClients: Map<string, MCPClient>,  // ADR-030: MCP clients for real execution
+    private mcpClients: Map<string, MCPClient>, // ADR-030: MCP clients for real execution
     config?: Partial<GatewayConfig>,
   ) {
     this.config = {
@@ -88,7 +88,7 @@ export class GatewayHandler {
       suggestionThreshold: 0.70,
       enableSpeculative: true,
       safetyChecks: DEFAULT_SAFETY_CHECKS,
-      executionMode: "real",  // ADR-030: default to real execution
+      executionMode: "real", // ADR-030: default to real execution
       ...config,
     };
 
@@ -112,14 +112,17 @@ export class GatewayHandler {
         return {
           mode: "explicit_required",
           confidence: 0,
-          explanation: "Unable to understand intent. Please be more specific or provide tool names explicitly.",
+          explanation:
+            "Unable to understand intent. Please be more specific or provide tool names explicitly.",
         };
       }
 
       // 2. Get adaptive thresholds
       const adaptiveThresholds = this.adaptiveManager.getThresholds();
-      const explicitThreshold = adaptiveThresholds.explicitThreshold ?? this.config.explicitThreshold;
-      const suggestionThreshold = adaptiveThresholds.suggestionThreshold ?? this.config.suggestionThreshold;
+      const explicitThreshold = adaptiveThresholds.explicitThreshold ??
+        this.config.explicitThreshold;
+      const suggestionThreshold = adaptiveThresholds.suggestionThreshold ??
+        this.config.suggestionThreshold;
 
       // 3. Apply safety checks
       const safetyResult = this.applySafetyChecks(suggestion.dagStructure);
@@ -129,7 +132,8 @@ export class GatewayHandler {
           confidence: suggestion.confidence,
           dagStructure: suggestion.dagStructure,
           warning: safetyResult.reason,
-          explanation: `Safety check failed: ${safetyResult.reason}. Please confirm this operation.`,
+          explanation:
+            `Safety check failed: ${safetyResult.reason}. Please confirm this operation.`,
         };
       }
 
@@ -140,7 +144,9 @@ export class GatewayHandler {
           mode: "explicit_required",
           confidence: suggestion.confidence,
           dagStructure: suggestion.dagStructure,
-          explanation: `Low confidence (${(suggestion.confidence * 100).toFixed(0)}%). ${suggestion.rationale}`,
+          explanation: `Low confidence (${
+            (suggestion.confidence * 100).toFixed(0)
+          }%). ${suggestion.rationale}`,
           note: "Please review and confirm the suggested tools.",
           warning: suggestion.warning, // ADR-026: Include cold start warning if present
         };
@@ -156,7 +162,9 @@ export class GatewayHandler {
         };
       } else if (this.config.enableSpeculative) {
         // High confidence: Speculative execution
-        log.info(`Speculative execution triggered (confidence: ${suggestion.confidence.toFixed(2)})`);
+        log.info(
+          `Speculative execution triggered (confidence: ${suggestion.confidence.toFixed(2)})`,
+        );
 
         const results = await this.executeDAG(suggestion.dagStructure);
         const executionTime = performance.now() - startTime;
@@ -318,7 +326,9 @@ export class GatewayHandler {
         throw new Error(`Invalid tool format: ${task.tool}`);
       }
     } else {
-      throw new Error(`Invalid tool format: ${task.tool} (expected server:tool or mcp__server__tool)`);
+      throw new Error(
+        `Invalid tool format: ${task.tool} (expected server:tool or mcp__server__tool)`,
+      );
     }
 
     const client = this.mcpClients.get(serverId);

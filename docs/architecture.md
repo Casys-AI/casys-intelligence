@@ -2,7 +2,11 @@
 
 ## Executive Summary
 
-AgentCards est un MCP gateway intelligent qui optimise le contexte LLM (<5% vs 30-50%) et parallélise l'exécution des workflows (5x speedup) via vector search sémantique et DAG execution. L'architecture repose sur Deno 2+ pour la runtime, PGlite (PostgreSQL WASM) avec pgvector pour le vector search HNSW, et une implémentation custom du DAG executor. Le système est zero-config, portable (single-file database), et supporte 15+ MCP servers simultanément.
+AgentCards est un MCP gateway intelligent qui optimise le contexte LLM (<5% vs 30-50%) et
+parallélise l'exécution des workflows (5x speedup) via vector search sémantique et DAG execution.
+L'architecture repose sur Deno 2+ pour la runtime, PGlite (PostgreSQL WASM) avec pgvector pour le
+vector search HNSW, et une implémentation custom du DAG executor. Le système est zero-config,
+portable (single-file database), et supporte 15+ MCP servers simultanément.
 
 ## Project Initialization
 
@@ -14,6 +18,7 @@ cd agentcards
 ```
 
 **What This Provides:**
+
 - `deno.json` - Configuration file with tasks, imports, and compiler options
 - `main.ts` - Entry point template
 - `main_test.ts` - Testing setup with Deno.test
@@ -22,6 +27,7 @@ cd agentcards
 **Deno Version:** 2.5 (latest) / 2.2 (LTS)
 
 **Additional Setup Required:**
+
 - CLI structure (commands: init, serve, status) via cliffy
 - Project organization (src/, tests/, docs/)
 - Dependencies centralization (deps.ts pattern)
@@ -31,48 +37,49 @@ cd agentcards
 
 ## Decision Summary
 
-| Category | Decision | Version | Affects Epics | Rationale |
-| -------- | -------- | ------- | ------------- | --------- |
-| Runtime | Deno | 2.5 / 2.2 LTS | Epic 1, Epic 2 | PROVIDED BY INIT - TypeScript native, secure by default, npm compat |
-| Database | PGlite | 0.3.11 | Epic 1 | Embedded PostgreSQL WASM, portable single-file, 3MB footprint |
-| Vector Search | pgvector (HNSW) | Built-in PGlite | Epic 1 | Production-ready ANN search, <100ms P95, supports cosine/L2/IP |
-| Embeddings | @huggingface/transformers | 3.7.6 | Epic 1 | BGE-M3 (Xenova/bge-m3) local inference, Deno compatible, 1024-dim vectors, v3 with WebGPU |
-| MCP Protocol | @modelcontextprotocol/sdk | 1.21.1 | Epic 1, Epic 2 | Official TypeScript SDK, 10.5k stars, stdio + SSE transport |
-| CLI Framework | cliffy | 1.0.0-rc.8 | Epic 1 | Type-safe args parsing, auto-help, shell completions, Deno-first (JSR) |
-| Configuration | @std/yaml | 1.0.5 | Epic 1 | Standard YAML parsing for config.yaml (JSR stable) |
-| Logging | @std/log | 0.224.14 | Epic 1 | Structured logging with levels (JSR, UNSTABLE) |
-| DAG Execution | Custom (zero deps) | N/A | Epic 2 | Topological sort + Promise.all, no external dependency |
-| Graph Algorithms | graphology | 0.26.0 | Epic 2 | True PageRank, Louvain, bidirectional search - "NetworkX of JavaScript" |
-| SSE Streaming | Native ReadableStream | Deno built-in | Epic 2 | Server-Sent Events for progressive results |
-| Process Management | Deno.Command | Deno built-in | Epic 1 | stdio subprocess for MCP server communication |
-| Testing | Deno.test | Deno built-in | Epic 1, Epic 2 | Native testing + benchmarks, >80% coverage target |
-| HTTP Server | Deno.serve | Deno 2+ built-in | Epic 2 | Modern HTTP server API for gateway (if needed) |
+| Category           | Decision                  | Version          | Affects Epics  | Rationale                                                                                 |
+| ------------------ | ------------------------- | ---------------- | -------------- | ----------------------------------------------------------------------------------------- |
+| Runtime            | Deno                      | 2.5 / 2.2 LTS    | Epic 1, Epic 2 | PROVIDED BY INIT - TypeScript native, secure by default, npm compat                       |
+| Database           | PGlite                    | 0.3.11           | Epic 1         | Embedded PostgreSQL WASM, portable single-file, 3MB footprint                             |
+| Vector Search      | pgvector (HNSW)           | Built-in PGlite  | Epic 1         | Production-ready ANN search, <100ms P95, supports cosine/L2/IP                            |
+| Embeddings         | @huggingface/transformers | 3.7.6            | Epic 1         | BGE-M3 (Xenova/bge-m3) local inference, Deno compatible, 1024-dim vectors, v3 with WebGPU |
+| MCP Protocol       | @modelcontextprotocol/sdk | 1.21.1           | Epic 1, Epic 2 | Official TypeScript SDK, 10.5k stars, stdio + SSE transport                               |
+| CLI Framework      | cliffy                    | 1.0.0-rc.8       | Epic 1         | Type-safe args parsing, auto-help, shell completions, Deno-first (JSR)                    |
+| Configuration      | @std/yaml                 | 1.0.5            | Epic 1         | Standard YAML parsing for config.yaml (JSR stable)                                        |
+| Logging            | @std/log                  | 0.224.14         | Epic 1         | Structured logging with levels (JSR, UNSTABLE)                                            |
+| DAG Execution      | Custom (zero deps)        | N/A              | Epic 2         | Topological sort + Promise.all, no external dependency                                    |
+| Graph Algorithms   | graphology                | 0.26.0           | Epic 2         | True PageRank, Louvain, bidirectional search - "NetworkX of JavaScript"                   |
+| SSE Streaming      | Native ReadableStream     | Deno built-in    | Epic 2         | Server-Sent Events for progressive results                                                |
+| Process Management | Deno.Command              | Deno built-in    | Epic 1         | stdio subprocess for MCP server communication                                             |
+| Testing            | Deno.test                 | Deno built-in    | Epic 1, Epic 2 | Native testing + benchmarks, >80% coverage target                                         |
+| HTTP Server        | Deno.serve                | Deno 2+ built-in | Epic 2         | Modern HTTP server API for gateway (if needed)                                            |
 
 ---
 
 ## Version Verification
 
-**Last Verified:** 2025-11-13
-**Method:** WebSearch + npm registry + Deno Land + JSR
+**Last Verified:** 2025-11-13 **Method:** WebSearch + npm registry + Deno Land + JSR
 
 All versions have been verified against their official registries to ensure:
+
 - Current stability status (stable, RC, beta)
 - Breaking changes between versions
 - Deno compatibility
 - Production readiness
 
-| Technology | Version | Registry | Status | Notes |
-|------------|---------|----------|--------|-------|
-| Deno | 2.5 / 2.2 LTS | deno.com | Stable | LTS (2.2) recommended for production |
-| PGlite | 0.3.11 | npm | Stable | Electric SQL, production-ready |
-| @huggingface/transformers | 3.7.6 | npm | Stable | v3 released Oct 2024, WebGPU support, Deno compatible, using BGE-M3 model |
-| @modelcontextprotocol/sdk | 1.21.1 | npm | Stable | Published recently, 16k+ dependents, active development |
-| cliffy | 1.0.0-rc.8 | JSR | RC | Latest stable RC on JSR (July 2024) |
-| @std/yaml | 1.0.5 | JSR | Stable | Stable 1.x on JSR, production-ready |
-| @std/log | 0.224.14 | JSR | Unstable | Still 0.x (UNSTABLE), deprecation warning for OpenTelemetry |
-| graphology | 0.26.0 | npm | Stable | Published April 2024, mature library, 138+ dependents |
+| Technology                | Version       | Registry | Status   | Notes                                                                     |
+| ------------------------- | ------------- | -------- | -------- | ------------------------------------------------------------------------- |
+| Deno                      | 2.5 / 2.2 LTS | deno.com | Stable   | LTS (2.2) recommended for production                                      |
+| PGlite                    | 0.3.11        | npm      | Stable   | Electric SQL, production-ready                                            |
+| @huggingface/transformers | 3.7.6         | npm      | Stable   | v3 released Oct 2024, WebGPU support, Deno compatible, using BGE-M3 model |
+| @modelcontextprotocol/sdk | 1.21.1        | npm      | Stable   | Published recently, 16k+ dependents, active development                   |
+| cliffy                    | 1.0.0-rc.8    | JSR      | RC       | Latest stable RC on JSR (July 2024)                                       |
+| @std/yaml                 | 1.0.5         | JSR      | Stable   | Stable 1.x on JSR, production-ready                                       |
+| @std/log                  | 0.224.14      | JSR      | Unstable | Still 0.x (UNSTABLE), deprecation warning for OpenTelemetry               |
+| graphology                | 0.26.0        | npm      | Stable   | Published April 2024, mature library, 138+ dependents                     |
 
 **Version Strategy:**
+
 - **Deno Runtime:** Use 2.2 (LTS) for production stability, 2.5 for latest features
 - **cliffy:** Using JSR version rc.8 (latest stable RC, deno.land rc.4 deprecated)
 - **Deno std packages:** Migrated to JSR with independent versioning
@@ -82,7 +89,9 @@ All versions have been verified against their official registries to ensure:
 - **@huggingface/transformers:** Using v3 (3.7.6) with WebGPU support, breaking change from v2
 
 **Breaking Changes Review:**
-- **@huggingface/transformers 2.x → 3.x:** Major version bump, package moved to @huggingface org, WebGPU support added
+
+- **@huggingface/transformers 2.x → 3.x:** Major version bump, package moved to @huggingface org,
+  WebGPU support added
 - **@std packages:** Now on JSR with independent versions (no longer bundled)
 - **@std/log:** Marked UNSTABLE with future migration to OpenTelemetry recommended
 - **cliffy:** Using JSR (rc.8), deno.land versions rc.6/rc.7 are broken, use JSR exclusively
@@ -198,18 +207,19 @@ agentcards/
 
 ## Epic to Architecture Mapping
 
-| Epic | Module | Key Components | Stories | Status |
-|------|--------|----------------|---------|--------|
-| **Epic 1: Foundation & Context Optimization** | `src/db/`, `src/vector/`, `src/mcp/`, `src/cli/`, `src/telemetry/` | PGlite client, Vector search, Embeddings, MCP discovery, Migration tool | 1.1-1.8 | ✅ DONE |
-| **Epic 2: DAG Execution & Production** | `src/dag/`, `src/streaming/`, `src/mcp/gateway.ts`, `tests/e2e/` | DAG builder, Parallel executor, SSE streaming, MCP gateway, Health checks | 2.1-2.7 | ✅ DONE |
-| **Epic 2.5: Adaptive DAG Feedback Loops** | `src/dag/controlled-executor.ts`, `src/dag/state.ts`, `src/graphrag/` | ControlledExecutor, EventStream, CommandQueue, WorkflowState, Checkpoints, AIL/HIL, DAGSuggester | 2.5-1 to 2.5-4 | ✅ DONE |
-| **Epic 3: Agent Code Execution & Local Processing** | `src/sandbox/` | DenoSandboxExecutor, ContextBuilder, execute_code MCP tool, Safe-to-fail pattern | 3.1-3.8 | ✅ DONE |
-| **Epic 3.5: Speculative Execution** | `src/speculation/` | SpeculativeExecutor, Confidence scoring, Cache management, Rollback | 3.5-1, 3.5-2 | ✅ DONE |
-| **Epic 4: Episodic Memory & Adaptive Learning** | `src/learning/` | EpisodicMemoryStore, AdaptiveThresholdManager, PGlite persistence | 4.1, 4.2 | 🟡 Phase 1 DONE |
-| **Epic 5: Intelligent Tool Discovery** | `src/graphrag/`, `src/mcp/gateway-server.ts` | search_tools MCP tool, Hybrid semantic+graph search, Workflow templates | 5.1, 5.2 | ✅ DONE |
-| **Epic 6: Real-time Graph Monitoring** | `src/server/`, `public/` | SSE events stream, Graph visualization, Metrics dashboard | 6.1-6.4 | 📋 DRAFTED |
+| Epic                                                | Module                                                                | Key Components                                                                                   | Stories        | Status          |
+| --------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------- | --------------- |
+| **Epic 1: Foundation & Context Optimization**       | `src/db/`, `src/vector/`, `src/mcp/`, `src/cli/`, `src/telemetry/`    | PGlite client, Vector search, Embeddings, MCP discovery, Migration tool                          | 1.1-1.8        | ✅ DONE         |
+| **Epic 2: DAG Execution & Production**              | `src/dag/`, `src/streaming/`, `src/mcp/gateway.ts`, `tests/e2e/`      | DAG builder, Parallel executor, SSE streaming, MCP gateway, Health checks                        | 2.1-2.7        | ✅ DONE         |
+| **Epic 2.5: Adaptive DAG Feedback Loops**           | `src/dag/controlled-executor.ts`, `src/dag/state.ts`, `src/graphrag/` | ControlledExecutor, EventStream, CommandQueue, WorkflowState, Checkpoints, AIL/HIL, DAGSuggester | 2.5-1 to 2.5-4 | ✅ DONE         |
+| **Epic 3: Agent Code Execution & Local Processing** | `src/sandbox/`                                                        | DenoSandboxExecutor, ContextBuilder, execute_code MCP tool, Safe-to-fail pattern                 | 3.1-3.8        | ✅ DONE         |
+| **Epic 3.5: Speculative Execution**                 | `src/speculation/`                                                    | SpeculativeExecutor, Confidence scoring, Cache management, Rollback                              | 3.5-1, 3.5-2   | ✅ DONE         |
+| **Epic 4: Episodic Memory & Adaptive Learning**     | `src/learning/`                                                       | EpisodicMemoryStore, AdaptiveThresholdManager, PGlite persistence                                | 4.1, 4.2       | 🟡 Phase 1 DONE |
+| **Epic 5: Intelligent Tool Discovery**              | `src/graphrag/`, `src/mcp/gateway-server.ts`                          | search_tools MCP tool, Hybrid semantic+graph search, Workflow templates                          | 5.1, 5.2       | ✅ DONE         |
+| **Epic 6: Real-time Graph Monitoring**              | `src/server/`, `public/`                                              | SSE events stream, Graph visualization, Metrics dashboard                                        | 6.1-6.4        | 📋 DRAFTED      |
 
 **Boundaries:**
+
 - **Epic 1** delivers: Standalone context optimization (vector search functional, <5% context)
 - **Epic 2** builds on: Epic 1 complete, adds DAG parallelization + production hardening
 - **Epic 2.5** extends: Epic 2 with adaptive feedback loops (AIL/HIL, checkpoints, replanning)
@@ -220,6 +230,7 @@ agentcards/
 - **Epic 6** extends: Epic 5 with real-time observability and graph visualization
 
 **Implementation Status Summary:**
+
 - ✅ Epic 1-3: Core foundation complete (context optimization, DAG execution, sandbox)
 - ✅ Epic 3.5: Speculative execution with confidence scoring
 - ✅ Epic 5: Intelligent tool discovery with hybrid search
@@ -233,21 +244,25 @@ agentcards/
 ### Core Technologies
 
 **Runtime Environment:**
+
 - Deno 2.5 (latest) or 2.2 (LTS)
 - TypeScript 5.7+ (via Deno)
 - ES2022 target
 
 **Database & Vector Search:**
+
 - PGlite 0.3.11 (PostgreSQL 17 WASM)
 - pgvector extension (HNSW index)
 - IndexedDB persistence (browser) / Filesystem (Deno)
 
 **ML & Embeddings:**
+
 - @huggingface/transformers 3.7.6
 - BGE-M3 model (Xenova/bge-m3, 1024-dim embeddings)
 - ONNX Runtime (WASM backend)
 
 **MCP Integration:**
+
 - @modelcontextprotocol/sdk (official)
 - stdio transport (primary)
 - SSE transport (optional)
@@ -255,11 +270,13 @@ agentcards/
 ### Integration Points
 
 **External Systems:**
+
 - **MCP Servers (15+):** stdio subprocess via `Deno.Command`
 - **Claude Code:** Reads `~/.config/Claude/claude_desktop_config.json`
 - **File System:** Config in `~/.agentcards/`, logs, database
 
 **Internal Communication:**
+
 - CLI → DB: PGlite SQL queries
 - CLI → Vector: Semantic search API
 - Gateway → MCP Servers: stdio protocol
@@ -272,13 +289,16 @@ agentcards/
 
 ### Pattern 1: DAG Builder with JSON Schema Dependency Detection
 
-**Problem:** Automatically detect dependencies between MCP tools to enable parallel execution without manual dependency specification.
+**Problem:** Automatically detect dependencies between MCP tools to enable parallel execution
+without manual dependency specification.
 
-**Challenge:** MCP tools expose input/output schemas as JSON Schema. Need to infer which outputs feed into which inputs semantically.
+**Challenge:** MCP tools expose input/output schemas as JSON Schema. Need to infer which outputs
+feed into which inputs semantically.
 
 **Solution Architecture:**
 
 **Components:**
+
 1. **Schema Analyzer** (`dag/builder.ts`)
    - Parses JSON Schema for each tool
    - Extracts parameter names and types
@@ -296,6 +316,7 @@ agentcards/
    - Topological sort for execution order
 
 **Data Flow:**
+
 ```typescript
 // Example: 3 tools workflow
 Tool A (filesystem:read) → output: { content: string }
@@ -320,13 +341,13 @@ interface DAGNode {
 }
 
 interface DAGEdge {
-  from: string;  // Source tool ID
-  to: string;    // Target tool ID
+  from: string; // Source tool ID
+  to: string; // Target tool ID
   dataPath: string; // e.g., "output.content → input.jsonString"
 }
 
 // Story 2.1 AC: Custom topological sort (no external deps)
-function buildDAG(tools: Tool[]): { nodes: DAGNode[], edges: DAGEdge[] } {
+function buildDAG(tools: Tool[]): { nodes: DAGNode[]; edges: DAGEdge[] } {
   // 1. Analyze schemas
   // 2. Detect dependencies via name/type matching
   // 3. Construct graph
@@ -336,6 +357,7 @@ function buildDAG(tools: Tool[]): { nodes: DAGNode[], edges: DAGEdge[] } {
 ```
 
 **Edge Cases:**
+
 - No dependencies → All tools run in parallel
 - Partial dependencies → Mixed parallel/sequential
 - Circular dependencies → Reject workflow, return error
@@ -352,12 +374,13 @@ function buildDAG(tools: Tool[]): { nodes: DAGNode[], edges: DAGEdge[] } {
 **Solution:**
 
 **Context Budget Tracker:**
+
 ```typescript
 interface ContextBudget {
-  totalTokens: number;      // LLM context window (e.g., 200k)
-  budgetTokens: number;     // Allocated for tool schemas (5% = 10k)
-  usedTokens: number;       // Currently loaded schemas
-  availableTokens: number;  // Remaining budget
+  totalTokens: number; // LLM context window (e.g., 200k)
+  budgetTokens: number; // Allocated for tool schemas (5% = 10k)
+  usedTokens: number; // Currently loaded schemas
+  availableTokens: number; // Remaining budget
 }
 
 // Dynamic loading strategy
@@ -387,9 +410,11 @@ function loadTools(query: string, budget: ContextBudget): Tool[] {
 
 ### Pattern 3: Speculative Execution with GraphRAG (THE Feature)
 
-**Problem:** Reduce latency by executing workflows optimistically before Claude responds, when confidence is high enough.
+**Problem:** Reduce latency by executing workflows optimistically before Claude responds, when
+confidence is high enough.
 
-**Vision:** The gateway should perform actions BEFORE Claude's call, not just suggest them. Have results ready immediately when user confirms.
+**Vision:** The gateway should perform actions BEFORE Claude's call, not just suggest them. Have
+results ready immediately when user confirms.
 
 **Solution Architecture:**
 
@@ -403,7 +428,8 @@ function loadTools(query: string, budget: ContextBudget): Tool[] {
    - Hybrid: PGlite stores edges, Graphology computes metrics
 
 2. **Three Execution Modes**
-   - `explicit_required` (confidence < 0.70): No pattern found, Claude must provide explicit workflow
+   - `explicit_required` (confidence < 0.70): No pattern found, Claude must provide explicit
+     workflow
    - `suggestion` (0.70-0.85): Good pattern found, suggest DAG to Claude
    - `speculative_execution` (>0.85): High confidence, execute immediately and have results ready
 
@@ -423,7 +449,7 @@ function loadTools(query: string, budget: ContextBudget): Tool[] {
 ```typescript
 // User Intent → Gateway Handler
 const intent = {
-  naturalLanguageQuery: "Read all JSON files and create a summary report"
+  naturalLanguageQuery: "Read all JSON files and create a summary report",
 };
 
 // Step 1: Vector search + GraphRAG suggestion
@@ -437,9 +463,9 @@ if (suggestion.confidence >= 0.85 && !isDangerous(suggestion.dagStructure)) {
 
   return {
     mode: "speculative_execution",
-    results: results,  // Already executed!
+    results: results, // Already executed!
     confidence: 0.92,
-    note: "✨ Results prepared speculatively - ready immediately"
+    note: "✨ Results prepared speculatively - ready immediately",
   };
 }
 
@@ -509,12 +535,12 @@ When Claude asks "why this DAG?", extract dependency paths:
 const explanation = {
   directDependencies: ["filesystem:read → json:parse"],
   transitiveDependencies: [
-    "filesystem:read → json:parse → github:create (2 hops)"
+    "filesystem:read → json:parse → github:create (2 hops)",
   ],
   pageRankScores: {
     "filesystem:read": 0.15,
-    "json:parse": 0.12
-  }
+    "json:parse": 0.12,
+  },
 };
 ```
 
@@ -534,22 +560,29 @@ const explanation = {
 
 **Affects Epics:** Epic 2 (Story 2.1 - GraphRAG + Speculative Execution)
 
-**Design Philosophy:** Speculative execution is THE feature - the core differentiator. Not optional, not opt-in. Default mode with smart safeguards.
+**Design Philosophy:** Speculative execution is THE feature - the core differentiator. Not optional,
+not opt-in. Default mode with smart safeguards.
 
 ---
 
 ### Pattern 4: 3-Loop Learning Architecture (Adaptive DAG Feedback Loops)
 
-> **⚠️ UPDATE 2025-11-24:** AIL/HIL implementation details updated. See **ADR-019: Two-Level AIL Architecture** for MCP-compatible approach using HTTP response pattern (not SSE streaming). Story 2.5-3 SSE pattern incompatible with MCP one-shot protocol.
+> **⚠️ UPDATE 2025-11-24:** AIL/HIL implementation details updated. See **ADR-019: Two-Level AIL
+> Architecture** for MCP-compatible approach using HTTP response pattern (not SSE streaming). Story
+> 2.5-3 SSE pattern incompatible with MCP one-shot protocol.
 
-**Problem:** Enable truly adaptive workflows that learn and improve over time through agent-in-the-loop (AIL) and human-in-the-loop (HIL) decision points, with dynamic re-planning and continuous meta-learning.
+**Problem:** Enable truly adaptive workflows that learn and improve over time through
+agent-in-the-loop (AIL) and human-in-the-loop (HIL) decision points, with dynamic re-planning and
+continuous meta-learning.
 
 **Vision:** Three distinct learning loops operating at different timescales:
+
 - **Loop 1 (Execution):** Real-time workflow execution with event streaming (milliseconds)
 - **Loop 2 (Adaptation):** Runtime decision-making and DAG replanning (seconds-minutes)
 - **Loop 3 (Meta-Learning):** Continuous improvement of the knowledge graph (per-workflow)
 
 **Challenge:** Current DAG executor runs linearly without:
+
 - Agent decision points (AIL) - agent cannot inject new tools based on discoveries
 - Human approval checkpoints (HIL) - no way to pause for confirmation
 - Multi-turn state persistence - conversations don't survive across turns
@@ -562,6 +595,7 @@ const explanation = {
 ⚠️ **Two Separate Concepts:**
 
 **GraphRAG (Knowledge Graph)** = Permanent knowledge base
+
 - **Nodes:** Available tools in the system (e.g., `filesystem:read`, `json:parse`)
 - **Edges:** Relationships between tools (co-occurrence, dependencies, success patterns)
 - **Storage:** PGlite (persistent database)
@@ -571,7 +605,9 @@ const explanation = {
 - **Updates:** Learns from every workflow execution
 
 **DAG (Workflow Execution Graph)** = Ephemeral execution plan
-- **Nodes:** Specific tasks to execute for THIS workflow (e.g., "read config.json", "parse it", "validate")
+
+- **Nodes:** Specific tasks to execute for THIS workflow (e.g., "read config.json", "parse it",
+  "validate")
 - **Edges:** Execution order dependencies
 - **Storage:** In-memory + checkpoints (for resume)
 - **Purpose:** Blueprint for current workflow only
@@ -579,6 +615,7 @@ const explanation = {
 - **Lifetime:** Created → Modified during execution → Discarded after completion
 
 **Relationship:**
+
 ```
 DAGSuggester (Workflow Layer)
     ↓ queries
@@ -594,19 +631,21 @@ PGlite (Storage: tools, edges, embeddings)
 ### Components:
 
 **1. ControlledExecutor** (`src/dag/controlled-executor.ts`)
+
 - Extends `ParallelExecutor` (zero breaking changes)
 - Event stream for real-time observability
 - Command queue for non-blocking control
 - State management with MessagesState-inspired reducers
 
 **2. WorkflowState with Reducers**
+
 ```typescript
 interface WorkflowState {
-  messages: Message[];      // Agent/human messages (reducer: append)
-  tasks: TaskResult[];      // Completed tasks (reducer: append)
-  decisions: Decision[];    // AIL/HIL decisions (reducer: append)
+  messages: Message[]; // Agent/human messages (reducer: append)
+  tasks: TaskResult[]; // Completed tasks (reducer: append)
+  decisions: Decision[]; // AIL/HIL decisions (reducer: append)
   context: Record<string, any>; // Shared context (reducer: merge)
-  checkpoint_id?: string;   // Resume capability
+  checkpoint_id?: string; // Resume capability
 }
 
 // MessagesState-inspired reducers (LangGraph v1.0 pattern)
@@ -614,11 +653,12 @@ const reducers = {
   messages: (existing, update) => [...existing, ...update],
   tasks: (existing, update) => [...existing, ...update],
   decisions: (existing, update) => [...existing, ...update],
-  context: (existing, update) => ({ ...existing, ...update })
+  context: (existing, update) => ({ ...existing, ...update }),
 };
 ```
 
 **3. Event Stream** (TransformStream API)
+
 ```typescript
 // Real-time observability
 eventStream.emit({
@@ -637,6 +677,7 @@ executor.eventStream.subscribe((event) => {
 ```
 
 **4. Command Queue** (AsyncQueue pattern)
+
 ```typescript
 // Agent/Human inject commands
 commandQueue.enqueue({
@@ -653,11 +694,12 @@ await this.processCommands();
 **⚠️ ARCHITECTURE LAYERS:**
 
 **Layer 1: DAGSuggester** (Workflow Layer) - `src/graphrag/dag-suggester.ts`
+
 ```typescript
 export class DAGSuggester {
   constructor(
-    private graphEngine: GraphRAGEngine,  // Uses knowledge graph
-    private vectorSearch: VectorSearch
+    private graphEngine: GraphRAGEngine, // Uses knowledge graph
+    private vectorSearch: VectorSearch,
   ) {}
 
   // ✅ EXISTS - Initial DAG suggestion
@@ -674,7 +716,7 @@ export class DAGSuggester {
       completedTasks: TaskResult[];
       newRequirement: string;
       availableContext: Record<string, any>;
-    }
+    },
   ): Promise<DAGStructure> {
     // 1. graphEngine.vectorSearch(newRequirement) → New tools
     // 2. graphEngine.findShortestPath(current, target) → Optimize path
@@ -684,7 +726,7 @@ export class DAGSuggester {
   // ✅ NEW METHOD - Speculative prediction
   async predictNextNodes(
     state: WorkflowState,
-    completed: TaskResult[]
+    completed: TaskResult[],
   ): Promise<PredictedNode[]> {
     // 1. Analyze completed task patterns in GraphRAG
     // 2. graphEngine.findCommunityMembers(lastTool) → Tools often used after
@@ -694,16 +736,17 @@ export class DAGSuggester {
 ```
 
 **Layer 2: GraphRAGEngine** (Knowledge Graph Layer) - `src/graphrag/graph-engine.ts`
+
 ```typescript
 export class GraphRAGEngine {
   // ✅ EXISTS - Used by suggestDAG()
-  async vectorSearch(query: string, k: number): Promise<Tool[]>
-  getPageRank(toolId: string): number
-  buildDAG(toolIds: string[]): DAGStructure
+  async vectorSearch(query: string, k: number): Promise<Tool[]>;
+  getPageRank(toolId: string): number;
+  buildDAG(toolIds: string[]): DAGStructure;
 
   // ✅ EXISTS - Used by replanDAG()
-  findShortestPath(from: string, to: string): string[]
-  findCommunityMembers(toolId: string): string[]
+  findShortestPath(from: string, to: string): string[];
+  findCommunityMembers(toolId: string): string[];
 
   // ✅ EXISTS - Feedback learning
   async updateFromExecution(execution: WorkflowExecution): Promise<void> {
@@ -822,24 +865,28 @@ NEXT WORKFLOW: Cycle improves
 ### 4 Roles of GraphRAG in Feedback Loop:
 
 **Role 1: Initial Workflow Suggestion**
+
 - User provides intent → DAGSuggester queries GraphRAG
 - Vector search finds relevant tools
 - PageRank ranks by importance
 - buildDAG creates initial workflow
 
 **Role 2: Dynamic Re-planning (AIL/HIL)**
+
 - Agent/Human discovers new requirement mid-execution
 - DAGSuggester.replanDAG() re-queries GraphRAG
 - Finds additional tools needed
 - Injects new nodes into running DAG
 
 **Role 3: Speculative Prediction**
+
 - During agent thinking, predict next likely tools
 - DAGSuggester.predictNextNodes() queries community members
 - High confidence (>0.7) → execute speculatively
 - Results ready when agent needs them (0ms latency)
 
 **Role 4: Learning & Enrichment**
+
 - After workflow completion, update knowledge graph
 - GraphRAGEngine.updateFromExecution() stores patterns
 - Tool co-occurrence edges strengthened
@@ -852,8 +899,8 @@ NEXT WORKFLOW: Cycle improves
 
 ```typescript
 class ControlledExecutor extends ParallelExecutor {
-  private dagSuggester: DAGSuggester;      // Workflow layer
-  private graphEngine: GraphRAGEngine;      // Knowledge layer
+  private dagSuggester: DAGSuggester; // Workflow layer
+  private graphEngine: GraphRAGEngine; // Knowledge layer
   private state: WorkflowState;
   private commandQueue: AsyncQueue<Command>;
   private eventStream: TransformStream<ExecutionEvent>;
@@ -863,7 +910,7 @@ class ControlledExecutor extends ParallelExecutor {
     if (config.speculation.enabled) {
       const predictions = await this.dagSuggester.predictNextNodes(
         this.state,
-        this.state.tasks
+        this.state.tasks,
       );
       // Execute high-confidence predictions speculatively
       this.startSpeculativeExecution(predictions);
@@ -889,7 +936,7 @@ class ControlledExecutor extends ParallelExecutor {
       executed_dag: dag,
       execution_results: this.state.tasks,
       timestamp: new Date(),
-      success: true
+      success: true,
     });
   }
 
@@ -900,8 +947,8 @@ class ControlledExecutor extends ParallelExecutor {
       {
         completedTasks: this.state.tasks,
         newRequirement: cmd.requirement,
-        availableContext: this.state.context
-      }
+        availableContext: this.state.context,
+      },
     );
 
     // Merge new nodes into current DAG
@@ -915,18 +962,21 @@ class ControlledExecutor extends ParallelExecutor {
 ### Benefits:
 
 **Immediate:**
+
 - ✅ **Adaptive workflows:** Plans adjust in real-time based on discoveries
 - ✅ **Smart predictions:** Speculation based on real usage patterns
 - ✅ **Progressive discovery:** Don't need to predict everything upfront
 - ✅ **Context-aware:** Suggestions consider current workflow state
 
 **Long-term Learning:**
+
 - ✅ **Pattern recognition:** Detects frequent tool sequences
 - ✅ **User preferences:** Learns from human decisions
 - ✅ **Error avoidance:** Tools that fail together → lower rank
 - ✅ **Efficiency:** Optimal paths reinforced by PageRank
 
 **Example Learning Cycle:**
+
 ```
 Week 1: User often "list_dir → find XML → need parse_xml"
         → GraphRAGEngine learns pattern (updateFromExecution)
@@ -958,32 +1008,36 @@ interface Checkpoint {
   id: string;
   workflow_id: string;
   timestamp: Date;
-  layer: number;              // Current DAG layer
-  state: WorkflowState;       // Complete workflow state
+  layer: number; // Current DAG layer
+  state: WorkflowState; // Complete workflow state
 }
 
 interface WorkflowState {
   workflow_id: string;
   current_layer: number;
-  tasks: TaskResult[];         // Completed tasks with results
-  decisions: Decision[];       // AIL/HIL decisions made
-  commands: Command[];         // Pending commands
-  messages: Message[];         // Multi-turn conversation
+  tasks: TaskResult[]; // Completed tasks with results
+  decisions: Decision[]; // AIL/HIL decisions made
+  commands: Command[]; // Pending commands
+  messages: Message[]; // Multi-turn conversation
   context: Record<string, any>; // Workflow context
 }
 ```
 
 **What Checkpoints DON'T Save:**
+
 - ❌ Filesystem state (modified files)
 - ❌ External side-effects (API calls, DB writes)
 - ❌ Code diffs or file changes
 
 **Why This Works for Epic 2.5:**
-- Epic 2.5 workflows = **orchestration primarily** (AIL/HIL decisions, GraphRAG queries, DAG replanning)
+
+- Epic 2.5 workflows = **orchestration primarily** (AIL/HIL decisions, GraphRAG queries, DAG
+  replanning)
 - File modifications **delegated to Epic 3** (Sandbox isolation)
 - Tasks requiring file changes → **idempotence required** (documented per story)
 
 **Resume Behavior:**
+
 - ✅ **Read-only workflows:** Perfect resume (zero data loss)
 - ⚠️ **Workflows with modifications:** Tasks re-execute (idempotency ensures safety)
 - 🎯 **Epic 3 (future):** Sandbox isolation eliminates this concern entirely
@@ -994,7 +1048,8 @@ interface WorkflowState {
 
 **Architecture Principle:** Un seul agent en conversation continue
 
-Epic 2.5 utilise un seul agent Claude qui exécute le DAG via ses MCP tools et prend toutes les décisions (AIL) dans sa conversation continue.
+Epic 2.5 utilise un seul agent Claude qui exécute le DAG via ses MCP tools et prend toutes les
+décisions (AIL) dans sa conversation continue.
 
 ```typescript
 class ControlledExecutor {
@@ -1023,17 +1078,23 @@ class ControlledExecutor {
 ```
 
 **Principes Clés:**
+
 - ✅ **Agent voit tous les MCP results:** Comportement normal de Claude (comme Bash, Read, etc.)
 - ✅ **Conversation continue:** Pas de re-contexte, pas de pruning, pas de summary pour agent
-- ✅ **MCP tools filtrent naturellement:** Les tools retournent résultats pertinents (top-k, search, etc.)
+- ✅ **MCP tools filtrent naturellement:** Les tools retournent résultats pertinents (top-k, search,
+  etc.)
 - ✅ **Décisions AIL informées:** Agent a accès à l'intégralité des résultats
-- ✅ **Summary pour HIL uniquement:** Génération de résumés pour affichage UI humain (~500-1000 tokens)
+- ✅ **Summary pour HIL uniquement:** Génération de résumés pour affichage UI humain (~500-1000
+  tokens)
 
 **Coût Contexte:**
+
 - **AIL:** Minimal (agent continue sa conversation avec MCP results déjà visibles)
 - **HIL:** ~500-1000 tokens (génération summary pour affichage UI une fois)
 
-**Note:** Les stratégies de "context pruning" ou "progressive summarization" seraient utiles uniquement pour des architectures multi-agents (supervisor ≠ executor), ce qui n'est pas le cas d'Epic 2.5.
+**Note:** Les stratégies de "context pruning" ou "progressive summarization" seraient utiles
+uniquement pour des architectures multi-agents (supervisor ≠ executor), ce qui n'est pas le cas
+d'Epic 2.5.
 
 ---
 
@@ -1051,23 +1112,27 @@ class ControlledExecutor {
 **Epic 2.5:** Adaptive DAG Feedback Loops (9-13 hours)
 
 **Story 2.5-1:** Event Stream + Command Queue + State Management (3-4h)
+
 - ControlledExecutor foundation
 - Event stream with TransformStream
 - Command queue with AsyncQueue
 - State reducers (MessagesState pattern)
 
 **Story 2.5-2:** Checkpoint & Resume (2-3h)
+
 - WorkflowState persistence to PGlite
 - Resume from checkpoint
 - State pruning strategy
 
 **Story 2.5-3:** AIL/HIL Integration (2-3h)
+
 - Agent decision points
 - Human approval checkpoints
 - Command injection patterns
 - DAGSuggester.replanDAG() integration
 
 **Story 2.5-4:** Speculative Execution + GraphRAG (3-4h)
+
 - DAGSuggester.predictNextNodes()
 - Confidence-based speculation
 - GraphRAGEngine.updateFromExecution()
@@ -1078,11 +1143,14 @@ class ControlledExecutor {
 **Affects Epics:** Epic 2.5 (Stories 2.5-1 through 2.5-4)
 
 **References:**
+
 - ADR-007: `docs/adrs/ADR-007-dag-adaptive-feedback-loops.md`
 - Research: `docs/research-technical-2025-11-13.md`
 - Spike: `docs/spikes/spike-agent-human-dag-feedback-loop.md`
 
-**Design Philosophy:** Feedback loops enable truly intelligent workflows that learn and adapt. The distinction between knowledge graph (permanent learning) and workflow graph (ephemeral execution) is critical for understanding the architecture.
+**Design Philosophy:** Feedback loops enable truly intelligent workflows that learn and adapt. The
+distinction between knowledge graph (permanent learning) and workflow graph (ephemeral execution) is
+critical for understanding the architecture.
 
 ---
 
@@ -1092,7 +1160,9 @@ class ControlledExecutor {
 
 **Architecture Principle:** LLM writes code, sandbox executes safely
 
-Epic 3 implémente un environnement d'exécution de code TypeScript sécurisé et isolé, permettant aux agents LLM d'**écrire du code de traitement** qui s'exécute localement pour filtrer/agréger les données volumineuses, retournant uniquement un résumé compact au contexte LLM.
+Epic 3 implémente un environnement d'exécution de code TypeScript sécurisé et isolé, permettant aux
+agents LLM d'**écrire du code de traitement** qui s'exécute localement pour filtrer/agréger les
+données volumineuses, retournant uniquement un résumé compact au contexte LLM.
 
 ### The Flow (Anthropic-Inspired Code Execution)
 
@@ -1105,6 +1175,7 @@ Epic 3 implémente un environnement d'exécution de code TypeScript sécurisé e
 ```
 
 **Concrete Example:**
+
 ```typescript
 // User: "Analyze commits from last week"
 
@@ -1138,6 +1209,7 @@ const code = `
 ### Architecture Components
 
 **1. DenoSandboxExecutor** (`src/sandbox/executor.ts`) - Story 3.1 ✅
+
 - Subprocess spawning: `Deno.Command` with explicit permissions
 - Timeout enforcement: AbortController, 30s default
 - Memory limits: `--v8-flags=--max-old-space-size=512`
@@ -1145,6 +1217,7 @@ const code = `
 - Performance: <100ms startup (achieved: 34.77ms), <50ms overhead
 
 **2. ContextBuilder** (`src/sandbox/context-builder.ts`) - Story 3.2 ✅
+
 - Intent-based tool discovery: Vector search for top-k relevant tools
 - Type-safe wrapper generation: MCP tools → TypeScript functions
 - Tool routing: Wrappers route calls through MCPGatewayServer
@@ -1152,6 +1225,7 @@ const code = `
 - Security: No eval(), template strings only
 
 **3. execute_code MCP Tool** (`src/mcp/gateway-server.ts`) - Story 3.4 ⏳
+
 - MCP tool: `agentcards:execute_code`
 - Input: `{ code: string, intent?: string, context?: object, sandbox_config?: object }`
 - Output: `{ result: any, logs: string[], metrics: object, state?: object }`
@@ -1161,6 +1235,7 @@ const code = `
 ### Epic 2.5 Integration (Delegation Pattern)
 
 **ControlledExecutor Delegation:**
+
 ```typescript
 // Epic 2.5 ControlledExecutor builds DAG with code_execution tasks
 const dag = {
@@ -1177,6 +1252,7 @@ const dag = {
 ```
 
 **Safe-to-Fail Pattern:**
+
 - Code execution tasks are **idempotent** (safe to retry)
 - Sandbox isolation prevents side-effects
 - Virtual filesystem hooks (foundation in 3.4, full implementation later)
@@ -1186,6 +1262,7 @@ const dag = {
 ### What Epic 3 Does vs Doesn't Do
 
 **✅ Epic 3 DOES:**
+
 - Execute TypeScript code in isolated Deno sandbox
 - Inject MCP tools into code context via vector search
 - Process large datasets locally before returning to LLM
@@ -1194,6 +1271,7 @@ const dag = {
 - Save code execution results in checkpoints
 
 **❌ Epic 3 DOES NOT:**
+
 - Automatically trigger DAG replanning from code
 - Replan is AIL/HIL decision (Epic 2.5-3 already handles this)
 - Code can return `state` for checkpoints, but no auto-enqueue of replan_dag
@@ -1220,20 +1298,24 @@ const dag = {
 **Epic 3:** Agent Code Execution & Local Processing (12-15 hours)
 
 **Story 3.1:** Deno Sandbox Executor Foundation (2-3h) ✅ DONE
+
 - DenoSandboxExecutor with subprocess isolation
 - Timeout and memory limits
 - Structured error handling
 
 **Story 3.2:** MCP Tools Injection (2-3h) ✅ REVIEW
+
 - ContextBuilder with vector search integration
 - Type-safe tool wrappers
 - Gateway routing for tool calls
 
 **Story 3.3:** Local Data Processing Pipeline (2-3h) ⚠️ SCOPE CLARIFICATION
+
 - **Status:** Likely skip/defer (overlaps with 3.4)
 - Agent writes custom code instead of pre-built helpers
 
 **Story 3.4:** execute_code MCP Tool (3-4h) ⏳ READY FOR DEV
+
 - MCP tool registration in gateway
 - Intent-based and explicit modes
 - DAG integration (new TaskType)
@@ -1241,6 +1323,7 @@ const dag = {
 - Safe-to-fail foundation
 
 **Stories 3.5-3.8:** Advanced Features (4-6h) 📋 DRAFTED/BACKLOG
+
 - 3.5: PII detection/tokenization
 - 3.6: Code execution caching
 - 3.7: E2E tests & documentation
@@ -1251,13 +1334,16 @@ const dag = {
 **Affects Epics:** Epic 3 (Stories 3.1-3.8)
 
 **References:**
+
 - Tech Spec: `docs/tech-spec-epic-3.md`
 - ADR-007: `docs/adrs/ADR-007-dag-adaptive-feedback-loops.md` (Epic 3 delegation architecture)
 - Story 3.1: `docs/stories/story-3.1.md`
 - Story 3.2: `docs/stories/story-3.2.md`
 - Story 3.4: `docs/stories/story-3.4.md`
 
-**Design Philosophy:** Code execution enables agents to "think locally, act globally" - process massive datasets locally, return compact insights. Sandbox isolation provides safe-to-fail semantics essential for speculative execution (Epic 3.5).
+**Design Philosophy:** Code execution enables agents to "think locally, act globally" - process
+massive datasets locally, return compact insights. Sandbox isolation provides safe-to-fail semantics
+essential for speculative execution (Epic 3.5).
 
 ---
 
@@ -1266,12 +1352,14 @@ const dag = {
 ### Naming Conventions
 
 **Files & Directories:**
+
 - Files: `kebab-case.ts` (e.g., `vector-search.ts`)
 - Directories: `kebab-case/` (e.g., `mcp/`, `dag/`)
 - Test files: `*.test.ts` (co-located with source)
 - Benchmark files: `*.bench.ts`
 
 **Code Identifiers:**
+
 - Classes: `PascalCase` (e.g., `VectorSearchEngine`)
 - Interfaces/Types: `PascalCase` with `I` prefix for interfaces (e.g., `IConfig`, `ToolSchema`)
 - Functions: `camelCase` (e.g., `buildDependencyGraph`)
@@ -1279,6 +1367,7 @@ const dag = {
 - Private fields: `_camelCase` with underscore prefix
 
 **Database:**
+
 - Tables: `snake_case` singular (e.g., `tool_schema`, `embedding`)
 - Columns: `snake_case` (e.g., `tool_id`, `created_at`)
 - Indexes: `idx_{table}_{column}` (e.g., `idx_embedding_vector`)
@@ -1286,6 +1375,7 @@ const dag = {
 ### Code Organization
 
 **Dependency Pattern:**
+
 ```typescript
 // deps.ts - ALL external dependencies centralized
 export { PGlite } from "npm:@electric-sql/pglite@0.3.11";
@@ -1299,6 +1389,7 @@ import { PGlite, vector } from "../../deps.ts";
 ```
 
 **Module Exports:**
+
 ```typescript
 // mod.ts - Public API (re-exports)
 export { VectorSearch } from "./src/vector/search.ts";
@@ -1307,6 +1398,7 @@ export type { Config, ToolSchema } from "./src/types.ts";
 ```
 
 **Test Organization:**
+
 - Unit tests: Co-located with source (`src/vector/search.test.ts`)
 - Integration: `tests/integration/vector-db.test.ts`
 - E2E: `tests/e2e/migration-workflow.test.ts`
@@ -1314,6 +1406,7 @@ export type { Config, ToolSchema } from "./src/types.ts";
 ### Error Handling
 
 **Custom Error Hierarchy:**
+
 ```typescript
 // src/utils/errors.ts
 export class AgentCardsError extends Error {
@@ -1343,6 +1436,7 @@ export class DAGExecutionError extends AgentCardsError {
 ```
 
 **Error Handling Pattern:**
+
 ```typescript
 // All async operations wrapped in try-catch
 async function executeWorkflow(tools: Tool[]): Promise<Result> {
@@ -1366,6 +1460,7 @@ const DEFAULT_TIMEOUT = 30_000; // 30s per tool
 ### Logging Strategy
 
 **Log Levels:**
+
 ```typescript
 // src/telemetry/logger.ts
 import * as log from "std/log";
@@ -1380,6 +1475,7 @@ logger.debug("Vector search query", { query, results });
 ```
 
 **Structured Format:**
+
 ```json
 {
   "timestamp": "2025-11-03T10:30:45.123Z",
@@ -1394,6 +1490,7 @@ logger.debug("Vector search query", { query, results });
 ```
 
 **Log Destinations:**
+
 - Console: INFO level (colorized for terminal)
 - File: `~/.agentcards/logs/agentcards.log` (all levels, rotated daily)
 
@@ -1404,16 +1501,19 @@ logger.debug("Vector search query", { query, results });
 ### Cross-Cutting Patterns
 
 **Date/Time Handling:**
+
 - All timestamps: ISO 8601 format (`2025-11-03T10:30:45.123Z`)
 - Library: Native `Date` object, no moment.js
 - Storage: PostgreSQL `TIMESTAMPTZ` type
 
 **Async Patterns:**
+
 - All I/O operations: `async/await` (no callbacks)
 - Parallel operations: `Promise.all()` for independent tasks
 - Sequential: `for...of` with `await` for dependent tasks
 
 **Configuration Access:**
+
 ```typescript
 // Single source of truth
 const config = await loadConfig("~/.agentcards/config.yaml");
@@ -1421,12 +1521,13 @@ const config = await loadConfig("~/.agentcards/config.yaml");
 ```
 
 **Retries:**
+
 ```typescript
 // src/utils/retry.ts
 export async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries = 3,
-  delayMs = 1000
+  delayMs = 1000,
 ): Promise<T> {
   // Exponential backoff: 1s, 2s, 4s
 }
@@ -1498,13 +1599,13 @@ export interface ToolSchema {
 
 export interface ToolEmbedding {
   toolId: string;
-  embedding: Float32Array;  // 1024-dim vector
+  embedding: Float32Array; // 1024-dim vector
   createdAt: Date;
 }
 
 export interface SearchResult {
   toolId: string;
-  score: number;  // Cosine similarity [0-1]
+  score: number; // Cosine similarity [0-1]
   schema: ToolSchema;
 }
 ```
@@ -1532,6 +1633,7 @@ agentcards status [--verbose]
 ### Internal APIs
 
 **Vector Search API:**
+
 ```typescript
 // src/vector/search.ts
 export interface VectorSearchAPI {
@@ -1542,6 +1644,7 @@ export interface VectorSearchAPI {
 ```
 
 **DAG Executor API:**
+
 ```typescript
 // src/dag/executor.ts
 export interface DAGExecutorAPI {
@@ -1551,6 +1654,7 @@ export interface DAGExecutorAPI {
 ```
 
 **MCP Gateway Protocol:**
+
 - Implements MCP specification 2025-06-18
 - stdio transport (stdin/stdout)
 - Methods: `list_tools`, `call_tool`, `list_resources`
@@ -1560,16 +1664,19 @@ export interface DAGExecutorAPI {
 ## Security Architecture
 
 **Sandboxing:**
+
 - Deno permissions model: Explicit `--allow-read`, `--allow-net`, etc.
 - MCP servers run as separate processes (isolated)
 - No eval/Function constructor usage
 
 **Data Protection:**
+
 - User queries: Never leave local machine
 - Telemetry: Opt-in, anonymized (no PII)
 - Database: Local filesystem (`~/.agentcards/agentcards.db`)
 
 **Input Validation:**
+
 - All CLI args validated via cliffy schemas
 - MCP responses validated against JSON Schema
 - SQL injection: Prevented via parameterized queries (PGlite)
@@ -1587,20 +1694,24 @@ export interface DAGExecutorAPI {
 ### Optimization Strategies
 
 **1. Vector Search:**
+
 - HNSW index parameters: `m=16`, `ef_construction=64` (balanced quality/speed)
 - Query batch size: 5-10 tools (trade-off recall/latency)
 
 **2. Embeddings Generation:**
+
 - Batch processing: Generate embeddings in parallel (Story 1.4)
 - Caching: Never regenerate if schema unchanged
 - Model loading: Lazy load BGE model on first query
 
 **3. DAG Execution:**
+
 - Parallel branches: `Promise.all()` for independent tools
 - Streaming: SSE events (Story 2.3) for progressive feedback
 - Timeouts: 30s per tool, fail fast
 
 **4. Database:**
+
 - PGlite: In-memory mode for CI/tests
 - Filesystem persistence: `~/.agentcards/` for production
 - Index maintenance: Auto-vacuum disabled (read-heavy)
@@ -1612,11 +1723,13 @@ export interface DAGExecutorAPI {
 **Target:** Local-first CLI tool (no server deployment MVP)
 
 **Supported Platforms:**
+
 - macOS (x64, ARM64)
 - Linux (x64, ARM64)
 - Windows (x64) - via WSL or native Deno
 
 **Distribution:**
+
 ```bash
 # Installation (future)
 deno install -A -n agentcards jsr:@agentcards/cli
@@ -1626,11 +1739,13 @@ brew install agentcards
 ```
 
 **Runtime Requirements:**
+
 - Deno 2.2+ (LTS)
 - 4GB RAM minimum (BGE model + HNSW index)
 - 1GB disk space (database + logs + models)
 
 **Edge Deployment (out of scope MVP):**
+
 - Deno Deploy compatible (architecture edge-ready)
 - Future: v1.1+ if demand
 
@@ -1699,6 +1814,7 @@ deno task dev -- serve
 **Decision:** Use PGlite (PostgreSQL WASM) with pgvector instead of SQLite + sqlite-vec
 
 **Rationale:**
+
 - sqlite-vec v0.1.0 lacks HNSW index (full-scan only)
 - pgvector provides production-ready HNSW + IVFFlat
 - PGlite is embedded (3MB WASM), preserves portability requirement
@@ -1706,11 +1822,13 @@ deno task dev -- serve
 - Trade-off: 3MB overhead vs <1MB SQLite, acceptable for performance gain
 
 **Consequences:**
+
 - Enables <100ms P95 vector search (NFR001)
 - Single-file portability maintained
 - PostgreSQL ecosystem access (future extensions)
 
 **Alternatives Considered:**
+
 - sqlite-vec: Rejected (no HNSW, future-only)
 - DuckDB VSS: Rejected (experimental persistence, Deno support unclear)
 - Full PostgreSQL: Rejected (breaks zero-config requirement)
@@ -1722,12 +1840,14 @@ deno task dev -- serve
 **Decision:** Implement DAG builder and executor from scratch, no external graph libraries
 
 **Rationale:**
+
 - Story 2.1 AC explicitly requires "custom, zero external dependency"
 - Topological sort is ~50 LOC (simple algorithm)
 - Avoids dependency bloat for single-purpose feature
 - Educational value for agents implementing this
 
 **Consequences:**
+
 - Full control over algorithm
 - No security vulnerabilities from external deps
 - More testing required (edge cases, cycles)
@@ -1739,6 +1859,7 @@ deno task dev -- serve
 **Decision:** Use BGE-M3 (Xenova/bge-m3) via @huggingface/transformers v3.7.6 (local inference)
 
 **Rationale:**
+
 - 1024-dim embeddings (good quality/size trade-off)
 - Local inference = no API calls, no API keys, privacy preserved
 - Deno compatible via npm: prefix
@@ -1746,6 +1867,7 @@ deno task dev -- serve
 - SOTA open model for semantic search
 
 **Consequences:**
+
 - 4GB RAM requirement (model in memory)
 - ~60s initial embedding generation for 200 tools (acceptable per Story 1.4 AC)
 - No usage costs (vs OpenAI embeddings API)
@@ -1757,12 +1879,14 @@ deno task dev -- serve
 **Decision:** MCP gateway uses stdio transport as primary, SSE as optional enhancement
 
 **Rationale:**
+
 - MCP servers commonly use stdio (Claude Code default)
 - SSE adds complexity (HTTP server required)
 - Story 2.4 AC: "stdio mode primary"
 - Local CLI tool doesn't need HTTP transport MVP
 
 **Consequences:**
+
 - Simpler architecture (no HTTP server MVP)
 - SSE available for future remote deployment
 - Gateway compatible with all stdio MCP servers
@@ -1771,11 +1895,14 @@ deno task dev -- serve
 
 ### ADR-005: Graphology for GraphRAG (True Graph Algorithms)
 
-**Decision:** Use Graphology library for graph algorithms instead of pseudo-GraphRAG with recursive CTEs in PostgreSQL
+**Decision:** Use Graphology library for graph algorithms instead of pseudo-GraphRAG with recursive
+CTEs in PostgreSQL
 
-**Context:** User insight: "et networkx ou un truc comme ca?" (what about networkx or something like that?)
+**Context:** User insight: "et networkx ou un truc comme ca?" (what about networkx or something like
+that?)
 
 **Rationale:**
+
 - Graphology is the "NetworkX of JavaScript" (~100KB)
 - True graph algorithms: Real PageRank, Louvain community detection, bidirectional search
 - 90% simpler SQL schema (just storage, no recursive CTEs)
@@ -1784,6 +1911,7 @@ deno task dev -- serve
 - Better separation of concerns: Storage vs computation
 
 **Consequences:**
+
 - Enables true GraphRAG capabilities for workflow suggestion
 - Simplifies database schema dramatically
 - Fast graph operations (<100ms PageRank, <1ms shortest path)
@@ -1791,6 +1919,7 @@ deno task dev -- serve
 - Small dependency footprint (~100KB vs implementing algorithms in SQL)
 
 **Alternatives Considered:**
+
 - Recursive CTEs + pseudo-PageRank: Rejected (90% more complex SQL, 3-5x slower)
 - NetworkX (Python): Rejected (language barrier, would need Python runtime)
 - Full graph database (Neo4j): Rejected (breaks portability requirement)
@@ -1801,11 +1930,15 @@ deno task dev -- serve
 
 ### ADR-006: Speculative Execution as Default Mode
 
-**Decision:** Make speculative execution the default mode for high-confidence workflows (>0.85), not an optional feature
+**Decision:** Make speculative execution the default mode for high-confidence workflows (>0.85), not
+an optional feature
 
-**Context:** User insight: "et donc les algo graph aident la gateway a performer l action avant meme l appel de claude non ? cetait l idee" (so the graph algorithms help the gateway perform the action even before Claude's call, right? That was the idea)
+**Context:** User insight: "et donc les algo graph aident la gateway a performer l action avant meme
+l appel de claude non ? cetait l idee" (so the graph algorithms help the gateway perform the action
+even before Claude's call, right? That was the idea)
 
 **Rationale:**
+
 - **THE feature** - core differentiator of AgentCards
 - 0ms perceived latency (results ready when user confirms)
 - Even with Claude confirmation dialogs, provides instant results vs 2-5s wait
@@ -1814,6 +1947,7 @@ deno task dev -- serve
 - Multiple safety guardrails prevent dangerous operations
 
 **Consequences:**
+
 - Dramatic improvement in perceived performance
 - Requires adaptive threshold learning (start conservative at 0.92)
 - Need comprehensive safety checks for dangerous operations
@@ -1821,38 +1955,48 @@ deno task dev -- serve
 - Graceful fallback to suggestion mode on failure
 
 **Safety Measures:**
+
 - Never speculate on: delete, deploy, payment, send_email operations
 - Cost limits: <$0.10 per speculative execution
 - Resource limits: <5s execution time
 - Confidence threshold: >0.85 minimum (adaptive learning from user feedback)
 
-**User Confirmation:** "Ouai on peut essayer sans speculative mais on va pas se mentir, speculative c est THE feature" (Yeah we can try without speculative but let's be honest, speculative IS THE feature)
+**User Confirmation:** "Ouai on peut essayer sans speculative mais on va pas se mentir, speculative
+c est THE feature" (Yeah we can try without speculative but let's be honest, speculative IS THE
+feature)
 
-**Design Philosophy:** Optimistic execution with smart safeguards > Conservative suggestion-only mode
+**Design Philosophy:** Optimistic execution with smart safeguards > Conservative suggestion-only
+mode
 
 ---
 
 ### ADR-007: DAG Adaptatif avec Feedback Loops AIL/HIL et Re-planification Dynamique
 
-**Decision:** Étendre ParallelExecutor avec architecture hybride: Event Stream + Command Queue + MessagesState-inspired Reducers
+**Decision:** Étendre ParallelExecutor avec architecture hybride: Event Stream + Command Queue +
+MessagesState-inspired Reducers
 
-**Context:** Le DAG executor actuel s'exécute de manière linéaire sans feedback loops, sans points de décision agent/humain, sans multi-turn, et sans capacité de re-planification.
+**Context:** Le DAG executor actuel s'exécute de manière linéaire sans feedback loops, sans points
+de décision agent/humain, sans multi-turn, et sans capacité de re-planification.
 
 **Rationale:**
-- Architecture hybride combine best practices de LangGraph MessagesState (reducers automatiques) + Event Stream (observability)
-- Score 95/100 après analyse comparative de 8 options (vs 80/100 pour State Machine, 68/100 pour Sync Checkpoints)
+
+- Architecture hybride combine best practices de LangGraph MessagesState (reducers automatiques) +
+  Event Stream (observability)
+- Score 95/100 après analyse comparative de 8 options (vs 80/100 pour State Machine, 68/100 pour
+  Sync Checkpoints)
 - 15% code reduction grâce aux reducers automatiques (add_messages, add_tasks, add_decisions)
 - Zero breaking changes - extension compatible de ParallelExecutor
 - Time to market: 9-13h vs 20-30h pour alternatives (State Machine full refactoring)
 - Performance préservée: Speedup 5x maintenu, speculation 23-30% gain
 
 **Architecture:**
+
 ```typescript
 // State avec reducers MessagesState-inspired
 interface WorkflowState {
-  messages: Message[];       // Reducer: append
-  tasks: TaskResult[];       // Reducer: append
-  decisions: Decision[];     // Reducer: append
+  messages: Message[]; // Reducer: append
+  tasks: TaskResult[]; // Reducer: append
+  decisions: Decision[]; // Reducer: append
   context: Record<string, any>; // Reducer: merge
 }
 
@@ -1869,6 +2013,7 @@ class ControlledExecutor extends ParallelExecutor {
 ```
 
 **Consequences:**
+
 - ✅ 100% requirements: AIL, HIL, multi-turn, dynamic DAG, GraphRAG re-trigger
 - ✅ Modern patterns: LangGraph v1.0 MessagesState best practices (2025)
 - ✅ Observability: Event stream pour monitoring temps réel
@@ -1877,12 +2022,14 @@ class ControlledExecutor extends ParallelExecutor {
 - ⚠️ Complexité moyenne: Event-driven + reducers (patterns standards)
 
 **Checkpoint Architecture:**
+
 - Sauvegarde: WorkflowState complet (tasks, decisions, messages, context)
 - Ne sauvegarde PAS: Filesystem state, external side-effects
 - Epic 2.5 = orchestration primarily → Checkpoints suffisants
 - Epic 3 (Sandbox) gérera isolation complète des modifications de code
 
 **Context Management:**
+
 - Un seul agent Claude en conversation continue
 - Agent voit tous les MCP results (comportement normal de Claude)
 - Pas de pruning/summary pour agent (décisions informées)
@@ -1891,23 +2038,27 @@ class ControlledExecutor extends ParallelExecutor {
 - Coût HIL: ~500-1000 tokens (generation summary UI)
 
 **Implementation:** 4 sprints progressifs (9-13h total)
+
 1. Sprint 1: State Management & Checkpoints avec reducers (2-3h)
 2. Sprint 2: Command Queue & Agent Control (2-3h)
 3. Sprint 3: Event-Driven + Human Loop (2-3h)
 4. Sprint 4: Speculative Execution (3-4h)
 
 **3-Loop Learning Architecture:**
+
 - **Loop 1 (Execution):** Event stream, state management, checkpoints (milliseconds)
 - **Loop 2 (Adaptation):** AIL/HIL, dynamic replanning, GraphRAG re-queries (seconds-minutes)
 - **Loop 3 (Meta-Learning):** Knowledge graph updates, pattern learning (per-workflow)
 
 **References:**
+
 - Technical Research: `docs/research-technical-2025-11-13.md`
 - Spike: `docs/spikes/spike-agent-human-dag-feedback-loop.md`
 - ADR Detail: `docs/adrs/ADR-007-dag-adaptive-feedback-loops.md`
 - ADR-008: `docs/adrs/ADR-008-episodic-memory-adaptive-thresholds.md` (Extension Loop 3)
 
-**User Insight:** "maintenant dans langgraph ya le message state je crois qui est plus flexible" - Analysis révèle que MessagesState + Event Stream sont complémentaires, pas opposés.
+**User Insight:** "maintenant dans langgraph ya le message state je crois qui est plus flexible" -
+Analysis révèle que MessagesState + Event Stream sont complémentaires, pas opposés.
 
 **Status:** ✅ Approved v2.0 (2025-11-14) - Implemented
 
@@ -1915,21 +2066,25 @@ class ControlledExecutor extends ParallelExecutor {
 
 ### ADR-008: Episodic Memory & Adaptive Thresholds for Meta-Learning
 
-**Decision:** Extend Loop 3 (Meta-Learning) with episodic memory storage and adaptive threshold learning
+**Decision:** Extend Loop 3 (Meta-Learning) with episodic memory storage and adaptive threshold
+learning
 
 **Status:** 🟡 Partially Implemented (Phase 1 Done 2025-11-25)
 
 **Rationale:**
+
 - Complete the 3-loop learning architecture (ADR-007)
 - Persist learning between sessions (thresholds survive restarts)
 - Enable context-aware predictions via historical episode retrieval
 - Implement sliding window algorithm (50 executions) for adaptive thresholds
 
 **Implementation:**
+
 - ✅ Phase 1: `EpisodicMemoryStore` (280 LOC), `AdaptiveThresholdManager` persistence (+100 LOC)
 - 🔴 Phase 2: ControlledExecutor + DAGSuggester integrations (after Epic 2.5/3.5)
 
 **Consequences:**
+
 - Self-improving system targeting 85% success rate
 - Thresholds adapt based on false positive/negative detection
 - Historical context improves prediction accuracy
@@ -1943,11 +2098,13 @@ class ControlledExecutor extends ParallelExecutor {
 **Status:** Proposed (2025-11-24)
 
 **Rationale:**
+
 - Resolves tension between PRD vision ("transparent gateway") and ADR-013 ("meta-tools only")
 - Provides flexibility for different user mental models
 - Addresses competitive positioning (drop-in replacement vs intent-based paradigm)
 
 **Consequences:**
+
 - Users can choose exposure mode based on preference
 - Documentation aligned with actual behavior
 - Broader addressable market
@@ -1956,21 +2113,25 @@ class ControlledExecutor extends ParallelExecutor {
 
 ### ADR-022: Hybrid Search Integration in DAG Suggester
 
-**Decision:** Make Hybrid Search (Semantic + Adamic-Adar + Graph Neighbors) the default for tool discovery
+**Decision:** Make Hybrid Search (Semantic + Adamic-Adar + Graph Neighbors) the default for tool
+discovery
 
 **Status:** Accepted (2025-11-27)
 
 **Rationale:**
+
 - Pure semantic search misses intermediate/related tools not explicitly in prompt
 - Story 5.1's hybrid search logic was trapped in `GatewayServer`, not reusable
 - Hybrid approach finds "hidden gems" (e.g., `npm_install` between `git_clone` and `deploy`)
 
 **Implementation:**
+
 - Extract hybrid search into `GraphRAGEngine.searchToolsHybrid()`
 - Update `DAGSuggester.suggestDAG()` to use hybrid search
 - Deprecate direct `VectorSearch` for high-level discovery
 
 **Consequences:**
+
 - More robust DAGs with fewer missing intermediate steps
 - Graph intelligence leveraged during candidate selection
 
@@ -1983,17 +2144,20 @@ class ControlledExecutor extends ParallelExecutor {
 **Status:** Proposed
 
 **Rationale:**
+
 - Static `limit * 2` is suboptimal for both cold start and mature graph scenarios
 - Cold start: Extra candidates wasteful (no graph signal)
 - Mature graph: Valuable tools might be semantically distant
 
 **Implementation:**
+
 - `expansion_multiplier` based on graph density:
   - Cold start (<0.01 density): 1.5x
   - Growing (0.01-0.10): 2.0x
   - Mature (>0.10): 3.0x
 
 **Consequences:**
+
 - Efficient resource usage in cold start
 - Better serendipitous discovery in mature systems
 
@@ -2006,23 +2170,25 @@ class ControlledExecutor extends ParallelExecutor {
 **Status:** Proposed
 
 **Rationale:**
+
 - Current greedy triangular approach creates ordering bias
 - If Parent appears after Child in list, dependency is missed
 - Risk increases with Hybrid Search injecting graph-related tools
 
 **Implementation:**
-- Check dependencies in both directions (N*N instead of N*(N-1)/2)
+
+- Check dependencies in both directions (N_N instead of N_(N-1)/2)
 - Add cycle detection and breaking (keep edge with higher confidence)
 
 **Consequences:**
+
 - Order-independent dependency detection
 - More robust DAG construction
 
 ---
 
-_Generated by BMAD Decision Architecture Workflow v1.3.2_
-_Date: 2025-11-03_
-_Updated: 2025-11-14 (ADR-007 Approved - Pattern 4: 3-Loop Learning Architecture with Checkpoint & Context Management clarifications)_
-_Updated: 2025-11-24 (ADR-019 - Two-Level AIL Architecture, MCP compatibility corrections)_
-_Updated: 2025-11-28 (Sync with PRD: BGE-M3 model, Epics 3.5-6 mapping, ADRs 008/017/022-024, modules learning/speculation)_
-_For: BMad_
+_Generated by BMAD Decision Architecture Workflow v1.3.2_ _Date: 2025-11-03_ _Updated: 2025-11-14
+(ADR-007 Approved - Pattern 4: 3-Loop Learning Architecture with Checkpoint & Context Management
+clarifications)_ _Updated: 2025-11-24 (ADR-019 - Two-Level AIL Architecture, MCP compatibility
+corrections)_ _Updated: 2025-11-28 (Sync with PRD: BGE-M3 model, Epics 3.5-6 mapping, ADRs
+008/017/022-024, modules learning/speculation)_ _For: BMad_

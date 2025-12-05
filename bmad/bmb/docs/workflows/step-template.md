@@ -1,6 +1,7 @@
 # BMAD Workflow Step Template
 
-This template provides the standard structure for all BMAD workflow step files. Copy and modify this template for each new step you create.
+This template provides the standard structure for all BMAD workflow step files. Copy and modify this
+template for each new step you create.
 
 ---
 
@@ -34,9 +35,11 @@ strategyTemplate: '{workflow_path}/templates/strategy-section.md'
 
 ## STEP GOAL:
 
-[State the goal in context of the overall workflow goal. Be specific about what this step accomplishes and how it contributes to the workflow's purpose.]
+[State the goal in context of the overall workflow goal. Be specific about what this step
+accomplishes and how it contributes to the workflow's purpose.]
 
-Example: "To analyze user requirements and document functional specifications that will guide the development process"
+Example: "To analyze user requirements and document functional specifications that will guide the
+development process"
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -50,9 +53,11 @@ Example: "To analyze user requirements and document functional specifications th
 ### Role Reinforcement:
 
 - ✅ You are a [specific role, e.g., "business analyst" or "technical architect"]
-- ✅ If you already have been given a name, communication_style and identity, continue to use those while playing this new role
+- ✅ If you already have been given a name, communication_style and identity, continue to use those
+  while playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
-- ✅ You bring [your expertise], user brings [their expertise], and together we produce something better than the sum of our own parts
+- ✅ You bring [your expertise], user brings [their expertise], and together we produce something
+  better than the sum of our own parts
 - ✅ Maintain collaborative [adjective] tone throughout
 
 ### Step-Specific Rules:
@@ -106,21 +111,26 @@ Display: "**Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Cont
 
 - IF A: Execute {advancedElicitationTask} # Or custom action
 - IF P: Execute {partyModeWorkflow}
-- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#n-present-menu-options)
+- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file,
+  then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#n-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 
 ## CRITICAL STEP COMPLETION NOTE
 
-[Specific conditions for completing this step and transitioning to the next, such as output to file being created with this tasks updates]
+[Specific conditions for completing this step and transitioning to the next, such as output to file
+being created with this tasks updates]
 
-ONLY WHEN [C continue option] is selected and [completion requirements], will you then load and read fully `[installed_path]/step-[next-number]-[name].md` to execute and begin [next step description].
+ONLY WHEN [C continue option] is selected and [completion requirements], will you then load and read
+fully `[installed_path]/step-[next-number]-[name].md` to execute and begin [next step description].
 
 ---
 
@@ -142,7 +152,8 @@ ONLY WHEN [C continue option] is selected and [completion requirements], will yo
 - Not updating required documents/frontmatter
 - [General failure modes]
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.
 
 ---
 
@@ -159,15 +170,18 @@ Display: "**Select an Option:** [A] [Advanced Elicitation] [P] Party Mode [C] Co
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#n-present-menu-options)
+- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file,
+  then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#n-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 ```
 
 ### Auto-Proceed Menu (No User Choice)
@@ -198,15 +212,18 @@ Display: "**Select an Option:** [A] [Custom Action 1] [B] [Custom Action 2] [C] 
 
 - IF A: [Custom handler for option A]
 - IF B: [Custom handler for option B]
-- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#n-present-menu-options)
+- IF C: Save content to {outputFile}, update frontmatter, then only then load, read entire file,
+  then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#n-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 ```
 
 ### Conditional Menu (Based on Workflow State)
@@ -222,21 +239,24 @@ Display: "**Select an Option:** [A] [Custom Label] [C] Continue"
 - IF C: Save content to {outputFile}, update frontmatter, check [condition]:
   - IF [condition true]: load, read entire file, then execute {pathA}
   - IF [condition false]: load, read entire file, then execute {pathB}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#n-present-menu-options)
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#n-present-menu-options)
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 ```
 
 ## Example Step Implementations
 
 ### Initialization Step Example
 
-See [step-01-init.md](../reference/workflows/meal-prep-nutrition/steps/step-01-init.md) for an example of:
+See [step-01-init.md](../reference/workflows/meal-prep-nutrition/steps/step-01-init.md) for an
+example of:
 
 - Detecting existing workflow state and short circuit to 1b
 - Creating output documents from templates
@@ -245,7 +265,8 @@ See [step-01-init.md](../reference/workflows/meal-prep-nutrition/steps/step-01-i
 
 ### Continuation Step Example
 
-See [step-01b-continue.md](../reference/workflows/meal-prep-nutrition/steps/step-01b-continue.md) for an example of:
+See [step-01b-continue.md](../reference/workflows/meal-prep-nutrition/steps/step-01b-continue.md)
+for an example of:
 
 - Handling already-in-progress workflows
 - Detecting completion status
@@ -254,7 +275,8 @@ See [step-01b-continue.md](../reference/workflows/meal-prep-nutrition/steps/step
 
 ### Standard Step with Menu Example
 
-See [step-02-profile.md](../reference/workflows/meal-prep-nutrition/steps/step-02-profile.md) for an example of:
+See [step-02-profile.md](../reference/workflows/meal-prep-nutrition/steps/step-02-profile.md) for an
+example of:
 
 - Presenting a menu with A/P/C options
 - Forcing halt until user selects 'C' (Continue)
@@ -264,7 +286,9 @@ See [step-02-profile.md](../reference/workflows/meal-prep-nutrition/steps/step-0
 
 ### Final Step Example
 
-See [step-06-prep-schedule.md](../reference/workflows/meal-prep-nutrition/steps/step-06-prep-schedule.md) for an example of:
+See
+[step-06-prep-schedule.md](../reference/workflows/meal-prep-nutrition/steps/step-06-prep-schedule.md)
+for an example of:
 
 - Completing workflow deliverables
 - Marking workflow as complete in frontmatter
@@ -277,7 +301,9 @@ See [step-06-prep-schedule.md](../reference/workflows/meal-prep-nutrition/steps/
 2. **Be explicit in instructions** - No ambiguity about what to do
 3. **Include all critical rules** - Don't assume anything from other steps
 4. **Use clear, concise language** - Avoid jargon unless necessary
-5. **Ensure all menu paths have handlers** - Ensure every option has clear instructions - use menu items that make sense for the situation.
+5. **Ensure all menu paths have handlers** - Ensure every option has clear instructions - use menu
+   items that make sense for the situation.
 6. **Document dependencies** - Clearly state what this step needs with full paths in front matter
 7. **Define success and failure clearly** - Both for the step and the workflow
-8. **Mark completion clearly** - Ensure final steps update frontmatter to indicate workflow completion
+8. **Mark completion clearly** - Ensure final steps update frontmatter to indicate workflow
+   completion

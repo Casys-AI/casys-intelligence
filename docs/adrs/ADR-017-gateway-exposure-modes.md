@@ -1,10 +1,8 @@
 # ADR-017: Gateway Exposure Modes
 
-**Status:** Proposed
-**Date:** 2025-11-24
-**Context:** Architectural drift between PRD vision and ADR-013 implementation
-**Decision Makers:** BMad (Product/Tech Lead)
-**Related:** ADR-013 (Meta-Tools Only Gateway)
+**Status:** Proposed **Date:** 2025-11-24 **Context:** Architectural drift between PRD vision and
+ADR-013 implementation **Decision Makers:** BMad (Product/Tech Lead) **Related:** ADR-013
+(Meta-Tools Only Gateway)
 
 ---
 
@@ -12,18 +10,24 @@
 
 ### Problem Statement
 
-AgentCards has an **architectural inconsistency** between documented vision and implementation regarding how tools are exposed to Claude Code:
+AgentCards has an **architectural inconsistency** between documented vision and implementation
+regarding how tools are exposed to Claude Code:
 
 **PRD Vision (docs/PRD.md, line 7):**
-> "AgentCards acts as a **transparent MCP gateway** that consolidates all your MCP servers into a single entry point"
+
+> "AgentCards acts as a **transparent MCP gateway** that consolidates all your MCP servers into a
+> single entry point"
 
 **ADR-013 Reality (Accepted 2025-11-14):**
+
 > "Meta-Tools Only with semantic discovery via `execute_workflow`"
+>
 > - Gateway exposes ONLY 2-3 meta-tools
 > - Direct tool access NOT exposed in `tools/list`
 > - Forces intent-based workflow pattern
 
 **README Examples (Obsolete):**
+
 ```typescript
 // Example implies direct tool access
 await callTool("filesystem:read_file", { path: "/config.json" });
@@ -33,17 +37,20 @@ await callTool("filesystem:read_file", { path: "/config.json" });
 ### Impact
 
 **1. User Friction:**
+
 - Users expect transparent proxy (call any tool directly)
 - Discover intent-based forced pattern (must use `execute_workflow`)
 - Mental model change: tool calls → workflow intents
 - Adoption barrier for users wanting "drop-in replacement"
 
 **2. Documentation Drift:**
+
 - README examples don't match reality
 - PRD promises transparent gateway
 - New users confused by discrepancy
 
 **3. Competitive Positioning:**
+
 - AIRIS, Smithery, Context Forge: Transparent proxies
 - AgentCards: Meta-tools only (different paradigm)
 - May limit addressable market to "advanced users"
@@ -51,6 +58,7 @@ await callTool("filesystem:read_file", { path: "/config.json" });
 ### Discovery Source
 
 Comprehensive audit (2025-11-24) identified this architectural drift as:
+
 - **Severity:** MEDIUM (DX degradation)
 - **Priority:** P1 (resolve before launch)
 - **Impact:** Adoption friction, documentation inconsistency
@@ -64,21 +72,25 @@ Comprehensive audit (2025-11-24) identified this architectural drift as:
 1. **Context Optimization Goal:** Maintain <5% context usage
 2. **Backward Compatibility:** Don't break existing intent-based workflows
 3. **User Experience:** Minimize adoption friction
-4. **Competitive Differentiation:** GraphRAG + semantic discovery unique, but transparent proxy expected
+4. **Competitive Differentiation:** GraphRAG + semantic discovery unique, but transparent proxy
+   expected
 5. **Implementation Complexity:** Solution must be feasible in Sprint 1 (1 week)
 
 ### Stakeholder Feedback
 
 **Early Adopters (Hypothetical Beta Program):**
+
 - Want transparent proxy for "simple" tool calls
 - Appreciate intent-based for complex workflows
 - Confused when direct tool access fails
 
 **Power Users:**
+
 - Prefer intent-based (less verbose)
 - But want fallback to direct access for debugging
 
 **Developers:**
+
 - Need transparent proxy for migration from direct MCP
 - Willing to learn intent-based after onboarding
 
@@ -88,10 +100,10 @@ Comprehensive audit (2025-11-24) identified this architectural drift as:
 
 ### Option A: Revert to Full Transparent Proxy
 
-**Description:**
-Remove ADR-013 meta-tools restriction. Expose all underlying tools in `tools/list`.
+**Description:** Remove ADR-013 meta-tools restriction. Expose all underlying tools in `tools/list`.
 
 **Implementation:**
+
 ```typescript
 async handleListTools(request: unknown): Promise<ListToolsResult> {
   // Load ALL tools from all MCP servers
@@ -101,12 +113,14 @@ async handleListTools(request: unknown): Promise<ListToolsResult> {
 ```
 
 **Pros:**
+
 - ✅ Matches PRD vision ("transparent gateway")
 - ✅ Zero adoption friction (drop-in replacement)
 - ✅ Aligns with competitors (AIRIS, Smithery)
 - ✅ README examples work as-is
 
 **Cons:**
+
 - ❌ **Defeats context optimization goal** (30-50% context saturation)
 - ❌ ADR-013 rationale invalid (44.5k tokens → 500 tokens lost)
 - ❌ Loses semantic discovery competitive advantage
@@ -118,31 +132,37 @@ async handleListTools(request: unknown): Promise<ListToolsResult> {
 
 ### Option B: Keep Meta-Tools Only (Status Quo + Documentation Fix)
 
-**Description:**
-Maintain ADR-013 as-is. Update PRD, README to clarify meta-tools only paradigm.
+**Description:** Maintain ADR-013 as-is. Update PRD, README to clarify meta-tools only paradigm.
 
 **Implementation:**
-```markdown
+
+````markdown
 # README.md (Updated)
+
 AgentCards uses **semantic intent-based workflows** instead of direct tool calls.
 
 ## ❌ OLD (Direct Tool Calls)
+
 ```typescript
 await callTool("filesystem:read_file", { path: "/config.json" });
 ```
+````
 
 ## ✅ NEW (Intent-Based Workflows)
+
 ```typescript
 await executeWorkflow("Read the config.json file");
 ```
 
 **Pros:**
+
 - ✅ Maintains ADR-013 rationale (context optimization)
 - ✅ Forces best practice (semantic discovery)
 - ✅ Zero implementation effort (doc-only fix)
 - ✅ Preserves competitive differentiation
 
 **Cons:**
+
 - ❌ Adoption friction remains (paradigm shift required)
 - ❌ Migration from direct MCP harder
 - ❌ Debugging difficult (can't call specific tool for testing)
@@ -154,8 +174,8 @@ await executeWorkflow("Read the config.json file");
 
 ### Option C: Hybrid Mode (Configurable Exposure) ✅ RECOMMENDED
 
-**Description:**
-Support BOTH transparent proxy AND meta-tools via configuration. Default to meta-tools (ADR-013), allow opt-in to hybrid/full proxy.
+**Description:** Support BOTH transparent proxy AND meta-tools via configuration. Default to
+meta-tools (ADR-013), allow opt-in to hybrid/full proxy.
 
 **Implementation:**
 
@@ -177,13 +197,13 @@ export interface GatewayConfig {
   tools_exposure: "meta_only" | "semantic" | "hybrid" | "full_proxy";
 
   hybrid?: {
-    expose_meta_tools: boolean;              // Default: true
-    expose_underlying_tools: boolean;        // Default: true
-    apply_semantic_filter: boolean;          // Default: true (filter by relevance)
-    max_underlying_tools: number;            // Default: 50 (cap for context)
-    semantic_threshold: number;              // Default: 0.6 (relevance cutoff)
-    whitelisted_tools?: string[];            // Explicitly include tools
-    blacklisted_tools?: string[];            // Explicitly exclude tools
+    expose_meta_tools: boolean; // Default: true
+    expose_underlying_tools: boolean; // Default: true
+    apply_semantic_filter: boolean; // Default: true (filter by relevance)
+    max_underlying_tools: number; // Default: 50 (cap for context)
+    semantic_threshold: number; // Default: 0.6 (relevance cutoff)
+    whitelisted_tools?: string[]; // Explicitly include tools
+    blacklisted_tools?: string[]; // Explicitly exclude tools
   };
 }
 ```
@@ -322,21 +342,26 @@ full_proxy:
 
 #### 4. Migration Path
 
-```markdown
+````markdown
 ## Migration Guide: Direct MCP → AgentCards
 
 ### Phase 1: Full Proxy (Week 1-2)
+
 Start with transparent proxy to minimize disruption:
+
 ```yaml
 # ~/.agentcards/config.yaml
 gateway:
   tools_exposure: "full_proxy"
 ```
+````
 
 All existing tool calls work unchanged.
 
 ### Phase 2: Hybrid Permissive (Week 3-4)
+
 Introduce semantic filtering:
+
 ```yaml
 gateway:
   tools_exposure: "hybrid"
@@ -348,7 +373,9 @@ gateway:
 Context usage reduced 50%, most tools still accessible.
 
 ### Phase 3: Hybrid Balanced (Month 2)
+
 Tighten semantic filter:
+
 ```yaml
 gateway:
   tools_exposure: "hybrid"
@@ -360,15 +387,17 @@ gateway:
 Context usage <10%, learn intent-based patterns.
 
 ### Phase 4: Meta-Only (Month 3+)
+
 Full intent-based workflows:
+
 ```yaml
 gateway:
   tools_exposure: "meta_only"
 ```
 
 Context usage <5%, maximum efficiency.
-```
 
+````
 **Pros:**
 - ✅ **Satisfies both paradigms** (transparent proxy + intent-based)
 - ✅ **Smooth migration path** (full_proxy → hybrid → meta_only)
@@ -406,14 +435,16 @@ async handleListTools(request: ListToolsRequest): Promise<ListToolsResult> {
 
   return { tools: [...this.metaTools, ...relevantTools] };
 }
-```
+````
 
 **Pros:**
+
 - ✅ Automatic context optimization (no user config)
 - ✅ Exposes underlying tools (satisfies PRD)
 - ✅ Semantic discovery always active
 
 **Cons:**
+
 - ❌ Context extraction unreliable (conversation may be vague)
 - ❌ Non-deterministic (tool list changes based on context)
 - ❌ Debugging difficult (which tools available?)
@@ -440,7 +471,7 @@ async handleListTools(request: ListToolsRequest): Promise<ListToolsResult> {
 ```yaml
 # ~/.agentcards/config.yaml (default)
 gateway:
-  tools_exposure: "meta_only"  # ADR-013 preserved as default
+  tools_exposure: "meta_only" # ADR-013 preserved as default
 ```
 
 Users opt-in to hybrid/full_proxy as needed.
@@ -511,16 +542,19 @@ Users opt-in to hybrid/full_proxy as needed.
 ### Sprint 1 (1 week)
 
 **Day 1-2: Core Implementation**
+
 - Add `tools_exposure` config field
 - Implement mode switcher in `handleListTools()`
 - Add `getHybridUnderlyingTools()` helper
 
 **Day 3: Presets & Validation**
+
 - Create `config/gateway-presets.yaml`
 - Add config validation (Zod schema)
 - CLI: `agentcards config --preset hybrid_balanced`
 
 **Day 4-5: Testing & Documentation**
+
 - Integration tests (4 modes × 3 scenarios)
 - Update README with mode comparison table
 - Create migration guide
@@ -531,11 +565,13 @@ Users opt-in to hybrid/full_proxy as needed.
 ### Sprint 2 (ongoing)
 
 **Telemetry & Analytics:**
+
 - Track mode usage (anonymous)
 - Context usage per mode (validate optimization)
 - Conversion tracking (full_proxy → meta_only journey)
 
 **UX Improvements:**
+
 - CLI wizard: `agentcards config --wizard`
 - Config validation warnings
 - Performance dashboard (context usage real-time)
@@ -544,9 +580,8 @@ Users opt-in to hybrid/full_proxy as needed.
 
 ## Alternatives Rejected
 
-**Option A (Full Transparent Proxy):** Violates context optimization goal
-**Option B (Meta-Tools Only):** High adoption friction
-**Option D (Automatic Filtering):** Too magical, unpredictable
+**Option A (Full Transparent Proxy):** Violates context optimization goal **Option B (Meta-Tools
+Only):** High adoption friction **Option D (Automatic Filtering):** Too magical, unpredictable
 
 ---
 
@@ -561,9 +596,7 @@ Users opt-in to hybrid/full_proxy as needed.
 
 ## Review & Approval
 
-**Status:** Proposed (Awaiting Review)
-**Proposer:** Mary (Business Analyst)
-**Date:** 2025-11-24
+**Status:** Proposed (Awaiting Review) **Proposer:** Mary (Business Analyst) **Date:** 2025-11-24
 **Next Step:** BMad review & decision (Approve/Reject/Request Changes)
 
 **Implementation Target:** Sprint 1 (Week starting 2025-11-25)
@@ -572,12 +605,13 @@ Users opt-in to hybrid/full_proxy as needed.
 
 **Appendix: Context Usage Comparison**
 
-| Mode | Tools Exposed | Context Tokens | Use Case |
-|------|---------------|----------------|----------|
-| meta_only | 2-3 | ~500 (0.5%) | Production, advanced users |
-| semantic | 2-30 | ~3-5k (3-5%) | Balanced, auto-optimization |
-| hybrid (balanced) | 2-20 | ~3-5k (3-5%) | Power users, mixed workflows |
-| hybrid (permissive) | 2-50 | ~8-10k (8-10%) | Development, testing |
-| full_proxy | 687 | ~44.5k (30-50%) | Migration, legacy |
+| Mode                | Tools Exposed | Context Tokens  | Use Case                     |
+| ------------------- | ------------- | --------------- | ---------------------------- |
+| meta_only           | 2-3           | ~500 (0.5%)     | Production, advanced users   |
+| semantic            | 2-30          | ~3-5k (3-5%)    | Balanced, auto-optimization  |
+| hybrid (balanced)   | 2-20          | ~3-5k (3-5%)    | Power users, mixed workflows |
+| hybrid (permissive) | 2-50          | ~8-10k (8-10%)  | Development, testing         |
+| full_proxy          | 687           | ~44.5k (30-50%) | Migration, legacy            |
 
-**Recommendation:** Start with full_proxy (migration), transition to hybrid_balanced (week 3), optimize to meta_only (month 2+).
+**Recommendation:** Start with full_proxy (migration), transition to hybrid_balanced (week 3),
+optimize to meta_only (month 2+).

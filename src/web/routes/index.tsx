@@ -1,16 +1,16 @@
 // @ts-nocheck
 import { page } from "fresh";
 import { Head } from "fresh/runtime";
-import { getPosts, formatDate, type Post } from "../utils/posts.ts";
+import { formatDate, getPosts, type Post } from "../utils/posts.ts";
 
 import {
-  ThreeLoopIllustration,
   CapabilitiesIllustration,
-  HypergraphIllustration,
-  StructuralEmergenceIllustration,
-  SandboxIllustration,
   HILIllustration,
-  SearchIllustration
+  HypergraphIllustration,
+  SandboxIllustration,
+  SearchIllustration,
+  StructuralEmergenceIllustration,
+  ThreeLoopIllustration,
 } from "../components/FeatureIllustrations.tsx";
 
 export const handler = {
@@ -53,46 +53,58 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
           <svg class="network-svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
             <defs>
               <radialGradient id="node-pulse" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#FFB86F" stop-opacity="0.8"/>
-                <stop offset="100%" stop-color="#FFB86F" stop-opacity="0"/>
+                <stop offset="0%" stop-color="#FFB86F" stop-opacity="0.8" />
+                <stop offset="100%" stop-color="#FFB86F" stop-opacity="0" />
               </radialGradient>
               <filter id="glow">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                 <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
             </defs>
 
             {/* Network connections - animated */}
             <g class="connections" stroke="#FFB86F" stroke-width="1" fill="none" opacity="0.15">
-              <path d="M100,200 Q300,100 500,200 T900,150" class="path-1"/>
-              <path d="M200,400 Q400,300 600,400 T1000,350" class="path-2"/>
-              <path d="M0,600 Q200,500 400,600 T800,550" class="path-3"/>
-              <path d="M300,100 L500,300 L700,200 L900,400" class="path-4"/>
-              <path d="M100,500 L300,350 L500,500 L700,350 L900,500" class="path-5"/>
+              <path d="M100,200 Q300,100 500,200 T900,150" class="path-1" />
+              <path d="M200,400 Q400,300 600,400 T1000,350" class="path-2" />
+              <path d="M0,600 Q200,500 400,600 T800,550" class="path-3" />
+              <path d="M300,100 L500,300 L700,200 L900,400" class="path-4" />
+              <path d="M100,500 L300,350 L500,500 L700,350 L900,500" class="path-5" />
             </g>
 
             {/* Floating nodes */}
             <g class="nodes">
-              <circle cx="200" cy="200" r="4" fill="#FFB86F" opacity="0.6" class="node-float-1"/>
-              <circle cx="500" cy="300" r="6" fill="#FFB86F" opacity="0.8" class="node-float-2"/>
-              <circle cx="800" cy="200" r="3" fill="#FFB86F" opacity="0.5" class="node-float-3"/>
-              <circle cx="300" cy="500" r="5" fill="#FFB86F" opacity="0.7" class="node-float-4"/>
-              <circle cx="700" cy="450" r="4" fill="#FFB86F" opacity="0.6" class="node-float-5"/>
-              <circle cx="1000" cy="300" r="5" fill="#FFB86F" opacity="0.4" class="node-float-6"/>
+              <circle cx="200" cy="200" r="4" fill="#FFB86F" opacity="0.6" class="node-float-1" />
+              <circle cx="500" cy="300" r="6" fill="#FFB86F" opacity="0.8" class="node-float-2" />
+              <circle cx="800" cy="200" r="3" fill="#FFB86F" opacity="0.5" class="node-float-3" />
+              <circle cx="300" cy="500" r="5" fill="#FFB86F" opacity="0.7" class="node-float-4" />
+              <circle cx="700" cy="450" r="4" fill="#FFB86F" opacity="0.6" class="node-float-5" />
+              <circle cx="1000" cy="300" r="5" fill="#FFB86F" opacity="0.4" class="node-float-6" />
             </g>
 
             {/* Data packets traveling along paths */}
             <circle r="3" fill="#FFB86F" filter="url(#glow)">
-              <animateMotion dur="8s" repeatCount="indefinite" path="M100,200 Q300,100 500,200 T900,150"/>
+              <animateMotion
+                dur="8s"
+                repeatCount="indefinite"
+                path="M100,200 Q300,100 500,200 T900,150"
+              />
             </circle>
             <circle r="2" fill="#FFB86F" filter="url(#glow)">
-              <animateMotion dur="10s" repeatCount="indefinite" path="M200,400 Q400,300 600,400 T1000,350"/>
+              <animateMotion
+                dur="10s"
+                repeatCount="indefinite"
+                path="M200,400 Q400,300 600,400 T1000,350"
+              />
             </circle>
             <circle r="2.5" fill="#FFB86F" filter="url(#glow)">
-              <animateMotion dur="12s" repeatCount="indefinite" path="M0,600 Q200,500 400,600 T800,550"/>
+              <animateMotion
+                dur="12s"
+                repeatCount="indefinite"
+                path="M0,600 Q200,500 400,600 T800,550"
+              />
             </circle>
           </svg>
         </div>
@@ -110,38 +122,57 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
               <a href="#moat" class="nav-link">Moat</a>
               <a href="/blog" class="nav-link">Blog</a>
               <a href="/dashboard" class="nav-link">Dashboard</a>
-              <a href="https://github.com/Casys-AI/casys-intelligence" class="nav-link nav-link-github" target="_blank" rel="noopener">
+              <a
+                href="https://github.com/Casys-AI/casys-intelligence"
+                class="nav-link nav-link-github"
+                target="_blank"
+                rel="noopener"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                 </svg>
               </a>
             </nav>
           </div>
         </header>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             HERO - The Core Promise
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         <main class="hero">
           <div class="hero-content">
             <p class="hero-eyebrow">The Intelligence Layer for MCP</p>
             <h1 class="hero-title">
-              Patterns become capabilities.<br/>
+              Patterns become capabilities.<br />
               Capabilities become <span class="hero-title-accent">collective.</span>
             </h1>
             <p class="hero-desc">
-              CAI isn't a gateway. It's where agent intelligence emerges.<br/>
-              Every execution reveals patterns. Patterns crystallize into capabilities.<br/>
+              CAI isn't a gateway. It's where agent intelligence emerges.<br />
+              Every execution reveals patterns. Patterns crystallize into capabilities.<br />
               The more agents use it, the smarter everyone gets.
             </p>
             <div class="hero-actions">
               <a href="#how" class="btn btn-primary">
                 See How It Works
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 5v14M5 12l7 7 7-7"/>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 5v14M5 12l7 7 7-7" />
                 </svg>
               </a>
-              <a href="https://github.com/Casys-AI/casys-intelligence" class="btn btn-ghost" target="_blank" rel="noopener">
+              <a
+                href="https://github.com/Casys-AI/casys-intelligence"
+                class="btn btn-ghost"
+                target="_blank"
+                rel="noopener"
+              >
                 View Source
               </a>
             </div>
@@ -151,31 +182,33 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
           <div class="insight-card">
             <div class="insight-quote">"</div>
             <p class="insight-text">
-              Smithery is npm — the packages.<br/>
+              Smithery is npm — the packages.<br />
               <strong>CAI is the intelligent runtime</strong> that knows how to combine them.
             </p>
           </div>
         </main>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             THE PROBLEM
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         <section id="problem" class="section-problem">
           <div class="container">
             <div class="problem-grid">
               <div class="problem-content">
                 <span class="section-label">The Problem</span>
                 <h2 class="problem-title">
-                  Agents discover patterns.<br/>
+                  Agents discover patterns.<br />
                   <span class="problem-highlight">Then they're lost.</span>
                 </h2>
                 <p class="problem-desc">
-                  Your agent finds a brilliant way to combine three MCPs.
-                  Session ends. Pattern gone. Next agent? Rediscovers the same thing.
+                  Your agent finds a brilliant way to combine three MCPs. Session ends. Pattern
+                  gone. Next agent? Rediscovers the same thing.
                 </p>
                 <p class="problem-desc">
-                  No one learns. No patterns get promoted. No capabilities emerge.
-                  Every agent reinvents the wheel, alone.
+                  No one learns. No patterns get promoted. No capabilities emerge. Every agent
+                  reinvents the wheel, alone.
                 </p>
               </div>
               <div class="problem-visual">
@@ -187,7 +220,12 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
                   <div class="amnesia-arrow">
                     <span>forgotten</span>
                     <svg width="40" height="40" viewBox="0 0 40 40">
-                      <path d="M10 20 L30 20 M25 15 L30 20 L25 25" stroke="#f87171" stroke-width="2" fill="none"/>
+                      <path
+                        d="M10 20 L30 20 M25 15 L30 20 L25 25"
+                        stroke="#f87171"
+                        stroke-width="2"
+                        fill="none"
+                      />
                     </svg>
                   </div>
                   <div class="session session-2">
@@ -197,7 +235,12 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
                   <div class="amnesia-arrow">
                     <span>forgotten</span>
                     <svg width="40" height="40" viewBox="0 0 40 40">
-                      <path d="M10 20 L30 20 M25 15 L30 20 L25 25" stroke="#f87171" stroke-width="2" fill="none"/>
+                      <path
+                        d="M10 20 L30 20 M25 15 L30 20 L25 25"
+                        stroke="#f87171"
+                        stroke-width="2"
+                        fill="none"
+                      />
                     </svg>
                   </div>
                   <div class="session session-3">
@@ -210,16 +253,18 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             THE SOLUTION - Two Levels of Emergence
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         <section id="how" class="section-solution">
           <div class="container">
             <div class="section-header">
               <span class="section-label">The Solution</span>
               <h2 class="section-title">Two Levels of Emergence</h2>
               <p class="section-desc">
-                CAI tracks how agents combine MCPs — both planned and improvised.<br/>
+                CAI tracks how agents combine MCPs — both planned and improvised.<br />
                 Patterns that work get promoted to explicit capabilities.
               </p>
             </div>
@@ -229,19 +274,27 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
               <div class="emergence-card">
                 <div class="emergence-icon">
                   <svg viewBox="0 0 48 48" fill="none">
-                    <path d="M8 24h8M32 24h8M24 8v8M24 32v8" stroke="#FFB86F" stroke-width="2"/>
-                    <rect x="16" y="16" width="16" height="16" rx="2" stroke="#FFB86F" stroke-width="2"/>
-                    <circle cx="8" cy="24" r="3" fill="#FFB86F"/>
-                    <circle cx="40" cy="24" r="3" fill="#FFB86F"/>
-                    <circle cx="24" cy="8" r="3" fill="#FFB86F"/>
-                    <circle cx="24" cy="40" r="3" fill="#FFB86F"/>
+                    <path d="M8 24h8M32 24h8M24 8v8M24 32v8" stroke="#FFB86F" stroke-width="2" />
+                    <rect
+                      x="16"
+                      y="16"
+                      width="16"
+                      height="16"
+                      rx="2"
+                      stroke="#FFB86F"
+                      stroke-width="2"
+                    />
+                    <circle cx="8" cy="24" r="3" fill="#FFB86F" />
+                    <circle cx="40" cy="24" r="3" fill="#FFB86F" />
+                    <circle cx="24" cy="8" r="3" fill="#FFB86F" />
+                    <circle cx="24" cy="40" r="3" fill="#FFB86F" />
                   </svg>
                 </div>
                 <span class="emergence-level">Level 1</span>
                 <h3 class="emergence-title">Structural Emergence</h3>
                 <p class="emergence-desc">
-                  The orchestrator analyzes intent and builds optimal DAGs.
-                  Routes calls intelligently, parallelizes where possible.
+                  The orchestrator analyzes intent and builds optimal DAGs. Routes calls
+                  intelligently, parallelizes where possible.
                   <strong>Relationships emerge from planning.</strong>
                 </p>
                 <div class="emergence-visual">
@@ -253,18 +306,23 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
               <div class="emergence-card emergence-card-accent">
                 <div class="emergence-icon">
                   <svg viewBox="0 0 48 48" fill="none">
-                    <path d="M12 36 L24 12 L36 36" stroke="#a78bfa" stroke-width="2" fill="none"/>
-                    <circle cx="24" cy="12" r="4" stroke="#a78bfa" stroke-width="2"/>
-                    <circle cx="12" cy="36" r="4" stroke="#a78bfa" stroke-width="2"/>
-                    <circle cx="36" cy="36" r="4" stroke="#a78bfa" stroke-width="2"/>
-                    <path d="M18 28 Q24 20 30 28" stroke="#a78bfa" stroke-width="2" stroke-dasharray="3 3"/>
+                    <path d="M12 36 L24 12 L36 36" stroke="#a78bfa" stroke-width="2" fill="none" />
+                    <circle cx="24" cy="12" r="4" stroke="#a78bfa" stroke-width="2" />
+                    <circle cx="12" cy="36" r="4" stroke="#a78bfa" stroke-width="2" />
+                    <circle cx="36" cy="36" r="4" stroke="#a78bfa" stroke-width="2" />
+                    <path
+                      d="M18 28 Q24 20 30 28"
+                      stroke="#a78bfa"
+                      stroke-width="2"
+                      stroke-dasharray="3 3"
+                    />
                   </svg>
                 </div>
                 <span class="emergence-level">Level 2</span>
                 <h3 class="emergence-title">Behavioral Emergence</h3>
                 <p class="emergence-desc">
-                  Agents generate code that combines MCPs in improvised ways.
-                  Novel combinations that no one designed upfront.
+                  Agents generate code that combines MCPs in improvised ways. Novel combinations
+                  that no one designed upfront.
                   <strong>Capabilities emerge from execution.</strong>
                 </p>
                 <div class="emergence-visual">
@@ -297,9 +355,11 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             THE MOAT - Network Effect
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         <section id="moat" class="section-moat">
           <div class="container">
             <div class="section-header">
@@ -324,8 +384,10 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
                 </ul>
                 <div class="moat-graph">
                   <svg viewBox="0 0 200 80" fill="none">
-                    <path d="M10 70 L190 60" stroke="#8a8078" stroke-width="2"/>
-                    <text x="100" y="40" fill="#8a8078" font-size="10" text-anchor="middle">Linear growth</text>
+                    <path d="M10 70 L190 60" stroke="#8a8078" stroke-width="2" />
+                    <text x="100" y="40" fill="#8a8078" font-size="10" text-anchor="middle">
+                      Linear growth
+                    </text>
                   </svg>
                 </div>
               </div>
@@ -345,8 +407,10 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
                 </ul>
                 <div class="moat-graph">
                   <svg viewBox="0 0 200 80" fill="none">
-                    <path d="M10 70 Q60 65 100 40 T190 10" stroke="#FFB86F" stroke-width="2"/>
-                    <text x="100" y="60" fill="#FFB86F" font-size="10" text-anchor="middle">Exponential growth</text>
+                    <path d="M10 70 Q60 65 100 40 T190 10" stroke="#FFB86F" stroke-width="2" />
+                    <text x="100" y="60" fill="#FFB86F" font-size="10" text-anchor="middle">
+                      Exponential growth
+                    </text>
                   </svg>
                 </div>
               </div>
@@ -354,16 +418,18 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
 
             <div class="moat-insight">
               <p>
-                A fork starts with zero patterns. Zero capabilities.<br/>
+                A fork starts with zero patterns. Zero capabilities.<br />
                 <strong>The value is in the learned patterns, not the code.</strong>
               </p>
             </div>
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             TECHNICAL FOUNDATION
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         <section class="section-tech">
           <div class="container">
             <div class="section-header">
@@ -377,7 +443,10 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
                   <HypergraphIllustration />
                 </div>
                 <h4>Hypergraph Structure</h4>
-                <p>N-ary relationships capture how tools combine into capabilities. Not just pairs — full patterns.</p>
+                <p>
+                  N-ary relationships capture how tools combine into capabilities. Not just pairs —
+                  full patterns.
+                </p>
               </div>
 
               <div class="tech-card">
@@ -401,7 +470,9 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
                   <SearchIllustration />
                 </div>
                 <h4>Semantic Routing</h4>
-                <p>BGE embeddings understand intent. Find tools by description, not memorization.</p>
+                <p>
+                  BGE embeddings understand intent. Find tools by description, not memorization.
+                </p>
               </div>
             </div>
 
@@ -422,9 +493,11 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             LATEST POSTS
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         {latestPosts.length > 0 && (
           <section class="section-blog">
             <div class="container">
@@ -465,25 +538,39 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
           </section>
         )}
 
-        {/* ═══════════════════════════════════════════════════════════════════
+        {
+          /* ═══════════════════════════════════════════════════════════════════
             CTA
-        ═══════════════════════════════════════════════════════════════════ */}
+        ═══════════════════════════════════════════════════════════════════ */
+        }
         <section class="section-cta">
           <div class="container">
             <div class="cta-content">
               <h2>Ready to stop reinventing?</h2>
               <p>Self-host with full control, or join the collective intelligence.</p>
               <div class="cta-actions">
-                <a href="https://github.com/Casys-AI/casys-intelligence" class="btn btn-primary" target="_blank" rel="noopener">
+                <a
+                  href="https://github.com/Casys-AI/casys-intelligence"
+                  class="btn btn-primary"
+                  target="_blank"
+                  rel="noopener"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
                   </svg>
                   Clone & Self-Host
                 </a>
                 <a href="https://casys.ai" class="btn btn-accent" target="_blank" rel="noopener">
                   Join the Collective
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </a>
               </div>
@@ -500,13 +587,20 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
             </div>
             <div class="footer-links">
               <a href="https://casys.ai" target="_blank" rel="noopener">Casys.ai</a>
-              <a href="https://github.com/Casys-AI/casys-intelligence" target="_blank" rel="noopener">GitHub</a>
+              <a
+                href="https://github.com/Casys-AI/casys-intelligence"
+                target="_blank"
+                rel="noopener"
+              >
+                GitHub
+              </a>
               <a href="/dashboard">Dashboard</a>
             </div>
           </div>
         </footer>
 
-        <style>{`
+        <style>
+          {`
           /* ═══════════════════════════════════════════════════════════════════
              DESIGN TOKENS
           ═══════════════════════════════════════════════════════════════════ */
@@ -1541,7 +1635,8 @@ export default function LandingPage({ data }: { data: { latestPosts: Post[] } })
             background: var(--accent);
             color: var(--bg);
           }
-        `}</style>
+        `}
+        </style>
       </div>
     </>
   );

@@ -1,25 +1,39 @@
 # Epic Technical Specification: Agent Code Execution & Local Processing
 
-Date: 2025-11-20
-Author: BMad
-Epic ID: 3
-Status: Draft
+Date: 2025-11-20 Author: BMad Epic ID: 3 Status: Draft
 
 ---
 
 ## Overview
 
-Epic 3 implémente un environnement d'exécution de code TypeScript sécurisé et isolé, permettant aux agents LLM d'**écrire du code de traitement** qui s'exécute localement pour filtrer/agréger les données volumineuses, retournant uniquement un résumé compact au contexte LLM. Inspiré par l'approche Anthropic de code execution, le flow typique est: (1) L'agent LLM voit les tools disponibles via vector search (Epic 1), (2) L'agent **décide** quelle analyse faire et **écrit le code TypeScript** pour la réaliser, (3) Ce code s'exécute dans un sandbox Deno isolé avec accès aux MCP tools, (4) Le résultat traité retourne au contexte LLM, pas les données brutes.
+Epic 3 implémente un environnement d'exécution de code TypeScript sécurisé et isolé, permettant aux
+agents LLM d'**écrire du code de traitement** qui s'exécute localement pour filtrer/agréger les
+données volumineuses, retournant uniquement un résumé compact au contexte LLM. Inspiré par
+l'approche Anthropic de code execution, le flow typique est: (1) L'agent LLM voit les tools
+disponibles via vector search (Epic 1), (2) L'agent **décide** quelle analyse faire et **écrit le
+code TypeScript** pour la réaliser, (3) Ce code s'exécute dans un sandbox Deno isolé avec accès aux
+MCP tools, (4) Le résultat traité retourne au contexte LLM, pas les données brutes.
 
-**Exemple concret:** L'agent reçoit la requête "Analyse les commits de la semaine dernière". Via vector search, il découvre le tool `github.listCommits()`. L'agent **écrit alors du code TypeScript** qui appelle ce tool, filtre les commits de la semaine dernière, agrège par auteur, et retourne `{ total: 42, top_authors: [...] }` (500 bytes) au lieu des 1000 commits bruts (1.2MB). Le LLM garde le contrôle de **quoi** analyser, mais le traitement lourd s'exécute localement, économisant 99.96% du contexte.
+**Exemple concret:** L'agent reçoit la requête "Analyse les commits de la semaine dernière". Via
+vector search, il découvre le tool `github.listCommits()`. L'agent **écrit alors du code
+TypeScript** qui appelle ce tool, filtre les commits de la semaine dernière, agrège par auteur, et
+retourne `{ total: 42, top_authors: [...] }` (500 bytes) au lieu des 1000 commits bruts (1.2MB). Le
+LLM garde le contrôle de **quoi** analyser, mais le traitement lourd s'exécute localement,
+économisant 99.96% du contexte.
 
-Epic 3 représente le **point de délégation** entre Epic 2.5 (ControlledExecutor orchestration) et l'exécution de code isolée : le ControlledExecutor peut inclure des tâches `code_execution` dans ses DAGs, qui s'exécutent dans un sandbox Deno avec permissions explicites, filesystem virtuel (ou hooks pour), et capacité de rollback sans side-effects. Cette architecture safe-to-fail débloque la speculation agressive (Epic 3.5) puisque les branches sandbox échouées ne corrompent pas l'état système.
+Epic 3 représente le **point de délégation** entre Epic 2.5 (ControlledExecutor orchestration) et
+l'exécution de code isolée : le ControlledExecutor peut inclure des tâches `code_execution` dans ses
+DAGs, qui s'exécutent dans un sandbox Deno avec permissions explicites, filesystem virtuel (ou hooks
+pour), et capacité de rollback sans side-effects. Cette architecture safe-to-fail débloque la
+speculation agressive (Epic 3.5) puisque les branches sandbox échouées ne corrompent pas l'état
+système.
 
 ## Objectives and Scope
 
 ### In Scope
 
 **Core Sandbox Foundation (Stories 3.1-3.2):**
+
 - ✅ Deno sandbox executor avec isolation complète (subprocess, permissions explicites)
 - ✅ Timeout enforcement (30s default), memory limits (512MB heap)
 - ✅ MCP tools injection dans le contexte sandbox via vector search
@@ -27,6 +41,7 @@ Epic 3 représente le **point de délégation** entre Epic 2.5 (ControlledExecut
 - ✅ Error handling structuré (syntax, runtime, timeout errors)
 
 **Code Execution Integration (Story 3.4):**
+
 - ✅ MCP tool `agentcards:execute_code` exposé via gateway
 - ✅ Intent-based mode (vector search → inject tools) et explicit mode
 - ✅ DAG integration: nouveau type de tâche `code_execution`
@@ -34,12 +49,14 @@ Epic 3 représente le **point de délégation** entre Epic 2.5 (ControlledExecut
 - ✅ Checkpoint-compatible (résultats structurés pour PGlite persistence)
 
 **Safe-to-Fail & Rollback Foundation (Story 3.4 + prep 3.5):**
+
 - ✅ Virtual filesystem hooks (ou implémentation basique)
 - ✅ Rollback support: exécution peut être aborted sans side-effects
 - ✅ Idempotence: code execution tasks sont safe-to-retry
 - ✅ Foundation pour speculation (Epic 3.5)
 
 **Security & Hardening (Stories 3.5-3.8 partiel):**
+
 - ✅ PII detection basique (patterns regex pour emails, SSNs, tokens)
 - ✅ Code execution caching (résultats identiques pour code identique)
 - ✅ Sandbox security hardening (sandboxing renforcé)
@@ -47,25 +64,31 @@ Epic 3 représente le **point de délégation** entre Epic 2.5 (ControlledExecut
 ### Out of Scope (Deferred)
 
 **Story 3.3 - Local Data Processing Pipeline:**
+
 - ❌ Pre-built pipeline helpers (filter, map, reduce, groupBy) → **Scope needs clarification**
-- ❌ **Rationale:** Story 3.4 (execute_code) already covers code execution. Story 3.3 might be redundant or needs redefinition as "stdlib"
+- ❌ **Rationale:** Story 3.4 (execute_code) already covers code execution. Story 3.3 might be
+  redundant or needs redefinition as "stdlib"
 
 **Advanced Safe-to-Fail (Story 3.5 - Full implementation):**
+
 - ❌ Complete safe-to-fail branches implementation (partial success, aggregation patterns)
 - ❌ Resilient workflows (retry logic, graceful degradation, A/B testing)
 - ❌ **Rationale:** Foundation in 3.4, full feature in separate story 3.5 or Epic 3.5
 
 **Advanced PII & Optimization (Stories 3.6-3.7 - Advanced features):**
+
 - ❌ ML-based PII detection (beyond regex patterns)
 - ❌ Advanced caching strategies (semantic similarity, TTL policies)
 - ❌ Code optimization (dead code elimination, bundling)
 
 **Epic 3.5 (Speculation with Sandbox):**
+
 - ❌ Speculative execution utilizing sandbox isolation
 - ❌ Confidence-based branch execution (threshold tuning)
 - ❌ THE feature combining Epic 2 speculation + Epic 3 safety
 
 **Epic 4 (Episodic Memory):**
+
 - ❌ Episodic memory for code execution patterns
 - ❌ Adaptive learning from execution history
 
@@ -73,9 +96,12 @@ Epic 3 représente le **point de délégation** entre Epic 2.5 (ControlledExecut
 
 **Architecture Foundation:**
 
-Epic 3 s'intègre dans l'architecture AgentCards en ajoutant la couche **Code Execution** entre Epic 2.5 (ControlledExecutor orchestration) et les MCP tools. L'architecture repose sur trois composants principaux:
+Epic 3 s'intègre dans l'architecture AgentCards en ajoutant la couche **Code Execution** entre Epic
+2.5 (ControlledExecutor orchestration) et les MCP tools. L'architecture repose sur trois composants
+principaux:
 
 **1. Sandbox Executor (Deno subprocess):**
+
 - Module: `src/sandbox/executor.ts`
 - Isolation: Processus Deno séparé avec permissions explicites
 - Contraintes: 512MB heap, 30s timeout, <100ms startup
@@ -83,6 +109,7 @@ Epic 3 s'intègre dans l'architecture AgentCards en ajoutant la couche **Code Ex
 - Output: Structured errors (syntax, runtime, timeout)
 
 **2. MCP Tools Injection (Vector Search):**
+
 - Module: `src/sandbox/context-builder.ts`
 - Pattern: Intent-based mode utilise vector search (Epic 1.5)
 - Wrappers: Type-safe tool wrappers générés automatiquement
@@ -90,6 +117,7 @@ Epic 3 s'intègre dans l'architecture AgentCards en ajoutant la couche **Code Ex
 - Integration: Seamless avec 15+ MCP servers déjà supportés
 
 **3. DAG Integration (Epic 2.5 Delegation Point):**
+
 - Module: `src/dag/controlled-executor.ts` extension
 - Task Type: Nouveau type `code_execution` ajouté à `TaskType` enum
 - State Management: Results intégrés dans `WorkflowState` via reducers
@@ -99,6 +127,7 @@ Epic 3 s'intègre dans l'architecture AgentCards en ajoutant la couche **Code Ex
 **Relation avec Epic 2.5 (ADR-007):**
 
 Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
+
 - **Epic 2.5:** Sauvegarde orchestration state uniquement (tasks, decisions, messages)
 - **Epic 3:** Ajoute filesystem isolation via sandbox Deno
 - **Délégation:** ControlledExecutor délègue modifications de code à sandbox
@@ -107,19 +136,20 @@ Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
 
 **Components Référencés:**
 
-| Component | Module | Epic | Role in Epic 3 |
-|-----------|--------|------|----------------|
-| PGlite + pgvector | `src/db/client.ts` | Epic 1.2 | Checkpoint persistence, vector search |
-| VectorSearch | `src/vector/search.ts` | Epic 1.5 | Intent-based tool discovery |
-| MCPGatewayServer | `src/mcp/gateway-server.ts` | Epic 2.4 | Tool routing, execute_code registration |
-| ControlledExecutor | `src/dag/controlled-executor.ts` | Epic 2.5 | DAG orchestration, code_execution tasks |
-| WorkflowState | `src/dag/state.ts` | Epic 2.5 | State management, checkpoint compatibility |
-| DenoSandboxExecutor | `src/sandbox/executor.ts` | Epic 3.1 | NEW - Code execution isolation |
-| ContextBuilder | `src/sandbox/context-builder.ts` | Epic 3.2 | NEW - Tool injection |
+| Component           | Module                           | Epic     | Role in Epic 3                             |
+| ------------------- | -------------------------------- | -------- | ------------------------------------------ |
+| PGlite + pgvector   | `src/db/client.ts`               | Epic 1.2 | Checkpoint persistence, vector search      |
+| VectorSearch        | `src/vector/search.ts`           | Epic 1.5 | Intent-based tool discovery                |
+| MCPGatewayServer    | `src/mcp/gateway-server.ts`      | Epic 2.4 | Tool routing, execute_code registration    |
+| ControlledExecutor  | `src/dag/controlled-executor.ts` | Epic 2.5 | DAG orchestration, code_execution tasks    |
+| WorkflowState       | `src/dag/state.ts`               | Epic 2.5 | State management, checkpoint compatibility |
+| DenoSandboxExecutor | `src/sandbox/executor.ts`        | Epic 3.1 | NEW - Code execution isolation             |
+| ContextBuilder      | `src/sandbox/context-builder.ts` | Epic 3.2 | NEW - Tool injection                       |
 
 **Contraintes Architecturales:**
 
-1. **Zero Breaking Changes:** Sandbox executor est un composant optionnel, n'affecte pas DAG execution existant
+1. **Zero Breaking Changes:** Sandbox executor est un composant optionnel, n'affecte pas DAG
+   execution existant
 2. **Performance:** Maintain <100ms sandbox startup, <3s P95 pour workflows hybrides (MCP + code)
 3. **Security:** Explicit permissions only, no eval(), structured error handling
 4. **Portability:** Deno runtime requis (déjà présent), pas de dépendances système additionnelles
@@ -129,8 +159,10 @@ Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
 ### Services and Modules
 
 **1. DenoSandboxExecutor** (`src/sandbox/executor.ts`) - Story 3.1
+
 - **Purpose:** Exécution isolée de code TypeScript dans subprocess Deno
-- **API:** `async execute(code: string, context?: Record<string, unknown>): Promise<ExecutionResult>`
+- **API:**
+  `async execute(code: string, context?: Record<string, unknown>): Promise<ExecutionResult>`
 - **Features:**
   - Subprocess spawning avec `Deno.Command`
   - Permissions explicites: `--allow-env`, `--allow-read=<paths>`, deny all others
@@ -141,6 +173,7 @@ Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
 - **Dependencies:** Deno 2.5+ runtime
 
 **2. ContextBuilder** (`src/sandbox/context-builder.ts`) - Story 3.2
+
 - **Purpose:** Injection de MCP tools dans contexte sandbox via vector search
 - **API:** `async buildContext(intent: string, topK: number = 5): Promise<ToolContext>`
 - **Features:**
@@ -153,8 +186,10 @@ Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
 - **Dependencies:** VectorSearch, MCPGatewayServer, MCP SDK
 
 **3. MCPGatewayServer Extension** (`src/mcp/gateway-server.ts`) - Story 3.4
+
 - **Purpose:** Registration du tool `agentcards:execute_code` exposé via MCP protocol
-- **API:** MCP tool with schema `{ code: string, intent?: string, context?: object, sandbox_config?: object }`
+- **API:** MCP tool with schema
+  `{ code: string, intent?: string, context?: object, sandbox_config?: object }`
 - **Features:**
   - Intent-based mode: vector search → inject tools → execute code
   - Explicit mode: execute code with provided context
@@ -164,6 +199,7 @@ Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
 - **Dependencies:** DenoSandboxExecutor, ContextBuilder, MCPClient
 
 **4. ControlledExecutor Extension** (`src/dag/controlled-executor.ts`) - Story 3.4
+
 - **Purpose:** Exécution de tasks `code_execution` type dans DAG workflows
 - **Changes:** Add `code_execution` to `TaskType` enum, route to sandbox executor
 - **Features:**
@@ -174,6 +210,7 @@ Epic 3 résout les limitations de checkpointing identifiées dans Epic 2.5:
 - **Dependencies:** DenoSandboxExecutor, WorkflowState, DAGStructure
 
 **Module Interaction Flow:**
+
 ```
 User Intent → MCPGatewayServer.execute_code
               ↓
@@ -195,68 +232,74 @@ User Intent → MCPGatewayServer.execute_code
 ### Data Models and Contracts
 
 **SandboxConfig** (`src/sandbox/types.ts`)
+
 ```typescript
 interface SandboxConfig {
-  timeoutMs: number;          // Default: 30000 (30s)
-  heapLimitMB: number;        // Default: 512MB
+  timeoutMs: number; // Default: 30000 (30s)
+  heapLimitMB: number; // Default: 512MB
   allowedReadPaths?: string[]; // Default: ["~/.agentcards"]
-  allowNetwork?: boolean;      // Default: false
-  allowWrite?: boolean;        // Default: false
+  allowNetwork?: boolean; // Default: false
+  allowWrite?: boolean; // Default: false
 }
 ```
 
 **ExecutionResult** (`src/sandbox/types.ts`)
+
 ```typescript
 interface ExecutionResult {
-  result: unknown;           // JSON-serializable output
-  logs: string[];            // stdout/stderr lines
+  result: unknown; // JSON-serializable output
+  logs: string[]; // stdout/stderr lines
   metrics: {
     executionTimeMs: number;
     startupTimeMs: number;
     memoryUsedMB: number;
   };
   state?: Record<string, any>; // For checkpoint compatibility (Story 3.4)
-                                // Merged into WorkflowState.context for persistence
+  // Merged into WorkflowState.context for persistence
 }
 ```
 
 **StructuredError** (`src/sandbox/types.ts`)
+
 ```typescript
 interface StructuredError {
   type: "SyntaxError" | "RuntimeError" | "TimeoutError" | "MemoryError";
   message: string;
   stack?: string;
-  code?: string;              // Error code for categorization
-  toolName?: string;          // If error from MCP tool call
+  code?: string; // Error code for categorization
+  toolName?: string; // If error from MCP tool call
 }
 ```
 
 **ToolContext** (`src/sandbox/context-builder.ts`)
+
 ```typescript
 interface ToolContext {
   tools: Record<string, ToolWrapper>; // e.g., { github: { listCommits: async (...) => ... } }
-  types: string;              // TypeScript type definitions (.d.ts content)
+  types: string; // TypeScript type definitions (.d.ts content)
   metadata: {
     discoveredTools: string[]; // Tool IDs identified by vector search
-    injectedTools: string[];   // Tools actually injected (may be fewer due to limits)
+    injectedTools: string[]; // Tools actually injected (may be fewer due to limits)
   };
 }
 ```
 
 **CodeExecutionTask** (`src/dag/types.ts`)
+
 ```typescript
 interface CodeExecutionTask {
   id: string;
-  type: "code_execution";     // NEW task type
-  code: string;               // TypeScript code to execute
-  intent?: string;            // For intent-based tool injection
+  type: "code_execution"; // NEW task type
+  code: string; // TypeScript code to execute
+  intent?: string; // For intent-based tool injection
   context?: Record<string, unknown>; // Explicit context
   sandbox_config?: SandboxConfig;
-  dependencies: string[];     // Task IDs this depends on
+  dependencies: string[]; // Task IDs this depends on
 }
 ```
 
 **MCPToolSchema** (execute_code tool)
+
 ```json
 {
   "name": "agentcards:execute_code",
@@ -265,7 +308,10 @@ interface CodeExecutionTask {
     "type": "object",
     "properties": {
       "code": { "type": "string", "description": "TypeScript code to execute" },
-      "intent": { "type": "string", "description": "Natural language intent for tool discovery (optional)" },
+      "intent": {
+        "type": "string",
+        "description": "Natural language intent for tool discovery (optional)"
+      },
       "context": { "type": "object", "description": "Explicit context object (optional)" },
       "sandbox_config": { "type": "object", "description": "Sandbox configuration (optional)" }
     },
@@ -286,19 +332,20 @@ interface CodeExecutionTask {
 ### APIs and Interfaces
 
 **DenoSandboxExecutor Public API:**
+
 ```typescript
 class DenoSandboxExecutor {
   constructor(config?: Partial<SandboxConfig>);
 
   async execute(
     code: string,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ): Promise<ExecutionResult>;
 
   async executeWithTimeout(
     code: string,
     context?: Record<string, unknown>,
-    timeoutMs?: number
+    timeoutMs?: number,
   ): Promise<ExecutionResult>;
 
   async dispose(): Promise<void>; // Cleanup resources
@@ -306,20 +353,21 @@ class DenoSandboxExecutor {
 ```
 
 **ContextBuilder Public API:**
+
 ```typescript
 class ContextBuilder {
   constructor(
     private vectorSearch: VectorSearch,
-    private mcpGateway: MCPGatewayServer
+    private mcpGateway: MCPGatewayServer,
   );
 
   async buildContext(
     intent: string,
-    topK?: number
+    topK?: number,
   ): Promise<ToolContext>;
 
   async buildContextExplicit(
-    toolIds: string[]
+    toolIds: string[],
   ): Promise<ToolContext>;
 
   generateTypeDefinitions(tools: ToolMetadata[]): string;
@@ -327,6 +375,7 @@ class ContextBuilder {
 ```
 
 **MCPGatewayServer.execute_code Handler:**
+
 ```typescript
 interface ExecuteCodeHandler {
   async handleExecuteCode(params: {
@@ -344,19 +393,20 @@ interface ExecuteCodeHandler {
 ```
 
 **ControlledExecutor Extension:**
+
 ```typescript
 class ControlledExecutor extends ParallelExecutor {
   // Existing methods...
 
   private async executeCodeTask(
     task: CodeExecutionTask,
-    workflowState: WorkflowState
+    workflowState: WorkflowState,
   ): Promise<TaskResult>;
 
   private async routeToSandbox(
     code: string,
     context: Record<string, unknown>,
-    config?: SandboxConfig
+    config?: SandboxConfig,
   ): Promise<ExecutionResult>;
 }
 ```
@@ -364,6 +414,7 @@ class ControlledExecutor extends ParallelExecutor {
 ### Workflows and Sequencing
 
 **Workflow 1: Intent-Based Code Execution**
+
 ```
 1. User/Agent → MCPGateway.execute_code({ code, intent: "analyze GitHub commits" })
 2. MCPGateway → ContextBuilder.buildContext(intent, k=5)
@@ -383,6 +434,7 @@ class ControlledExecutor extends ParallelExecutor {
 ```
 
 **Workflow 2: Explicit Mode Code Execution**
+
 ```
 1. User/Agent → MCPGateway.execute_code({ code, context: { data: [...] } })
 2. MCPGateway → DenoSandboxExecutor.execute(code, context)
@@ -393,6 +445,7 @@ class ControlledExecutor extends ParallelExecutor {
 ```
 
 **Workflow 3: DAG Integration (Hybrid Workflow)**
+
 ```
 1. ControlledExecutor → Build DAG with mixed task types:
    [
@@ -413,6 +466,7 @@ class ControlledExecutor extends ParallelExecutor {
 ```
 
 **Workflow 4: Rollback & Safe-to-Fail**
+
 ```
 1. ControlledExecutor → Execute code_execution task
 2. DenoSandboxExecutor → Subprocess starts
@@ -429,6 +483,7 @@ class ControlledExecutor extends ParallelExecutor {
 ```
 
 **Error Handling Sequence:**
+
 ```
 Sandbox Error Types:
 - SyntaxError: TypeScript parsing fails
@@ -461,6 +516,7 @@ Sandbox Error Types:
 ### Performance
 
 **Sandbox Execution Performance:**
+
 - **Startup Time:** <100ms sandbox initialization (AC Story 3.1 #9)
   - Achieved: 34.77ms in benchmarks
   - Target: P95 < 100ms
@@ -471,21 +527,25 @@ Sandbox Error Types:
   - Includes: startup + execution + result serialization
 
 **Tool Discovery Performance:**
+
 - **Vector Search:** <200ms for intent-based tool discovery (k=5)
   - Inherited from Epic 1.5 (<100ms P95 vector search)
   - +100ms for wrapper generation
 - **Context Building:** <300ms total for ContextBuilder.buildContext()
 
 **Hybrid Workflow Performance:**
+
 - **DAG with Code Execution:** <3s P95 for workflows with 5 tasks (mixed MCP + code)
   - Maintains Epic 2 speedup 5x for parallel layers
   - Code execution tasks add minimal overhead (<500ms per task)
 
 **Checkpoint Performance:**
+
 - **Save:** <50ms to persist WorkflowState to PGlite (Epic 2.5)
 - **Resume:** <100ms to restore from checkpoint
 
 **Metrics to Track:**
+
 - `sandbox_startup_ms`: Subprocess initialization time
 - `code_execution_ms`: Actual code execution time
 - `tool_discovery_ms`: Vector search + wrapper generation time
@@ -494,6 +554,7 @@ Sandbox Error Types:
 ### Security
 
 **Sandbox Isolation:**
+
 - **Explicit Permissions Only:** Deno subprocess avec permissions explicites
   - Allow: `--allow-env`, `--allow-read=~/.agentcards`
   - Deny: `--deny-write`, `--deny-net`, `--deny-run`, `--deny-ffi`
@@ -502,16 +563,19 @@ Sandbox Error Types:
 - **Resource Limits:** Timeout 30s, memory 512MB → prevent DoS attacks
 
 **Code Injection Protection:**
+
 - **No Dynamic Code Generation:** Tool wrappers générés via template strings sûrs, pas d'eval
 - **Input Validation:** Tool names validés (no `__proto__`, no special chars)
 - **Structured Errors:** Error messages sanitized, no sensitive data leaks
 
 **MCP Tool Security:**
+
 - **Existing Security Maintained:** Tool calls routés via MCPGatewayServer (Epic 2.4)
 - **Health Checks:** Epic 2.5 health checks still enforced
 - **Rate Limiting:** Epic 2.6 rate limiting applies to tool calls from sandbox
 
 **Virtual Filesystem (Foundation):**
+
 - **Hooks for Isolation:** Prepare architecture for isolated file operations
 - **Rollback-Safe:** Code execution tasks can be aborted without permanent side-effects
 - **Epic 3.5 Goal:** Full virtual filesystem implementation for speculation safety
@@ -519,23 +583,28 @@ Sandbox Error Types:
 ### Reliability/Availability
 
 **Error Handling:**
-- **Structured Errors:** All sandbox errors typed (SyntaxError, RuntimeError, TimeoutError, MemoryError)
+
+- **Structured Errors:** All sandbox errors typed (SyntaxError, RuntimeError, TimeoutError,
+  MemoryError)
 - **Graceful Degradation:** If sandbox fails, workflow continues with error result
 - **Retry Logic:** Code execution tasks are idempotent, safe to retry
 - **Timeout Enforcement:** Prevent infinite loops, ensure bounded execution time
 
 **Checkpoint & Resume:**
+
 - **Workflow Resilience:** WorkflowState checkpoints enable resume after failure
 - **State Persistence:** PGlite persistence (Epic 2.5) ensures durability
 - **Idempotence:** Code execution tasks safe-to-retry (foundation for Epic 3.5 speculation)
 
 **Resource Management:**
+
 - **Memory Limits:** 512MB heap prevents OOM crashes
 - **Timeout Enforcement:** 30s timeout prevents hung processes
 - **Process Cleanup:** Subprocess terminated on completion/error/timeout
 - **No Resource Leaks:** Explicit disposal of sandbox resources
 
 **Availability Targets:**
+
 - **Uptime:** 99.9% (same as Epic 2 MCPGateway)
 - **Failure Recovery:** <100ms to resume from checkpoint
 - **Error Rate:** <1% code execution failures (excluding user code errors)
@@ -543,12 +612,14 @@ Sandbox Error Types:
 ### Observability
 
 **Logging:**
+
 - **Sandbox Events:** Log sandbox creation, execution, completion, errors
 - **Tool Discovery:** Log vector search results, injected tools
 - **Execution Metrics:** Log startup time, execution time, memory usage
 - **Error Details:** Structured error logging with type, message, stack
 
 **Metrics (Telemetry):**
+
 - **Execution Count:** `code_execution_total` (counter)
 - **Execution Latency:** `code_execution_duration_ms` (histogram)
 - **Error Rate:** `code_execution_errors_total` by error type (counter)
@@ -556,6 +627,7 @@ Sandbox Error Types:
 - **Tool Injection:** `tools_injected_count` (histogram)
 
 **Event Stream (Epic 2.5 Integration):**
+
 - **Execution Events:** Emit events via ControlledExecutor event stream
   - `code_execution_started`
   - `code_execution_completed`
@@ -563,6 +635,7 @@ Sandbox Error Types:
 - **Real-Time Observability:** Consumers can subscribe to code execution events
 
 **Debugging Support:**
+
 - **Logs Output:** Capture stdout/stderr from subprocess
 - **Stack Traces:** Preserve stack traces for RuntimeErrors
 - **Execution Context:** Log code snippet, intent, injected tools for debugging
@@ -571,11 +644,13 @@ Sandbox Error Types:
 ## Dependencies and Integrations
 
 **Runtime Dependencies:**
+
 - **Deno 2.5+ / 2.2 LTS:** Core runtime for TypeScript execution and subprocess management
 - **PGlite 0.3.11:** Checkpoint persistence (Epic 2.5)
 - **@modelcontextprotocol/sdk 1.21.1:** MCP protocol implementation
 
 **Internal Dependencies (Epic 1 & 2):**
+
 - **VectorSearch** (`src/vector/search.ts`) - Epic 1.5
   - Used by ContextBuilder for intent-based tool discovery
   - <100ms P95 semantic search performance
@@ -590,21 +665,25 @@ Sandbox Error Types:
   - Checkpoint compatibility for code execution results
 
 **External Integrations:**
+
 - **MCP Servers (15+):** Tools can be called from agent code via wrappers
 - **GitHub, Filesystem, etc.:** Existing MCP servers work seamlessly with code execution
 
 **Epic 3 Internal Dependencies:**
+
 - **Story 3.1 → Story 3.2:** ContextBuilder uses DenoSandboxExecutor for code execution
 - **Story 3.1 + 3.2 → Story 3.4:** MCPGateway execute_code tool orchestrates both
 - **Story 3.4 → Epic 2.5:** ControlledExecutor delegates to execute_code tool
 
 **Note on DAG Replanning:**
+
 - DAG replanning is handled by **Epic 2.5 Story 2.5-3** (already done ✅)
 - AIL/HIL decision points can trigger `replan_dag` commands
 - Code execution results are integrated into WorkflowState via `state` field
 - Agent/Human decides when to replan based on code execution results
 
 **Foundation for Epic 3.5:**
+
 - **Safe-to-Fail Architecture:** Virtual filesystem hooks enable safe speculation
 - **Idempotent Tasks:** Code execution tasks can be speculatively executed and rolled back
 - **Isolation:** Sandbox prevents side-effects, perfect for speculative execution
@@ -648,6 +727,7 @@ Sandbox Error Types:
 **Story-Level Acceptance Criteria:**
 
 **Story 3.1 (Deno Sandbox Executor Foundation):**
+
 1. ✅ Sandbox module créé (`src/sandbox/executor.ts`)
 2. ✅ Deno subprocess spawned avec permissions explicites
 3. ✅ Code execution isolée (no access outside allowed paths)
@@ -659,6 +739,7 @@ Sandbox Error Types:
 9. ✅ Performance: <100ms startup, <50ms overhead
 
 **Story 3.2 (MCP Tools Injection):**
+
 1. ✅ Tool injection system créé (`src/sandbox/context-builder.ts`)
 2. ✅ MCP clients wrapped as TypeScript functions
 3. ✅ Code context includes typed tool wrappers
@@ -670,6 +751,7 @@ Sandbox Error Types:
 9. ✅ Security: No eval() or dynamic code generation
 
 **Story 3.4 (execute_code MCP Tool):**
+
 1. ⏳ New MCP tool registered: agentcards:execute_code
 2. ⏳ Input schema: { code, intent?, context?, sandbox_config? }
 3. ⏳ Intent-based mode: vector search → inject tools → execute
@@ -691,40 +773,40 @@ Sandbox Error Types:
 
 **PRD Requirements → Epic 3 Stories:**
 
-| PRD Requirement | Story | Implementation |
-|----------------|-------|----------------|
-| FR017: Agent code execution | 3.1, 3.4 | DenoSandboxExecutor + execute_code tool |
-| FR018: Context optimization via local processing | 3.2, 3.4 | Tool injection + intent-based mode |
-| FR019: Security isolation | 3.1 | Deno subprocess avec permissions explicites |
-| FR020: Hybrid workflows | 3.4 | code_execution task type in DAG |
-| NFR001: Performance (<3s P95) | 3.1 | <100ms startup, <50ms overhead |
-| NFR002: Security isolation | 3.1 | Subprocess, timeout, memory limits |
-| NFR003: Checkpoint resilience | 3.4 | WorkflowState compatibility |
+| PRD Requirement                                  | Story    | Implementation                              |
+| ------------------------------------------------ | -------- | ------------------------------------------- |
+| FR017: Agent code execution                      | 3.1, 3.4 | DenoSandboxExecutor + execute_code tool     |
+| FR018: Context optimization via local processing | 3.2, 3.4 | Tool injection + intent-based mode          |
+| FR019: Security isolation                        | 3.1      | Deno subprocess avec permissions explicites |
+| FR020: Hybrid workflows                          | 3.4      | code_execution task type in DAG             |
+| NFR001: Performance (<3s P95)                    | 3.1      | <100ms startup, <50ms overhead              |
+| NFR002: Security isolation                       | 3.1      | Subprocess, timeout, memory limits          |
+| NFR003: Checkpoint resilience                    | 3.4      | WorkflowState compatibility                 |
 
 **Architecture Components → Stories:**
 
-| Component | Epic | Story | Status |
-|-----------|------|-------|--------|
-| DenoSandboxExecutor | 3 | 3.1 | ✅ Done |
-| ContextBuilder | 3 | 3.2 | ✅ Review |
-| execute_code tool | 3 | 3.4 | ⏳ Ready for dev |
-| code_execution task type | 3 | 3.4 | ⏳ Ready for dev |
-| Virtual filesystem hooks | 3 | 3.4 | ⏳ Ready for dev (foundation) |
-| PII detection | 3 | 3.5 | 📋 Drafted |
-| Code execution caching | 3 | 3.6 | 📋 Drafted |
-| E2E tests & docs | 3 | 3.7 | 📋 Drafted |
-| Security hardening | 3 | 3.8 | 📋 Backlog |
+| Component                | Epic | Story | Status                        |
+| ------------------------ | ---- | ----- | ----------------------------- |
+| DenoSandboxExecutor      | 3    | 3.1   | ✅ Done                       |
+| ContextBuilder           | 3    | 3.2   | ✅ Review                     |
+| execute_code tool        | 3    | 3.4   | ⏳ Ready for dev              |
+| code_execution task type | 3    | 3.4   | ⏳ Ready for dev              |
+| Virtual filesystem hooks | 3    | 3.4   | ⏳ Ready for dev (foundation) |
+| PII detection            | 3    | 3.5   | 📋 Drafted                    |
+| Code execution caching   | 3    | 3.6   | 📋 Drafted                    |
+| E2E tests & docs         | 3    | 3.7   | 📋 Drafted                    |
+| Security hardening       | 3    | 3.8   | 📋 Backlog                    |
 
 **Epic 2.5 (ADR-007) Integration:**
 
-| ADR-007 Concept | Epic 3 Implementation |
-|-----------------|----------------------|
-| Loop 1: Execution | Event stream emits code_execution events |
-| Loop 2: Adaptation | ControlledExecutor can replan DAG, inject code tasks |
-| Loop 3: Meta-Learning | Code execution patterns learned (deferred Epic 4) |
-| Checkpoint/Resume | Code execution results in WorkflowState, PGlite persistence |
-| Safe-to-Fail | Sandbox isolation, virtual filesystem, rollback support |
-| Idempotence | Code execution tasks can be safely re-executed |
+| ADR-007 Concept       | Epic 3 Implementation                                       |
+| --------------------- | ----------------------------------------------------------- |
+| Loop 1: Execution     | Event stream emits code_execution events                    |
+| Loop 2: Adaptation    | ControlledExecutor can replan DAG, inject code tasks        |
+| Loop 3: Meta-Learning | Code execution patterns learned (deferred Epic 4)           |
+| Checkpoint/Resume     | Code execution results in WorkflowState, PGlite persistence |
+| Safe-to-Fail          | Sandbox isolation, virtual filesystem, rollback support     |
+| Idempotence           | Code execution tasks can be safely re-executed              |
 
 ## Risks, Assumptions, Open Questions
 
@@ -818,39 +900,46 @@ Sandbox Error Types:
 **Testing Approach by Story:**
 
 **Story 3.1 (Sandbox Foundation):**
+
 - **Unit Tests:** Isolation validation, timeout enforcement, memory limits, error handling
 - **Benchmarks:** Startup <100ms, overhead <50ms
 - **Security Tests:** Attempt filesystem/network access (must fail)
 - **Coverage Target:** >90% (critical security component)
 
 **Story 3.2 (Tools Injection):**
+
 - **Unit Tests:** Wrapper generation, type definition generation, error propagation
 - **Integration Tests:** Vector search integration, MCP gateway routing
 - **Security Tests:** No eval() audit, malicious tool name rejection
 - **Coverage Target:** >85%
 
 **Story 3.4 (execute_code Tool):**
+
 - **Unit Tests:** MCP tool handler, schema validation
 - **Integration Tests:** Intent-based mode, explicit mode, DAG integration
 - **E2E Tests:** Full ControlledExecutor → DAG → code task → checkpoint workflow
 - **Coverage Target:** >80%
 
 **Cross-Story Integration Tests:**
+
 - **Hybrid DAG Workflows:** MCP tools + code execution tasks
 - **Checkpoint/Resume:** Code execution state persistence and recovery
 - **Error Propagation:** End-to-end error handling across all layers
 
 **Performance Benchmarks:**
+
 - **Sandbox Startup:** <100ms P95
 - **Code Execution:** Simple code <500ms total
 - **Tool Discovery:** <200ms for intent-based mode
 - **Hybrid Workflow:** 5-task DAG <3s P95
 
 **Test Environments:**
+
 - **Local:** Deno 2.5 / 2.2 LTS
 - **CI:** Automated test suite on every commit
 - **Production:** Smoke tests for critical paths
 
 **Regression Prevention:**
+
 - All Epic 1 & 2 tests continue passing (zero breaking changes)
 - Performance benchmarks gated in CI (fail if >10% regression)

@@ -1,22 +1,23 @@
 ---
-name: 'step-02b-input-transform'
-description: 'Select existing article to transform into different format or language'
+name: "step-02b-input-transform"
+description: "Select existing article to transform into different format or language"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/custom/src/workflows/work-to-blog'
+workflow_path: "{project-root}/bmad/custom/src/workflows/work-to-blog"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-02b-input-transform.md'
-nextStepFile: '{workflow_path}/steps/step-03-configure.md'
-workflowFile: '{workflow_path}/workflow.md'
-draftFolder: '{project-root}/docs/blog/draft'
+thisStepFile: "{workflow_path}/steps/step-02b-input-transform.md"
+nextStepFile: "{workflow_path}/steps/step-03-configure.md"
+workflowFile: "{workflow_path}/workflow.md"
+draftFolder: "{project-root}/docs/blog/draft"
 ---
 
 # Step 2b: Input Collection (Transform Mode)
 
 ## STEP GOAL:
 
-Select an existing article from the drafts folder to transform into a different format (LinkedIn <-> Article) or translate to a different language.
+Select an existing article from the drafts folder to transform into a different format (LinkedIn <->
+Article) or translate to a different language.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -42,20 +43,19 @@ Select an existing article from the drafts folder to transform into a different 
 
 ### 1. List Available Articles
 
-Scan {draftFolder} for existing articles and display:
-"**Mode Transformation**
+Scan {draftFolder} for existing articles and display: "**Mode Transformation**
 
 Articles disponibles dans `docs/blog/draft/`:
 
 [List files with format indicator]
+
 1. `2025-12-05-topic.md` (Article)
-2. `2025-12-05-topic.linkedin.md` (LinkedIn)
-...
+2. `2025-12-05-topic.linkedin.md` (LinkedIn) ...
 
-*Quel article veux-tu transformer ? (numero ou chemin)*"
+_Quel article veux-tu transformer ? (numero ou chemin)_"
 
-If no articles found:
-"Aucun article trouve dans `docs/blog/draft/`. Tu veux plutot creer un nouvel article ? [C] Creer"
+If no articles found: "Aucun article trouve dans `docs/blog/draft/`. Tu veux plutot creer un nouvel
+article ? [C] Creer"
 
 ### 2. Load Selected Article
 
@@ -63,8 +63,8 @@ If no articles found:
 - Detect current format (LinkedIn or Article based on filename/content)
 - Display article summary
 
-Display:
-"**Article selectionne:**
+Display: "**Article selectionne:**
+
 - Fichier: [filename]
 - Format actuel: [LinkedIn/Article]
 - Langue actuelle: [FR/EN]
@@ -84,7 +84,8 @@ Display: "**[C] Confirmer** | **[A] Autre article**"
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY proceed when user confirms article selection. Store the source article content and current format/language for transformation.
+ONLY proceed when user confirms article selection. Store the source article content and current
+format/language for transformation.
 
 ---
 
@@ -103,4 +104,5 @@ ONLY proceed when user confirms article selection. Store the source article cont
 - Proceeding without user confirmation
 - Not detecting current format/language
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

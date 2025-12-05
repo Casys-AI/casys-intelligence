@@ -8,7 +8,7 @@
 import { assertEquals, assertExists } from "@std/assert";
 import { AgentCardsGatewayServer } from "../../src/mcp/gateway-server.ts";
 import { createDefaultClient, PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { GraphRAGEngine } from "../../src/graphrag/graph-engine.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
 import { DAGSuggester } from "../../src/graphrag/dag-suggester.ts";

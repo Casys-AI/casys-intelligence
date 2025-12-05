@@ -16,7 +16,7 @@ import { assertEquals } from "@std/assert";
 import { ControlledExecutor } from "../../../src/dag/controlled-executor.ts";
 import { ParallelExecutor } from "../../../src/dag/executor.ts";
 import type { DAGStructure } from "../../../src/graphrag/types.ts";
-import type { ToolExecutor, ExecutionEvent } from "../../../src/dag/types.ts";
+import type { ExecutionEvent, ToolExecutor } from "../../../src/dag/types.ts";
 
 // Mock tool executor for testing
 const mockToolExecutor: ToolExecutor = async (tool: string, args: Record<string, unknown>) => {
@@ -178,11 +178,18 @@ Deno.test("ControlledExecutor - Command Queue", async (t) => {
       reason: "test abort",
     });
 
-    // Execute
-    for await (const _event of executor.executeStream(dag)) {
-      // Commands will be processed between layers
+    // Execute - abort should throw an error
+    let errorThrown = false;
+    try {
+      for await (const _event of executor.executeStream(dag)) {
+        // Commands will be processed between layers
+      }
+    } catch (error) {
+      errorThrown = true;
+      assertEquals((error as Error).message, "Workflow aborted by agent: test abort");
     }
 
+    assertEquals(errorThrown, true, "Abort command should throw an error");
     const stats = executor.getCommandQueueStats();
     assertEquals(stats.processed_commands, 1);
   });

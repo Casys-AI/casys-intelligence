@@ -1,24 +1,24 @@
 # Spike: Hybrid DAG + Agent Delegation (Strategy D)
 
-**Date:** 2025-11-23
-**Author:** Claude (Sonnet 4.5)
-**Status:** 🔬 Exploration
-**Estimated Effort:** 2-3 days research + 5-7 days implementation
-**Risk Level:** 🟡 Medium
+**Date:** 2025-11-23 **Author:** Claude (Sonnet 4.5) **Status:** 🔬 Exploration **Estimated
+Effort:** 2-3 days research + 5-7 days implementation **Risk Level:** 🟡 Medium
 
 ---
 
 ## Context
 
-Suite à l'audit sur le risque de délégation multi-agents, nous explorons la **Stratégie D : Hybride DAG + Agents**.
+Suite à l'audit sur le risque de délégation multi-agents, nous explorons la **Stratégie D : Hybride
+DAG + Agents**.
 
 **Problème identifié:**
+
 - Les agents conversationnels délèguent de plus en plus à des sous-agents spécialisés
 - Risque de bypass d'AgentCards si sous-agents appellent MCP tools directement
 - Besoin de combiner orchestration DAG + spécialisation multi-agents
 
-**Opportunité:**
-Intégrer la délégation d'agents DANS le DAG comme un type de task à part entière, permettant:
+**Opportunité:** Intégrer la délégation d'agents DANS le DAG comme un type de task à part entière,
+permettant:
+
 - Parallélisation entre agents (comme entre tasks)
 - GraphRAG learning sur patterns multi-agents
 - Context optimization cross-agents
@@ -28,9 +28,12 @@ Intégrer la délégation d'agents DANS le DAG comme un type de task à part ent
 
 ## Objective
 
-**Spike Goal:** Valider la faisabilité technique d'ajouter un nouveau type de task `agent_delegation` dans le DAG, permettant d'orchestrer des sous-agents aux côtés des MCP tasks et code execution tasks.
+**Spike Goal:** Valider la faisabilité technique d'ajouter un nouveau type de task
+`agent_delegation` dans le DAG, permettant d'orchestrer des sous-agents aux côtés des MCP tasks et
+code execution tasks.
 
 **Success Criteria:**
+
 - ✅ Prototype fonctionnel (agent task dans un DAG)
 - ✅ Design API clair et ergonomique
 - ✅ Trade-offs identifiés (coûts, complexité, latence)
@@ -49,14 +52,14 @@ Intégrer la délégation d'agents DANS le DAG comme un type de task à part ent
 interface MCPTask extends Task {
   tool: string;
   arguments: Record<string, unknown>;
-  side_effects?: boolean;  // Default: true
+  side_effects?: boolean; // Default: true
 }
 
 interface CodeExecutionTask extends Task {
   type: "code_execution";
   code: string;
   sandbox_config?: SandboxConfig;
-  side_effects?: boolean;  // Default: false
+  side_effects?: boolean; // Default: false
 }
 
 // NEW: Agent delegation task
@@ -64,22 +67,22 @@ interface AgentDelegationTask extends Task {
   type: "agent_delegation";
 
   // Agent configuration
-  agent_role: string;          // "researcher", "coder", "reviewer"
-  agent_goal: string;          // Natural language goal
-  agent_model?: "haiku" | "sonnet" | "opus";  // Default: "haiku"
+  agent_role: string; // "researcher", "coder", "reviewer"
+  agent_goal: string; // Natural language goal
+  agent_model?: "haiku" | "sonnet" | "opus"; // Default: "haiku"
 
   // Tools available to agent
-  agent_tools?: string[];      // Subset of MCP tools (e.g., ["github:*", "web_search"])
-  agent_context?: Record<string, unknown>;  // Initial context for agent
+  agent_tools?: string[]; // Subset of MCP tools (e.g., ["github:*", "web_search"])
+  agent_context?: Record<string, unknown>; // Initial context for agent
 
   // Execution constraints
-  max_iterations?: number;     // Default: 5 (prevent infinite loops)
-  timeout?: number;            // Default: 60s
-  budget?: number;             // Max cost in tokens (e.g., 10k tokens)
+  max_iterations?: number; // Default: 5 (prevent infinite loops)
+  timeout?: number; // Default: 60s
+  budget?: number; // Max cost in tokens (e.g., 10k tokens)
 
   // Integration with DAG
-  depends_on: string[];        // Like other tasks
-  side_effects?: boolean;      // Default: true (agents can modify state)
+  depends_on: string[]; // Like other tasks
+  side_effects?: boolean; // Default: true (agents can modify state)
 }
 
 // Union type (extends existing ADR-010)
@@ -96,9 +99,9 @@ const workflow: DAGStructure = {
       id: "fetch_api_docs",
       tool: "web_search:scrape",
       arguments: {
-        urls: ["https://api.example.com/docs"]
+        urls: ["https://api.example.com/docs"],
       },
-      side_effects: false
+      side_effects: false,
     },
 
     // Layer 1: Research best practices (AGENT task)
@@ -107,10 +110,10 @@ const workflow: DAGStructure = {
       type: "agent_delegation",
       agent_role: "api_researcher",
       agent_goal: "Analyze API docs and extract authentication best practices",
-      agent_model: "haiku",  // Cost-effective for research
+      agent_model: "haiku", // Cost-effective for research
       agent_tools: ["web_search:*", "read_file"],
       depends_on: ["fetch_api_docs"],
-      side_effects: false  // Read-only research
+      side_effects: false, // Read-only research
     },
 
     // Layer 2: Implement (AGENT task)
@@ -119,13 +122,13 @@ const workflow: DAGStructure = {
       type: "agent_delegation",
       agent_role: "coder",
       agent_goal: "Implement OAuth2 authentication following best practices",
-      agent_model: "sonnet",  // More capable for coding
+      agent_model: "sonnet", // More capable for coding
       agent_tools: ["write_file", "run_tests"],
       agent_context: {
-        best_practices: "$OUTPUT[research_best_practices]"
+        best_practices: "$OUTPUT[research_best_practices]",
       },
       depends_on: ["research_best_practices"],
-      side_effects: true  // Writes files
+      side_effects: true, // Writes files
     },
 
     // Layer 3: Aggregate results (CODE task)
@@ -140,9 +143,9 @@ const workflow: DAGStructure = {
         };
       `,
       depends_on: ["research_best_practices", "implement_auth"],
-      side_effects: false
-    }
-  ]
+      side_effects: false,
+    },
+  ],
 };
 ```
 
@@ -191,21 +194,20 @@ const workflow: DAGStructure = {
 class AgentExecutor {
   async executeAgentTask(
     task: AgentDelegationTask,
-    context: ExecutionContext
+    context: ExecutionContext,
   ): Promise<TaskResult> {
-
     // 1. Resolve dependencies (like other tasks)
     const resolvedContext = this.resolveDependencies(
       task.depends_on,
-      context.completedTasks
+      context.completedTasks,
     );
 
     // 2. Create agent instance
     const agent = await this.createAgent({
       role: task.agent_role,
       model: task.agent_model || "haiku",
-      tools: this.filterTools(task.agent_tools),  // Subset of available MCP tools
-      systemPrompt: this.buildSystemPrompt(task)
+      tools: this.filterTools(task.agent_tools), // Subset of available MCP tools
+      systemPrompt: this.buildSystemPrompt(task),
     });
 
     // 3. Execute agent conversation
@@ -216,7 +218,7 @@ class AgentExecutor {
     while (iterations < (task.max_iterations || 5)) {
       const response = await agent.sendMessage(task.agent_goal, {
         context: { ...resolvedContext, ...task.agent_context },
-        timeout: task.timeout || 60000
+        timeout: task.timeout || 60000,
       });
 
       // Track costs
@@ -242,8 +244,8 @@ class AgentExecutor {
         iterations,
         tokens: totalTokens,
         cost: this.calculateCost(totalTokens, task.agent_model),
-        duration_ms: Date.now() - startTime
-      }
+        duration_ms: Date.now() - startTime,
+      },
     };
   }
 
@@ -275,18 +277,20 @@ class AgentExecutor {
       model: config.model,
       systemPrompt: config.systemPrompt,
       tools: config.tools,
-      maxTokens: 4096
+      maxTokens: 4096,
     });
   }
 }
 ```
 
 **Pros:**
+
 - ✅ Simple implementation
 - ✅ Isolation totale (pas de pollution de contexte)
 - ✅ Parallélisme facile (Promise.all)
 
 **Cons:**
+
 - ❌ Coûts répétés (system prompt à chaque instance)
 - ❌ Pas de réutilisation de contexte
 
@@ -300,7 +304,7 @@ class AgentPool {
     const key = `${role}:${model}`;
 
     if (this.pool.has(key)) {
-      return this.pool.get(key)!;  // Reuse existing
+      return this.pool.get(key)!; // Reuse existing
     }
 
     const agent = await this.createAgent(role, model);
@@ -312,17 +316,19 @@ class AgentPool {
     // Reset agent context but keep instance alive
     const agent = this.pool.get(role);
     if (agent) {
-      await agent.reset();  // Clear conversation history
+      await agent.reset(); // Clear conversation history
     }
   }
 }
 ```
 
 **Pros:**
+
 - ✅ Réduction coûts (réutilisation instances)
 - ✅ Warm start (pas de cold start)
 
 **Cons:**
+
 - ⚠️ Complexité accrue (lifecycle management)
 - ⚠️ Risque de pollution de contexte (must reset carefully)
 
@@ -336,7 +342,7 @@ class AgentPool {
 class FilteredMCPGateway {
   constructor(
     private baseGateway: AgentCardsGateway,
-    private allowedTools: string[]  // e.g., ["github:*", "web_search:search"]
+    private allowedTools: string[], // e.g., ["github:*", "web_search:search"]
   ) {}
 
   async callTool(toolName: string, args: unknown): Promise<unknown> {
@@ -350,7 +356,7 @@ class FilteredMCPGateway {
   }
 
   private isToolAllowed(toolName: string): boolean {
-    return this.allowedTools.some(pattern => {
+    return this.allowedTools.some((pattern) => {
       if (pattern.endsWith("*")) {
         const prefix = pattern.slice(0, -1);
         return toolName.startsWith(prefix);
@@ -367,7 +373,7 @@ class FilteredMCPGateway {
 const task: AgentDelegationTask = {
   type: "agent_delegation",
   agent_role: "researcher",
-  agent_tools: ["web_search:*", "read_file"],  // Only these tools
+  agent_tools: ["web_search:*", "read_file"], // Only these tools
   // ...
 };
 
@@ -380,6 +386,7 @@ const task: AgentDelegationTask = {
 ```
 
 **Benefits:**
+
 - ✅ Security (agents can't access dangerous tools)
 - ✅ Cost control (limit expensive tools)
 - ✅ Explicit contracts (clear what agent can do)
@@ -412,9 +419,9 @@ const task: AgentDelegationTask = {
 ```typescript
 // Sub-agent sees this in its context
 const context = {
-  docs: { /* MCP task output */ },
-  analysis: { /* Code task output */ },
-  best_practices: { /* Previous agent output */ }
+  docs: {/* MCP task output */},
+  analysis: {/* Code task output */},
+  best_practices: {/* Previous agent output */},
 };
 
 // Agent can use in prompt
@@ -432,22 +439,22 @@ agent.sendMessage(`
 ```typescript
 interface AgentCosts {
   researcher: {
-    tokens: 15000,
-    cost: 0.003,  // $0.003 for haiku
-    duration_ms: 5000
-  },
+    tokens: 15000;
+    cost: 0.003; // $0.003 for haiku
+    duration_ms: 5000;
+  };
   coder: {
-    tokens: 50000,
-    cost: 0.015,  // $0.015 for sonnet
-    duration_ms: 12000
-  }
+    tokens: 50000;
+    cost: 0.015; // $0.015 for sonnet
+    duration_ms: 12000;
+  };
 }
 
 // Total workflow cost
 const totalCost = Object.values(agentCosts).reduce(
   (sum, agent) => sum + agent.cost,
-  0
-);  // $0.018
+  0,
+); // $0.018
 ```
 
 #### Budget Enforcement
@@ -462,6 +469,7 @@ const totalCost = Object.values(agentCosts).reduce(
 ```
 
 **Benefits:**
+
 - ✅ Cost visibility (track per agent)
 - ✅ Budget protection (prevent runaway costs)
 - ✅ Optimization (choose model based on task)
@@ -490,7 +498,7 @@ async function testAgentTask() {
         agent_model: "haiku",
         agent_tools: ["web_search:search"],
         max_iterations: 3,
-        depends_on: []
+        depends_on: [],
       },
       {
         id: "summarize",
@@ -502,19 +510,19 @@ async function testAgentTask() {
             source: "agent_delegation"
           };
         `,
-        depends_on: ["research"]
-      }
-    ]
+        depends_on: ["research"],
+      },
+    ],
   };
 
   const executor = new ControlledExecutor({
-    agentExecutor: new AgentExecutor()
+    agentExecutor: new AgentExecutor(),
   });
 
   const result = await executor.execute(dag);
 
-  console.log("Agent output:", result.tasks.find(t => t.id === "research").output);
-  console.log("Summary:", result.tasks.find(t => t.id === "summarize").output);
+  console.log("Agent output:", result.tasks.find((t) => t.id === "research").output);
+  console.log("Summary:", result.tasks.find((t) => t.id === "summarize").output);
   console.log("Total cost:", result.metadata.total_cost);
 }
 ```
@@ -571,7 +579,7 @@ const dag: DAGStructure = {
       agent_role: "security_researcher",
       agent_goal: "Research OAuth2 best practices",
       agent_model: "haiku",
-      depends_on: []
+      depends_on: [],
     },
     {
       id: "research_rate_limiting",
@@ -579,7 +587,7 @@ const dag: DAGStructure = {
       agent_role: "performance_researcher",
       agent_goal: "Research API rate limiting strategies",
       agent_model: "haiku",
-      depends_on: []
+      depends_on: [],
     },
     {
       id: "research_caching",
@@ -587,7 +595,7 @@ const dag: DAGStructure = {
       agent_role: "performance_researcher",
       agent_goal: "Research API caching best practices",
       agent_model: "haiku",
-      depends_on: []
+      depends_on: [],
     },
 
     // Layer 1: Aggregate (code execution)
@@ -602,7 +610,7 @@ const dag: DAGStructure = {
           confidence: "high"
         };
       `,
-      depends_on: ["research_auth", "research_rate_limiting", "research_caching"]
+      depends_on: ["research_auth", "research_rate_limiting", "research_caching"],
     },
 
     // Layer 2: Implement (single agent)
@@ -613,15 +621,16 @@ const dag: DAGStructure = {
       agent_goal: "Implement API with auth, rate limiting, and caching",
       agent_model: "sonnet",
       agent_context: {
-        specifications: "$OUTPUT[aggregate_research]"
+        specifications: "$OUTPUT[aggregate_research]",
       },
-      depends_on: ["aggregate_research"]
-    }
-  ]
+      depends_on: ["aggregate_research"],
+    },
+  ],
 };
 ```
 
 **Expected Behavior:**
+
 - Layer 0: 3 agents run in parallel (like Promise.all)
 - Total time: ~max(agent1_time, agent2_time, agent3_time) ≈ 5s (not 15s sequential)
 - Layer 1: Aggregation waits for all 3
@@ -638,7 +647,7 @@ const dag: DAGStructure = {
     {
       id: "fetch_repo",
       tool: "github:get_repository",
-      arguments: { repo: "agentcards" }
+      arguments: { repo: "agentcards" },
     },
 
     // Agent task
@@ -649,9 +658,9 @@ const dag: DAGStructure = {
       agent_goal: "Analyze repository structure and identify architectural patterns",
       agent_tools: ["read_file", "grep"],
       agent_context: {
-        repo_info: "$OUTPUT[fetch_repo]"
+        repo_info: "$OUTPUT[fetch_repo]",
       },
-      depends_on: ["fetch_repo"]
+      depends_on: ["fetch_repo"],
     },
 
     // Code execution task
@@ -662,7 +671,7 @@ const dag: DAGStructure = {
         const patterns = deps.analyze_architecture.output.patterns;
         return generateMermaidDiagram(patterns);
       `,
-      depends_on: ["analyze_architecture"]
+      depends_on: ["analyze_architecture"],
     },
 
     // Another agent task
@@ -674,15 +683,16 @@ const dag: DAGStructure = {
       agent_tools: ["write_file"],
       agent_context: {
         analysis: "$OUTPUT[analyze_architecture]",
-        diagram: "$OUTPUT[generate_diagram]"
+        diagram: "$OUTPUT[generate_diagram]",
       },
-      depends_on: ["analyze_architecture", "generate_diagram"]
-    }
-  ]
+      depends_on: ["analyze_architecture", "generate_diagram"],
+    },
+  ],
 };
 ```
 
 **Flow:**
+
 ```
 fetch_repo (MCP)
     ↓
@@ -700,11 +710,13 @@ write_documentation (AGENT)
 ### Benefits
 
 #### ✅ 1. Best of Both Worlds
+
 - DAG orchestration (parallelism, dependencies)
 - Agent specialization (expertise, natural language goals)
 - Unified workflow (single DAG, multiple paradigms)
 
 #### ✅ 2. Parallelism at Agent Level
+
 ```typescript
 // 5 researchers in parallel
 tasks: [
@@ -712,12 +724,13 @@ tasks: [
   { type: "agent_delegation", agent_role: "researcher", topic: "caching" },
   { type: "agent_delegation", agent_role: "researcher", topic: "rate_limit" },
   { type: "agent_delegation", agent_role: "researcher", topic: "monitoring" },
-  { type: "agent_delegation", agent_role: "researcher", topic: "security" }
-]
+  { type: "agent_delegation", agent_role: "researcher", topic: "security" },
+];
 // Execute in parallel → 5x faster than sequential
 ```
 
 #### ✅ 3. GraphRAG Learning on Multi-Agent Patterns
+
 ```typescript
 // GraphRAG learns:
 // - Which agent_roles work best for which goals
@@ -727,6 +740,7 @@ tasks: [
 ```
 
 #### ✅ 4. Cost Optimization
+
 ```typescript
 // Use cheap model for simple tasks
 { agent_model: "haiku", agent_goal: "Research..." }  // $0.001
@@ -739,6 +753,7 @@ tasks: [
 ```
 
 #### ✅ 5. Gradual Adoption
+
 - Existing DAGs still work (backward compatible)
 - Add agent tasks incrementally
 - No breaking changes to API
@@ -748,6 +763,7 @@ tasks: [
 #### ❌ 1. Implementation Complexity
 
 **Estimated Effort:**
+
 - AgentExecutor class: 2-3 days
 - Agent pool management: 1-2 days
 - Tool filtering: 1 day
@@ -756,6 +772,7 @@ tasks: [
 - **Total: 7-9 days**
 
 **Components to build:**
+
 - `src/dag/agent-executor.ts` (new)
 - `src/dag/agent-pool.ts` (new)
 - `src/mcp/filtered-gateway.ts` (new)
@@ -780,6 +797,7 @@ tasks: [
 ```
 
 **Mitigation:**
+
 - Budget enforcement (hard limits)
 - Model selection guidance (use haiku by default)
 - Cost monitoring dashboards
@@ -803,6 +821,7 @@ Total: 8.5-13.5s
 ```
 
 **Mitigation:**
+
 - Use agents only when necessary (complex goals)
 - Parallelize agents aggressively
 - Use haiku for speed-critical tasks
@@ -823,6 +842,7 @@ Workflow fails
 ```
 
 **Mitigation:**
+
 - Enhanced event stream (agent-level events)
 - Agent conversation logs
 - Step-by-step replay capability
@@ -832,11 +852,13 @@ Workflow fails
 #### ⚠️ 1. Agent Reliability
 
 **Agents can fail unpredictably:**
+
 - Hallucinations (wrong tool calls)
 - Infinite loops (max_iterations critical)
 - Context overflow (long conversations)
 
 **Mitigation:**
+
 - Strict max_iterations (default: 5)
 - Timeout enforcement (default: 60s)
 - Budget limits (default: 10k tokens)
@@ -856,6 +878,7 @@ Workflow fails
 ```
 
 **Mitigation:**
+
 - Hard-coded max limits (max_iterations ≤ 20)
 - Required budget field (make it explicit)
 - Cost alerts (notify if >$1 per workflow)
@@ -873,6 +896,7 @@ Workflow fails
 ```
 
 **Mitigation:**
+
 - Whitelist-only tool access (explicit allow list)
 - Audit logs (track all agent tool calls)
 - Dry-run mode (preview agent actions before executing)
@@ -892,7 +916,7 @@ Workflow fails
      agent_role: "researcher",
      goal_type: "api_analysis",
      success_rate: 0.92,
-     avg_tokens: 5000
+     avg_tokens: 5000,
    });
    ```
 
@@ -902,7 +926,7 @@ Workflow fails
    graphRAG.addPattern({
      task_type: "research",
      optimal_model: "haiku",
-     cost_vs_quality: 0.95  // 95% quality at 1/5 the cost
+     cost_vs_quality: 0.95, // 95% quality at 1/5 the cost
    });
    ```
 
@@ -912,7 +936,7 @@ Workflow fails
    graphRAG.addEdge({
      from_role: "researcher",
      to_role: "coder",
-     confidence: 0.88
+     confidence: 0.88,
    });
    ```
 
@@ -922,7 +946,7 @@ Workflow fails
    graphRAG.addPattern({
      agent_role: "researcher",
      common_tools: ["web_search:*", "read_file"],
-     frequency: 0.85
+     frequency: 0.85,
    });
    ```
 
@@ -942,7 +966,7 @@ class DAGSuggester {
 
     return {
       tasks: [...mcpTasks, ...codeTasks, ...agentTasks],
-      confidence: this.calculateConfidence()
+      confidence: this.calculateConfidence(),
     };
   }
 
@@ -951,18 +975,18 @@ class DAGSuggester {
     const complexity = await this.analyzeComplexity(intent);
 
     if (complexity < 0.5) {
-      return [];  // Simple intent, no agents needed
+      return []; // Simple intent, no agents needed
     }
 
     // Query GraphRAG for similar agent patterns
     const patterns = await this.graphRAG.findAgentPatterns(intent);
 
-    return patterns.map(pattern => ({
+    return patterns.map((pattern) => ({
       type: "agent_delegation",
       agent_role: pattern.role,
       agent_goal: this.extractGoal(intent),
       agent_model: pattern.optimal_model,
-      agent_tools: pattern.common_tools
+      agent_tools: pattern.common_tools,
     }));
   }
 }
@@ -977,6 +1001,7 @@ class DAGSuggester {
 **Goal:** Validate core concept
 
 **Deliverables:**
+
 - ✅ `AgentExecutor` basic implementation
 - ✅ Single agent task in DAG (PoC 1)
 - ✅ Cost tracking
@@ -989,6 +1014,7 @@ class DAGSuggester {
 **Goal:** Full feature set
 
 **Deliverables:**
+
 - ✅ Agent pool management
 - ✅ Parallel agent execution (PoC 2)
 - ✅ Tool filtering
@@ -1004,6 +1030,7 @@ class DAGSuggester {
 **Goal:** Production optimization
 
 **Deliverables:**
+
 - ✅ Agent result caching
 - ✅ Cost optimization strategies
 - ✅ Performance benchmarks
@@ -1045,12 +1072,14 @@ class DAGSuggester {
 ### Go/No-Go: **🟢 GO**
 
 **Rationale:**
+
 1. **Technical feasibility:** High (builds on existing architecture)
 2. **Value proposition:** Strong (best of DAG + multi-agents)
 3. **Risk:** Manageable (budget enforcement, tool filtering, timeouts)
 4. **Competitive advantage:** Significant (no framework does this)
 
 **Conditions:**
+
 - ✅ Start with Phase 1 (prototype) to validate assumptions
 - ✅ Hard budget/timeout limits mandatory (no opt-out)
 - ✅ Cost monitoring dashboard before production
@@ -1059,18 +1088,21 @@ class DAGSuggester {
 ### Next Steps
 
 **Immediate (This Week):**
+
 1. Create `docs/spikes/spike-hybrid-dag-agent-delegation.md` ✅
 2. Prototype `AgentExecutor` class (PoC 1)
 3. Test single agent task in DAG
 4. Measure costs (haiku vs sonnet)
 
 **Short-Term (Next 2 Weeks):**
+
 1. Implement full `AgentDelegationTask` type
 2. Parallel agent execution (PoC 2)
 3. Tool filtering
 4. GraphRAG integration
 
 **Medium-Term (Month 2):**
+
 1. Production deployment
 2. Cost optimization
 3. Documentation + examples
@@ -1085,6 +1117,7 @@ class DAGSuggester {
 **Question:** Should agent conversations be saved/logged?
 
 **Options:**
+
 - A. Ephemeral (discard after task completes)
 - B. Log to PGlite (for debugging/audit)
 - C. Optional (controlled by user)
@@ -1096,6 +1129,7 @@ class DAGSuggester {
 **Question:** Max context size for agent_context?
 
 **Options:**
+
 - A. No limit (risk: overflow)
 - B. 10k tokens (practical limit)
 - C. Dynamic based on model
@@ -1107,6 +1141,7 @@ class DAGSuggester {
 **Question:** If agent task fails, how does DAG handle it?
 
 **Options:**
+
 - A. Fail entire DAG (strict)
 - B. Mark as `failed_safe` if no side_effects (resilient)
 - C. Retry with different model (adaptive)
@@ -1118,15 +1153,21 @@ class DAGSuggester {
 **Question:** Should identical agent goals return cached results?
 
 **Example:**
+
 ```typescript
 // First execution
-{ agent_goal: "Research OAuth2 best practices" }  // → Execute, cache result
+{
+  agent_goal: "Research OAuth2 best practices";
+} // → Execute, cache result
 
 // Second execution (same goal)
-{ agent_goal: "Research OAuth2 best practices" }  // → Return cached?
+{
+  agent_goal: "Research OAuth2 best practices";
+} // → Return cached?
 ```
 
 **Options:**
+
 - A. No caching (always fresh)
 - B. TTL cache (e.g., 24h)
 - C. Opt-in caching (user decides)
@@ -1137,10 +1178,13 @@ class DAGSuggester {
 
 ## Conclusion
 
-La **Stratégie D (Hybrid DAG + Agent Delegation)** est techniquement faisable, stratégiquement pertinente, et offre une différenciation forte vs frameworks multi-agents existants.
+La **Stratégie D (Hybrid DAG + Agent Delegation)** est techniquement faisable, stratégiquement
+pertinente, et offre une différenciation forte vs frameworks multi-agents existants.
 
 **Key Innovation:**
-> Agents ne sont plus des entités autonomes, mais des **tasks orchestrables** dans un DAG, permettant parallélisme, context optimization, et GraphRAG learning.
+
+> Agents ne sont plus des entités autonomes, mais des **tasks orchestrables** dans un DAG,
+> permettant parallélisme, context optimization, et GraphRAG learning.
 
 **Recommendation: GO with phased rollout.**
 
@@ -1148,6 +1192,4 @@ La **Stratégie D (Hybrid DAG + Agent Delegation)** est techniquement faisable, 
 
 **Next Spike:** Agent pool optimization strategies (if this spike validates as GO)
 
-**Date:** 2025-11-23
-**Author:** Claude Sonnet 4.5
-**Status:** ✅ Ready for Review
+**Date:** 2025-11-23 **Author:** Claude Sonnet 4.5 **Status:** ✅ Ready for Review

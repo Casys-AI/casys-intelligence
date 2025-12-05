@@ -1,25 +1,29 @@
 # MCP Gateway Architecture: Semantic Discovery and Parallel Execution
 
-**Author:** AgentCards Team
-**Date:** January 2025
-**Topics:** MCP Protocol, Agent Architecture, Performance Optimization
+**Author:** AgentCards Team **Date:** January 2025 **Topics:** MCP Protocol, Agent Architecture,
+Performance Optimization
 
 ---
 
 ## The MCP Scalability Paradox
 
-The Model Context Protocol (MCP) aimed to be the "USB standard" for AI agents — a universal interface connecting language models to tools and data sources. And in many ways, it's succeeded: hundreds of MCP servers exist today, covering filesystem access, GitHub integration, database queries, and much more.
+The Model Context Protocol (MCP) aimed to be the "USB standard" for AI agents — a universal
+interface connecting language models to tools and data sources. And in many ways, it's succeeded:
+hundreds of MCP servers exist today, covering filesystem access, GitHub integration, database
+queries, and much more.
 
-But there's an irony at the heart of MCP adoption: **the protocol scales, but the user experience doesn't.**
+But there's an irony at the heart of MCP adoption: **the protocol scales, but the user experience
+doesn't.**
 
-The standard architecture today involves connecting Claude Desktop (or Claude Code) directly to multiple MCP servers simultaneously. A typical configuration looks like this:
+The standard architecture today involves connecting Claude Desktop (or Claude Code) directly to
+multiple MCP servers simultaneously. A typical configuration looks like this:
 
 ```json
 {
   "mcpServers": {
     "filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem"] },
     "github": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"] },
-    "database": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-postgres"] },
+    "database": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-postgres"] }
     // ... 12 additional servers
   }
 }
@@ -27,13 +31,15 @@ The standard architecture today involves connecting Claude Desktop (or Claude Co
 
 This approach works admirably for 3-5 servers. But beyond 15 servers, cracks appear:
 
-1. **Context saturation**: Tool schemas consume 30-50% of Claude's context window before any actual work begins
+1. **Context saturation**: Tool schemas consume 30-50% of Claude's context window before any actual
+   work begins
 2. **Sequential execution**: Multi-tool workflows execute one tool at a time, accumulating latency
 3. **Intermediate data bloat**: Large datasets transit unnecessarily through the context window
 
 These aren't bugs — they're architectural limitations of the direct-connection model.
 
-In this article (first in a two-part series), we explore two architectural concepts that address these limitations:
+In this article (first in a two-part series), we explore two architectural concepts that address
+these limitations:
 
 1. **Semantic Gateway Pattern** — Dynamic tool discovery via vector search
 2. **DAG-Based Parallel Execution** — Eliminating sequential bottlenecks via dependency graphs
@@ -44,13 +50,19 @@ In this article (first in a two-part series), we explore two architectural conce
 
 ### From Static to Dynamic Discovery
 
-The MCP protocol defines a simple method for tool discovery: the client requests the complete list, the server returns all its tools. Simple, but with a critical problem: **no context about what the user is trying to do**.
+The MCP protocol defines a simple method for tool discovery: the client requests the complete list,
+the server returns all its tools. Simple, but with a critical problem: **no context about what the
+user is trying to do**.
 
-The server has no choice but to return everything. If you have 15 MCP servers with an average of 45 tools each, that's 687 tool schemas loaded into Claude's context. At roughly 80-150 tokens per schema, we're talking about 55,000 to 103,000 tokens consumed before the first user message.
+The server has no choice but to return everything. If you have 15 MCP servers with an average of 45
+tools each, that's 687 tool schemas loaded into Claude's context. At roughly 80-150 tokens per
+schema, we're talking about 55,000 to 103,000 tokens consumed before the first user message.
 
 For Claude's 200,000-token context window, that's **27-51% overhead just for tool definitions**.
 
-This architectural decision made sense when MCP was new and servers were few. But it doesn't scale. It's an information asymmetry: the server doesn't know the user's intent, so it must send everything. The client must load everything to decide what's relevant.
+This architectural decision made sense when MCP was new and servers were few. But it doesn't scale.
+It's an information asymmetry: the server doesn't know the user's intent, so it must send
+everything. The client must load everything to decide what's relevant.
 
 ### The Gateway Architecture
 
@@ -123,13 +135,16 @@ A gateway sits between Claude and your MCP servers:
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-The gateway provides a single MCP endpoint to Claude while maintaining connections to all your real MCP servers. But more importantly, it can make intelligent decisions about which tools to expose.
+The gateway provides a single MCP endpoint to Claude while maintaining connections to all your real
+MCP servers. But more importantly, it can make intelligent decisions about which tools to expose.
 
 ### Vector Embeddings as Discovery Mechanism
 
 Why vector search over traditional indexing?
 
-Keyword-based approaches fail quickly. For example, for the intent "Read configuration files and parse them", keyword search would miss `yaml:load` (different vocabulary) or `S3:get_object` (could read configs from S3).
+Keyword-based approaches fail quickly. For example, for the intent "Read configuration files and
+parse them", keyword search would miss `yaml:load` (different vocabulary) or `S3:get_object` (could
+read configs from S3).
 
 Semantic embeddings capture intent across vocabulary variations:
 
@@ -147,19 +162,26 @@ Semantic similarity scores:
 [0.19] slack:send_message   ← Correctly excluded
 ```
 
-The gateway generates embeddings for all tool schemas during initialization (one-time operation), then performs vector similarity search at runtime. The implementation philosophy is simple:
+The gateway generates embeddings for all tool schemas during initialization (one-time operation),
+then performs vector similarity search at runtime. The implementation philosophy is simple:
 
-**Initialization**: For each tool, combine name + description + schema into searchable text, generate embedding, and store in a vector database (PGlite + pgvector).
+**Initialization**: For each tool, combine name + description + schema into searchable text,
+generate embedding, and store in a vector database (PGlite + pgvector).
 
-**Runtime search**: Generate embedding of user intent, query the vector database with similarity threshold (0.6), and return the most relevant tools.
+**Runtime search**: Generate embedding of user intent, query the vector database with similarity
+threshold (0.6), and return the most relevant tools.
 
-> **Validation Note:** Context reduction metrics (229x) are empirically validated by our tests. For a typical query "read config.json and create GitHub issue", vector search identifies 3 relevant tools out of 687 available (similarity score >0.6), reducing context usage from 82,440 tokens (41%) to 360 tokens (0.18%) — a 229x improvement. Search time: <6ms on average.
+> **Validation Note:** Context reduction metrics (229x) are empirically validated by our tests. For
+> a typical query "read config.json and create GitHub issue", vector search identifies 3 relevant
+> tools out of 687 available (similarity score >0.6), reducing context usage from 82,440 tokens
+> (41%) to 360 tokens (0.18%) — a 229x improvement. Search time: <6ms on average.
 
 ### Local vs. Cloud Embeddings: Trade-off Analysis
 
 We chose local embeddings (Transformers.js + BGE-M3) over cloud APIs. Here's why:
 
 **Local embeddings (our choice):**
+
 - ✅ Zero latency (no network round-trip)
 - ✅ Total privacy (no data leaves the machine)
 - ✅ Zero cost (no API fees)
@@ -168,24 +190,29 @@ We chose local embeddings (Transformers.js + BGE-M3) over cloud APIs. Here's why
 - ⚠️ Quality: very good, not perfect
 
 **Cloud embeddings (OpenAI, Cohere, Voyage):**
+
 - ✅ Better embedding quality
 - ⚠️ 100-300ms latency per request
 - ⚠️ Privacy concerns (schemas reveal system architecture)
 - ⚠️ API costs that scale with usage
 - ⚠️ Network dependency
 
-For a gateway running locally and handling potentially sensitive tool schemas, **privacy and latency outweigh marginal quality improvements**. The local model is "good enough" for tool retrieval — we rarely see relevant tools ranked below the threshold.
+For a gateway running locally and handling potentially sensitive tool schemas, **privacy and latency
+outweigh marginal quality improvements**. The local model is "good enough" for tool retrieval — we
+rarely see relevant tools ranked below the threshold.
 
 ### The Gateway as Universal Middleware
 
 An interesting question arises: should semantic search be part of the MCP protocol itself?
 
 **Arguments for extending the protocol:**
+
 - Standardizes semantic discovery
 - Allows clients to optimize their own tool loading
 - Backward compatible (optional parameter)
 
 **Arguments against:**
+
 - Shifts complexity to every server implementation
 - Not all servers have embedding capabilities
 - Could fragment the ecosystem
@@ -193,9 +220,13 @@ An interesting question arises: should semantic search be part of the MCP protoc
 
 **Our approach: Gateway as middleware layer**
 
-Instead of requiring all MCP servers to implement semantic search, the gateway provides it as a universal layer. Any existing MCP server benefits immediately without code changes. Servers stay simple. Complexity lives in one place.
+Instead of requiring all MCP servers to implement semantic search, the gateway provides it as a
+universal layer. Any existing MCP server benefits immediately without code changes. Servers stay
+simple. Complexity lives in one place.
 
-This mirrors web infrastructure patterns: nginx handles caching and load balancing so backend services don't have to. The MCP gateway handles tool discovery optimization so MCP servers don't have to.
+This mirrors web infrastructure patterns: nginx handles caching and load balancing so backend
+services don't have to. The MCP gateway handles tool discovery optimization so MCP servers don't
+have to.
 
 ---
 
@@ -203,9 +234,11 @@ This mirrors web infrastructure patterns: nginx handles caching and load balanci
 
 ### GraphRAG vs DAG: Architectural Clarification
 
-Before diving into parallel execution, it's crucial to understand the distinction between two architectural components that work together:
+Before diving into parallel execution, it's crucial to understand the distinction between two
+architectural components that work together:
 
 **GraphRAG (Knowledge Graph)** — The complete knowledge base
+
 - Stores ALL tools from ALL MCP servers (e.g., 687 tools)
 - Contains execution history of workflows and their success/failure patterns
 - Maintains relationships between tools (e.g., "filesystem:read often followed by json:parse")
@@ -213,6 +246,7 @@ Before diving into parallel execution, it's crucial to understand the distinctio
 - **Scope:** Global, all possibilities
 
 **DAG (Directed Acyclic Graph)** — The specific workflow instance
+
 - A concrete workflow for ONE specific task
 - Contains only the 3-5 relevant tools for this query
 - Explicitly defines dependencies (task B depends on task A)
@@ -262,23 +296,28 @@ Before diving into parallel execution, it's crucial to understand the distinctio
 ```
 
 **Why this distinction matters:**
+
 - GraphRAG = "What workflows worked before?"
 - DAG Suggester = "Based on this intent, what workflow to build?"
 - DAG = "Here's the concrete plan to execute"
 - DAG Executor = "Let's execute this plan (possibly speculatively)"
 
-Without GraphRAG (the knowledge), we can't predict which DAG to build. Without DAG (the structure), we can't execute workflows in parallel. They're complementary.
+Without GraphRAG (the knowledge), we can't predict which DAG to build. Without DAG (the structure),
+we can't execute workflows in parallel. They're complementary.
 
 ### The Sequential Execution Bottleneck
 
 MCP workflows today execute sequentially. The LLM must:
+
 1. Make a tool call
 2. Wait for the result
 3. Incorporate the result into context
 4. Decide on the next tool call
 5. Repeat
 
-This is by design. MCP keeps servers stateless and simple. Orchestration is left to the client (Claude). But this creates a fundamental bottleneck: **even when tasks are independent, they execute serially**.
+This is by design. MCP keeps servers stateless and simple. Orchestration is left to the client
+(Claude). But this creates a fundamental bottleneck: **even when tasks are independent, they execute
+serially**.
 
 Consider a concrete example:
 
@@ -307,19 +346,23 @@ Total time: 1.2 seconds
 Speedup: 4.75x
 ```
 
-Why doesn't this happen automatically? **Because the MCP protocol doesn't express dependencies between tool calls**.
+Why doesn't this happen automatically? **Because the MCP protocol doesn't express dependencies
+between tool calls**.
 
 ### Introduction to DAG Execution Model
 
-A **Directed Acyclic Graph (DAG)** explicitly represents dependencies between tasks. Here's the difference:
+A **Directed Acyclic Graph (DAG)** explicitly represents dependencies between tasks. Here's the
+difference:
 
 **Sequential workflow:**
+
 ```
 t1 → t2 → t3
 (must execute sequentially)
 ```
 
 **Parallel workflow:**
+
 ```
 t1 ─┐
 t2 ─┤
@@ -328,7 +371,9 @@ t4 ─┤
 t5 ─┘
 ```
 
-The DAG executor uses topological sorting to identify "layers" of tasks that can execute in parallel. For each layer, all tasks execute simultaneously via `Promise.all()`. Between layers, we wait for all tasks to complete before moving to the next.
+The DAG executor uses topological sorting to identify "layers" of tasks that can execute in
+parallel. For each layer, all tasks execute simultaneously via `Promise.all()`. Between layers, we
+wait for all tasks to complete before moving to the next.
 
 ### Dependency Resolution with $OUTPUT References
 
@@ -361,15 +406,16 @@ This supports complex references with JSONPath-style syntax:
 
 We benchmarked various workflow patterns:
 
-| Workflow Type | Tasks | Sequential | Parallel | Speedup |
-|--------------|-------|------------|----------|---------|
-| Independent file reads | 5 | 5.7s | 1.2s | **4.75x** |
-| Parallel API calls (I/O bound) | 8 | 12.4s | 2.1s | **5.90x** |
-| Mixed (some dependencies) | 10 | 15.2s | 4.8s | **3.17x** |
-| Purely sequential chain | 5 | 5.7s | 5.7s | **1.00x** |
-| Fan-out then fan-in | 12 | 18.9s | 4.2s | **4.50x** |
+| Workflow Type                  | Tasks | Sequential | Parallel | Speedup   |
+| ------------------------------ | ----- | ---------- | -------- | --------- |
+| Independent file reads         | 5     | 5.7s       | 1.2s     | **4.75x** |
+| Parallel API calls (I/O bound) | 8     | 12.4s      | 2.1s     | **5.90x** |
+| Mixed (some dependencies)      | 10    | 15.2s      | 4.8s     | **3.17x** |
+| Purely sequential chain        | 5     | 5.7s       | 5.7s     | **1.00x** |
+| Fan-out then fan-in            | 12    | 18.9s      | 4.2s     | **4.50x** |
 
-**Key insight: Parallelization gains are proportional to workflow "width"** (number of independent branches).
+**Key insight: Parallelization gains are proportional to workflow "width"** (number of independent
+branches).
 
 ### Visual Comparison: Sequential vs. Parallel Execution
 
@@ -422,7 +468,9 @@ We benchmarked various workflow patterns:
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-Real-world workflows typically have 30-50% parallelizable tasks. Even modest workflows see 2-3x speedups. Highly parallel workflows (multiple file reads, multiple API calls) can see 5-6x improvements.
+Real-world workflows typically have 30-50% parallelizable tasks. Even modest workflows see 2-3x
+speedups. Highly parallel workflows (multiple file reads, multiple API calls) can see 5-6x
+improvements.
 
 ### Complex Pattern: Fan-Out, Fan-In
 
@@ -452,29 +500,39 @@ Workflow: "Read 5 configs, parse each, then aggregate into summary"
   Speedup: 1.8x
 ```
 
-This pattern is extremely common in agent workflows: fetch data from multiple sources, process in parallel, then aggregate for final analysis.
+This pattern is extremely common in agent workflows: fetch data from multiple sources, process in
+parallel, then aggregate for final analysis.
 
 ---
 
 ## Conclusion of Part 1
 
-We've explored two architectural concepts that address the scalability limitations of traditional MCP architecture:
+We've explored two architectural concepts that address the scalability limitations of traditional
+MCP architecture:
 
-1. **Semantic Gateway Pattern**: Use vector search to dynamically expose only relevant tools, reducing context usage by 229x (empirically validated)
+1. **Semantic Gateway Pattern**: Use vector search to dynamically expose only relevant tools,
+   reducing context usage by 229x (empirically validated)
 
-2. **DAG-Based Parallel Execution**: Explicitly express task dependencies to enable parallel execution, with speedups of 2-6x depending on workflow "width"
+2. **DAG-Based Parallel Execution**: Explicitly express task dependencies to enable parallel
+   execution, with speedups of 2-6x depending on workflow "width"
 
-These two concepts work in synergy: the gateway reduces context overhead, making it possible to add more MCP servers, while DAG execution optimizes the multi-tool workflows that become possible with this expanded ecosystem.
+These two concepts work in synergy: the gateway reduces context overhead, making it possible to add
+more MCP servers, while DAG execution optimizes the multi-tool workflows that become possible with
+this expanded ecosystem.
 
 In **Part 2** of this series, we'll explore two even more ambitious concepts:
 
 - **Agent Code Sandboxing**: Moving computation out of the protocol into local code execution
 - **Speculative Execution**: Predicting and pre-executing workflows before they're even requested
 
-These concepts push the boundaries of what's possible with MCP architecture even further, introducing fascinating questions about security, predictive intelligence, and the future of AI agents.
+These concepts push the boundaries of what's possible with MCP architecture even further,
+introducing fascinating questions about security, predictive intelligence, and the future of AI
+agents.
 
 ---
 
-**About AgentCards**: AgentCards is an open-source exploration of advanced architectural patterns for MCP agents. Full code and benchmarks are available on GitHub.
+**About AgentCards**: AgentCards is an open-source exploration of advanced architectural patterns
+for MCP agents. Full code and benchmarks are available on GitHub.
 
-**Questions or feedback?** We'd love to hear your thoughts on these concepts. Should these patterns be part of the MCP protocol itself? 
+**Questions or feedback?** We'd love to hear your thoughts on these concepts. Should these patterns
+be part of the MCP protocol itself?

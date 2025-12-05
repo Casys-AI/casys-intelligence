@@ -188,7 +188,9 @@ if (import.meta.main) {
 
   const p95Pass = latencyStats.p95 < 3000;
   console.log(
-    `\n${p95Pass ? "✅ PASS" : "❌ FAIL"}: P95 latency = ${latencyStats.p95.toFixed(1)}ms (target: <3000ms)`,
+    `\n${p95Pass ? "✅ PASS" : "❌ FAIL"}: P95 latency = ${
+      latencyStats.p95.toFixed(1)
+    }ms (target: <3000ms)`,
   );
 
   // Test 2: AC9 - Speedup validation
@@ -226,7 +228,9 @@ if (import.meta.main) {
 
   const speedupPass = avgSpeedup >= 3.0 && avgSpeedup <= 5.5;
   console.log(
-    `\n${speedupPass ? "✅ PASS" : "❌ FAIL"}: Average speedup = ${avgSpeedup.toFixed(2)}x (target: 3-5x)`,
+    `\n${speedupPass ? "✅ PASS" : "❌ FAIL"}: Average speedup = ${
+      avgSpeedup.toFixed(2)
+    }x (target: 3-5x)`,
   );
 
   // Test 3: Mixed parallel/sequential patterns
@@ -265,8 +269,14 @@ if (import.meta.main) {
   console.log("\n" + "=".repeat(60));
   console.log("📊 PERFORMANCE VALIDATION SUMMARY");
   console.log("=".repeat(60));
-  console.log(`AC8 (P95 Latency <3s):     ${p95Pass ? "✅ PASS" : "❌ FAIL"} (${latencyStats.p95.toFixed(1)}ms)`);
-  console.log(`AC9 (Speedup 3-5x):        ${speedupPass ? "✅ PASS" : "❌ FAIL"} (${avgSpeedup.toFixed(2)}x)`);
+  console.log(
+    `AC8 (P95 Latency <3s):     ${p95Pass ? "✅ PASS" : "❌ FAIL"} (${
+      latencyStats.p95.toFixed(1)
+    }ms)`,
+  );
+  console.log(
+    `AC9 (Speedup 3-5x):        ${speedupPass ? "✅ PASS" : "❌ FAIL"} (${avgSpeedup.toFixed(2)}x)`,
+  );
   console.log("=".repeat(60) + "\n");
 
   Deno.exit(p95Pass && speedupPass ? 0 : 1);

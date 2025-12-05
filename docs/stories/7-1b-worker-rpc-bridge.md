@@ -1,25 +1,26 @@
 # Story 7.1b: Worker RPC Bridge - Native Tracing
 
 > **ADR:** [ADR-032: Sandbox Worker RPC Bridge](../adrs/ADR-032-sandbox-worker-rpc-bridge.md)
-> **Supersedes:** [Story 7.1](./7-1-ipc-tracking-tool-usage-capture.md) (IPC Tracking via `__TRACE__`)
-> **Status:** done
+> **Supersedes:** [Story 7.1](./7-1-ipc-tracking-tool-usage-capture.md) (IPC Tracking via
+> `__TRACE__`) **Status:** done
 
 ## Dev Agent Record
 
 ### Context Reference
+
 - [7-1b-worker-rpc-bridge.context.xml](./7-1b-worker-rpc-bridge.context.xml)
 
 ## User Story
 
-As a system executing code with MCP tools,
-I want a Worker-based sandbox with RPC bridge for tool calls,
-So that MCP tools work in sandbox AND all calls are traced natively without stdout parsing.
+As a system executing code with MCP tools, I want a Worker-based sandbox with RPC bridge for tool
+calls, So that MCP tools work in sandbox AND all calls are traced natively without stdout parsing.
 
 ## Context
 
 ### The Hidden Bug: `wrapMCPClient()` Never Worked
 
-Story 3.2 implemented `wrapMCPClient()` to inject MCP tools into the sandbox. **This code exists and is called, but has never actually worked:**
+Story 3.2 implemented `wrapMCPClient()` to inject MCP tools into the sandbox. **This code exists and
+is called, but has never actually worked:**
 
 ```typescript
 // What happens today:
@@ -36,9 +37,11 @@ return `const ${key} = ${JSON.stringify(value)};`;
 // MCP tools silently disappear!
 ```
 
-**Why never caught:** Tests used mock data, not real MCP clients. No integration test called real MCP tools from sandbox code.
+**Why never caught:** Tests used mock data, not real MCP clients. No integration test called real
+MCP tools from sandbox code.
 
 **The error when we finally tried:**
+
 ```
 Server log: "Security validation failed"
 Server log: "Context contains function value"
@@ -46,11 +49,13 @@ Server log: "Context contains function value"
 
 ### Problem with Story 7.1 Approach
 
-Story 7.1 tried to add `__TRACE__` stdout parsing for tool tracing, but this doesn't solve the fundamental issue: **you cannot serialize JavaScript functions to a subprocess**.
+Story 7.1 tried to add `__TRACE__` stdout parsing for tool tracing, but this doesn't solve the
+fundamental issue: **you cannot serialize JavaScript functions to a subprocess**.
 
 ### Solution: Worker RPC Bridge
 
 Instead of passing functions to the sandbox, we:
+
 1. Pass **tool definitions** (names, schemas) - serializable!
 2. Generate **tool proxies** in the Worker that call back to main process
 3. Route tool calls through **RPC bridge** to actual MCPClients
@@ -109,16 +114,16 @@ Main Process (Gateway Server)              Worker (permissions: "none")
 // Request from Worker to Bridge
 interface RPCCallMessage {
   type: "rpc_call";
-  id: string;           // UUID for correlation
-  server: string;       // "filesystem"
-  tool: string;         // "read_file"
+  id: string; // UUID for correlation
+  server: string; // "filesystem"
+  tool: string; // "read_file"
   args: Record<string, unknown>;
 }
 
 // Response from Bridge to Worker
 interface RPCResultMessage {
   type: "rpc_result";
-  id: string;           // Matching request ID
+  id: string; // Matching request ID
   success: boolean;
   result?: unknown;
   error?: string;
@@ -175,19 +180,19 @@ interface ToolDefinition {
 
 ### Files to Create
 
-| File | Description | LOC |
-|------|-------------|-----|
-| `src/sandbox/worker-bridge.ts` | WorkerBridge class | ~150 |
-| `src/sandbox/sandbox-worker.ts` | Worker script | ~100 |
+| File                            | Description        | LOC  |
+| ------------------------------- | ------------------ | ---- |
+| `src/sandbox/worker-bridge.ts`  | WorkerBridge class | ~150 |
+| `src/sandbox/sandbox-worker.ts` | Worker script      | ~100 |
 
 ### Files to Modify
 
-| File | Change | LOC |
-|------|--------|-----|
-| `src/sandbox/types.ts` | Add RPC message types | ~50 |
-| `src/sandbox/executor.ts` | Add Worker mode | ~30 |
-| `src/sandbox/context-builder.ts` | Add `buildToolDefinitions()` | ~20 |
-| `src/mcp/gateway-server.ts` | Use bridge traces (remove parseTraces) | ~-40 |
+| File                             | Change                                 | LOC  |
+| -------------------------------- | -------------------------------------- | ---- |
+| `src/sandbox/types.ts`           | Add RPC message types                  | ~50  |
+| `src/sandbox/executor.ts`        | Add Worker mode                        | ~30  |
+| `src/sandbox/context-builder.ts` | Add `buildToolDefinitions()`           | ~20  |
+| `src/mcp/gateway-server.ts`      | Use bridge traces (remove parseTraces) | ~-40 |
 
 ### Files to Delete
 
@@ -210,7 +215,7 @@ export class WorkerBridge {
     // 1. Spawn worker
     this.worker = new Worker(new URL("./sandbox-worker.ts", import.meta.url).href, {
       type: "module",
-      deno: { permissions: "none" }
+      deno: { permissions: "none" },
     });
 
     // 2. Setup message handler
@@ -247,16 +252,23 @@ export class WorkerBridge {
 
       // TRACE END - success
       this.traces.push({
-        type: "tool_end", tool: toolId, trace_id: id,
-        success: true, duration_ms: Date.now() - startTime
+        type: "tool_end",
+        tool: toolId,
+        trace_id: id,
+        success: true,
+        duration_ms: Date.now() - startTime,
       });
 
       this.worker.postMessage({ type: "rpc_result", id, success: true, result });
     } catch (error) {
       // TRACE END - failure
       this.traces.push({
-        type: "tool_end", tool: toolId, trace_id: id,
-        success: false, duration_ms: Date.now() - startTime, error: String(error)
+        type: "tool_end",
+        tool: toolId,
+        trace_id: id,
+        success: false,
+        duration_ms: Date.now() - startTime,
+        error: String(error),
       });
 
       this.worker.postMessage({ type: "rpc_result", id, success: false, error: String(error) });
@@ -302,7 +314,7 @@ self.onmessage = async (e: MessageEvent) => {
 
     // Execute user code
     try {
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+      const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
       const fn = new AsyncFunction("mcp", code);
       const result = await fn(mcp);
       self.postMessage({ type: "execution_complete", success: true, result });
@@ -325,13 +337,13 @@ self.onmessage = async (e: MessageEvent) => {
 
 ## Benefits Over Story 7.1
 
-| Aspect | Story 7.1 (`__TRACE__`) | Story 7.1b (RPC Bridge) |
-|--------|-------------------------|-------------------------|
-| MCP tools in sandbox | ❌ Functions can't serialize | ✅ Proxies work |
-| Tracing reliability | ⚠️ Stdout parsing, collision risk | ✅ Native, 100% reliable |
-| Code complexity | ~70 LOC + parsing | ~350 LOC but cleaner |
-| Performance overhead | Regex parsing per line | Direct postMessage |
-| Debugging | Hard (mixed stdout) | Easy (structured messages) |
+| Aspect               | Story 7.1 (`__TRACE__`)           | Story 7.1b (RPC Bridge)    |
+| -------------------- | --------------------------------- | -------------------------- |
+| MCP tools in sandbox | ❌ Functions can't serialize      | ✅ Proxies work            |
+| Tracing reliability  | ⚠️ Stdout parsing, collision risk | ✅ Native, 100% reliable   |
+| Code complexity      | ~70 LOC + parsing                 | ~350 LOC but cleaner       |
+| Performance overhead | Regex parsing per line            | Direct postMessage         |
+| Debugging            | Hard (mixed stdout)               | Easy (structured messages) |
 
 ## Prerequisites
 
@@ -354,33 +366,31 @@ self.onmessage = async (e: MessageEvent) => {
 
 ## Implementation Summary
 
-**Status:** ✅ DONE
-**Implemented:** 2025-12-05
-**Code Review:** APPROVED 2025-12-05
+**Status:** ✅ DONE **Implemented:** 2025-12-05 **Code Review:** APPROVED 2025-12-05
 
 ### Files Created
 
-| File | Description | LOC |
-|------|-------------|-----|
-| `src/sandbox/worker-bridge.ts` | WorkerBridge class with RPC handler | ~180 |
-| `src/sandbox/sandbox-worker.ts` | Worker script with tool proxies | ~150 |
-| `tests/unit/sandbox/worker_bridge_test.ts` | Unit tests for WorkerBridge | ~280 |
+| File                                       | Description                         | LOC  |
+| ------------------------------------------ | ----------------------------------- | ---- |
+| `src/sandbox/worker-bridge.ts`             | WorkerBridge class with RPC handler | ~180 |
+| `src/sandbox/sandbox-worker.ts`            | Worker script with tool proxies     | ~150 |
+| `tests/unit/sandbox/worker_bridge_test.ts` | Unit tests for WorkerBridge         | ~280 |
 
 ### Files Modified
 
-| File | Change | LOC Delta |
-|------|--------|-----------|
-| `src/sandbox/types.ts` | Added RPC message types, TraceEvent, ExecutionMode | +120 |
-| `src/sandbox/executor.ts` | Added `executeWithTools()`, `setExecutionMode()` | +150 |
-| `src/sandbox/context-builder.ts` | Added `buildToolDefinitions()`, removed tracing | +35/-95 |
-| `src/mcp/gateway-server.ts` | Use WorkerBridge traces, removed `parseTraces()` | +20/-80 |
-| `tests/unit/sandbox/context_builder_test.ts` | Updated tests for new API | -130 |
+| File                                         | Change                                             | LOC Delta |
+| -------------------------------------------- | -------------------------------------------------- | --------- |
+| `src/sandbox/types.ts`                       | Added RPC message types, TraceEvent, ExecutionMode | +120      |
+| `src/sandbox/executor.ts`                    | Added `executeWithTools()`, `setExecutionMode()`   | +150      |
+| `src/sandbox/context-builder.ts`             | Added `buildToolDefinitions()`, removed tracing    | +35/-95   |
+| `src/mcp/gateway-server.ts`                  | Use WorkerBridge traces, removed `parseTraces()`   | +20/-80   |
+| `tests/unit/sandbox/context_builder_test.ts` | Updated tests for new API                          | -130      |
 
 ### Files Deleted
 
-| File | Reason |
-|------|--------|
-| `tests/unit/mcp/trace_parsing_test.ts` | Story 7.1 code removed |
+| File                                             | Reason                 |
+| ------------------------------------------------ | ---------------------- |
+| `tests/unit/mcp/trace_parsing_test.ts`           | Story 7.1 code removed |
 | `tests/unit/sandbox/tracing_performance_test.ts` | Story 7.1 code removed |
 
 ### Acceptance Criteria Verification
@@ -430,37 +440,36 @@ The implementation follows ADR-032 Worker RPC Bridge architecture:
 
 ## Code Review
 
-**Reviewer:** Senior Developer Agent
-**Date:** 2025-12-05
-**Verdict:** ✅ **APPROVED**
+**Reviewer:** Senior Developer Agent **Date:** 2025-12-05 **Verdict:** ✅ **APPROVED**
 
 ### Executive Summary
 
-Story 7.1b implements the Worker RPC Bridge architecture (ADR-032) successfully, providing native tool tracing and working MCP tool calls in sandbox. All 7 acceptance criteria validated.
+Story 7.1b implements the Worker RPC Bridge architecture (ADR-032) successfully, providing native
+tool tracing and working MCP tool calls in sandbox. All 7 acceptance criteria validated.
 
 ### Acceptance Criteria Validation
 
-| AC | Description | Status | Evidence |
-|----|-------------|--------|----------|
-| AC1 | `ToolDefinition` type in `types.ts` | ✅ PASS | `src/sandbox/types.ts:148-158` |
-| AC2 | `WorkerBridge` class with RPC handler | ✅ PASS | `src/sandbox/worker-bridge.ts:66-360` |
-| AC3 | `SandboxWorker` with tool proxies | ✅ PASS | `src/sandbox/sandbox-worker.ts:79-93` |
-| AC4 | `buildToolDefinitions()` in context-builder | ✅ PASS | `src/sandbox/context-builder.ts:281-298` |
-| AC5 | `executeWithTools()` in executor | ✅ PASS | `src/sandbox/executor.ts:852-961` |
-| AC6 | gateway-server uses native traces | ✅ PASS | `src/mcp/gateway-server.ts:67` comment confirms parseTraces removed |
-| AC7 | Story 7.1 cleanup complete | ✅ PASS | All cleanup items verified (fixed in review) |
+| AC  | Description                                 | Status  | Evidence                                                            |
+| --- | ------------------------------------------- | ------- | ------------------------------------------------------------------- |
+| AC1 | `ToolDefinition` type in `types.ts`         | ✅ PASS | `src/sandbox/types.ts:148-158`                                      |
+| AC2 | `WorkerBridge` class with RPC handler       | ✅ PASS | `src/sandbox/worker-bridge.ts:66-360`                               |
+| AC3 | `SandboxWorker` with tool proxies           | ✅ PASS | `src/sandbox/sandbox-worker.ts:79-93`                               |
+| AC4 | `buildToolDefinitions()` in context-builder | ✅ PASS | `src/sandbox/context-builder.ts:281-298`                            |
+| AC5 | `executeWithTools()` in executor            | ✅ PASS | `src/sandbox/executor.ts:852-961`                                   |
+| AC6 | gateway-server uses native traces           | ✅ PASS | `src/mcp/gateway-server.ts:67` comment confirms parseTraces removed |
+| AC7 | Story 7.1 cleanup complete                  | ✅ PASS | All cleanup items verified (fixed in review)                        |
 
 ### AC7 Cleanup Verification
 
-| Item | Required | Status | Evidence |
-|------|----------|--------|----------|
-| `wrapToolCall()` removed | ✅ | ✅ PASS | Not found in context-builder.ts |
-| `setTracingEnabled()` removed | ✅ | ✅ PASS | Not found in context-builder.ts |
-| `isTracingEnabled()` removed | ✅ | ✅ PASS | Not found in context-builder.ts |
-| `parseTraces()` removed | ✅ | ✅ PASS | Not found in gateway-server.ts |
-| `rawStdout` removed from types | ✅ | ✅ PASS | Removed in fix iteration |
-| trace_parsing_test.ts deleted | ✅ | ✅ PASS | File not found |
-| tracing_performance_test.ts deleted | ✅ | ✅ PASS | File not found |
+| Item                                | Required | Status  | Evidence                        |
+| ----------------------------------- | -------- | ------- | ------------------------------- |
+| `wrapToolCall()` removed            | ✅       | ✅ PASS | Not found in context-builder.ts |
+| `setTracingEnabled()` removed       | ✅       | ✅ PASS | Not found in context-builder.ts |
+| `isTracingEnabled()` removed        | ✅       | ✅ PASS | Not found in context-builder.ts |
+| `parseTraces()` removed             | ✅       | ✅ PASS | Not found in gateway-server.ts  |
+| `rawStdout` removed from types      | ✅       | ✅ PASS | Removed in fix iteration        |
+| trace_parsing_test.ts deleted       | ✅       | ✅ PASS | File not found                  |
+| tracing_performance_test.ts deleted | ✅       | ✅ PASS | File not found                  |
 
 ### Findings
 
@@ -469,6 +478,7 @@ Story 7.1b implements the Worker RPC Bridge architecture (ADR-032) successfully,
 **Issue:** The `rawStdout` field from Story 7.1 was not initially removed.
 
 **Fix Applied:**
+
 1. ✅ Removed `rawStdout` field from `ExecutionResult` interface in `src/sandbox/types.ts`
 2. ✅ Removed `rawStdout` assignment in `src/sandbox/executor.ts`
 3. ✅ Removed `rawStdout` from `executeWithTimeout()` return type
@@ -478,14 +488,14 @@ Story 7.1b implements the Worker RPC Bridge architecture (ADR-032) successfully,
 
 ### Code Quality Assessment
 
-| Aspect | Rating | Notes |
-|--------|--------|-------|
-| TypeScript Types | ✅ Excellent | All files pass `deno check` |
-| Error Handling | ✅ Good | Proper try/catch with structured errors |
-| Security | ✅ Excellent | Worker `permissions: "none"` enforced |
-| Test Coverage | ✅ Good | 33 tests covering unit + integration |
-| Documentation | ✅ Good | JSDoc comments, architecture notes |
-| Best Practices | ✅ Good | Follows Deno conventions |
+| Aspect           | Rating       | Notes                                   |
+| ---------------- | ------------ | --------------------------------------- |
+| TypeScript Types | ✅ Excellent | All files pass `deno check`             |
+| Error Handling   | ✅ Good      | Proper try/catch with structured errors |
+| Security         | ✅ Excellent | Worker `permissions: "none"` enforced   |
+| Test Coverage    | ✅ Good      | 33 tests covering unit + integration    |
+| Documentation    | ✅ Good      | JSDoc comments, architecture notes      |
+| Best Practices   | ✅ Good      | Follows Deno conventions                |
 
 ### Security Review
 

@@ -91,9 +91,7 @@ export class DAGExecutionError extends AgentCardsError {
       message,
       "DAG_EXECUTION_ERROR",
       recoverable,
-      recoverable
-        ? "This task failed but workflow continues"
-        : "Workflow execution halted",
+      recoverable ? "This task failed but workflow continues" : "Workflow execution halted",
     );
   }
 }

@@ -1,8 +1,6 @@
 # Engineering Backlog - AgentCards
 
-**Last Updated:** 2025-11-26
-**Project:** AgentCards
-**Maintainer:** BMad
+**Last Updated:** 2025-11-26 **Project:** AgentCards **Maintainer:** BMad
 
 ---
 
@@ -18,19 +16,17 @@
 
 ## 🔴 CRITICAL - Production Blockers
 
-**Priority:** P0 - Fix before production deployment
-**Total Estimated Effort:** 7 hours
+**Priority:** P0 - Fix before production deployment **Total Estimated Effort:** 7 hours
 
 ### BUG-005: DAGSuggester Dependency Ordering Bias
 
-**Severity:** CRITICAL (P0)
-**Status:** Open
-**Discovered:** 2025-11-26 (Spike: dag-suggester-dependency-analysis)
-**Estimate:** 3 hours
+**Severity:** CRITICAL (P0) **Status:** Open **Discovered:** 2025-11-26 (Spike:
+dag-suggester-dependency-analysis) **Estimate:** 3 hours
 
 **Impact:**
 
-- Tools running in parallel instead of sequence when "Child" appears before "Parent" in candidate list
+- Tools running in parallel instead of sequence when "Child" appears before "Parent" in candidate
+  list
 - Increased failure rate for complex workflows
 - Undermines reliability of Hybrid Search (which randomizes order)
 
@@ -50,8 +46,7 @@ for (let i = 0; i < candidates.length; i++) {
 }
 ```
 
-**Fix Required:**
-Implement Full Adjacency Matrix approach (ADR-024):
+**Fix Required:** Implement Full Adjacency Matrix approach (ADR-024):
 
 1. Compare all N\*N pairs regardless of list order
 2. Add dependencies for any detected path (Parent -> Child)
@@ -63,10 +58,8 @@ Implement Full Adjacency Matrix approach (ADR-024):
 
 ### BUG-006: Hybrid Search Logic Not Used by Suggester
 
-**Severity:** CRITICAL (P0)
-**Status:** Open
-**Discovered:** 2025-11-26 (Code Review)
-**Estimate:** 4 hours
+**Severity:** CRITICAL (P0) **Status:** Open **Discovered:** 2025-11-26 (Code Review) **Estimate:**
+4 hours
 
 **Impact:**
 
@@ -91,10 +84,8 @@ Implement Full Adjacency Matrix approach (ADR-024):
 
 ### BUG-003: Tool Schema Cache Unbounded Growth
 
-**Severity:** LOW (P3) - Downgraded 2025-11-25
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 1 hour (simplified fix)
+**Severity:** LOW (P3) - Downgraded 2025-11-25 **Status:** Open **Discovered:** 2025-11-24
+(Comprehensive Audit) **Estimate:** 1 hour (simplified fix)
 
 **Impact:**
 
@@ -179,8 +170,7 @@ for (let i = 0; i < candidates.length; i++) {
 }
 ```
 
-**Fix Required:**
-Implement Full Adjacency Matrix approach (ADR-024):
+**Fix Required:** Implement Full Adjacency Matrix approach (ADR-024):
 
 1. Compare all N\*N pairs regardless of list order
 2. Add dependencies for any detected path (Parent -> Child)
@@ -192,10 +182,8 @@ Implement Full Adjacency Matrix approach (ADR-024):
 
 ### BUG-006: Hybrid Search Logic Not Used by Suggester
 
-**Severity:** CRITICAL (P0)
-**Status:** Open
-**Discovered:** 2025-11-26 (Code Review)
-**Estimate:** 4 hours
+**Severity:** CRITICAL (P0) **Status:** Open **Discovered:** 2025-11-26 (Code Review) **Estimate:**
+4 hours
 
 **Impact:**
 
@@ -222,10 +210,8 @@ Implement Full Adjacency Matrix approach (ADR-024):
 
 ### PERF-001: EventStream Array Unbounded Growth
 
-**Severity:** HIGH
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 3 hours
+**Severity:** HIGH **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:** 3
+hours
 
 **Impact:**
 
@@ -239,8 +225,7 @@ Implement Full Adjacency Matrix approach (ADR-024):
 - **Line:** 34
 - **Property:** `private events: ExecutionEvent[] = [];`
 
-**Fix Required:**
-Implement ring buffer with configurable size:
+**Fix Required:** Implement ring buffer with configurable size:
 
 ```typescript
 private events: ExecutionEvent[] = [];
@@ -267,10 +252,8 @@ async emit(event: ExecutionEvent): Promise<void> {
 
 ### PERF-002: Vector Search Query Re-encoding
 
-**Severity:** MEDIUM
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 4 hours
+**Severity:** MEDIUM **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:**
+4 hours
 
 **Impact:**
 
@@ -283,8 +266,7 @@ async emit(event: ExecutionEvent): Promise<void> {
 - **File:** `src/vector/search.ts`
 - **Method:** `searchTools()`
 
-**Fix Required:**
-Implement LRU cache for query embeddings:
+**Fix Required:** Implement LRU cache for query embeddings:
 
 ```typescript
 import { LRUCache } from "lru-cache";
@@ -316,10 +298,8 @@ async searchTools(query: string, topK: number): Promise<SearchResult[]> {
 
 ### PERF-003: GraphRAG Metrics Recomputation on Every Sync
 
-**Severity:** MEDIUM
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 5 hours
+**Severity:** MEDIUM **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:**
+5 hours
 
 **Impact:**
 
@@ -332,8 +312,7 @@ async searchTools(query: string, topK: number): Promise<SearchResult[]> {
 - **File:** `src/graphrag/graph-engine.ts`
 - **Method:** `syncFromDatabase()`
 
-**Fix Required:**
-Implement dirty flag + lazy recomputation:
+**Fix Required:** Implement dirty flag + lazy recomputation:
 
 ```typescript
 private isDirty: boolean = false;
@@ -376,10 +355,8 @@ getPageRank(nodeId: string): number {
 
 ### QUALITY-001: Type Safety - Eliminate `any` Usage
 
-**Severity:** MEDIUM
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 1 week
+**Severity:** MEDIUM **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:**
+1 week
 
 **Impact:**
 
@@ -394,8 +371,7 @@ getPageRank(nodeId: string): number {
 3. `src/vector/embeddings.ts` - Model instance
 4. [7 more locations]
 
-**Fix Strategy:**
-Replace all `any` with:
+**Fix Strategy:** Replace all `any` with:
 
 - Specific types where structure known
 - `unknown` + type guards where structure unknown
@@ -405,7 +381,7 @@ Replace all `any` with:
 
 ```typescript
 // BEFORE
-async (request: any) => await this.handleListTools(request);
+(async (request: any) => await this.handleListTools(request));
 
 // AFTER
 interface ListToolsRequest {
@@ -415,13 +391,13 @@ interface ListToolsRequest {
   };
 }
 
-async (request: ListToolsRequest) => {
+(async (request: ListToolsRequest) => {
   // Runtime validation
   if (request.params?.query && typeof request.params.query !== "string") {
     throw new ValidationError("query must be string");
   }
   return await this.handleListTools(request);
-};
+});
 ```
 
 **Validation:**
@@ -434,10 +410,8 @@ async (request: ListToolsRequest) => {
 
 ### QUALITY-002: Refactor Large Files (>1000 LOC)
 
-**Severity:** MEDIUM
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 1 week
+**Severity:** MEDIUM **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:**
+1 week
 
 **Impact:**
 
@@ -479,10 +453,8 @@ src/dag/
 
 ### DEBT-001: Sandbox Temp File Cleanup on Error
 
-**Severity:** LOW
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 2 hours
+**Severity:** LOW **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:** 2
+hours
 
 **Impact:**
 
@@ -495,8 +467,7 @@ src/dag/
 - **File:** `src/sandbox/executor.ts`
 - **Method:** `execute()`
 
-**Fix Required:**
-Add try/finally cleanup:
+**Fix Required:** Add try/finally cleanup:
 
 ```typescript
 async execute(code: string, context: Record<string, unknown>) {
@@ -515,10 +486,8 @@ async execute(code: string, context: Record<string, unknown>) {
 
 ### DEBT-002: Console Logging Not Captured in Sandbox
 
-**Severity:** LOW
-**Status:** Open
-**Discovered:** 2025-11-24 (Comprehensive Audit)
-**Estimate:** 3 hours
+**Severity:** LOW **Status:** Open **Discovered:** 2025-11-24 (Comprehensive Audit) **Estimate:** 3
+hours
 
 **Impact:**
 
@@ -532,8 +501,7 @@ async execute(code: string, context: Record<string, unknown>) {
 - **Line:** 768
 - **Comment:** `logs: [], // TODO: Capture console logs in future enhancement`
 
-**Fix Required:**
-Implement stdout/stderr capture in sandbox subprocess:
+**Fix Required:** Implement stdout/stderr capture in sandbox subprocess:
 
 ```typescript
 const process = new Deno.Command("deno", {
@@ -574,21 +542,18 @@ const logs = [
 
 ---
 
-**Last Updated:** 2025-11-24
-**Next Review:** 2025-12-01
+**Last Updated:** 2025-11-24 **Next Review:** 2025-12-01
 
 ---
 
 ## 🔮 FUTURE ENHANCEMENTS - Deferred Features
 
-**Priority:** P4 - Explicitly deferred per ADR-018 until proven need
-**Review Date:** 2026-02-24 (3 months post-Epic 2.5 completion)
+**Priority:** P4 - Explicitly deferred per ADR-018 until proven need **Review Date:** 2026-02-24 (3
+months post-Epic 2.5 completion)
 
 ### DEFER-001: inject_tasks Command Handler
 
-**Severity:** LOW (P4)
-**Status:** Deferred (ADR-018)
-**Decision Date:** 2025-11-24
+**Severity:** LOW (P4) **Status:** Deferred (ADR-018) **Decision Date:** 2025-11-24
 
 **Rationale:** Redundant with `replan_dag` command
 
@@ -612,7 +577,7 @@ executor.enqueueCommand({
 
 **Reconsider if:**
 
-- > 10 user complaints about replan_dag speed/unpredictability in 3 months
+- 10 user complaints about replan_dag speed/unpredictability in 3 months
 - GraphRAG query optimization exhausted
 - Proven use case where manual control superior
 
@@ -630,9 +595,7 @@ executor.enqueueCommand({
 
 ### DEFER-002: skip_layer Command Handler
 
-**Severity:** LOW (P4)
-**Status:** Deferred (ADR-018)
-**Decision Date:** 2025-11-24
+**Severity:** LOW (P4) **Status:** Deferred (ADR-018) **Decision Date:** 2025-11-24
 
 **Rationale:** Safe-to-fail branches (Epic 3.5) architectural pattern covers use cases
 
@@ -656,7 +619,7 @@ executor.enqueueCommand({
 
 **Reconsider if:**
 
-- > 5 proven use cases where conditional skip needed
+- 5 proven use cases where conditional skip needed
 - Safe-to-fail pattern insufficient for use case
 - Requirement for mid-execution layer skip (not failure-based)
 
@@ -674,9 +637,7 @@ executor.enqueueCommand({
 
 ### DEFER-003: modify_args Command Handler
 
-**Severity:** LOW (P4)
-**Status:** Deferred (ADR-018)
-**Decision Date:** 2025-11-24
+**Severity:** LOW (P4) **Status:** Deferred (ADR-018) **Decision Date:** 2025-11-24
 
 **Rationale:** No proven HIL correction workflow yet
 
@@ -692,7 +653,7 @@ executor.enqueueCommand({
 
 **Reconsider if:**
 
-- > 3 user requests for runtime argument modification
+- 3 user requests for runtime argument modification
 - HIL correction workflow emerges in production
 - Real-world use case where replan_dag too heavy
 
@@ -710,9 +671,7 @@ executor.enqueueCommand({
 
 ### DEFER-004: checkpoint_response Command Handler
 
-**Severity:** LOW (P4)
-**Status:** Deferred (ADR-018)
-**Decision Date:** 2025-11-24
+**Severity:** LOW (P4) **Status:** Deferred (ADR-018) **Decision Date:** 2025-11-24
 
 **Rationale:** Composition of existing handlers sufficient
 
@@ -740,7 +699,7 @@ executor.enqueueCommand({
 
 **Reconsider if:**
 
-- > 5 use cases where composition insufficient
+- 5 use cases where composition insufficient
 - Performance issue with multiple commands
 - Transactional requirement (modify + continue atomic)
 
@@ -777,20 +736,18 @@ executor.enqueueCommand({
 
 ### BUG-001: Race Condition in CommandQueue.processCommands()
 
-**Status:** ✅ RESOLVED (2025-11-25)
-**Resolution:** Added `drainSync()` method to AsyncQueue.
+**Status:** ✅ RESOLVED (2025-11-25) **Resolution:** Added `drainSync()` method to AsyncQueue.
 
 ### BUG-002: EventStream Subscriber Memory Leak
 
-**Status:** ✅ RESOLVED (already fixed in codebase)
-**Resolution:** Code already had try/finally block.
+**Status:** ✅ RESOLVED (already fixed in codebase) **Resolution:** Code already had try/finally
+block.
 
 ### BUG-004: Rate Limiter Per-Server Instead of Per-Tool
 
-**Status:** ✅ RESOLVED (2025-11-25)
-**Resolution:** Changed rate limit key from `serverId` to `toolId`.
+**Status:** ✅ RESOLVED (2025-11-25) **Resolution:** Changed rate limit key from `serverId` to
+`toolId`.
 
 ---
 
-**Last Updated:** 2025-11-26
-**Next Review:** 2025-12-01
+**Last Updated:** 2025-11-26 **Next Review:** 2025-12-01

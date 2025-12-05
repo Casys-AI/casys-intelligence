@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current customer data
 - 📋 YOU ARE A CUSTOMER INSIGHTS ANALYST, not content generator
 - 💬 FOCUS on customer behavior and needs analysis
@@ -28,16 +30,18 @@
 
 ## YOUR TASK:
 
-Conduct comprehensive customer insights analysis using current {{current_year}} web data with emphasis on behavior patterns and needs.
+Conduct comprehensive customer insights analysis using current {{current_year}} web data with
+emphasis on behavior patterns and needs.
 
 ## CUSTOMER INSIGHTS SEQUENCE:
 
 ### 1. Begin Customer Insights Analysis
 
-**UTILIZE SUBPROCESSES AND SUBAGENTS**: Use research subagents, subprocesses or parallel processing if available to thoroughly analyze different customer areas simultaneously and thoroughly
+**UTILIZE SUBPROCESSES AND SUBAGENTS**: Use research subagents, subprocesses or parallel processing
+if available to thoroughly analyze different customer areas simultaneously and thoroughly
 
-Start with customer research approach:
-"Now I'll conduct **customer insights analysis** using current {{current_year}} web data to understand customer behavior and needs.
+Start with customer research approach: "Now I'll conduct **customer insights analysis** using
+current {{current_year}} web data to understand customer behavior and needs.
 
 **Customer Insights Focus:**
 
@@ -48,7 +52,8 @@ Start with customer research approach:
 - Customer satisfaction drivers
 - Demographic and psychographic profiles
 
-**Let me search for current customer insights using parallel web searches for comprehensive coverage.**"
+**Let me search for current customer insights using parallel web searches for comprehensive
+coverage.**"
 
 ### 2. Parallel Customer Research Execution
 
@@ -71,7 +76,8 @@ Start with customer research approach:
 
 **Collect and analyze findings from all parallel searches:**
 
-"After executing comprehensive parallel web searches, let me analyze and aggregate the customer insights:
+"After executing comprehensive parallel web searches, let me analyze and aggregate the customer
+insights:
 
 **Research Coverage:**
 
@@ -79,11 +85,9 @@ Start with customer research approach:
 - Pain points and challenges
 - Decision-making processes and journey mapping
 
-**Cross-Customer Analysis:**
-[Identify patterns connecting behavior, pain points, and decisions]
+**Cross-Customer Analysis:** [Identify patterns connecting behavior, pain points, and decisions]
 
-**Quality Assessment:**
-[Overall confidence levels and research gaps identified]"
+**Quality Assessment:** [Overall confidence levels and research gaps identified]"
 
 ### 4. Generate Customer Insights Content
 
@@ -98,44 +102,44 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### Customer Behavior Patterns
 
-[Customer behavior analysis with source citations]
-_Source: [URL with {{current_year}} customer data]_
+[Customer behavior analysis with source citations] _Source: [URL with {{current_year}} customer
+data]_
 
 ### Pain Points and Challenges
 
-[Pain points analysis with source citations]
-_Source: [URL with {{current_year}} customer challenges data]_
+[Pain points analysis with source citations] _Source: [URL with {{current_year}} customer challenges
+data]_
 
 ### Decision-Making Processes
 
-[Decision-making analysis with source citations]
-_Source: [URL with {{current_year}} decision process data]_
+[Decision-making analysis with source citations] _Source: [URL with {{current_year}} decision
+process data]_
 
 ### Customer Journey Mapping
 
-[Customer journey analysis with source citations]
-_Source: [URL with {{current_year}} customer journey data]_
+[Customer journey analysis with source citations] _Source: [URL with {{current_year}} customer
+journey data]_
 
 ### Customer Satisfaction Drivers
 
-[Satisfaction drivers analysis with source citations]
-_Source: [URL with {{current_year}} satisfaction data]_
+[Satisfaction drivers analysis with source citations] _Source: [URL with {{current_year}}
+satisfaction data]_
 
 ### Demographic Profiles
 
-[Demographic profiles analysis with source citations]
-_Source: [URL with {{current_year}} demographic data]_
+[Demographic profiles analysis with source citations] _Source: [URL with {{current_year}}
+demographic data]_
 
 ### Psychographic Profiles
 
-[Psychographic profiles analysis with source citations]
-_Source: [URL with {{current_year}} psychographic data]_
+[Psychographic profiles analysis with source citations] _Source: [URL with {{current_year}}
+psychographic data]_
 ```
 
 ### 5. Present Analysis and Continue Option
 
-Show the generated customer insights and present continue option:
-"I've completed the **customer insights analysis** using current {{current_year}} data to understand customer behavior and needs.
+Show the generated customer insights and present continue option: "I've completed the **customer
+insights analysis** using current {{current_year}} data to understand customer behavior and needs.
 
 **Key Customer Findings:**
 
@@ -145,8 +149,8 @@ Show the generated customer insights and present continue option:
 - Customer journey insights captured
 - Satisfaction and profile data analyzed
 
-**Ready to proceed to competitive analysis?**
-[C] Continue - Save this to the document and proceed to competitive analysis
+**Ready to proceed to competitive analysis?** [C] Continue - Save this to the document and proceed
+to competitive analysis
 
 ### 6. Handle Continue Selection
 
@@ -158,30 +162,27 @@ Show the generated customer insights and present continue option:
 
 ## APPEND TO DOCUMENT:
 
-When user selects 'C', append the content directly to the research document using the structure from step 4.
+When user selects 'C', append the content directly to the research document using the structure from
+step 4.
 
 ## SUCCESS METRICS:
 
-✅ Customer behavior patterns identified with current {{current_year}} citations
-✅ Pain points and challenges clearly documented
-✅ Decision-making processes thoroughly analyzed
-✅ Customer journey insights captured and mapped
-✅ Customer satisfaction drivers identified
-✅ [C] continue option presented and handled correctly
-✅ Content properly appended to document when C selected
+✅ Customer behavior patterns identified with current {{current_year}} citations ✅ Pain points and
+challenges clearly documented ✅ Decision-making processes thoroughly analyzed ✅ Customer journey
+insights captured and mapped ✅ Customer satisfaction drivers identified ✅ [C] continue option
+presented and handled correctly ✅ Content properly appended to document when C selected
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in customer web searches
-❌ Missing critical customer behavior patterns
-❌ Not identifying key pain points and challenges
-❌ Incomplete customer journey mapping
-❌ Not presenting [C] continue option after content generation
-❌ Appending content without user selecting 'C'
+❌ Not using {{current_year}} in customer web searches ❌ Missing critical customer behavior
+patterns ❌ Not identifying key pain points and challenges ❌ Incomplete customer journey mapping ❌
+Not presenting [C] continue option after content generation ❌ Appending content without user
+selecting 'C'
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## CUSTOMER RESEARCH PROTOCOLS:
 
@@ -193,6 +194,7 @@ When user selects 'C', append the content directly to the research document usin
 
 ## NEXT STEP:
 
-After user selects 'C' and content is saved to document, load `./step-03-competitive-analysis.md` to focus on competitive landscape analysis.
+After user selects 'C' and content is saved to document, load `./step-03-competitive-analysis.md` to
+focus on competitive landscape analysis.
 
 Remember: Always emphasize current {{current_year}} customer data and rigorous source verification!

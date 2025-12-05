@@ -12,17 +12,20 @@
   <story>
     <asA>system executing code with MCP tools</asA>
     <iWant>a Worker-based sandbox with RPC bridge for tool calls</iWant>
-    <soThat>MCP tools work in sandbox AND all calls are traced natively without stdout parsing</soThat>
+    <soThat
+    >MCP tools work in sandbox AND all calls are traced natively without stdout parsing</soThat>
     <tasks>
       <task id="1">Create WorkerBridge class (src/sandbox/worker-bridge.ts) - ~150 LOC</task>
       <task id="2">Create SandboxWorker script (src/sandbox/sandbox-worker.ts) - ~100 LOC</task>
       <task id="3">Add RPC message types to src/sandbox/types.ts - ~50 LOC</task>
       <task id="4">Extend DenoSandboxExecutor with Worker mode - ~30 LOC</task>
       <task id="5">Add buildToolDefinitions() to context-builder.ts - ~20 LOC</task>
-      <task id="6">Update gateway-server.ts to use bridge traces (remove parseTraces) - ~-40 LOC</task>
+      <task id="6"
+      >Update gateway-server.ts to use bridge traces (remove parseTraces) - ~-40 LOC</task>
       <task id="7">Cleanup Story 7.1 code (wrapToolCall, parseTraces, rawStdout)</task>
       <task id="8">Write unit tests for Worker RPC bridge</task>
-      <task id="9">Delete obsolete test files (trace_parsing_test.ts, tracing_performance_test.ts)</task>
+      <task id="9"
+      >Delete obsolete test files (trace_parsing_test.ts, tracing_performance_test.ts)</task>
     </tasks>
   </story>
 
@@ -101,33 +104,98 @@
 
   <artifacts>
     <docs>
-      <doc path="docs/adrs/ADR-032-sandbox-worker-rpc-bridge.md" title="ADR-032: Sandbox Worker RPC Bridge" section="Full ADR">
+      <doc
+        path="docs/adrs/ADR-032-sandbox-worker-rpc-bridge.md"
+        title="ADR-032: Sandbox Worker RPC Bridge"
+        section="Full ADR"
+      >
         Architecture decision for replacing subprocess-based sandbox with Web Worker + RPC Bridge pattern. Covers the hidden bug in wrapMCPClient(), RPC protocol, and native tracing.
       </doc>
-      <doc path="docs/PRD.md" title="Product Requirements Document" section="FR017-FR019">
+      <doc
+        path="docs/PRD.md"
+        title="Product Requirements Document"
+        section="FR017-FR019"
+      >
         Functional requirements for sandbox code execution (FR017), safe-to-fail branches (FR018), and MCP tool injection (FR019).
       </doc>
-      <doc path="docs/epics.md" title="Epic Breakdown" section="Epic 7, Story 7.1b">
+      <doc
+        path="docs/epics.md"
+        title="Epic Breakdown"
+        section="Epic 7, Story 7.1b"
+      >
         Epic 7 context with Story 7.1b details. Documents the 3-layer architecture with Worker RPC Bridge at Layer 2.
       </doc>
-      <doc path="docs/stories/7-1-ipc-tracking-tool-usage-capture.md" title="Story 7.1 (Superseded)" section="Full story">
+      <doc
+        path="docs/stories/7-1-ipc-tracking-tool-usage-capture.md"
+        title="Story 7.1 (Superseded)"
+        section="Full story"
+      >
         Original Story 7.1 with __TRACE__ stdout approach. Code to remove in cleanup phase.
       </doc>
     </docs>
     <code>
-      <artifact path="src/sandbox/executor.ts" kind="service" symbol="DenoSandboxExecutor" lines="71-789" reason="Main sandbox executor class. Needs Worker mode addition alongside existing subprocess execution."/>
-      <artifact path="src/sandbox/context-builder.ts" kind="service" symbol="ContextBuilder" lines="59-270" reason="Current tool context builder. Contains wrapMCPClient() and wrapToolCall() to be replaced with buildToolDefinitions()."/>
-      <artifact path="src/sandbox/context-builder.ts" kind="function" symbol="wrapToolCall" lines="379-427" reason="Story 7.1 tracing code to REMOVE - stdout-based tracing replaced by native bridge tracing."/>
-      <artifact path="src/sandbox/context-builder.ts" kind="function" symbol="wrapMCPClient" lines="447-503" reason="Current function wrapper that doesn't work with subprocess. To be deprecated in favor of buildToolDefinitions()."/>
-      <artifact path="src/sandbox/types.ts" kind="types" symbol="ExecutionResult" lines="95-128" reason="Contains rawStdout field to REMOVE and location to add RPC message types."/>
-      <artifact path="src/mcp/gateway-server.ts" kind="function" symbol="parseTraces" lines="105-150" reason="Stdout trace parsing to REMOVE. Replace with bridge.getTraces() usage."/>
-      <artifact path="src/mcp/gateway-server.ts" kind="method" symbol="handleExecuteCode" lines="1101-1270" reason="Code execution handler. Uses parseTraces() - to be updated to use bridge traces instead."/>
-      <artifact path="src/mcp/client.ts" kind="service" symbol="MCPClient" reason="MCP client interface. WorkerBridge will route tool calls to these clients."/>
+      <artifact
+        path="src/sandbox/executor.ts"
+        kind="service"
+        symbol="DenoSandboxExecutor"
+        lines="71-789"
+        reason="Main sandbox executor class. Needs Worker mode addition alongside existing subprocess execution."
+      />
+      <artifact
+        path="src/sandbox/context-builder.ts"
+        kind="service"
+        symbol="ContextBuilder"
+        lines="59-270"
+        reason="Current tool context builder. Contains wrapMCPClient() and wrapToolCall() to be replaced with buildToolDefinitions()."
+      />
+      <artifact
+        path="src/sandbox/context-builder.ts"
+        kind="function"
+        symbol="wrapToolCall"
+        lines="379-427"
+        reason="Story 7.1 tracing code to REMOVE - stdout-based tracing replaced by native bridge tracing."
+      />
+      <artifact
+        path="src/sandbox/context-builder.ts"
+        kind="function"
+        symbol="wrapMCPClient"
+        lines="447-503"
+        reason="Current function wrapper that doesn't work with subprocess. To be deprecated in favor of buildToolDefinitions()."
+      />
+      <artifact
+        path="src/sandbox/types.ts"
+        kind="types"
+        symbol="ExecutionResult"
+        lines="95-128"
+        reason="Contains rawStdout field to REMOVE and location to add RPC message types."
+      />
+      <artifact
+        path="src/mcp/gateway-server.ts"
+        kind="function"
+        symbol="parseTraces"
+        lines="105-150"
+        reason="Stdout trace parsing to REMOVE. Replace with bridge.getTraces() usage."
+      />
+      <artifact
+        path="src/mcp/gateway-server.ts"
+        kind="method"
+        symbol="handleExecuteCode"
+        lines="1101-1270"
+        reason="Code execution handler. Uses parseTraces() - to be updated to use bridge traces instead."
+      />
+      <artifact
+        path="src/mcp/client.ts"
+        kind="service"
+        symbol="MCPClient"
+        reason="MCP client interface. WorkerBridge will route tool calls to these clients."
+      />
     </code>
     <dependencies>
       <ecosystem name="deno">
-        <package name="deno" version="2.x">Deno runtime with Worker API support (permissions: "none")</package>
-        <package name="@modelcontextprotocol/sdk" version="^1.0.4">MCP SDK for tool definitions</package>
+        <package name="deno" version="2.x"
+        >Deno runtime with Worker API support (permissions: "none")</package>
+        <package name="@modelcontextprotocol/sdk" version="^1.0.4"
+        >MCP SDK for tool definitions</package>
       </ecosystem>
       <key_imports>
         <import>Web Worker API with deno: { permissions: "none" } option</import>
@@ -138,19 +206,27 @@
   </artifacts>
 
   <constraints>
-    <constraint type="architecture">Worker must run with permissions: "none" for security isolation</constraint>
-    <constraint type="architecture">Tool definitions (not functions) must be serializable to Worker</constraint>
-    <constraint type="architecture">All MCP tool calls route through RPC bridge for native tracing</constraint>
-    <constraint type="architecture">No stdout parsing - traces captured directly in bridge</constraint>
+    <constraint type="architecture"
+    >Worker must run with permissions: "none" for security isolation</constraint>
+    <constraint type="architecture"
+    >Tool definitions (not functions) must be serializable to Worker</constraint>
+    <constraint type="architecture"
+    >All MCP tool calls route through RPC bridge for native tracing</constraint>
+    <constraint type="architecture"
+    >No stdout parsing - traces captured directly in bridge</constraint>
     <constraint type="performance">RPC overhead must be less than 10ms per call</constraint>
-    <constraint type="cleanup">Must remove ALL Story 7.1 __TRACE__ code - no dual implementation</constraint>
-    <constraint type="backwards-compat">Keep subprocess mode available (deprecated) during transition</constraint>
-    <constraint type="security">Context validation via SecurityValidator remains in place</constraint>
+    <constraint type="cleanup"
+    >Must remove ALL Story 7.1 __TRACE__ code - no dual implementation</constraint>
+    <constraint type="backwards-compat"
+    >Keep subprocess mode available (deprecated) during transition</constraint>
+    <constraint type="security"
+    >Context validation via SecurityValidator remains in place</constraint>
   </constraints>
 
   <interfaces>
     <interface name="WorkerBridge" kind="class">
-      <signature><![CDATA[
+      <signature
+      ><![CDATA[
 class WorkerBridge {
   constructor(mcpClients: Map<string, MCPClient>);
   async execute(code: string, toolDefs: ToolDefinition[]): Promise<ExecutionResult>;
@@ -161,7 +237,8 @@ class WorkerBridge {
       <path>src/sandbox/worker-bridge.ts (NEW)</path>
     </interface>
     <interface name="RPCCallMessage" kind="interface">
-      <signature><![CDATA[
+      <signature
+      ><![CDATA[
 interface RPCCallMessage {
   type: "rpc_call";
   id: string;           // UUID for correlation
@@ -173,7 +250,8 @@ interface RPCCallMessage {
       <path>src/sandbox/types.ts</path>
     </interface>
     <interface name="RPCResultMessage" kind="interface">
-      <signature><![CDATA[
+      <signature
+      ><![CDATA[
 interface RPCResultMessage {
   type: "rpc_result";
   id: string;           // Matching request ID
@@ -185,7 +263,8 @@ interface RPCResultMessage {
       <path>src/sandbox/types.ts</path>
     </interface>
     <interface name="ToolDefinition" kind="interface">
-      <signature><![CDATA[
+      <signature
+      ><![CDATA[
 interface ToolDefinition {
   server: string;
   name: string;
@@ -196,7 +275,8 @@ interface ToolDefinition {
       <path>src/sandbox/types.ts</path>
     </interface>
     <interface name="TraceEvent" kind="interface">
-      <signature><![CDATA[
+      <signature
+      ><![CDATA[
 interface TraceEvent {
   type: "tool_start" | "tool_end";
   tool: string;         // "filesystem:read_file"
@@ -210,7 +290,8 @@ interface TraceEvent {
       <path>src/sandbox/types.ts (existing in gateway-server, to consolidate)</path>
     </interface>
     <interface name="buildToolDefinitions" kind="function">
-      <signature><![CDATA[
+      <signature
+      ><![CDATA[
 function buildToolDefinitions(
   searchResults: SearchResult[]
 ): ToolDefinition[]
@@ -220,13 +301,15 @@ function buildToolDefinitions(
   </interfaces>
 
   <tests>
-    <standards>
+    <standards
+    >
       Tests use Deno's built-in test framework with @std/assert. Unit tests live in tests/unit/ with pattern *_test.ts. Integration tests in tests/integration/. All tests run with deno test --allow-all. Test names should be descriptive and follow pattern: "ComponentName - behavior under test".
     </standards>
     <locations>
       <location>tests/unit/sandbox/worker_bridge_test.ts (NEW)</location>
       <location>tests/unit/sandbox/executor_test.ts (existing - add Worker mode tests)</location>
-      <location>tests/unit/sandbox/context_builder_test.ts (existing - update for buildToolDefinitions)</location>
+      <location
+      >tests/unit/sandbox/context_builder_test.ts (existing - update for buildToolDefinitions)</location>
       <location>tests/integration/code_execution_test.ts (existing - end-to-end tests)</location>
     </locations>
     <ideas>
@@ -247,7 +330,8 @@ function buildToolDefinitions(
       <idea ac="6">Benchmark: verify RPC overhead is under 10ms per call</idea>
       <idea ac="7">Verify parseTraces function is removed from gateway-server.ts</idea>
       <idea ac="7">Verify rawStdout field is removed from ExecutionResult</idea>
-      <idea ac="7">Verify test files deleted: trace_parsing_test.ts, tracing_performance_test.ts</idea>
+      <idea ac="7"
+      >Verify test files deleted: trace_parsing_test.ts, tracing_performance_test.ts</idea>
     </ideas>
   </tests>
 </story-context>

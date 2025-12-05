@@ -38,14 +38,22 @@ async function insertTestEmbeddings(db: PGliteClient, model: EmbeddingModel): Pr
       serverId: "filesystem",
       toolName: "list_directory",
       description: "List files in a directory",
-      schema: { name: "list_directory", description: "List directory", inputSchema: { type: "object" } },
+      schema: {
+        name: "list_directory",
+        description: "List directory",
+        inputSchema: { type: "object" },
+      },
     },
     {
       toolId: "github:create_pull_request",
       serverId: "github",
       toolName: "create_pull_request",
       description: "Create a new pull request on GitHub repository",
-      schema: { name: "create_pull_request", description: "Create PR", inputSchema: { type: "object" } },
+      schema: {
+        name: "create_pull_request",
+        description: "Create PR",
+        inputSchema: { type: "object" },
+      },
     },
     {
       toolId: "github:list_issues",
@@ -74,7 +82,13 @@ async function insertTestEmbeddings(db: PGliteClient, model: EmbeddingModel): Pr
     await db.query(
       `INSERT INTO tool_schema (tool_id, server_id, name, description, input_schema)
        VALUES ($1, $2, $3, $4, $5)`,
-      [tool.toolId, tool.serverId, tool.toolName, tool.description, JSON.stringify(tool.schema.inputSchema)],
+      [
+        tool.toolId,
+        tool.serverId,
+        tool.toolName,
+        tool.description,
+        JSON.stringify(tool.schema.inputSchema),
+      ],
     );
 
     const text = `${tool.schema.name} ${tool.schema.description}`;
@@ -84,14 +98,20 @@ async function insertTestEmbeddings(db: PGliteClient, model: EmbeddingModel): Pr
     await db.query(
       `INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding, metadata)
        VALUES ($1, $2, $3, $4::vector, $5)`,
-      [tool.toolId, tool.serverId, tool.toolName, vectorLiteral, JSON.stringify({ description: tool.description })],
+      [
+        tool.toolId,
+        tool.serverId,
+        tool.toolName,
+        vectorLiteral,
+        JSON.stringify({ description: tool.description }),
+      ],
     );
   }
 }
 
 Deno.test("Manual - Verify context reduction (Article 1 claim)", async () => {
   console.log("\n📊 VÉRIFICATION DES CHIFFRES DE L'ARTICLE 1\n");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
 
   const db = await createTestDb();
   const model = new EmbeddingModel();
@@ -104,7 +124,11 @@ Deno.test("Manual - Verify context reduction (Article 1 claim)", async () => {
   // Scenario de l'article : "Lire config.json et créer issue GitHub"
   console.log("\n🎯 Scénario : 'Lire config.json et créer issue GitHub'\n");
 
-  const results = await vectorSearch.searchTools("read config file and create github issue", 3, 0.6);
+  const results = await vectorSearch.searchTools(
+    "read config file and create github issue",
+    3,
+    0.6,
+  );
 
   console.log("Résultats de la recherche vectorielle :");
   for (const result of results) {
@@ -125,8 +149,12 @@ Deno.test("Manual - Verify context reduction (Article 1 claim)", async () => {
   const reductionFactor = contextWithoutOptimization / contextWithOptimization;
 
   console.log(`\n📉 Réduction de contexte :`);
-  console.log(`   Sans optimisation : ${TOTAL_TOOLS} tools × ${AVG_TOKENS_PER_SCHEMA} tokens = ${contextWithoutOptimization} tokens`);
-  console.log(`   Avec optimisation : ${TOOLS_RETURNED} tools × ${AVG_TOKENS_PER_SCHEMA} tokens = ${contextWithOptimization} tokens`);
+  console.log(
+    `   Sans optimisation : ${TOTAL_TOOLS} tools × ${AVG_TOKENS_PER_SCHEMA} tokens = ${contextWithoutOptimization} tokens`,
+  );
+  console.log(
+    `   Avec optimisation : ${TOOLS_RETURNED} tools × ${AVG_TOKENS_PER_SCHEMA} tokens = ${contextWithOptimization} tokens`,
+  );
   console.log(`   Réduction : ${reductionFactor.toFixed(1)}x\n`);
 
   // Extrapolation à 687 tools (article)
@@ -136,8 +164,12 @@ Deno.test("Manual - Verify context reduction (Article 1 claim)", async () => {
   const articleReduction = contextArticleWithout / contextArticleWith;
 
   console.log(`📊 Extrapolation article (687 tools sur 15 serveurs) :`);
-  console.log(`   Sans optimisation : ${ARTICLE_TOTAL_TOOLS} tools × ${AVG_TOKENS_PER_SCHEMA} = ${contextArticleWithout.toLocaleString()} tokens`);
-  console.log(`   Avec optimisation : ${TOOLS_RETURNED} tools × ${AVG_TOKENS_PER_SCHEMA} = ${contextArticleWith} tokens`);
+  console.log(
+    `   Sans optimisation : ${ARTICLE_TOTAL_TOOLS} tools × ${AVG_TOKENS_PER_SCHEMA} = ${contextArticleWithout.toLocaleString()} tokens`,
+  );
+  console.log(
+    `   Avec optimisation : ${TOOLS_RETURNED} tools × ${AVG_TOKENS_PER_SCHEMA} = ${contextArticleWith} tokens`,
+  );
   console.log(`   Réduction : ${articleReduction.toFixed(1)}x`);
   console.log(`   Article claim : 167x\n`);
 
@@ -145,11 +177,17 @@ Deno.test("Manual - Verify context reduction (Article 1 claim)", async () => {
   const contextPctWith = (contextArticleWith / 200000) * 100;
 
   console.log(`💾 Fenêtre de contexte (200K tokens) :`);
-  console.log(`   Sans optimisation : ${contextPctWithout.toFixed(1)}% (${contextArticleWithout.toLocaleString()} / 200,000)`);
-  console.log(`   Avec optimisation : ${contextPctWith.toFixed(2)}% (${contextArticleWith} / 200,000)`);
+  console.log(
+    `   Sans optimisation : ${
+      contextPctWithout.toFixed(1)
+    }% (${contextArticleWithout.toLocaleString()} / 200,000)`,
+  );
+  console.log(
+    `   Avec optimisation : ${contextPctWith.toFixed(2)}% (${contextArticleWith} / 200,000)`,
+  );
   console.log(`   Article target : <5%\n`);
 
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
 
   // Validation
   console.log(`\n✅ Résultats :`);

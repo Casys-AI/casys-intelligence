@@ -13,17 +13,13 @@
  * @module tests/integration/episodic_integration_test
  */
 
-import {
-  assertEquals,
-  assertExists,
-  assertLess,
-} from "@std/assert";
+import { assertEquals, assertExists, assertLess } from "@std/assert";
 import { ControlledExecutor } from "../../src/dag/controlled-executor.ts";
 import { EpisodicMemoryStore } from "../../src/learning/episodic-memory-store.ts";
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import type { DAGStructure } from "../../src/graphrag/types.ts";
-import type { ToolExecutor, ExecutionEvent } from "../../src/dag/types.ts";
+import type { ExecutionEvent, ToolExecutor } from "../../src/dag/types.ts";
 
 // Helper to create in-memory test database with migrations
 async function createTestDb(): Promise<PGliteClient> {
@@ -234,7 +230,10 @@ Deno.test("Story 4.1d - Task 5: speculation_start Event Support", async (t) => {
     assertExists(specEvents[0].data.prediction);
     assertEquals(specEvents[0].data.prediction!.toolId, "speculative_tool");
     assertEquals(specEvents[0].data.prediction!.confidence, 0.85);
-    assertEquals(specEvents[0].data.prediction!.reasoning, "High confidence based on similar context");
+    assertEquals(
+      specEvents[0].data.prediction!.reasoning,
+      "High confidence based on similar context",
+    );
 
     await teardownTest(db, episodicMemory);
   });
@@ -289,7 +288,11 @@ Deno.test("Story 4.1d - Task 6: Performance Validation", async (t) => {
     console.log(`Per-capture overhead estimate: ${perCaptureOverhead.toFixed(2)}ms`);
 
     // Should be <1ms per capture (allowing for test overhead)
-    assertLess(perCaptureOverhead, 1.5, `Expected <1ms per capture, got ${perCaptureOverhead.toFixed(2)}ms`);
+    assertLess(
+      perCaptureOverhead,
+      1.5,
+      `Expected <1ms per capture, got ${perCaptureOverhead.toFixed(2)}ms`,
+    );
 
     await teardownTest(db, episodicMemory);
   });

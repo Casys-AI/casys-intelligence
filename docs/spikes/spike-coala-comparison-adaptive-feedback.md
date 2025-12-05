@@ -1,17 +1,19 @@
 # Spike: CoALA Framework vs AgentCards Adaptive Feedback Loops
 
-**Date:** 2025-11-13
-**Author:** Research Analysis
-**Status:** Analysis Complete
-**Related:** Epic 2.5 - Adaptive DAG Feedback Loops
+**Date:** 2025-11-13 **Author:** Research Analysis **Status:** Analysis Complete **Related:** Epic
+2.5 - Adaptive DAG Feedback Loops
 
 ---
 
 ## Executive Summary
 
-Ce spike compare le framework **CoALA** (Cognitive Architectures for Language Agents) avec notre architecture **AgentCards Epic 2.5** pour identifier parallèles, différences, et opportunités d'amélioration.
+Ce spike compare le framework **CoALA** (Cognitive Architectures for Language Agents) avec notre
+architecture **AgentCards Epic 2.5** pour identifier parallèles, différences, et opportunités
+d'amélioration.
 
-**Conclusion Clé:** AgentCards implémente une architecture **plus granulaire** (3 loops vs 2) avec **meta-learning explicite** (GraphRAG), mais pourrait bénéficier des mécanismes CoALA pour: **confidence adaptative**, **memory structurée**, et **retrieval dynamique**.
+**Conclusion Clé:** AgentCards implémente une architecture **plus granulaire** (3 loops vs 2) avec
+**meta-learning explicite** (GraphRAG), mais pourrait bénéficier des mécanismes CoALA pour:
+**confidence adaptative**, **memory structurée**, et **retrieval dynamique**.
 
 ---
 
@@ -28,17 +30,21 @@ CoALA organise les agents autour de **3 dimensions:**
 ### 1.2 Les Deux Feedback Loops
 
 **Decision Cycle Loop (Inner):**
+
 ```
 Observation → Planning (Propose → Evaluate → Select) → Execute Action → New Observation
 ```
+
 - Opère à chaque décision (milliseconds to seconds)
 - Working memory = état actif
 - Reasoning/Retrieval = actions internes
 
 **Learning Loop (Outer):**
+
 ```
 Experience trajectories → Reflect → Write to Long-term Memory → Improve future cycles
 ```
+
 - Opère sur multiples cycles (hours to days)
 - Episodic: Store experiences
 - Semantic: Extract knowledge
@@ -46,29 +52,30 @@ Experience trajectories → Reflect → Write to Long-term Memory → Improve fu
 
 ### 1.3 Memory Architecture
 
-| Memory Type | Content | Access | Write |
-|-------------|---------|--------|-------|
-| **Working** | Current state, active info | Read/Write during cycle | Every cycle |
-| **Episodic** | Experiences, trajectories | Retrieval during planning | Learning loop |
-| **Semantic** | Facts, inferences | Retrieval for reasoning | Reflection on episodes |
-| **Procedural** | LLM weights + agent code | LLM calls, function exec | Fine-tuning, code gen |
+| Memory Type    | Content                    | Access                    | Write                  |
+| -------------- | -------------------------- | ------------------------- | ---------------------- |
+| **Working**    | Current state, active info | Read/Write during cycle   | Every cycle            |
+| **Episodic**   | Experiences, trajectories  | Retrieval during planning | Learning loop          |
+| **Semantic**   | Facts, inferences          | Retrieval for reasoning   | Reflection on episodes |
+| **Procedural** | LLM weights + agent code   | LLM calls, function exec  | Fine-tuning, code gen  |
 
 ### 1.4 Action Space
 
 **External Actions (Grounding):**
+
 - Physical: Robot control
 - Digital: APIs, code execution
 - Dialogue: Human interaction
 
 **Internal Actions:**
+
 - **Reasoning:** Generate new info from current state
 - **Retrieval:** Read from long-term memory
 - **Learning:** Write to long-term memory
 
 ### 1.5 Planning Mechanisms
 
-**Simple:** LLM proposes action directly
-**Intermediate:** Reason → propose code procedure → refine
+**Simple:** LLM proposes action directly **Intermediate:** Reason → propose code procedure → refine
 **Complex:** Tree search (BFS/DFS), MCTS, multi-step simulation
 
 ---
@@ -78,18 +85,21 @@ Experience trajectories → Reflect → Write to Long-term Memory → Improve fu
 ### 2.1 Notre Structure (3 Loops!)
 
 **Loop 1 (Inner): Execution Loop**
+
 - **Niveau:** DAG Workflow (éphémère)
 - **Composants:** Event stream, command queue, state management
 - **Cycle:** Task → Event → State update → Next task
 - **Fréquence:** Real-time (milliseconds)
 
 **Loop 2 (Middle): Adaptation Loop**
+
 - **Niveau:** DAG Workflow (modification runtime)
 - **Composants:** AIL/HIL decisions, DAGSuggester.replanDAG()
 - **Cycle:** Discovery → Decision → Query GraphRAG → Inject new nodes
 - **Fréquence:** Per-layer (seconds to minutes)
 
 **Loop 3 (Outer/Meta): Learning Loop**
+
 - **Niveau:** GraphRAG Knowledge Graph (permanent)
 - **Composants:** GraphRAGEngine.updateFromExecution()
 - **Cycle:** Workflow complete → Extract patterns → Update graph → Better suggestions
@@ -97,20 +107,22 @@ Experience trajectories → Reflect → Write to Long-term Memory → Improve fu
 
 ### 2.2 Notre Memory Architecture (Implicite)
 
-| Type | AgentCards Équivalent | Storage | Scope |
-|------|----------------------|---------|-------|
-| **Working** | `WorkflowState` (messages, tasks, decisions, context) | In-memory | Current workflow |
-| **Episodic** | `state.tasks[]` + Checkpoints (PGlite) | PGlite | Current + resume |
-| **Semantic** | GraphRAG edges + PageRank | PGlite | All workflows |
-| **Procedural** | DAGSuggester + GraphRAGEngine code | Code | System-wide |
+| Type           | AgentCards Équivalent                                 | Storage   | Scope            |
+| -------------- | ----------------------------------------------------- | --------- | ---------------- |
+| **Working**    | `WorkflowState` (messages, tasks, decisions, context) | In-memory | Current workflow |
+| **Episodic**   | `state.tasks[]` + Checkpoints (PGlite)                | PGlite    | Current + resume |
+| **Semantic**   | GraphRAG edges + PageRank                             | PGlite    | All workflows    |
+| **Procedural** | DAGSuggester + GraphRAGEngine code                    | Code      | System-wide      |
 
 ### 2.3 Notre Action Space
 
 **External Actions:**
+
 - MCP tool execution (digital grounding)
 - Code execution (Deno sandbox - Epic 3)
 
 **Internal Actions:**
+
 - **Reasoning:** Agent decisions (AIL)
 - **Retrieval:** DAGSuggester queries GraphRAG
 - **Learning:** GraphRAGEngine.updateFromExecution()
@@ -121,21 +133,21 @@ Experience trajectories → Reflect → Write to Long-term Memory → Improve fu
 
 ### 3.1 Feedback Loops Comparison
 
-| Aspect | CoALA Decision Cycle | AgentCards Loop 1 (Execution) |
-|--------|---------------------|-------------------------------|
-| **Purpose** | Make decisions with planning | Execute DAG tasks with observability |
-| **Components** | Propose → Evaluate → Select → Execute | Event stream → Command queue → Execute |
-| **Memory** | Working memory (symbolic variables) | WorkflowState (messages, tasks, context) |
-| **Cycle time** | Per-decision | Per-task |
-| **Key difference** | ❌ No explicit evaluation step | ✅ Event-driven, observable |
+| Aspect             | CoALA Decision Cycle                  | AgentCards Loop 1 (Execution)            |
+| ------------------ | ------------------------------------- | ---------------------------------------- |
+| **Purpose**        | Make decisions with planning          | Execute DAG tasks with observability     |
+| **Components**     | Propose → Evaluate → Select → Execute | Event stream → Command queue → Execute   |
+| **Memory**         | Working memory (symbolic variables)   | WorkflowState (messages, tasks, context) |
+| **Cycle time**     | Per-decision                          | Per-task                                 |
+| **Key difference** | ❌ No explicit evaluation step        | ✅ Event-driven, observable              |
 
-| Aspect | CoALA Learning Loop | AgentCards Loop 3 (Meta-Learning) |
-|--------|---------------------|-----------------------------------|
-| **Purpose** | Improve agent from trajectories | Improve system from all workflows |
-| **Memory** | Episodic → Semantic → Procedural | GraphRAG (edges, PageRank) |
-| **Scope** | Single agent's experiences | ✅ **Cross-workflow, cross-user** |
-| **Learning** | Reflection, fine-tuning, code gen | Graph updates, PageRank recomputation |
-| **Key difference** | Individual agent learning | ✅ **System-wide meta-learning** |
+| Aspect             | CoALA Learning Loop               | AgentCards Loop 3 (Meta-Learning)     |
+| ------------------ | --------------------------------- | ------------------------------------- |
+| **Purpose**        | Improve agent from trajectories   | Improve system from all workflows     |
+| **Memory**         | Episodic → Semantic → Procedural  | GraphRAG (edges, PageRank)            |
+| **Scope**          | Single agent's experiences        | ✅ **Cross-workflow, cross-user**     |
+| **Learning**       | Reflection, fine-tuning, code gen | Graph updates, PageRank recomputation |
+| **Key difference** | Individual agent learning         | ✅ **System-wide meta-learning**      |
 
 ### 3.2 Le Loop Manquant dans CoALA
 
@@ -146,11 +158,13 @@ CoALA: Decision cycle → Learning loop (gap: pas d'adaptation runtime du plan)
 AgentCards: Execution → **Adaptation (replan)** → Learning
 
 **Pourquoi c'est critique:**
+
 - CoALA agents re-planifient à chaque cycle (from scratch)
 - AgentCards **modifie le plan existant dynamiquement** (efficient)
 - AIL/HIL decisions pendant exécution (pas après)
 
 **Exemple:**
+
 ```
 CoALA: Execute 5 tasks → Complete → Reflect → Next workflow starts fresh
 AgentCards: Execute task 1 → Discover XML → Replan → Add parse_xml → Continue
@@ -158,14 +172,15 @@ AgentCards: Execute task 1 → Discover XML → Replan → Add parse_xml → Con
 
 ### 3.3 Memory Architecture Comparison
 
-| Memory | CoALA | AgentCards | Gap/Opportunity |
-|--------|-------|------------|-----------------|
-| **Working** | Symbolic variables, goals | WorkflowState | ⚠️ No explicit goals tracking |
-| **Episodic** | Training pairs, trajectories | Checkpoints | ⚠️ Not optimized for learning retrieval |
-| **Semantic** | Facts, inferences | GraphRAG edges | ✅ Similar! |
-| **Procedural** | LLM + code | DAGSuggester code | ⚠️ No LLM parameter learning |
+| Memory         | CoALA                        | AgentCards        | Gap/Opportunity                         |
+| -------------- | ---------------------------- | ----------------- | --------------------------------------- |
+| **Working**    | Symbolic variables, goals    | WorkflowState     | ⚠️ No explicit goals tracking           |
+| **Episodic**   | Training pairs, trajectories | Checkpoints       | ⚠️ Not optimized for learning retrieval |
+| **Semantic**   | Facts, inferences            | GraphRAG edges    | ✅ Similar!                             |
+| **Procedural** | LLM + code                   | DAGSuggester code | ⚠️ No LLM parameter learning            |
 
-**Key Insight:** Notre checkpoints sont pour **resume**, pas pour **learning retrieval**. CoALA utilise episodic memory activement pendant planning (retrieval).
+**Key Insight:** Notre checkpoints sont pour **resume**, pas pour **learning retrieval**. CoALA
+utilise episodic memory activement pendant planning (retrieval).
 
 ---
 
@@ -174,49 +189,58 @@ AgentCards: Execute task 1 → Discover XML → Replan → Add parse_xml → Con
 ### 4.1 Planning vs Execution Focus
 
 **CoALA:**
+
 - Focus: **Planning sophistiqué** (proposal, evaluation, selection)
 - Strength: Multi-step simulation, tree search
 - Agents **proposent plusieurs options**, évaluent, sélectionnent
 
 **AgentCards:**
+
 - Focus: **Execution efficace** (DAG parallelization, speculation)
 - Strength: 5x speedup, 0ms latency speculation
 - System **suggère DAG optimal**, exécute directement
 
 **Trade-off:**
+
 - CoALA: Plus de délibération, moins d'action
 - AgentCards: Action rapide, délibération implicite (GraphRAG pre-computed)
 
 ### 4.2 Individual vs System Learning
 
 **CoALA:**
+
 - **Individual agent** learns from ses propres experiences
 - Fine-tuning LLM per-agent
 - Episodic memory = agent's personal history
 
 **AgentCards:**
+
 - **System-wide** learning across tous les workflows
 - GraphRAG = shared knowledge base
 - Meta-learning: Améliore suggestions pour TOUS les users
 
 **Implication:**
+
 - CoALA: Personnalisation par agent
 - AgentCards: Amélioration collective (plus scalable)
 
 ### 4.3 Confidence Handling
 
 **CoALA:**
+
 - ⚠️ **Pas explicite** dans le framework
 - Mentionne "probabilistic formulation" des LLMs
 - Pas de seuils adaptatifs documentés
 
 **AgentCards:**
+
 - ✅ **Confidence explicite** (calculateConfidence)
 - Path confidence, PageRank, semantic scores
 - Seuils pour speculation (>0.7)
 - ⚠️ **Mais pas adaptatif** (fixed threshold)
 
-**Opportunité:** Ajouter adaptive thresholds inspiré des mécanismes CoALA (learning-based adaptation).
+**Opportunité:** Ajouter adaptive thresholds inspiré des mécanismes CoALA (learning-based
+adaptation).
 
 ---
 
@@ -225,24 +249,27 @@ AgentCards: Execute task 1 → Discover XML → Replan → Add parse_xml → Con
 ### 5.1 ⭐ Confidence Adaptative (High Priority)
 
 **Problème Actuel:**
+
 ```typescript
 // Fixed threshold
-if (prediction.confidence > 0.7) { speculate(); }
+if (prediction.confidence > 0.7) speculate();
 ```
 
 **Inspiration CoALA:**
+
 - Agents adaptent leur "decision-making procedures" basé sur success rates
 - Fine-tuning on "high-scoring trajectories"
 
 **Proposition:**
+
 ```typescript
 // Adaptive threshold based on success rate
 interface AdaptiveThresholdConfig {
-  initialThreshold: number;        // Start: 0.92 (conservative)
-  targetSuccessRate: number;       // Goal: 0.85
-  targetWasteRate: number;         // Max: 0.15
-  learningRate: number;            // How fast to adapt
-  evaluationWindow: number;        // Evaluate every N workflows
+  initialThreshold: number; // Start: 0.92 (conservative)
+  targetSuccessRate: number; // Goal: 0.85
+  targetWasteRate: number; // Max: 0.15
+  learningRate: number; // How fast to adapt
+  evaluationWindow: number; // Evaluate every N workflows
 }
 
 class AdaptiveThresholdManager {
@@ -256,7 +283,7 @@ class AdaptiveThresholdManager {
 
     // Every 50 workflows, adjust threshold
     if (this.successHistory.length >= 50) {
-      const successRate = this.successHistory.filter(s => s).length / 50;
+      const successRate = this.successHistory.filter((s) => s).length / 50;
 
       if (successRate > 0.90) {
         // Too conservative, lower threshold (speculate more)
@@ -266,7 +293,7 @@ class AdaptiveThresholdManager {
         this.threshold = Math.min(0.95, this.threshold + 0.02);
       }
 
-      this.successHistory = [];  // Reset window
+      this.successHistory = []; // Reset window
     }
   }
 
@@ -277,6 +304,7 @@ class AdaptiveThresholdManager {
 ```
 
 **Bénéfices:**
+
 - 🎯 Auto-tune optimal threshold per domain
 - 🎯 Balance success rate vs latency automatically
 - 🎯 Adapts to user patterns over time
@@ -288,14 +316,17 @@ class AdaptiveThresholdManager {
 ### 5.2 ⭐ Episodic Memory pour Retrieval (Medium Priority)
 
 **Problème Actuel:**
+
 - Checkpoints = resume uniquement
 - Pas de retrieval actif pendant planning
 
 **Inspiration CoALA:**
+
 - Episodic memory retrieved **during planning** for context
 - "Recency, importance, relevance scores" (Generative Agents)
 
 **Proposition:**
+
 ```typescript
 // Story 2.5-4 enhancement
 interface EpisodicEvent {
@@ -342,6 +373,7 @@ async predictNextNodes(state: WorkflowState): Promise<PredictedNode[]> {
 ```
 
 **Bénéfices:**
+
 - 🎯 Context-aware predictions (pas juste co-occurrence)
 - 🎯 Learn from similar situations
 - 🎯 Better cold-start (nouveaux workflows)
@@ -353,11 +385,13 @@ async predictNextNodes(state: WorkflowState): Promise<PredictedNode[]> {
 ### 5.3 🔵 Proposal-Evaluation-Selection Pattern (Low Priority)
 
 **Inspiration CoALA:**
+
 - Planning stage: Propose → Evaluate → Select
 - Multiple proposals considérées
 - Explicit evaluation step
 
 **Proposition:**
+
 ```typescript
 // Alternative to direct execution in ControlledExecutor
 interface ProposedAction {
@@ -388,11 +422,13 @@ async planNextActions(state: WorkflowState): Promise<Task> {
 ```
 
 **Bénéfices:**
+
 - 🎯 Cost-aware decisions
 - 🎯 Explicit trade-offs (speed vs quality)
 - 🎯 Better handling of expensive tools
 
 **Trade-off:**
+
 - ⚠️ Adds latency (evaluation step)
 - ⚠️ Complexity increase
 
@@ -403,34 +439,35 @@ async planNextActions(state: WorkflowState): Promise<Task> {
 ### 5.4 🔵 Working Memory Goals Tracking (Low Priority)
 
 **Inspiration CoALA:**
+
 - Working memory includes explicit **goals**
 - Helps focus reasoning and retrieval
 
 **Proposition:**
+
 ```typescript
 interface WorkflowState {
   messages: Message[];
   tasks: TaskResult[];
   decisions: Decision[];
   context: Record<string, any>;
-  goals: Goal[];  // ✨ NEW
+  goals: Goal[]; // ✨ NEW
 }
 
 interface Goal {
   id: string;
   description: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  status: "pending" | "in_progress" | "completed" | "failed";
   priority: number;
-  constraints?: string[];  // e.g., "budget < $10", "latency < 2s"
+  constraints?: string[]; // e.g., "budget < $10", "latency < 2s"
 }
 
 // Usage: Filter predictions by goal relevance
-predictions.filter(pred =>
-  this.isRelevantToGoal(pred.task, state.goals)
-);
+predictions.filter((pred) => this.isRelevantToGoal(pred.task, state.goals));
 ```
 
 **Bénéfices:**
+
 - 🎯 Goal-oriented planning
 - 🎯 Filter irrelevant tools
 - 🎯 Better explainability
@@ -446,10 +483,12 @@ predictions.filter(pred =>
 ### 6.1 ✅ Meta-Learning Explicite (GraphRAG)
 
 **CoALA:**
+
 - Learning loop = individual agent améliore ses propres procédures
 - Pas de knowledge sharing entre agents
 
 **AgentCards:**
+
 - ✅ GraphRAG = **system-wide knowledge base**
 - ✅ Tous les workflows contribuent
 - ✅ Cross-user, cross-context learning
@@ -460,9 +499,11 @@ predictions.filter(pred =>
 ### 6.2 ✅ Runtime Adaptation (Loop 2)
 
 **CoALA:**
+
 - Re-plan = start new decision cycle from scratch
 
 **AgentCards:**
+
 - ✅ **Dynamic DAG modification** pendant exécution
 - ✅ AIL/HIL decisions en temps réel
 - ✅ Efficient (pas de restart)
@@ -470,9 +511,11 @@ predictions.filter(pred =>
 ### 6.3 ✅ Granularité de Confidence
 
 **CoALA:**
+
 - Pas de mécanisme explicite
 
 **AgentCards:**
+
 - ✅ Path-level confidence (per hop)
 - ✅ Task-level confidence (per prediction)
 - ✅ DAG-level confidence (overall)
@@ -482,10 +525,12 @@ predictions.filter(pred =>
 ### 6.4 ✅ Performance Focus
 
 **CoALA:**
+
 - Focus: Reasoning sophistication
 - Trade-off: Planning overhead
 
 **AgentCards:**
+
 - ✅ Speculation = 0ms latency
 - ✅ DAG parallelization = 5x speedup
 - ✅ Performance targets explicites (<200ms replan, <50ms checkpoint)
@@ -497,32 +542,33 @@ predictions.filter(pred =>
 ### 7.1 Priorité Immédiate (Epic 2.5)
 
 **✅ À Implémenter:**
+
 1. **Confidence Adaptative** (5.1) - Add to Story 2.5-4
    - Effort: +1-2h
    - Impact: High (auto-tuning optimal threshold)
    - Risk: Low (fallback to fixed 0.7)
 
-**📝 À Documenter:**
-2. **Clarifier les 3 loops** dans architecture.md
-   - Effort: 30min
-   - Impact: Medium (clarté conceptuelle)
+**📝 À Documenter:** 2. **Clarifier les 3 loops** dans architecture.md
+
+- Effort: 30min
+- Impact: Medium (clarté conceptuelle)
 
 ### 7.2 Futur (Epic 2.5+ ou Epic 3)
 
-**🔄 Considérer:**
-3. **Episodic Memory pour Retrieval** (5.2)
-   - Effort: +2-3h (nouvelle story?)
-   - Impact: Medium-High (context-aware predictions)
-   - Dépend de: Volumétrie checkpoints
+**🔄 Considérer:** 3. **Episodic Memory pour Retrieval** (5.2)
+
+- Effort: +2-3h (nouvelle story?)
+- Impact: Medium-High (context-aware predictions)
+- Dépend de: Volumétrie checkpoints
 
 4. **Goals Tracking** (5.4)
    - Effort: +1-2h
    - Impact: Medium (explainability)
 
-**❌ Pas prioritaire:**
-5. **Proposal-Evaluation-Selection** (5.3)
-   - Raison: Speculation déjà efficace, adds complexity
-   - Reconsidérer si: Performance issues avec speculation
+**❌ Pas prioritaire:** 5. **Proposal-Evaluation-Selection** (5.3)
+
+- Raison: Speculation déjà efficace, adds complexity
+- Reconsidérer si: Performance issues avec speculation
 
 ### 7.3 Architecture Documentation Updates
 
@@ -551,11 +597,13 @@ predictions.filter(pred =>
 ### 8.1 Verdict
 
 **AgentCards Epic 2.5 a une architecture plus granulaire et scalable que CoALA:**
+
 - ✅ 3 loops vs 2 (adaptation explicite)
 - ✅ Meta-learning system-wide
 - ✅ Performance-focused (speculation, parallelization)
 
 **Mais on peut emprunter de CoALA:**
+
 - 🎯 Adaptive thresholds (high value, low effort)
 - 🎯 Episodic retrieval (medium value, medium effort)
 - 🎯 Goals tracking (low value, nice-to-have)
@@ -563,13 +611,14 @@ predictions.filter(pred =>
 ### 8.2 Impact sur Epic 2.5 Stories
 
 **Story 2.5-4 Enhancement:**
+
 ```typescript
 // Add AdaptiveThresholdManager
 class SpeculativeExecutor {
   private thresholdManager: AdaptiveThresholdManager;
 
   async start(predictions: PredictedNode[]): Promise<void> {
-    const threshold = this.thresholdManager.getThreshold();  // Dynamic!
+    const threshold = this.thresholdManager.getThreshold(); // Dynamic!
 
     for (const pred of predictions) {
       if (pred.confidence > threshold) {
@@ -588,7 +637,9 @@ class SpeculativeExecutor {
 
 ### 8.3 Key Takeaway
 
-**Notre architecture est solide.** CoALA valide nos choix (feedback loops, memory structure) mais suggère des raffinements (adaptive mechanisms, episodic retrieval) qu'on peut intégrer progressivement.
+**Notre architecture est solide.** CoALA valide nos choix (feedback loops, memory structure) mais
+suggère des raffinements (adaptive mechanisms, episodic retrieval) qu'on peut intégrer
+progressivement.
 
 **Ne pas copier CoALA, mais s'inspirer pour les adaptive mechanisms.**
 
@@ -601,9 +652,11 @@ class SpeculativeExecutor {
 This theoretical comparison spike has been translated into two implementation spikes:
 
 #### 1. Agent & Human-in-the-Loop DAG Feedback Loop
+
 **See:** `docs/spikes/spike-agent-human-dag-feedback-loop.md`
 
 Implements Stories 2.5-1 to 2.5-4:
+
 - Event Stream + Command Queue (Loop 1)
 - Checkpoints & Resume
 - AIL/HIL Integration (Loop 2 - unique to AgentCards)
@@ -612,16 +665,19 @@ Implements Stories 2.5-1 to 2.5-4:
 **Maps to CoALA:** Decision Cycle (Loop 1) + partial Learning Loop
 
 #### 2. Episodic Memory & Adaptive Thresholds
+
 **See:** `docs/spikes/spike-episodic-memory-adaptive-thresholds.md`
 
 Implements Stories 2.5-5 to 2.5-6 (based on recommendations from Section 5 of this spike):
+
 - Episodic Memory for context-aware retrieval (Section 5.2)
 - Adaptive Thresholds learning (Section 5.1)
 - Loop 3 Meta-Learning details
 
 **Maps to CoALA:** Learning Loop (outer loop) with enhanced meta-learning
 
-**Together:** These implementation spikes realize the 3-loop architecture that this comparison spike identified as superior to CoALA's 2-loop model.
+**Together:** These implementation spikes realize the 3-loop architecture that this comparison spike
+identified as superior to CoALA's 2-loop model.
 
 ---
 

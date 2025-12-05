@@ -98,25 +98,5 @@ export interface CapabilitySearchResult {
   similarity: number;
 }
 
-/**
- * Database row for workflow_pattern with capability columns
- */
-export interface WorkflowPatternRow {
-  pattern_id: string;
-  pattern_hash: string;
-  dag_structure: Record<string, unknown>;
-  intent_embedding: string; // PGlite returns as string "[0.1,0.2,...]"
-  usage_count: number;
-  success_count: number;
-  last_used: string;
-  code_snippet: string | null;
-  code_hash: string | null;
-  parameters_schema: Record<string, unknown> | null;
-  cache_config: CacheConfig | null;
-  name: string | null;
-  description: string | null;
-  success_rate: number | null;
-  avg_duration_ms: number | null;
-  created_at: string | null;
-  source: string | null;
-}
+// Note: Database row types are inferred from PGlite query results.
+// See rowToCapability() in capability-store.ts for the mapping logic.

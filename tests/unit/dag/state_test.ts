@@ -14,18 +14,18 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  contextReducer,
   createInitialState,
+  type Decision,
+  decisionsReducer,
+  getStateSnapshot,
+  type Message,
+  messagesReducer,
+  type TaskResult,
+  tasksReducer,
   updateState,
   validateStateInvariants,
-  messagesReducer,
-  tasksReducer,
-  decisionsReducer,
-  contextReducer,
-  getStateSnapshot,
   type WorkflowState,
-  type Message,
-  type Decision,
-  type TaskResult,
 } from "../../../src/dag/state.ts";
 
 Deno.test("WorkflowState - Reducers", async (t) => {

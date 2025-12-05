@@ -1,9 +1,6 @@
 # Casys MCP Gateway Playground - Product Requirements Document (PRD)
 
-**Auteur:** BMad
-**Date:** 2025-11-28
-**Niveau Projet:** 2
-**Échelle Cible:** Playground éducatif
+**Auteur:** BMad **Date:** 2025-11-28 **Niveau Projet:** 2 **Échelle Cible:** Playground éducatif
 
 ---
 
@@ -11,19 +8,34 @@
 
 ### Goals
 
-- **Démontrer le problème MCP de manière tangible** - Permettre aux utilisateurs de voir et mesurer eux-mêmes le context explosion (~45% de la fenêtre) et le latency cost via des notebooks exécutables avec de vrais appels
+- **Démontrer le problème MCP de manière tangible** - Permettre aux utilisateurs de voir et mesurer
+  eux-mêmes le context explosion (~45% de la fenêtre) et le latency cost via des notebooks
+  exécutables avec de vrais appels
 
-- **Enseigner la solution Casys MCP Gateway étape par étape** - Guider progressivement à travers : context optimization → DAG execution → sandbox → GraphRAG, avec des exemples concrets et interactifs
+- **Enseigner la solution Casys MCP Gateway étape par étape** - Guider progressivement à travers :
+  context optimization → DAG execution → sandbox → GraphRAG, avec des exemples concrets et
+  interactifs
 
-- **Fournir un environnement LLM-agnostic prêt à l'emploi** - Un Codespace GitHub où tout fonctionne out-of-the-box avec le provider de son choix (OpenAI, Anthropic, Google via Vercel AI SDK), en mode stdio ou HTTP
+- **Fournir un environnement LLM-agnostic prêt à l'emploi** - Un Codespace GitHub où tout fonctionne
+  out-of-the-box avec le provider de son choix (OpenAI, Anthropic, Google via Vercel AI SDK), en
+  mode stdio ou HTTP
 
 ### Background Context
 
-Le Model Context Protocol (MCP) révolutionne la façon dont les agents IA interagissent avec les outils externes. Cependant, l'adoption à grande échelle se heurte à deux problèmes fondamentaux : l'explosion du contexte (30-50% de la fenêtre consommée par les schémas d'outils) et la latence séquentielle des appels.
+Le Model Context Protocol (MCP) révolutionne la façon dont les agents IA interagissent avec les
+outils externes. Cependant, l'adoption à grande échelle se heurte à deux problèmes fondamentaux :
+l'explosion du contexte (30-50% de la fenêtre consommée par les schémas d'outils) et la latence
+séquentielle des appels.
 
-Casys MCP Gateway est une solution LLM-agnostic (fonctionne avec Claude, GPT-4, Gemini via Vercel AI SDK) qui résout ces problèmes via quatre mécanismes : recherche vectorielle pour le chargement à la demande, exécution DAG pour la parallélisation, sandbox Deno pour l'exécution de code sécurisée, et GraphRAG pour l'apprentissage de patterns.
+Casys MCP Gateway est une solution LLM-agnostic (fonctionne avec Claude, GPT-4, Gemini via Vercel AI
+SDK) qui résout ces problèmes via quatre mécanismes : recherche vectorielle pour le chargement à la
+demande, exécution DAG pour la parallélisation, sandbox Deno pour l'exécution de code sécurisée, et
+GraphRAG pour l'apprentissage de patterns.
 
-Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vrais serveurs MCP, de vrais appels LLM, des métriques réelles. L'objectif est que chaque développeur puisse constater lui-même le problème et la solution. La gateway supporte deux modes de transport (stdio et HTTP) pour s'adapter à différents cas d'usage.
+Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vrais serveurs MCP, de
+vrais appels LLM, des métriques réelles. L'objectif est que chaque développeur puisse constater
+lui-même le problème et la solution. La gateway supporte deux modes de transport (stdio et HTTP)
+pour s'adapter à différents cas d'usage.
 
 ---
 
@@ -32,27 +44,43 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 ### Functional Requirements
 
 **Environnement & Setup**
-- **FR001:** Le playground doit s'exécuter dans un GitHub Codespace avec une configuration devcontainer prête à l'emploi
-- **FR002:** L'initialisation doit supporter la commande `agentcards init` pour configurer automatiquement la gateway
-- **FR003:** La gateway doit pouvoir démarrer en mode stdio (`agentcards serve`) ou HTTP (`agentcards serve --port 3000`)
+
+- **FR001:** Le playground doit s'exécuter dans un GitHub Codespace avec une configuration
+  devcontainer prête à l'emploi
+- **FR002:** L'initialisation doit supporter la commande `agentcards init` pour configurer
+  automatiquement la gateway
+- **FR003:** La gateway doit pouvoir démarrer en mode stdio (`agentcards serve`) ou HTTP
+  (`agentcards serve --port 3000`)
 
 **Multi-LLM Support**
-- **FR004:** L'utilisateur doit pouvoir choisir son provider LLM (OpenAI, Anthropic, Google) via variable d'environnement ou config
+
+- **FR004:** L'utilisateur doit pouvoir choisir son provider LLM (OpenAI, Anthropic, Google) via
+  variable d'environnement ou config
 - **FR005:** Le système doit auto-détecter le provider depuis le format de la clé API
 
 **Notebooks Pédagogiques**
-- **FR006:** Chaque notebook doit être exécutable de bout en bout dans l'ordre séquentiel (00 → 01 → 02...)
-- **FR007:** Les notebooks doivent afficher des métriques visuelles (tokens consommés, latence, speedup)
-- **FR008:** Les notebooks doivent pouvoir afficher des diagrammes Mermaid (via Kroki ou rendu natif Jupyter)
-- **FR009:** Les cellules de code doivent clairement distinguer les exemples exécutables des illustrations
+
+- **FR006:** Chaque notebook doit être exécutable de bout en bout dans l'ordre séquentiel (00 → 01 →
+  02...)
+- **FR007:** Les notebooks doivent afficher des métriques visuelles (tokens consommés, latence,
+  speedup)
+- **FR008:** Les notebooks doivent pouvoir afficher des diagrammes Mermaid (via Kroki ou rendu natif
+  Jupyter)
+- **FR009:** Les cellules de code doivent clairement distinguer les exemples exécutables des
+  illustrations
 
 **Concepts Démontrés**
-- **FR010:** Le notebook "Context Optimization" doit démontrer la réduction de contexte de ~45% à <5%
-- **FR011:** Le notebook "DAG Execution" doit visualiser le graphe de dépendances et le speedup obtenu
-- **FR012:** Le notebook "Sandbox" doit exécuter du code TypeScript isolé et montrer les contrôles de sécurité
+
+- **FR010:** Le notebook "Context Optimization" doit démontrer la réduction de contexte de ~45% à
+  <5%
+- **FR011:** Le notebook "DAG Execution" doit visualiser le graphe de dépendances et le speedup
+  obtenu
+- **FR012:** Le notebook "Sandbox" doit exécuter du code TypeScript isolé et montrer les contrôles
+  de sécurité
 - **FR013:** Le notebook "GraphRAG" doit montrer l'apprentissage de patterns d'usage d'outils
 
 **MCP Servers & Workflow Templates**
+
 - **FR015:** Le playground doit inclure 3 MCP servers Tier 1 sans clé API :
   - `@modelcontextprotocol/server-filesystem` - parallélisation lecture fichiers
   - `@modelcontextprotocol/server-memory` - knowledge graph local
@@ -61,18 +89,24 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
   - Parallélisation pure (3 outils indépendants)
   - Pattern récurrent GraphRAG (séquence apprise)
   - DAG multi-niveaux (dépendances entre niveaux)
-- **FR017:** Le notebook GraphRAG doit démontrer le chargement de workflow templates via `agentcards workflows sync`
+- **FR017:** Le notebook GraphRAG doit démontrer le chargement de workflow templates via
+  `agentcards workflows sync`
 
 **Progression & Checkpoints**
+
 - **FR018:** Chaque notebook doit se terminer par un checkpoint de validation (quiz ou exercice)
 
 ### Non-Functional Requirements
 
-- **NFR001:** **Temps de setup < 5 minutes** - Un utilisateur doit pouvoir lancer le Codespace et exécuter le premier notebook en moins de 5 minutes (incluant le téléchargement des modèles d'embedding)
+- **NFR001:** **Temps de setup < 5 minutes** - Un utilisateur doit pouvoir lancer le Codespace et
+  exécuter le premier notebook en moins de 5 minutes (incluant le téléchargement des modèles
+  d'embedding)
 
-- **NFR002:** **Compatibilité Jupyter** - Les notebooks doivent fonctionner avec le kernel Deno dans VS Code (extension Jupyter) sans configuration supplémentaire
+- **NFR002:** **Compatibilité Jupyter** - Les notebooks doivent fonctionner avec le kernel Deno dans
+  VS Code (extension Jupyter) sans configuration supplémentaire
 
-- **NFR003:** **Documentation inline** - Chaque cellule de code doit être auto-explicative avec des commentaires clairs, sans nécessiter de documentation externe
+- **NFR003:** **Documentation inline** - Chaque cellule de code doit être auto-explicative avec des
+  commentaires clairs, sans nécessiter de documentation externe
 
 ---
 
@@ -121,6 +155,7 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 ```
 
 **Points de friction potentiels:**
+
 - Config clé API → Résolu par auto-détection du provider
 - Téléchargement modèles embedding → Message de progression clair
 - Notebook qui plante → Chaque notebook est indépendant après 00
@@ -129,7 +164,8 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 
 ## UX Design Principles
 
-1. **Progressive Disclosure** - Chaque notebook révèle un concept à la fois, pas de surcharge cognitive
+1. **Progressive Disclosure** - Chaque notebook révèle un concept à la fois, pas de surcharge
+   cognitive
 2. **Show, Don't Tell** - Les métriques et visualisations parlent d'elles-mêmes avant l'explication
 3. **Fail-Safe** - Si une cellule échoue, le message d'erreur guide vers la solution
 
@@ -157,14 +193,15 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 
 ## Epic List
 
-| Epic | Titre | Goal | Stories estimées |
-|------|-------|------|------------------|
-| **Epic 1** | Infrastructure Playground | Configurer l'environnement Codespace prêt à l'emploi avec devcontainer, MCP servers, workflow templates, et helpers | ~8 stories |
-| **Epic 2** | Notebooks Pédagogiques | Créer la séquence de notebooks propre (00-06) en nettoyant le chaos actuel, avec progression claire et checkpoints | ~8 stories |
+| Epic       | Titre                     | Goal                                                                                                                | Stories estimées |
+| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Epic 1** | Infrastructure Playground | Configurer l'environnement Codespace prêt à l'emploi avec devcontainer, MCP servers, workflow templates, et helpers | ~8 stories       |
+| **Epic 2** | Notebooks Pédagogiques    | Créer la séquence de notebooks propre (00-06) en nettoyant le chaos actuel, avec progression claire et checkpoints  | ~8 stories       |
 
 ### Détail des Epics
 
 **Epic 1: Infrastructure Playground**
+
 - Devcontainer avec Deno + Jupyter + extensions VS Code
 - Config MCP pré-faite avec 3 servers Tier 1 (filesystem, memory, sequential-thinking)
 - Workflow templates pré-configurés (`playground/config/workflow-templates.yaml`)
@@ -175,6 +212,7 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 - README playground avec "Open in Codespace" badge
 
 **Epic 2: Notebooks Pédagogiques**
+
 - 00-introduction : Vue d'ensemble, vérification environnement
 - 01-the-problem : Démonstration context explosion + latency
 - 02-context-optimization : Vector search, chargement à la demande
@@ -184,13 +222,15 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 - 06-workflow-templates : Définir ses patterns YAML, `agentcards workflows sync`, bootstrap graph
 - Nettoyage des anciens notebooks (archivage ou suppression)
 
-> **Note:** Detailed epic breakdown with full story specifications is available in [epics-playground.md](./epics-playground.md)
+> **Note:** Detailed epic breakdown with full story specifications is available in
+> [epics-playground.md](./epics-playground.md)
 
 ---
 
 ## Out of Scope
 
 **Fonctionnalités exclues:**
+
 - **Repo séparé** - Pour l'instant, reste dans AgentCards (migration JSR plus tard)
 - **UI web custom** - Pas de dashboard ou interface au-delà de Jupyter
 - **Notebooks avancés (07+)** - Speculative execution avancée, adaptive workflows → phase 2
@@ -198,11 +238,13 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 - **Internationalisation** - Notebooks en anglais uniquement (audience dev internationale)
 
 **MCP Servers inclus (Tier 1 - sans clé API):**
+
 - `@modelcontextprotocol/server-filesystem` - Parallélisation fichiers
 - `@modelcontextprotocol/server-memory` - Knowledge graph local
 - `@modelcontextprotocol/server-sequential-thinking` - Branchement DAG
 
 **MCP Servers exclus du MVP (Tier 2-3 - optionnels):**
+
 - `mcp-server-git` - Pourrait être ajouté si utile
 - `mcp-server-time` - Démos simples mais pas essentielles
 - `mcp-server-sqlite` - Persistance avancée
@@ -211,12 +253,16 @@ Ce playground existe pour rendre ces concepts accessibles. Pas de mocks - de vra
 - **MCP servers avec clé API** - GitHub, Slack, etc. (l'utilisateur peut les ajouter)
 
 **Authentification:**
+
 - Clé API LLM en variable d'environnement uniquement (pas de système auth complexe)
 
 **Hors périmètre technique:**
+
 - **Support Python** - Deno/TypeScript uniquement
 - **Jupyter Lab standalone** - Focus sur VS Code Jupyter extension
 - **Offline mode** - Nécessite connexion pour LLM et potentiellement Kroki
 
 **Inclus mais pas documenté en détail:**
-- **Workflow Templates (5.2)** - Le notebook GraphRAG montrera comment définir des templates YAML et les charger via `agentcards workflows sync`
+
+- **Workflow Templates (5.2)** - Le notebook GraphRAG montrera comment définir des templates YAML et
+  les charger via `agentcards workflows sync`

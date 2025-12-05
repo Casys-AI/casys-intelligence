@@ -27,7 +27,7 @@ export class ResourceLimitError extends Error {
 
   constructor(limitType: string, currentValue: number, maxValue: number) {
     super(
-      `Resource limit exceeded: ${limitType} (${currentValue}/${maxValue})`
+      `Resource limit exceeded: ${limitType} (${currentValue}/${maxValue})`,
     );
     this.name = "ResourceLimitError";
     this.limitType = limitType;
@@ -143,10 +143,8 @@ export class ResourceLimiter {
     this.config = {
       maxConcurrentExecutions: config?.maxConcurrentExecutions ?? 10,
       maxTotalMemoryMb: config?.maxTotalMemoryMb ?? 3072, // 3GB - supports 5 concurrent 512MB executions
-      enableMemoryPressureDetection:
-        config?.enableMemoryPressureDetection ?? true,
-      memoryPressureThresholdPercent:
-        config?.memoryPressureThresholdPercent ?? 80,
+      enableMemoryPressureDetection: config?.enableMemoryPressureDetection ?? true,
+      memoryPressureThresholdPercent: config?.memoryPressureThresholdPercent ?? 80,
     };
 
     logger.debug("ResourceLimiter initialized", {
@@ -200,7 +198,7 @@ export class ResourceLimiter {
       throw new ResourceLimitError(
         "CONCURRENT_EXECUTIONS",
         this.activeExecutions.size,
-        this.config.maxConcurrentExecutions
+        this.config.maxConcurrentExecutions,
       );
     }
 
@@ -219,7 +217,7 @@ export class ResourceLimiter {
       throw new ResourceLimitError(
         "TOTAL_MEMORY",
         requestedTotal,
-        this.config.maxTotalMemoryMb
+        this.config.maxTotalMemoryMb,
       );
     }
 
@@ -235,7 +233,7 @@ export class ResourceLimiter {
         throw new ResourceLimitError(
           "MEMORY_PRESSURE",
           this.config.memoryPressureThresholdPercent,
-          100
+          100,
         );
       }
     }
@@ -301,8 +299,7 @@ export class ResourceLimiter {
       currentAllocatedMemoryMb: this.getCurrentAllocatedMemory(),
       maxTotalMemoryMb: this.config.maxTotalMemoryMb,
       memoryPressureDetected: false, // Updated by detectMemoryPressure()
-      availableSlots:
-        this.config.maxConcurrentExecutions - this.activeExecutions.size,
+      availableSlots: this.config.maxConcurrentExecutions - this.activeExecutions.size,
     };
   }
 
@@ -372,7 +369,7 @@ export class ResourceLimiter {
    */
   async acquireWithWait(
     memoryLimitMb: number,
-    timeoutMs = 5000
+    timeoutMs = 5000,
   ): Promise<ExecutionToken> {
     const startTime = Date.now();
     const pollInterval = 100; // Poll every 100ms
@@ -396,7 +393,7 @@ export class ResourceLimiter {
     throw new ResourceLimitError(
       "ACQUIRE_TIMEOUT",
       Date.now() - startTime,
-      timeoutMs
+      timeoutMs,
     );
   }
 

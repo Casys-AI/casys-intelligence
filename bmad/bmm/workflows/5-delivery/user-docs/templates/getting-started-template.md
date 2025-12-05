@@ -23,6 +23,7 @@ Before you begin, ensure you have:
 ```
 
 You should see:
+
 ```
 {expected_output_1}
 ```
@@ -40,6 +41,7 @@ You should see:
 ```
 
 Expected output:
+
 ```
 {verification_output}
 ```
@@ -69,6 +71,7 @@ Let's {tutorial_goal} in just a few steps.
 {tutorial_step_3_description}
 
 You should now see:
+
 ```
 {tutorial_final_output}
 ```

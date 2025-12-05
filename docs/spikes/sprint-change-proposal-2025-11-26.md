@@ -1,9 +1,7 @@
 # Sprint Change Proposal: ADR-022 Hybrid Search Integration
 
-**Date:** 2025-11-26
-**Auteur:** BMad (via correct-course workflow)
-**Statut:** En attente d'approbation
-**Scope:** Minor (Direct Implementation)
+**Date:** 2025-11-26 **Auteur:** BMad (via correct-course workflow) **Statut:** En attente
+d'approbation **Scope:** Minor (Direct Implementation)
 
 ---
 
@@ -11,7 +9,9 @@
 
 ### Description du Problème
 
-L'ADR-022 identifie une **dette technique** dans l'architecture AgentCards : la logique de recherche hybride (Semantic + Adamic-Adar + Graph Neighbors) est implémentée dans `GatewayServer.handleSearchTools` mais **n'est pas réutilisée** par `DAGSuggester.suggestDAG`.
+L'ADR-022 identifie une **dette technique** dans l'architecture AgentCards : la logique de recherche
+hybride (Semantic + Adamic-Adar + Graph Neighbors) est implémentée dans
+`GatewayServer.handleSearchTools` mais **n'est pas réutilisée** par `DAGSuggester.suggestDAG`.
 
 ### Contexte de Découverte
 
@@ -27,7 +27,8 @@ L'ADR-022 identifie une **dette technique** dans l'architecture AgentCards : la 
    const candidates = await this.vectorSearch.searchTools(intent.text, 10, 0.6);
    ```
 
-2. **Code source - GatewayServer** ([gateway-server.ts:940-976](src/mcp/gateway-server.ts#L940-L976)):
+2. **Code source - GatewayServer**
+   ([gateway-server.ts:940-976](src/mcp/gateway-server.ts#L940-L976)):
    ```typescript
    // Logique complète hybride NON partagée
    const alpha = Math.max(0.5, 1.0 - density * 2);
@@ -39,9 +40,11 @@ L'ADR-022 identifie une **dette technique** dans l'architecture AgentCards : la 
 
 ### Conséquence
 
-Les DAGs suggérés par `DAGSuggester` sont "fragiles" - ils omettent des outils intermédiaires logiquement nécessaires qui auraient été trouvés par la recherche hybride.
+Les DAGs suggérés par `DAGSuggester` sont "fragiles" - ils omettent des outils intermédiaires
+logiquement nécessaires qui auraient été trouvés par la recherche hybride.
 
 **Exemple concret:**
+
 ```
 Intent: "Deploy my Node.js app"
 
@@ -58,28 +61,28 @@ DAGSuggester (suggestDAG interne):
 
 ### Impact Epic
 
-| Epic | Impact | Description |
-|------|--------|-------------|
-| Epic 5 | Modéré | Story 5.2 doit intégrer l'extraction comme prérequis |
-| Epic 3.5 | Indirect | Speculative Execution bénéficie de meilleurs DAGs |
-| Epic 4 | Aucun | Pas d'impact |
+| Epic     | Impact   | Description                                          |
+| -------- | -------- | ---------------------------------------------------- |
+| Epic 5   | Modéré   | Story 5.2 doit intégrer l'extraction comme prérequis |
+| Epic 3.5 | Indirect | Speculative Execution bénéficie de meilleurs DAGs    |
+| Epic 4   | Aucun    | Pas d'impact                                         |
 
 ### Impact Stories
 
-| Story | Status Actuel | Impact |
-|-------|---------------|--------|
-| Story 5.1 | done | Source de la logique à extraire |
-| Story 5.2 | drafted | Ajout Task 0 comme prérequis |
+| Story     | Status Actuel | Impact                          |
+| --------- | ------------- | ------------------------------- |
+| Story 5.1 | done          | Source de la logique à extraire |
+| Story 5.2 | drafted       | Ajout Task 0 comme prérequis    |
 
 ### Impact Artifacts
 
-| Artifact | Type de Changement |
-|----------|-------------------|
-| ADR-022 | Status: Proposed → Accepted |
-| graph-engine.ts | Nouvelle méthode `searchToolsHybrid()` |
-| dag-suggester.ts | Modification `suggestDAG()` |
-| gateway-server.ts | Refactoring `handleSearchTools()` |
-| story-5.2.md | Ajout Task 0 |
+| Artifact          | Type de Changement                     |
+| ----------------- | -------------------------------------- |
+| ADR-022           | Status: Proposed → Accepted            |
+| graph-engine.ts   | Nouvelle méthode `searchToolsHybrid()` |
+| dag-suggester.ts  | Modification `suggestDAG()`            |
+| gateway-server.ts | Refactoring `handleSearchTools()`      |
+| story-5.2.md      | Ajout Task 0                           |
 
 ### Impact Technique
 
@@ -95,6 +98,7 @@ DAGSuggester (suggestDAG interne):
 ### Option Sélectionnée: Direct Adjustment
 
 **Justification:**
+
 1. Changement localisé (3 fichiers core)
 2. La logique existe déjà - simple extraction/refactoring
 3. Aucun risque architectural (pattern déjà validé par Story 5.1)
@@ -102,20 +106,20 @@ DAGSuggester (suggestDAG interne):
 
 ### Effort et Risque
 
-| Critère | Évaluation |
-|---------|-----------|
-| Effort | **Low** (~1h15) |
-| Risque | **Low** |
-| Impact Timeline | Aucun |
-| Technical Debt | Réduit |
+| Critère         | Évaluation      |
+| --------------- | --------------- |
+| Effort          | **Low** (~1h15) |
+| Risque          | **Low**         |
+| Impact Timeline | Aucun           |
+| Technical Debt  | Réduit          |
 
 ### Alternatives Considérées
 
-| Option | Verdict | Raison |
-|--------|---------|--------|
-| Rollback | Non viable | Rien à rollback |
-| MVP Review | Non viable | MVP non impacté |
-| Nouvelle Story | Rejeté | Trop overhead pour ~1h de travail |
+| Option         | Verdict    | Raison                            |
+| -------------- | ---------- | --------------------------------- |
+| Rollback       | Non viable | Rien à rollback                   |
+| MVP Review     | Non viable | MVP non impacté                   |
+| Nouvelle Story | Rejeté     | Trop overhead pour ~1h de travail |
 
 ---
 
@@ -136,8 +140,7 @@ DAGSuggester (suggestDAG interne):
 
 ### Changement 2: GraphRAGEngine - Nouvelle méthode
 
-**Fichier:** `src/graphrag/graph-engine.ts`
-**Action:** Ajouter après `getStats()`
+**Fichier:** `src/graphrag/graph-engine.ts` **Action:** Ajouter après `getStats()`
 
 ```typescript
 /**
@@ -193,8 +196,7 @@ async searchToolsHybrid(
 
 ### Changement 3: DAGSuggester - Utiliser Hybrid Search
 
-**Fichier:** `src/graphrag/dag-suggester.ts`
-**Section:** Méthode `suggestDAG()`, ligne ~63
+**Fichier:** `src/graphrag/dag-suggester.ts` **Section:** Méthode `suggestDAG()`, ligne ~63
 
 ```diff
 async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null> {
@@ -221,8 +223,7 @@ async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null> {
 
 ### Changement 4: GatewayServer - Refactoring
 
-**Fichier:** `src/mcp/gateway-server.ts`
-**Section:** Méthode `handleSearchTools()`, lignes ~940-976
+**Fichier:** `src/mcp/gateway-server.ts` **Section:** Méthode `handleSearchTools()`, lignes ~940-976
 
 ```diff
 - // 1. Semantic search (main candidates)
@@ -283,10 +284,10 @@ async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null> {
 
 ### Routing
 
-| Rôle | Responsabilité |
-|------|---------------|
+| Rôle         | Responsabilité                   |
+| ------------ | -------------------------------- |
 | **Dev Team** | Implémentation des 5 changements |
-| **Reviewer** | Code review standard |
+| **Reviewer** | Code review standard             |
 
 ### Critères de Succès
 
@@ -298,12 +299,12 @@ async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null> {
 
 ### Timeline Estimée
 
-| Phase | Durée |
-|-------|-------|
-| Implémentation | 1h |
-| Tests | 15min |
-| Review | 15min |
-| **Total** | ~1h30 |
+| Phase          | Durée |
+| -------------- | ----- |
+| Implémentation | 1h    |
+| Tests          | 15min |
+| Review         | 15min |
+| **Total**      | ~1h30 |
 
 ---
 
@@ -317,4 +318,4 @@ async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null> {
 
 ---
 
-*Document généré par le workflow correct-course BMAD*
+_Document généré par le workflow correct-course BMAD_

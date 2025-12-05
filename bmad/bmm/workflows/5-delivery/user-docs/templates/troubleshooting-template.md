@@ -11,6 +11,7 @@ Before diving into specific issues, run these checks:
 ```
 
 **Expected output:**
+
 ```
 {health_check_expected}
 ```
@@ -78,8 +79,8 @@ Ensure you're running version {minimum_version} or higher.
 
 ## Error Messages
 
-| Error | Meaning | Solution |
-|-------|---------|----------|
+| Error               | Meaning           | Solution           |
+| ------------------- | ----------------- | ------------------ |
 | `{error_message_1}` | {error_meaning_1} | {error_solution_1} |
 | `{error_message_2}` | {error_meaning_2} | {error_solution_2} |
 | `{error_message_3}` | {error_meaning_3} | {error_solution_3} |
@@ -94,11 +95,13 @@ Ensure you're running version {minimum_version} or higher.
 {env_issue_1_description}
 
 **Check:**
+
 ```bash
 {env_issue_1_check}
 ```
 
 **Fix:**
+
 ```bash
 {env_issue_1_fix}
 ```
@@ -110,6 +113,7 @@ Ensure you're running version {minimum_version} or higher.
 ### Slow {operation}
 
 **Possible causes:**
+
 - {perf_cause_1}
 - {perf_cause_2}
 - {perf_cause_3}
@@ -172,8 +176,8 @@ Ensure you're running version {minimum_version} or higher.
 
 ### Log Locations
 
-| Platform | Location |
-|----------|----------|
+| Platform     | Location           |
+| ------------ | ------------------ |
 | {platform_1} | `{log_location_1}` |
 | {platform_2} | `{log_location_2}` |
 
@@ -190,6 +194,7 @@ If you've tried the above and still have issues:
 ### 2. Gather Information
 
 Before reporting, collect:
+
 - {info_to_collect_1}
 - {info_to_collect_2}
 - {info_to_collect_3}
@@ -200,6 +205,7 @@ Before reporting, collect:
 {report_issue_instructions}
 
 **Include:**
+
 - What you were trying to do
 - What happened instead
 - Steps to reproduce
@@ -209,7 +215,7 @@ Before reporting, collect:
 
 ## Known Issues
 
-| Issue | Status | Workaround |
-|-------|--------|------------|
+| Issue           | Status     | Workaround     |
+| --------------- | ---------- | -------------- |
 | {known_issue_1} | {status_1} | {workaround_1} |
 | {known_issue_2} | {status_2} | {workaround_2} |

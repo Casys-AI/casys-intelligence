@@ -13,7 +13,8 @@
     <asA>developer building robust production workflows</asA>
     <iWant>to leverage sandbox tasks as safe-to-fail branches in my DAG</iWant>
     <soThat>I can implement resilient workflows with graceful degradation and retry safety</soThat>
-    <tasks>
+    <tasks
+    >
 ### Phase 1: DAG Executor Enhancement (2-3h)
 - Task 1: Detect safe-to-fail tasks using existing `side_effects` field
 - Task 2: Partial success execution mode
@@ -34,7 +35,8 @@
     </tasks>
   </story>
 
-  <acceptanceCriteria>
+  <acceptanceCriteria
+  >
 1. DAG executor enhanced to mark sandbox tasks as "safe-to-fail" (failure doesn't halt workflow)
 2. Partial success mode: DAG continues even if sandbox branches fail
 3. Aggregation patterns implemented: collect results from successful branches, ignore failures
@@ -53,31 +55,36 @@
         <path>docs/adrs/ADR-010-hybrid-dag-architecture.md</path>
         <title>ADR-010: Architecture DAG Hybride - Nœuds Externes vs Nœuds de Logique</title>
         <section>Safe-to-Fail Property</section>
-        <snippet>Defines two types of DAG nodes: MCP tasks (external, side effects, NOT safe-to-fail) and code_execution tasks (logic, no side effects, safe-to-fail). Foundation for resilient patterns.</snippet>
+        <snippet
+        >Defines two types of DAG nodes: MCP tasks (external, side effects, NOT safe-to-fail) and code_execution tasks (logic, no side effects, safe-to-fail). Foundation for resilient patterns.</snippet>
       </doc>
       <doc>
         <path>docs/tech-spec-epic-3.md</path>
         <title>Epic 3 Technical Specification: Agent Code Execution & Local Processing</title>
         <section>Safe-to-Fail & Rollback Foundation</section>
-        <snippet>Story 3.4 provides foundation for safe-to-fail execution: virtual filesystem hooks, rollback support, idempotence for code execution tasks, enabling speculation.</snippet>
+        <snippet
+        >Story 3.4 provides foundation for safe-to-fail execution: virtual filesystem hooks, rollback support, idempotence for code execution tasks, enabling speculation.</snippet>
       </doc>
       <doc>
         <path>docs/adrs/ADR-007-dag-adaptive-feedback-loops.md</path>
         <title>ADR-007: DAG Adaptatif avec Feedback Loops AIL/HIL</title>
         <section>Event Stream & State Management</section>
-        <snippet>Defines event stream, command queue, and state management for ControlledExecutor. Tasks emit events (task_start, task_complete, task_error, task_warning) that can trigger AIL/HIL loops.</snippet>
+        <snippet
+        >Defines event stream, command queue, and state management for ControlledExecutor. Tasks emit events (task_start, task_complete, task_error, task_warning) that can trigger AIL/HIL loops.</snippet>
       </doc>
       <doc>
         <path>docs/stories/story-3.4.md</path>
         <title>Story 3.4: agentcards:execute_code MCP Tool</title>
         <section>Implementation & Code Review</section>
-        <snippet>Completed implementation of code_execution task type with context injection (deps), sandbox isolation, checkpoint compatibility. 46/46 tests passing. Provides foundation for Story 3.5.</snippet>
+        <snippet
+        >Completed implementation of code_execution task type with context injection (deps), sandbox isolation, checkpoint compatibility. 46/46 tests passing. Provides foundation for Story 3.5.</snippet>
       </doc>
       <doc>
         <path>docs/architecture.md</path>
         <title>AgentCards Architecture</title>
         <section>DAG Execution & Workflow Orchestration</section>
-        <snippet>Core architecture with ParallelExecutor (5x speedup), ControlledExecutor (Epic 2.5 adaptive loops), and code execution integration (Epic 3).</snippet>
+        <snippet
+        >Core architecture with ParallelExecutor (5x speedup), ControlledExecutor (Epic 2.5 adaptive loops), and code execution integration (Epic 3).</snippet>
       </doc>
     </docs>
     <code>
@@ -86,35 +93,40 @@
         <kind>executor</kind>
         <symbol>ControlledExecutor, executeCodeTask</symbol>
         <lines>1-1150 (focus: 1060-1140 for executeCodeTask)</lines>
-        <reason>Main DAG executor with event stream, state management. Needs modifications: safe-to-fail detection (Task 1), partial success mode (Task 2), deps enhancement at line ~1090 - change deps[depId] = depResult.output to deps[depId] = depResult (Task 3).</reason>
+        <reason
+        >Main DAG executor with event stream, state management. Needs modifications: safe-to-fail detection (Task 1), partial success mode (Task 2), deps enhancement at line ~1090 - change deps[depId] = depResult.output to deps[depId] = depResult (Task 3).</reason>
       </file>
       <file>
         <path>src/dag/types.ts</path>
         <kind>types</kind>
         <symbol>Task, TaskResult</symbol>
         <lines>1-279</lines>
-        <reason>Defines Task interface with side_effects field (Task 1) and TaskResult structure (status, output, error) for Task 3.</reason>
+        <reason
+        >Defines Task interface with side_effects field (Task 1) and TaskResult structure (status, output, error) for Task 3.</reason>
       </file>
       <file>
         <path>src/dag/event-stream.ts</path>
         <kind>service</kind>
         <symbol>EventStream</symbol>
         <lines>1-144</lines>
-        <reason>Event emission system. Task 2 requires new task_warning event type for safe failures (vs task_error for critical failures).</reason>
+        <reason
+        >Event emission system. Task 2 requires new task_warning event type for safe failures (vs task_error for critical failures).</reason>
       </file>
       <file>
         <path>tests/e2e/controlled_executor_code_exec_test.ts</path>
         <kind>test</kind>
         <symbol>E2E code execution tests</symbol>
         <lines>102, 295, 307</lines>
-        <reason>Existing tests using deps.task pattern. Need update to deps.task.output (breaking change from Task 3).</reason>
+        <reason
+        >Existing tests using deps.task pattern. Need update to deps.task.output (breaking change from Task 3).</reason>
       </file>
       <file>
         <path>src/sandbox/executor.ts</path>
         <kind>executor</kind>
         <symbol>DenoSandboxExecutor</symbol>
         <lines>1-300</lines>
-        <reason>Sandbox execution with context injection. Idempotent execution foundation for retry logic (Task 7).</reason>
+        <reason
+        >Sandbox execution with context injection. Idempotent execution foundation for retry logic (Task 7).</reason>
       </file>
     </code>
     <dependencies>
@@ -141,7 +153,8 @@
     </dependencies>
   </artifacts>
 
-  <constraints>
+  <constraints
+  >
 - BREAKING CHANGE: deps context structure changes from `deps[id] = output` to `deps[id] = TaskResult` (impacts existing code_execution tasks)
 - Must preserve backward compatibility for MCP tasks using $OUTPUT[task_id] pattern
 - Event stream must differentiate task_warning (safe failures) from task_error (critical failures)
@@ -155,7 +168,8 @@
     <interface>
       <name>TaskResult</name>
       <kind>TypeScript interface</kind>
-      <signature>
+      <signature
+      >
 interface TaskResult {
   status: "success" | "error" | "failed_safe";
   output: unknown;
@@ -167,7 +181,8 @@ interface TaskResult {
     <interface>
       <name>isSafeToFail detection logic</name>
       <kind>Function signature</kind>
-      <signature>
+      <signature
+      >
 function isSafeToFail(task: Task): boolean {
   return !task.side_effects && task.type === "code_execution";
 }
@@ -177,7 +192,8 @@ function isSafeToFail(task: Task): boolean {
     <interface>
       <name>deps context structure (NEW in Story 3.5)</name>
       <kind>Object structure</kind>
-      <signature>
+      <signature
+      >
 // OLD (Story 3.4):
 deps[taskId] = depResult.output;
 
@@ -194,7 +210,8 @@ if (deps.fast?.status === "success") {
     <interface>
       <name>task_warning event (new event type)</name>
       <kind>Event emission</kind>
-      <signature>
+      <signature
+      >
 this.eventStream.emit({
   type: "task_warning",
   taskId: task.id,
@@ -207,16 +224,19 @@ this.eventStream.emit({
     </interface>
   </interfaces>
   <tests>
-    <standards>
+    <standards
+    >
 Tests use Deno's built-in test runner with @std/assert. Integration tests require sanitizeOps: false and sanitizeResources: false to prevent resource leak detection from subprocess operations. E2E tests validate full workflows with real ControlledExecutor and sandbox execution. Test naming convention: {module}_{test_type}_test.ts (e.g., controlled_executor_resilient_test.ts).
     </standards>
-    <locations>
+    <locations
+    >
 - tests/unit/dag/ - Unit tests for DAG executor logic
 - tests/integration/ - Integration tests for code execution and DAG workflows
 - tests/e2e/ - End-to-end tests for complete workflows
 - tests/fixtures/ - Test fixtures and mock data
     </locations>
-    <ideas>
+    <ideas
+    >
 AC #1: Unit test for isSafeToFail() detection logic with various task configurations (MCP vs code_execution, with/without side_effects)
 AC #2: Integration test for partial success mode - 3 parallel tasks, 1 fails, workflow continues with partial results
 AC #3a: Unit test for deps structure change - verify TaskResult contains status, output, error fields

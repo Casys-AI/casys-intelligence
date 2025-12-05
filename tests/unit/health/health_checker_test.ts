@@ -4,7 +4,7 @@
  * Tests health check functionality for MCP servers
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { HealthChecker } from "../../../src/health/health-checker.ts";
 import type { MCPServer } from "../../../src/mcp/types.ts";
 

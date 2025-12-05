@@ -4,13 +4,13 @@
  * Tests MCP gateway server functionality with tools/list and tools/call.
  */
 
-import { assertEquals, assert } from "jsr:@std/assert@1";
+import { assert, assertEquals } from "jsr:@std/assert@1";
 import {
   cleanupTestDatabase,
-  initializeTestDatabase,
-  storeSchemas,
-  loadEmbeddingModel,
   generateEmbeddings,
+  initializeTestDatabase,
+  loadEmbeddingModel,
+  storeSchemas,
 } from "../fixtures/test-helpers.ts";
 import {
   createMockFilesystemServer,

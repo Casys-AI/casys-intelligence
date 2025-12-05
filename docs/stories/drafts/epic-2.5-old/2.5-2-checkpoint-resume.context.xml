@@ -19,7 +19,8 @@
         <title>Create checkpoint schema in PGlite</title>
         <ac>1</ac>
         <subtasks>
-          <subtask>Create migration src/db/migrations/006_workflow_checkpoints.sql with workflow_checkpoints table</subtask>
+          <subtask
+          >Create migration src/db/migrations/006_workflow_checkpoints.sql with workflow_checkpoints table</subtask>
           <subtask>Add checkpoint queries to src/db/queries.ts</subtask>
         </subtasks>
       </task>
@@ -103,7 +104,8 @@
   <acceptanceCriteria>
     <criterion id="1">WorkflowState persistence to PGlite implemented</criterion>
     <criterion id="2">Checkpoint saved after each layer completion</criterion>
-    <criterion id="3">Resume from checkpoint restores full state (tasks, decisions, context)</criterion>
+    <criterion id="3"
+    >Resume from checkpoint restores full state (tasks, decisions, context)</criterion>
     <criterion id="4">Checkpoint pruning strategy to prevent unbounded growth</criterion>
     <criterion id="5">checkpoint_id generated and stored in state</criterion>
     <criterion id="6">Resume API: executor.resumeFromCheckpoint(checkpointId)</criterion>

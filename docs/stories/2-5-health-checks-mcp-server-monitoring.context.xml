@@ -13,7 +13,8 @@
     <asA>developer</asA>
     <iWant>AgentCards to monitor MCP server health et report issues</iWant>
     <soThat>I know which servers are down or misconfigured</soThat>
-    <tasks>
+    <tasks
+    >
       - HealthChecker service implemented
       - Initial health check at startup working
       - Periodic health checks (5 min interval) working
@@ -29,7 +30,8 @@
     </tasks>
   </story>
 
-  <acceptanceCriteria>
+  <acceptanceCriteria
+  >
     1. Health check implementation au startup (ping chaque MCP server)
     2. Periodic health checks (every 5 minutes) durant runtime
     3. Health status tracking: healthy, degraded, down
@@ -45,43 +47,50 @@
         <path>docs/architecture.md</path>
         <title>Decision Architecture - AgentCards</title>
         <section>CLI Commands</section>
-        <snippet>Story 2.5 defines health checks CLI command: `agentcards status [--verbose]` to show server health, database size, and metrics.</snippet>
+        <snippet
+        >Story 2.5 defines health checks CLI command: `agentcards status [--verbose]` to show server health, database size, and metrics.</snippet>
       </doc>
       <doc>
         <path>docs/architecture.md</path>
         <title>Decision Architecture - AgentCards</title>
         <section>Project Structure</section>
-        <snippet>Health checks command location: src/cli/commands/status.ts. Telemetry module for logging: src/telemetry/logger.ts</snippet>
+        <snippet
+        >Health checks command location: src/cli/commands/status.ts. Telemetry module for logging: src/telemetry/logger.ts</snippet>
       </doc>
       <doc>
         <path>docs/architecture.md</path>
         <title>Decision Architecture - AgentCards</title>
         <section>Error Handling Pattern</section>
-        <snippet>Custom error hierarchy with AgentCardsError base class. MCPServerError for server-specific errors. All async operations wrapped in try-catch with structured error logging.</snippet>
+        <snippet
+        >Custom error hierarchy with AgentCardsError base class. MCPServerError for server-specific errors. All async operations wrapped in try-catch with structured error logging.</snippet>
       </doc>
       <doc>
         <path>docs/architecture.md</path>
         <title>Decision Architecture - AgentCards</title>
         <section>Logging Strategy</section>
-        <snippet>Structured logging with std/log. Log levels: error, warn, info, debug. JSON format for file logs: {timestamp, level, message, context}. Logs destination: console (INFO) and file (~/.agentcards/logs/agentcards.log)</snippet>
+        <snippet
+        >Structured logging with std/log. Log levels: error, warn, info, debug. JSON format for file logs: {timestamp, level, message, context}. Logs destination: console (INFO) and file (~/.agentcards/logs/agentcards.log)</snippet>
       </doc>
       <doc>
         <path>docs/PRD.md</path>
         <title>Product Requirements Document</title>
         <section>Functional Requirements</section>
-        <snippet>FR010: System must perform automatic health checks on MCP servers at startup. FR015: System must generate structured logs for debugging and monitoring.</snippet>
+        <snippet
+        >FR010: System must perform automatic health checks on MCP servers at startup. FR015: System must generate structured logs for debugging and monitoring.</snippet>
       </doc>
       <doc>
         <path>docs/PRD.md</path>
         <title>Product Requirements Document</title>
         <section>User Journey - Setup AgentCards</section>
-        <snippet>During migration, AgentCards detects 15 MCP servers and displays "15 MCP servers migrés et indexés avec succès". Console shows metrics like "Context usage: 2.3% | Workflow completed in 4.2s"</snippet>
+        <snippet
+        >During migration, AgentCards detects 15 MCP servers and displays "15 MCP servers migrés et indexés avec succès". Console shows metrics like "Context usage: 2.3% | Workflow completed in 4.2s"</snippet>
       </doc>
       <doc>
         <path>docs/stories/story-2.4.md</path>
         <title>Story 2.4 - MCP Gateway Integration</title>
         <section>Prerequisites</section>
-        <snippet>Story 2.4 completed - Gateway integration with Claude Code operational. Gateway server implements stdio transport and exposes tools via MCP protocol.</snippet>
+        <snippet
+        >Story 2.4 completed - Gateway integration with Claude Code operational. Gateway server implements stdio transport and exposes tools via MCP protocol.</snippet>
       </doc>
     </docs>
     <code>
@@ -90,28 +99,32 @@
         <kind>service</kind>
         <symbol>MCPClient</symbol>
         <lines>28-353</lines>
-        <reason>MCP client class that will be used by HealthChecker to ping servers. Has listTools() method for health checks and timeout handling.</reason>
+        <reason
+        >MCP client class that will be used by HealthChecker to ping servers. Has listTools() method for health checks and timeout handling.</reason>
       </file>
       <file>
         <path>src/mcp/gateway-server.ts</path>
         <kind>service</kind>
         <symbol>AgentCardsGatewayServer</symbol>
         <lines>60-478</lines>
-        <reason>Gateway server where HealthChecker will be integrated. Has mcpClients Map and start() method where health checks should be called.</reason>
+        <reason
+        >Gateway server where HealthChecker will be integrated. Has mcpClients Map and start() method where health checks should be called.</reason>
       </file>
       <file>
         <path>src/telemetry/logger.ts</path>
         <kind>service</kind>
         <symbol>setupLogger, getLogger, logger</symbol>
         <lines>1-164</lines>
-        <reason>Logging infrastructure to use for structured health check logs. Provides logger.info(), logger.warn(), logger.error() with JSON formatting.</reason>
+        <reason
+        >Logging infrastructure to use for structured health check logs. Provides logger.info(), logger.warn(), logger.error() with JSON formatting.</reason>
       </file>
       <file>
         <path>src/mcp/types.ts</path>
         <kind>types</kind>
         <symbol>MCPServer, MCPTool</symbol>
         <lines>All</lines>
-        <reason>Type definitions for MCP servers and tools. HealthChecker will use MCPServer type and work with MCPClient instances.</reason>
+        <reason
+        >Type definitions for MCP servers and tools. HealthChecker will use MCPServer type and work with MCPClient instances.</reason>
       </file>
     </code>
     <dependencies>
@@ -148,7 +161,8 @@
     </dependencies>
   </artifacts>
 
-  <constraints>
+  <constraints
+  >
     - Health checks MUST NOT block gateway startup - run asynchronously
     - Use existing MCPClient.listTools() method for server ping (don't create new RPC methods)
     - Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s delays)
@@ -166,7 +180,8 @@
     <interface>
       <name>HealthChecker</name>
       <kind>class</kind>
-      <signature>
+      <signature
+      >
         class HealthChecker {
           constructor(mcpClients: Map&lt;string, MCPClient&gt;)
           async initialHealthCheck(): Promise&lt;void&gt;
@@ -182,7 +197,8 @@
     <interface>
       <name>ServerHealth</name>
       <kind>interface</kind>
-      <signature>
+      <signature
+      >
         interface ServerHealth {
           serverId: string
           serverName: string
@@ -204,16 +220,19 @@
     </interface>
   </interfaces>
   <tests>
-    <standards>
+    <standards
+    >
       Testing follows Deno native testing conventions using Deno.test() framework. Test files use .test.ts extension. Assertions via @std/assert. Tests should cover unit, integration, and error scenarios. Mock MCP servers available in tests/mocks/. Success criteria typically include success rates (>=90%), latency targets (P95), and zero crashes. Integration tests should test real MCP client interactions with mocks.
     </standards>
-    <locations>
+    <locations
+    >
       - tests/unit/ - Unit tests for individual components
       - tests/integration/ - Integration tests with dependencies
       - tests/mocks/ - Mock MCP servers for testing
       - tests/validation/ - Validation/smoke tests (see option2-mcp-gateway.test.ts)
     </locations>
-    <ideas>
+    <ideas
+    >
       - AC1: Unit test for initialHealthCheck() - verify all servers pinged, console output correct
       - AC2: Unit test for periodic checks - verify setInterval called with 300000ms (5 min)
       - AC3: Integration test for health status tracking - healthy/degraded/down state transitions

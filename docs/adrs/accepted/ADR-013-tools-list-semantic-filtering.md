@@ -1,18 +1,23 @@
 # ADR-013: Tools/List Semantic Filtering for Context Optimization
 
 ## Status
+
 **Accepted** - 2025-11-21
 
 ## Context
 
-AgentCards was designed to optimize LLM context usage by providing semantic tool discovery instead of exposing all MCP tools. However, the current implementation of `tools/list` returns **ALL tools** from underlying MCP servers (~44.5k tokens, 22% of context).
+AgentCards was designed to optimize LLM context usage by providing semantic tool discovery instead
+of exposing all MCP tools. However, the current implementation of `tools/list` returns **ALL tools**
+from underlying MCP servers (~44.5k tokens, 22% of context).
 
 ### Current Behavior
+
 ```
 Claude Code → AgentCards Gateway → tools/list → Returns 100+ tools (44.5k tokens)
 ```
 
 ### Expected Behavior (per PRD/concepts docs)
+
 ```
 Claude Code → AgentCards Gateway → tools/list → Returns ~5 relevant tools (2% context)
 ```
@@ -20,14 +25,19 @@ Claude Code → AgentCards Gateway → tools/list → Returns ~5 relevant tools 
 ### Evidence from Documentation
 
 From `docs/concepts/mcp-gateway-concepts.md`:
-> "Rather than exposing hundreds of individual tools [...] AgentCards exposes a small, fixed set of meta-tools that provide intelligent access to the entire ecosystem"
+
+> "Rather than exposing hundreds of individual tools [...] AgentCards exposes a small, fixed set of
+> meta-tools that provide intelligent access to the entire ecosystem"
 
 From `docs/prd.md`:
+
 > "Context optimization through semantic tool discovery"
 
 ## Problem
 
-The gateway currently acts as a **transparent proxy**, exposing all underlying tools. This defeats the core value proposition of AgentCards:
+The gateway currently acts as a **transparent proxy**, exposing all underlying tools. This defeats
+the core value proposition of AgentCards:
+
 - 44.5k tokens consumed just for tool definitions
 - No semantic filtering applied
 - LLM must process all tool schemas even when irrelevant
@@ -44,36 +54,38 @@ The gateway currently acts as a **transparent proxy**, exposing all underlying t
 ### Option A: Meta-Tools Only (Recommended)
 
 Expose only AgentCards meta-tools:
+
 - `agentcards_execute_workflow` - Intent-based tool orchestration
 - `agentcards_execute_code` - Sandbox code execution
 - `exa_get_code_context_exa` - Code search (high-value)
 - `exa_web_search_exa` - Web search (high-value)
 
-**Pros**: Minimal context (~2k tokens), forces intent-based usage
-**Cons**: Requires workflow engine for tool access
+**Pros**: Minimal context (~2k tokens), forces intent-based usage **Cons**: Requires workflow engine
+for tool access
 
 ### Option B: Semantic Query Parameter
 
 Add optional `query` param to `tools/list`:
+
 ```json
-{"method": "tools/list", "params": {"query": "search the web"}}
+{ "method": "tools/list", "params": { "query": "search the web" } }
 ```
 
 Returns only semantically relevant tools.
 
-**Pros**: Dynamic filtering, backward compatible
-**Cons**: Non-standard MCP extension, complex implementation
+**Pros**: Dynamic filtering, backward compatible **Cons**: Non-standard MCP extension, complex
+implementation
 
 ### Option C: Configurable Mode
 
 Add gateway config for exposure mode:
+
 ```yaml
 gateway:
   tools_exposure: "meta_only" | "semantic" | "full_proxy"
 ```
 
-**Pros**: Flexible, supports multiple use cases
-**Cons**: Configuration complexity
+**Pros**: Flexible, supports multiple use cases **Cons**: Configuration complexity
 
 ## Decision
 
@@ -87,7 +99,7 @@ gateway:
 
 2. Tool discovery happens via intent:
    ```json
-   {"tool": "agentcards:execute_workflow", "params": {"intent": "search the web for AI news"}}
+   { "tool": "agentcards:execute_workflow", "params": { "intent": "search the web for AI news" } }
    ```
 
 3. DAGSuggester uses vector search (Story 1.5) to find relevant underlying tools internally.
@@ -97,15 +109,18 @@ gateway:
 ## Consequences
 
 ### Positive
+
 - Context reduced from 44.5k to ~500 tokens (99% reduction)
 - Forces intent-driven tool usage (better UX)
 - Aligns with original PRD design
 
 ### Negative
+
 - Direct tool access requires workflow wrapper
 - Learning curve for users expecting all tools visible
 
 ### Risks
+
 - Users may expect transparent proxy behavior
 - Need clear documentation on intent-based usage
 
@@ -118,9 +133,11 @@ gateway:
 
 Story 3.7 implemented cache invalidation based on tool schema changes.
 
-**Before ADR-013**: `loadAllTools()` was called on `tools/list`, which populated `toolSchemaCache` with all tool schemas.
+**Before ADR-013**: `loadAllTools()` was called on `tools/list`, which populated `toolSchemaCache`
+with all tool schemas.
 
-**After ADR-013**: `tools/list` no longer loads all tools. Cache tracking now happens at tool execution time:
+**After ADR-013**: `tools/list` no longer loads all tools. Cache tracking now happens at tool
+execution time:
 
 1. `createToolExecutor()` in `serve.ts` accepts an `onToolCall` callback
 2. Callback fires on each tool execution, calling `gateway.trackToolUsage(toolKey)`

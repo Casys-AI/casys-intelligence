@@ -1,26 +1,27 @@
 ---
-name: 'step-04-generate'
-description: 'Generate the article using tech-blogger agent with web enrichment'
+name: "step-04-generate"
+description: "Generate the article using tech-blogger agent with web enrichment"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/custom/src/workflows/work-to-blog'
+workflow_path: "{project-root}/bmad/custom/src/workflows/work-to-blog"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-04-generate.md'
-nextStepFile: '{workflow_path}/steps/step-05-finalize.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-04-generate.md"
+nextStepFile: "{workflow_path}/steps/step-05-finalize.md"
+workflowFile: "{workflow_path}/workflow.md"
 
 # Template References
-articleTemplate: '{workflow_path}/templates/article-template.md'
-linkedinTemplate: '{workflow_path}/templates/linkedin-template.md'
-styleGuide: '{workflow_path}/data/style-guide.md'
+articleTemplate: "{workflow_path}/templates/article-template.md"
+linkedinTemplate: "{workflow_path}/templates/linkedin-template.md"
+styleGuide: "{workflow_path}/data/style-guide.md"
 ---
 
 # Step 4: Generate Article
 
 ## STEP GOAL:
 
-Generate the article draft using the tech-blogger persona, incorporating web search for enrichment if relevant sources exist.
+Generate the article draft using the tech-blogger persona, incorporating web search for enrichment
+if relevant sources exist.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -48,6 +49,7 @@ Generate the article draft using the tech-blogger persona, incorporating web sea
 ### 1. Load Generation Context
 
 Gather from previous steps:
+
 - Source material (text or file content)
 - Target format (LinkedIn or Article)
 - Target language (FR or EN)
@@ -63,6 +65,7 @@ Gather from previous steps:
 ### 3. Optional Web Enrichment
 
 If the topic could benefit from external references:
+
 - Search for relevant recent articles, documentation, or discussions
 - Extract 1-3 credible sources to reference
 - DO NOT overdo - only if genuinely adds value
@@ -74,6 +77,7 @@ If the topic could benefit from external references:
 Generate the article following the template structure:
 
 **For LinkedIn:**
+
 - Strong hook (first line that grabs attention)
 - Story/discovery narrative (2-3 short paragraphs)
 - Key takeaway (what reader should remember)
@@ -81,6 +85,7 @@ Generate the article following the template structure:
 - Relevant hashtags (3-5)
 
 **For Article:**
+
 - Engaging title
 - Introduction with context
 - Problem/challenge section
@@ -91,8 +96,7 @@ Generate the article following the template structure:
 
 ### 5. Present Draft
 
-Display the generated article in full:
-"**Draft genere:**
+Display the generated article in full: "**Draft genere:**
 
 ---
 [Full article content]
@@ -111,7 +115,8 @@ Display: "**[C] Continuer vers finalisation**"
 
 ## CRITICAL STEP COMPLETION NOTE
 
-Article generation is the core value of this workflow. Ensure quality output that matches the tech-blogger voice and selected format.
+Article generation is the core value of this workflow. Ensure quality output that matches the
+tech-blogger voice and selected format.
 
 ---
 
@@ -132,4 +137,5 @@ Article generation is the core value of this workflow. Ensure quality output tha
 - Missing key elements from template
 - Over-reliance on web sources
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

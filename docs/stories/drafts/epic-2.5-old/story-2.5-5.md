@@ -1,18 +1,15 @@
 # Story 2.5-5: Episodic Memory Foundation
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops
-**Story ID:** 2.5-5
-**Status:** drafted
-**Estimated Effort:** 3-4 heures
-**Priority:** P1 (Depends on 2.5-1, 2.5-2)
+**Epic:** 2.5 - Adaptive DAG Feedback Loops **Story ID:** 2.5-5 **Status:** drafted **Estimated
+Effort:** 3-4 heures **Priority:** P1 (Depends on 2.5-1, 2.5-2)
 
 ---
 
 ## User Story
 
-**As a** developer building adaptive agent workflows,
-**I want** episodic memory to capture and retrieve execution events,
-**So that** Loop 2 adaptation decisions can be informed by similar past situations and Loop 3 can learn optimal patterns.
+**As a** developer building adaptive agent workflows, **I want** episodic memory to capture and
+retrieve execution events, **So that** Loop 2 adaptation decisions can be informed by similar past
+situations and Loop 3 can learn optimal patterns.
 
 ---
 
@@ -38,11 +35,11 @@
   - [ ] Create `src/learning/types.ts`:
     ```typescript
     export interface EpisodicEvent {
-      id: string;              // UUID
+      id: string; // UUID
       workflow_id: string;
-      event_type: 'speculation_start' | 'task_complete' | 'ail_decision' | 'hil_decision';
+      event_type: "speculation_start" | "task_complete" | "ail_decision" | "hil_decision";
       task_id?: string;
-      timestamp: number;       // Unix timestamp
+      timestamp: number; // Unix timestamp
       data: {
         // Flexible JSONB for context
         context?: Record<string, any>;
@@ -56,14 +53,14 @@
 
         // For task completion
         result?: {
-          status: 'success' | 'error';
+          status: "success" | "error";
           output?: unknown;
           executionTimeMs?: number;
         };
 
         // For AIL/HIL decisions
         decision?: {
-          type: 'ail' | 'hil';
+          type: "ail" | "hil";
           action: string;
           reasoning: string;
         };
@@ -111,15 +108,15 @@
         private config = {
           batchSize: 100,
           flushIntervalMs: 5000,
-          retentionDays: 30
-        }
+          retentionDays: 30,
+        },
       ) {}
 
       // Non-blocking capture
-      async capture(event: Omit<EpisodicEvent, 'id'>): Promise<void> {
+      async capture(event: Omit<EpisodicEvent, "id">): Promise<void> {
         const enrichedEvent: EpisodicEvent = {
           ...event,
-          id: generateUUID()
+          id: generateUUID(),
         };
 
         this.buffer.push(enrichedEvent);
@@ -139,28 +136,34 @@
 
         await this.db.transaction(async (tx) => {
           for (const event of events) {
-            await tx.query(`
+            await tx.query(
+              `
               INSERT INTO episodic_events (id, workflow_id, event_type, task_id, timestamp, data)
               VALUES ($1, $2, $3, $4, to_timestamp($5 / 1000.0), $6)
-            `, [
-              event.id,
-              event.workflow_id,
-              event.event_type,
-              event.task_id,
-              event.timestamp,
-              JSON.stringify(event.data)
-            ]);
+            `,
+              [
+                event.id,
+                event.workflow_id,
+                event.event_type,
+                event.task_id,
+                event.timestamp,
+                JSON.stringify(event.data),
+              ],
+            );
           }
         });
       }
 
       // Query for workflow
       async getWorkflowEvents(workflowId: string): Promise<EpisodicEvent[]> {
-        const result = await this.db.query(`
+        const result = await this.db.query(
+          `
           SELECT * FROM episodic_events
           WHERE workflow_id = $1
           ORDER BY timestamp ASC
-        `, [workflowId]);
+        `,
+          [workflowId],
+        );
 
         return result.rows.map(this.deserialize);
       }
@@ -172,7 +175,7 @@
           event_type: row.event_type,
           task_id: row.task_id,
           timestamp: new Date(row.timestamp).getTime(),
-          data: row.data
+          data: row.data,
         };
       }
     }
@@ -270,7 +273,7 @@
 
       constructor(
         config: ExecutorConfig,
-        episodicMemory: EpisodicMemoryStore
+        episodicMemory: EpisodicMemoryStore,
       ) {
         super(config);
         this.episodicMemory = episodicMemory;
@@ -278,17 +281,17 @@
 
       protected async executeTask(
         task: Task,
-        previousResults: TaskResult[]
+        previousResults: TaskResult[],
       ): Promise<TaskResult> {
         // Capture task start
         await this.episodicMemory.capture({
           workflow_id: this.executionId,
-          event_type: 'task_complete', // Will update after
+          event_type: "task_complete", // Will update after
           task_id: task.id,
           timestamp: Date.now(),
           data: {
-            context: this.getCurrentContext()
-          }
+            context: this.getCurrentContext(),
+          },
         });
 
         // Execute task (parent implementation)
@@ -297,7 +300,7 @@
         // Capture task completion
         await this.episodicMemory.capture({
           workflow_id: this.executionId,
-          event_type: 'task_complete',
+          event_type: "task_complete",
           task_id: task.id,
           timestamp: Date.now(),
           data: {
@@ -305,9 +308,9 @@
             result: {
               status: result.status,
               output: result.output,
-              executionTimeMs: result.executionTimeMs
-            }
-          }
+              executionTimeMs: result.executionTimeMs,
+            },
+          },
         });
 
         return result;
@@ -343,12 +346,12 @@
       constructor(
         private graphEngine: GraphRAGEngine,
         private vectorSearch: VectorSearch,
-        private episodicMemory: EpisodicMemoryStore // NEW
+        private episodicMemory: EpisodicMemoryStore, // NEW
       ) {}
 
       // NEW: Get adaptation context from episodic memory
       async getAdaptationContext(
-        state: WorkflowState
+        state: WorkflowState,
       ): Promise<{
         relevantEpisodes: EpisodicEvent[];
         contextBoost: Map<string, number>;
@@ -358,9 +361,9 @@
           state.context,
           {
             k: 5,
-            eventTypes: ['task_complete', 'ail_decision'],
-            since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
-          }
+            eventTypes: ["task_complete", "ail_decision"],
+            since: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
         );
 
         // Calculate context boost for tool predictions
@@ -368,9 +371,11 @@
 
         for (const episode of relevantEpisodes) {
           // If similar context had successful task, boost that tool
-          if (episode.event_type === 'task_complete' &&
-              episode.data.result?.status === 'success') {
-            const toolId = episode.task_id?.split('_')[0]; // Extract tool from task_id
+          if (
+            episode.event_type === "task_complete" &&
+            episode.data.result?.status === "success"
+          ) {
+            const toolId = episode.task_id?.split("_")[0]; // Extract tool from task_id
             if (toolId) {
               const currentBoost = contextBoost.get(toolId) ?? 0;
               contextBoost.set(toolId, currentBoost + 0.02); // +2% per success
@@ -384,7 +389,7 @@
       // UPDATED: Use episodic context in predictions
       async predictNextNodes(
         state: WorkflowState,
-        completed: TaskResult[]
+        completed: TaskResult[],
       ): Promise<PredictedNode[]> {
         // Get episodic context
         const { contextBoost } = await this.getAdaptationContext(state);
@@ -393,12 +398,12 @@
         const predictions = await this.getPredictionsFromGraphRAG(state, completed);
 
         // Apply episodic boost
-        return predictions.map(pred => ({
+        return predictions.map((pred) => ({
           ...pred,
           confidence: Math.min(
             1.0,
-            pred.confidence + (contextBoost.get(pred.task.toolId) ?? 0)
-          )
+            pred.confidence + (contextBoost.get(pred.task.toolId) ?? 0),
+          ),
         }));
       }
     }
@@ -462,16 +467,19 @@ LOOP 3 (Meta-Learning): ANALYZE
 ### Performance Considerations
 
 **Write Performance:**
+
 - Non-blocking capture: events buffered in memory
 - Batch inserts: 100 events/transaction (~10ms)
 - Async flush: doesn't block workflow execution
 
 **Read Performance:**
+
 - Indexed queries: (workflow_id, timestamp) → <5ms
 - Context similarity: Simple key matching (no vector search yet)
 - Top-k limit: Max 5 episodes retrieved
 
 **Storage:**
+
 - JSONB compression: ~500 bytes/event average
 - 1000 workflows/month × 50 events/workflow = 50K events
 - Storage: ~25MB/month, ~300MB/year
@@ -496,11 +504,13 @@ LOOP 3 (Meta-Learning): ANALYZE
 ### Error Handling
 
 **Capture Failures:**
+
 - Buffer full → Force flush synchronously
 - Flush fails → Log error, retry once, then discard
 - Don't fail workflow on episodic memory errors
 
 **Query Failures:**
+
 - retrieveRelevant() fails → Return empty array, log error
 - Don't block adaptation on episodic query errors
 - Graceful degradation: use GraphRAG only
@@ -508,6 +518,7 @@ LOOP 3 (Meta-Learning): ANALYZE
 ### Project Structure
 
 **New Files:**
+
 ```
 src/learning/
 ├── episodic-memory.ts         # EpisodicMemoryStore class
@@ -518,6 +529,7 @@ src/db/migrations/
 ```
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts  # Add capture integration
 src/graphrag/dag-suggester.ts   # Add retrieval integration

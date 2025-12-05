@@ -1,28 +1,28 @@
 # Story 3.5: Safe-to-Fail Branches & Resilient Workflows
 
-**Epic:** 3 - Agent Code Execution & Local Processing
-**Story ID:** 3.5
-**Status:** done
-**Estimated Effort:** 4-6 heures
+**Epic:** 3 - Agent Code Execution & Local Processing **Story ID:** 3.5 **Status:** done **Estimated
+Effort:** 4-6 heures
 
 ## Dev Agent Record
 
 **Context Reference:**
+
 - Story Context: `docs/stories/story-3.5.context.xml` (Generated: 2025-11-20)
 
 ---
 
 ## User Story
 
-**As a** developer building robust production workflows,
-**I want** to leverage sandbox tasks as safe-to-fail branches in my DAG,
-**So that** I can implement resilient workflows with graceful degradation and retry safety.
+**As a** developer building robust production workflows, **I want** to leverage sandbox tasks as
+safe-to-fail branches in my DAG, **So that** I can implement resilient workflows with graceful
+degradation and retry safety.
 
 ---
 
 ## Acceptance Criteria
 
-1. ✅ DAG executor enhanced pour marquer sandbox tasks comme "safe-to-fail" (failure doesn't halt workflow)
+1. ✅ DAG executor enhanced pour marquer sandbox tasks comme "safe-to-fail" (failure doesn't halt
+   workflow)
 2. ✅ Partial success mode: DAG continues même si sandbox branches fail
 3. ✅ Aggregation patterns implemented: collect results from successful branches, ignore failures
 4. ✅ Example resilient workflow: Parallel analysis (fast/ML/stats) → use first success
@@ -41,7 +41,8 @@
 
 - [x] **Task 1: Detect safe-to-fail tasks using existing `side_effects` field** (AC: #1)
   - [x] Modifier `src/dag/controlled-executor.ts`
-  - [x] **Réutiliser field existant:** `side_effects?: boolean` (déjà dans Task type depuis Story 3.4)
+  - [x] **Réutiliser field existant:** `side_effects?: boolean` (déjà dans Task type depuis Story
+        3.4)
   - [x] Logic: `const isSafeToFail = !task.side_effects && task.type === "code_execution"`
   - [x] Auto-detect: code_execution tasks sans side_effects → safe-to-fail
   - [x] MCP tasks always have side_effects → NOT safe-to-fail
@@ -56,7 +57,8 @@
 - [x] **Task 3: Enhance deps context to include full TaskResult** (AC: #3)
   - [x] **Modifier `src/dag/controlled-executor.ts` ligne ~1090**
   - [x] Change: `deps[depId] = depResult.output` → `deps[depId] = depResult`
-  - [x] Deps now contains: `{ status: "success" | "error" | "failed_safe", output: any, error?: string }`
+  - [x] Deps now contains:
+        `{ status: "success" | "error" | "failed_safe", output: any, error?: string }`
   - [x] User code can check: `if (deps.ml?.status === "success") results.push(deps.ml.output)`
   - [x] Failed safe-to-fail tasks: `{ status: "failed_safe", output: null, error: ... }`
   - [x] **Mettre à jour tests existants** (breaking change):
@@ -78,7 +80,7 @@
       if (deps.ml?.status === "success") results.push({ type: 'ml', ...deps.ml.output });
       if (deps.stats?.status === "success") results.push({ type: 'stats', ...deps.stats.output });
       return results.length > 0 ? results[0] : null; // First success
-    `
+    `;
     ```
 
 - [x] **Task 5: Graceful degradation pattern** (AC: #6)
@@ -97,7 +99,7 @@
         b: deps.algo_b?.status === "success" ? deps.algo_b.output : null,
         metrics: { /* ... */ }
       };
-    `
+    `;
     ```
   - [x] Return both results pour comparison même si un échoue
 
@@ -140,6 +142,7 @@
 ### Breaking Change: deps Context Structure
 
 **Current implementation (Story 3.4):**
+
 ```typescript
 // deps contains only outputs
 deps[depId] = depResult.output;
@@ -147,29 +150,34 @@ deps[depId] = depResult.output;
 ```
 
 **New implementation (Story 3.5):**
+
 ```typescript
 // deps contains full TaskResult
-deps[depId] = depResult;  // { status, output, error? }
+deps[depId] = depResult; // { status, output, error? }
 // Usage: const commits = deps.fetch.output;
 ```
 
 **Migration impact:**
+
 - ✅ **MCP tasks**: Not affected (use `$OUTPUT[task_id]` in arguments)
 - ⚠️ **Existing code_execution tasks**: Need to change `deps.task` → `deps.task.output`
 - ✅ **Benefit**: Enables resilient patterns with status checking
 
 **Backward compatibility strategy:**
+
 - Could add getter: `deps.task` returns `output` for backward compat
 - Prefer breaking change for cleaner API (justify in retro)
 
 ### Safe-to-Fail Property (Using Existing `side_effects` Field)
 
 **Why sandbox tasks are safe-to-fail:**
+
 - **Idempotent**: Re-execution produces same result
 - **Isolated**: No side effects (pas de fichier créé, pas d'API call externe)
 - **Stateless**: Failure doesn't corrupt system state
 
 **Using existing `side_effects` field (from Story 3.4):**
+
 ```typescript
 // ❌ MCP Task: HAS side effects, NOT safe-to-fail
 {
@@ -193,6 +201,7 @@ const isSafeToFail = !task.side_effects && task.type === "code_execution";
 ```
 
 **Benefits of reusing `side_effects`:**
+
 - ✅ No new field needed (already exists in Task type)
 - ✅ More explicit semantics (describes what task does)
 - ✅ Follows inverse logic: `safeToFail = !side_effects`
@@ -200,6 +209,7 @@ const isSafeToFail = !task.side_effects && task.type === "code_execution";
 ### Resilient Workflow Example
 
 **Complete resilient workflow:**
+
 ```typescript
 const resilientWorkflow: DAGStructure = {
   tasks: [
@@ -209,7 +219,7 @@ const resilientWorkflow: DAGStructure = {
       tool: "github:list_commits",
       arguments: { repo: "agentcards", limit: 1000 },
       depends_on: [],
-      side_effects: true  // MCP task - has external side effects
+      side_effects: true, // MCP task - has external side effects
     },
 
     // Launch 3 parallel analysis approaches (NO side effects = safe-to-fail)
@@ -219,7 +229,7 @@ const resilientWorkflow: DAGStructure = {
       code: "return simpleAnalysis(deps.fetch.output);",
       timeout: 500,
       depends_on: ["fetch"],
-      side_effects: false  // No side effects → can fail safely
+      side_effects: false, // No side effects → can fail safely
     },
     {
       id: "ml",
@@ -227,14 +237,14 @@ const resilientWorkflow: DAGStructure = {
       code: "return mlAnalysis(deps.fetch.output);",
       timeout: 2000,
       depends_on: ["fetch"],
-      side_effects: false  // No side effects → can fail safely
+      side_effects: false, // No side effects → can fail safely
     },
     {
       id: "stats",
       type: "code_execution",
       code: "return statisticalAnalysis(deps.fetch.output);",
       depends_on: ["fetch"],
-      side_effects: false  // No side effects → can fail safely
+      side_effects: false, // No side effects → can fail safely
     },
 
     // Aggregate successful results using deps context
@@ -256,7 +266,7 @@ const resilientWorkflow: DAGStructure = {
         return results.length > 0 ? mergeBestInsights(results) : null;
       `,
       depends_on: ["fast", "ml", "stats"],
-      side_effects: false  // Pure aggregation, no side effects
+      side_effects: false, // Pure aggregation, no side effects
     },
 
     // Create GitHub issue (MCP task - has side effects, NOT safe-to-fail)
@@ -265,12 +275,12 @@ const resilientWorkflow: DAGStructure = {
       tool: "github:create_issue",
       arguments: {
         title: "Analysis Results",
-        body: "$OUTPUT[aggregate]"  // Reference to aggregate task output
+        body: "$OUTPUT[aggregate]", // Reference to aggregate task output
       },
       depends_on: ["aggregate"],
-      side_effects: true  // Creates external resource! Must succeed or halt
-    }
-  ]
+      side_effects: true, // Creates external resource! Must succeed or halt
+    },
+  ],
 };
 ```
 
@@ -278,18 +288,22 @@ const resilientWorkflow: DAGStructure = {
 
 1. **All succeed**: Fast (200ms), ML (1.8s), Stats (1.2s) → Aggregate all 3
 2. **ML timeouts**: Fast (200ms), ML (timeout), Stats (1.2s) → Aggregate 2 (graceful degradation)
-3. **Only fast succeeds**: Fast (200ms), ML (error), Stats (error) → Aggregate 1 (degraded but functional)
-4. **All fail**: Fast/ML/Stats all fail → Aggregate gets empty results → Create issue fails (acceptable)
+3. **Only fast succeeds**: Fast (200ms), ML (error), Stats (error) → Aggregate 1 (degraded but
+   functional)
+4. **All fail**: Fast/ML/Stats all fail → Aggregate gets empty results → Create issue fails
+   (acceptable)
 
 ### Performance Characteristics
 
 **Benefits of safe-to-fail branches:**
+
 - **Aggressive speculation**: Try multiple approaches without risk
 - **Graceful degradation**: Partial success better than complete failure
 - **Retry safety**: Idempotent tasks can be retried without duplication
 - **A/B testing**: Run experiments in production safely
 
 **Trade-offs:**
+
 - **Wasted compute**: Failed branches consume CPU (but cheap resource)
 - **Complexity**: More branches = more debugging
 - **Latency variance**: Results depend on which branches succeed
@@ -301,7 +315,7 @@ Safe-to-fail branches unlock **speculative resilience**:
 ```typescript
 // Gateway can speculatively execute multiple hypotheses
 const speculativeExecution = await gatewayHandler.processIntent({
-  text: "Analyze commits and find trends"
+  text: "Analyze commits and find trends",
 });
 
 // If confidence > 0.70 → Execute speculatively
@@ -310,8 +324,8 @@ const speculativeExecution = await gatewayHandler.processIntent({
 // If predictions right → Agent gets instant multi-perspective analysis
 ```
 
-**Without safe-to-fail**: Speculative execution too risky (side effects)
-**With safe-to-fail**: Speculative execution becomes aggressive and safe
+**Without safe-to-fail**: Speculative execution too risky (side effects) **With safe-to-fail**:
+Speculative execution becomes aggressive and safe
 
 ---
 
@@ -341,13 +355,17 @@ const speculativeExecution = await gatewayHandler.processIntent({
 ## File List
 
 **Modified Files:**
+
 - `src/dag/types.ts` - Added `failed_safe` status to TaskResult, added `task_warning` event type
 - `src/dag/state.ts` - Updated TaskResult interface with new statuses
-- `src/dag/controlled-executor.ts` - Added isSafeToFail() helper, partial success mode, retry logic, deps enhancement
-- `tests/e2e/controlled_executor_code_exec_test.ts` - Updated tests for deps.task.output breaking change
+- `src/dag/controlled-executor.ts` - Added isSafeToFail() helper, partial success mode, retry logic,
+  deps enhancement
+- `tests/e2e/controlled_executor_code_exec_test.ts` - Updated tests for deps.task.output breaking
+  change
 - `tests/e2e/controlled_executor_resilient_test.ts` - Added 6 new tests for resilient patterns
 
 **New Files:**
+
 - `docs/resilient-workflows.md` - Comprehensive guide for resilient workflow patterns
 
 ---
@@ -359,52 +377,56 @@ const speculativeExecution = await gatewayHandler.processIntent({
   - ✅ Phase 2: Resilient patterns implemented (parallel, degradation, A/B testing)
   - ✅ Phase 3: Retry logic and error isolation validated
   - ✅ Phase 4: Documentation and integration tests complete
-  - ✅ Breaking change: deps context now contains full TaskResult (backward compatible for MCP tasks)
+  - ✅ Breaking change: deps context now contains full TaskResult (backward compatible for MCP
+    tasks)
   - ✅ 10/10 E2E tests passing for Story 3.5 functionality
 
 ---
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad
-**Date:** 2025-11-20
-**Outcome:** ✅ **APPROVE**
+**Reviewer:** BMad **Date:** 2025-11-20 **Outcome:** ✅ **APPROVE**
 
 ### Summary
 
-Excellent implémentation des resilient workflows avec safe-to-fail branches! L'implementation est **complète, robuste et bien testée**. Tous les 10 critères d'acceptation sont **IMPLEMENTED** avec evidence solide. Les 10 tâches marquées complètes ont été **VERIFIED** avec file:line references. Breaking change sur deps context géré proprement. Documentation complète et patterns bien démontrés. **Aucun problème bloquant identifié**.
+Excellent implémentation des resilient workflows avec safe-to-fail branches! L'implementation est
+**complète, robuste et bien testée**. Tous les 10 critères d'acceptation sont **IMPLEMENTED** avec
+evidence solide. Les 10 tâches marquées complètes ont été **VERIFIED** avec file:line references.
+Breaking change sur deps context géré proprement. Documentation complète et patterns bien démontrés.
+**Aucun problème bloquant identifié**.
 
 ### Acceptance Criteria Coverage
 
-| AC | Description | Status | Evidence |
-|----|-------------|--------|----------|
-| AC #1 | DAG executor marks sandbox tasks as safe-to-fail | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:47-49 (isSafeToFail function) |
-| AC #2 | Partial success mode - workflow continues despite failures | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:390-416 (safe failure handling) |
-| AC #3 | Aggregation patterns - collect successful branches | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:1176-1192 (deps enhancement) |
-| AC #4 | Parallel analysis pattern (fast/ML/stats) | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:20-144 |
-| AC #5 | Retry logic for safe-to-fail tasks | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:1096-1139 (executeWithRetry) |
-| AC #6 | Graceful degradation (ML → stats fallback) | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:146-250 |
-| AC #7 | A/B testing pattern | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:252-357 |
-| AC #8 | Error isolation (sandbox → MCP downstream) | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:423-498 |
-| AC #9 | Documentation - resilient patterns guide | ✅ IMPLEMENTED | docs/resilient-workflows.md (619 lines, 4 patterns) |
-| AC #10 | Multi-branch workflow integration test | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:500-609 |
+| AC     | Description                                                | Status         | Evidence                                                       |
+| ------ | ---------------------------------------------------------- | -------------- | -------------------------------------------------------------- |
+| AC #1  | DAG executor marks sandbox tasks as safe-to-fail           | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:47-49 (isSafeToFail function)   |
+| AC #2  | Partial success mode - workflow continues despite failures | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:390-416 (safe failure handling) |
+| AC #3  | Aggregation patterns - collect successful branches         | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:1176-1192 (deps enhancement)    |
+| AC #4  | Parallel analysis pattern (fast/ML/stats)                  | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:20-144         |
+| AC #5  | Retry logic for safe-to-fail tasks                         | ✅ IMPLEMENTED | src/dag/controlled-executor.ts:1096-1139 (executeWithRetry)    |
+| AC #6  | Graceful degradation (ML → stats fallback)                 | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:146-250        |
+| AC #7  | A/B testing pattern                                        | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:252-357        |
+| AC #8  | Error isolation (sandbox → MCP downstream)                 | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:423-498        |
+| AC #9  | Documentation - resilient patterns guide                   | ✅ IMPLEMENTED | docs/resilient-workflows.md (619 lines, 4 patterns)            |
+| AC #10 | Multi-branch workflow integration test                     | ✅ IMPLEMENTED | tests/e2e/controlled_executor_resilient_test.ts:500-609        |
 
 **Summary:** 10/10 ACs fully implemented
 
 ### Task Completion Validation
 
-| Phase | Tasks | Verified | Evidence |
-|-------|-------|----------|----------|
-| Phase 1 | 3 tasks (DAG enhancement) | ✅ 3/3 | src/dag/controlled-executor.ts, src/dag/types.ts |
-| Phase 2 | 3 tasks (Resilient patterns) | ✅ 3/3 | tests/e2e/controlled_executor_resilient_test.ts |
-| Phase 3 | 2 tasks (Retry & isolation) | ✅ 2/2 | src/dag/controlled-executor.ts:1096-1139 |
-| Phase 4 | 2 tasks (Docs & tests) | ✅ 2/2 | docs/resilient-workflows.md, tests/ |
+| Phase   | Tasks                        | Verified | Evidence                                         |
+| ------- | ---------------------------- | -------- | ------------------------------------------------ |
+| Phase 1 | 3 tasks (DAG enhancement)    | ✅ 3/3   | src/dag/controlled-executor.ts, src/dag/types.ts |
+| Phase 2 | 3 tasks (Resilient patterns) | ✅ 3/3   | tests/e2e/controlled_executor_resilient_test.ts  |
+| Phase 3 | 2 tasks (Retry & isolation)  | ✅ 2/2   | src/dag/controlled-executor.ts:1096-1139         |
+| Phase 4 | 2 tasks (Docs & tests)       | ✅ 2/2   | docs/resilient-workflows.md, tests/              |
 
 **Summary:** 10/10 tasks verified complete, 0 falsely marked complete
 
 ### Test Coverage and Gaps
 
 **E2E Tests:** 6/6 passing (100%)
+
 - ✅ Pattern #1: Parallel speculation
 - ✅ Pattern #2: Graceful degradation
 - ✅ Pattern #3: A/B testing
@@ -413,6 +435,7 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 - ✅ Multi-branch partial success
 
 **Test Quality:**
+
 - ✅ Meaningful assertions (verify status, events, partial success)
 - ✅ Edge cases covered (all branches fail, partial success, error isolation)
 - ✅ Deterministic behavior (no flakiness)
@@ -423,16 +446,19 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 ### Architectural Alignment
 
 **ADR-010 Hybrid DAG Architecture:** ✅ COMPLIANT
+
 - Safe-to-fail property correctly implemented
 - Detection logic: `!task.side_effects && task.type === "code_execution"`
 - Two-tier architecture preserved (MCP vs code_execution)
 
 **Epic 3 Tech Spec:** ✅ ALIGNED
+
 - Sandbox isolation leveraged for safe-to-fail
 - Rollback foundation via idempotent execution
 - ControlledExecutor integration clean
 
 **Breaking Change Management:** ✅ WELL HANDLED
+
 - deps context: `deps.task` → `deps.task.output`
 - MCP backward compatible ($OUTPUT still works)
 - All existing tests updated (3 locations verified)
@@ -443,6 +469,7 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 ### Security Notes
 
 **Security Review:** ✅ CLEAN
+
 - ✅ Sandbox isolation maintained
 - ✅ No eval() or dynamic code generation
 - ✅ Retry logic bounded (max 3 attempts)
@@ -456,6 +483,7 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 **Code Quality:** ✅ EXCELLENT
 
 **Strengths:**
+
 1. Clear abstractions (isSafeToFail helper)
 2. Event-driven design (task_warning vs task_error)
 3. Type safety (TaskResult status union)
@@ -464,6 +492,7 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 6. E2E tests demonstrate real-world patterns
 
 **Best Practices:**
+
 - ✅ Pure functions (isSafeToFail, reducers)
 - ✅ Explicit over implicit (side_effects field)
 - ✅ Fail-safe defaults
@@ -471,6 +500,7 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 - ✅ Idempotent retry
 
 **References:**
+
 - [ADR-010: Hybrid DAG Architecture](./adrs/ADR-010-hybrid-dag-architecture.md)
 - [Epic 3 Technical Spec](./tech-spec-epic-3.md)
 - [Story 3.4](./stories/story-3.4.md)
@@ -478,9 +508,7 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 
 ### Key Findings
 
-**HIGH Severity:** 0 issues ✅
-**MEDIUM Severity:** 0 issues ✅
-**LOW Severity:** 0 issues ✅
+**HIGH Severity:** 0 issues ✅ **MEDIUM Severity:** 0 issues ✅ **LOW Severity:** 0 issues ✅
 
 **Summary:** Aucun problème identifié! Implementation propre et complète.
 
@@ -489,24 +517,29 @@ Excellent implémentation des resilient workflows avec safe-to-fail branches! L'
 **Code Changes Required:** NONE ✅
 
 **Advisory Notes:**
+
 - Note: Consider monitoring safe-to-fail task failure rates in production
 - Note: Document retry backoff strategy in architecture guide
 - Note: Consider telemetry for partial success workflows (track degradation patterns)
 
 ### Validation Summary
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| ACs Implemented | 10/10 | 10/10 | ✅ PASS |
-| Tasks Verified | 10/10 | 10/10 | ✅ PASS |
-| False Completions | 0 | 0 | ✅ PASS |
-| E2E Tests | 6/6 | 6/6 | ✅ PASS |
-| Critical Issues | 0 | 0 | ✅ PASS |
+| Metric            | Target | Actual | Status  |
+| ----------------- | ------ | ------ | ------- |
+| ACs Implemented   | 10/10  | 10/10  | ✅ PASS |
+| Tasks Verified    | 10/10  | 10/10  | ✅ PASS |
+| False Completions | 0      | 0      | ✅ PASS |
+| E2E Tests         | 6/6    | 6/6    | ✅ PASS |
+| Critical Issues   | 0      | 0      | ✅ PASS |
 
 ### Conclusion
 
 **Story 3.5 is APPROVED for merge.** ✅
 
-L'implémentation des resilient workflows est exemplaire. Tous les critères d'acceptation sont satisfaits avec evidence solide, tous les tests passent, la documentation est complète, et l'architecture est correctement alignée. Le breaking change sur deps context est bien géré avec migration claire. Les patterns de résilience (parallel speculation, graceful degradation, A/B testing, error isolation) sont robustes et bien testés.
+L'implémentation des resilient workflows est exemplaire. Tous les critères d'acceptation sont
+satisfaits avec evidence solide, tous les tests passent, la documentation est complète, et
+l'architecture est correctement alignée. Le breaking change sur deps context est bien géré avec
+migration claire. Les patterns de résilience (parallel speculation, graceful degradation, A/B
+testing, error isolation) sont robustes et bien testés.
 
 **Excellent travail!** 🎉

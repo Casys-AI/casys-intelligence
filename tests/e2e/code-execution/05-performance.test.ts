@@ -11,7 +11,7 @@
  * Story 3.8 - AC: #3, #6
  */
 
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { DenoSandboxExecutor } from "../../../src/sandbox/executor.ts";
 import { CodeExecutionCache, generateCacheKey } from "../../../src/sandbox/cache.ts";
 import type { ExecutionResult } from "../../../src/sandbox/types.ts";
@@ -208,9 +208,7 @@ Deno.test({
 
     // Run 5 concurrent executions
     const start = performance.now();
-    const promises = Array.from({ length: 5 }, (_, i) =>
-      executor.execute(`return ${i} * 2;`)
-    );
+    const promises = Array.from({ length: 5 }, (_, i) => executor.execute(`return ${i} * 2;`));
 
     const results = await Promise.all(promises);
     const elapsed = performance.now() - start;

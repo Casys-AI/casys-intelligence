@@ -1,28 +1,29 @@
 ---
-name: 'step-10-plan-review'
-description: 'Review the complete workflow plan before generating files'
+name: "step-10-plan-review"
+description: "Review the complete workflow plan before generating files"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-10-plan-review.md'
-nextStepFile: '{workflow_path}/steps/step-11-build.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-10-plan-review.md"
+nextStepFile: "{workflow_path}/steps/step-11-build.md"
+workflowFile: "{workflow_path}/workflow.md"
 # Output files for workflow creation process
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
-targetWorkflowPath: '{custom_workflow_location}/{new_workflow_name}'
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
+targetWorkflowPath: "{custom_workflow_location}/{new_workflow_name}"
 
 # Task References
-advancedElicitationTask: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/bmad/core/workflows/party-mode/workflow.md"
 ---
 
 # Step 4: Workflow Plan Review
 
 ## STEP GOAL:
 
-To present the complete workflow plan for user review and approval before generating the actual workflow files.
+To present the complete workflow plan for user review and approval before generating the actual
+workflow files.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -36,7 +37,8 @@ To present the complete workflow plan for user review and approval before genera
 ### Role Reinforcement:
 
 - ✅ You are a workflow architect and systems designer
-- ✅ If you already have been given communication or persona patterns, continue to use those while playing this new role
+- ✅ If you already have been given communication or persona patterns, continue to use those while
+  playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
 - ✅ You present the plan clearly and answer questions
 - ✅ User provides approval or requests changes
@@ -107,8 +109,7 @@ Perform systematic analysis of the loaded plan:
 - Menu flow is logical and complete?
 - Variable naming is consistent?
 
-**Issue Identification:**
-If gaps or issues found:
+**Issue Identification:** If gaps or issues found:
 
 - Clearly identify each issue
 - Propose specific solutions
@@ -116,7 +117,8 @@ If gaps or issues found:
 
 ### 3. Present Menu for Plan Approval
 
-Display: **Plan Review Complete - Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Build
+Display: **Plan Review Complete - Select an Option:** [A] Advanced Elicitation [P] Party Mode [C]
+Continue to Build
 
 ### 4. Address Questions and Concerns
 
@@ -162,36 +164,40 @@ Based on feedback:
 
 ### Explicit Confirmation Required
 
-Before proceeding to build, get explicit confirmation:
-"Based on this plan, I will generate:
+Before proceeding to build, get explicit confirmation: "Based on this plan, I will generate:
 
-- [List of files]
-  in [target location]"
+- [List of files] in [target location]"
 
 Ready to proceed when you are! Select your option below to build or modify the plan.
 
 ### 6. Present MENU OPTIONS
 
-Display: **Review Complete - Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Continue to Build
+Display: **Review Complete - Select an Option:** [A] Advanced Elicitation [P] Party Mode [C]
+Continue to Build
 
 #### EXECUTION RULES:
 
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to build step with explicit 'C' selection AND approval
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 - Use menu handling logic section below
 
 #### Menu Handling Logic:
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: AND user has approved the plan, update plan frontmatter, then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#6-present-menu-options)
+- IF C: AND user has approved the plan, update plan frontmatter, then load, read entire file, then
+  execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#6-present-menu-options)
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected AND user has explicitly approved the plan, will you then update the plan frontmatter and load, read entire file, then execute {nextStepFile} to execute and begin workflow file generation step.
+ONLY WHEN C is selected AND user has explicitly approved the plan, will you then update the plan
+frontmatter and load, read entire file, then execute {nextStepFile} to execute and begin workflow
+file generation step.
 
 ---
 
@@ -212,4 +218,5 @@ ONLY WHEN C is selected AND user has explicitly approved the plan, will you then
 - Not answering user questions
 - Rushing through the review process
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

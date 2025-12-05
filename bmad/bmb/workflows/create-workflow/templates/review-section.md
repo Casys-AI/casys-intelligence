@@ -52,5 +52,4 @@
 
 {{#issues}}
 
-- **{{severity}}**: {{description}}
-  {{/issues}}
+- **{{severity}}**: {{description}} {{/issues}}

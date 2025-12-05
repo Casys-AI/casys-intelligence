@@ -8,9 +8,11 @@
 
 ### Problème Découvert (2025-12-02)
 
-L'intent-based DAG suggestion retournait `confidence: 0` même quand la recherche sémantique trouvait des outils pertinents avec des scores élevés (0.72+).
+L'intent-based DAG suggestion retournait `confidence: 0` même quand la recherche sémantique trouvait
+des outils pertinents avec des scores élevés (0.72+).
 
 **Exemple (avant fix):**
+
 ```
 Intent: "Read the deno.json file"
 search_tools result: filesystem:read_text_file (semantic_score: 0.72)
@@ -22,10 +24,11 @@ execute_dag result: {"mode": "explicit_required", "confidence": 0}
 La formule de confidence dans `dag-suggester.ts` donnait 30% du poids au PageRank:
 
 ```typescript
-confidence = hybridScore * 0.55 + pageRankScore * 0.30 + pathStrength * 0.15
+confidence = hybridScore * 0.55 + pageRankScore * 0.30 + pathStrength * 0.15;
 ```
 
 En **cold start** (graphe vide/sparse):
+
 - `hybridScore` = 0.72 (bon score sémantique)
 - `pageRankScore` = 0 (pas de PageRank calculé - graphe vide)
 - `pathStrength` = 0.5 (valeur par défaut, pas de chemins)
@@ -69,11 +72,11 @@ private getAdaptiveWeights(): { hybrid: number; pageRank: number; path: number }
 }
 ```
 
-| Densité | Phase | Hybrid | PageRank | Path |
-|---------|-------|--------|----------|------|
-| <0.01 | Cold start | 85% | 5% | 10% |
-| <0.10 | Growing | 65% | 20% | 15% |
-| ≥0.10 | Mature | 55% | 30% | 15% |
+| Densité | Phase      | Hybrid | PageRank | Path |
+| ------- | ---------- | ------ | -------- | ---- |
+| <0.01   | Cold start | 85%    | 5%       | 10%  |
+| <0.10   | Growing    | 65%    | 20%      | 15%  |
+| ≥0.10   | Mature     | 55%    | 30%      | 15%  |
 
 ### 2. Ne Jamais Retourner Null si Candidats Valides
 
@@ -87,7 +90,8 @@ if (confidence < 0.50) {
     rationale,
     dependencyPaths,
     alternatives,
-    warning: "Low confidence suggestion - graph is in cold start mode. Confidence may improve with usage.",
+    warning:
+      "Low confidence suggestion - graph is in cold start mode. Confidence may improve with usage.",
   };
 }
 ```
@@ -95,6 +99,7 @@ if (confidence < 0.50) {
 ## Résultat
 
 **Après fix:**
+
 ```
 Intent: "Read the deno.json file"
 execute_dag result: {
@@ -105,6 +110,7 @@ execute_dag result: {
 ```
 
 Nouvelle formule en cold start:
+
 ```
 confidence = 0.72 * 0.85 + 0.059 * 0.05 + 0.5 * 0.10
            = 0.612 + 0.003 + 0.05
@@ -113,11 +119,11 @@ confidence = 0.72 * 0.85 + 0.059 * 0.05 + 0.5 * 0.10
 
 ## Fichiers Modifiés
 
-| Fichier | Changement |
-|---------|------------|
+| Fichier                         | Changement                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `src/graphrag/dag-suggester.ts` | Ajout `getAdaptiveWeights()`, modification `calculateConfidenceHybrid()`, condition ligne 139-159 |
-| `src/graphrag/types.ts` | Ajout `warning?: string` à `SuggestedDAG` |
-| `src/mcp/gateway-handler.ts` | Propagation du warning dans la réponse |
+| `src/graphrag/types.ts`         | Ajout `warning?: string` à `SuggestedDAG`                                                         |
+| `src/mcp/gateway-handler.ts`    | Propagation du warning dans la réponse                                                            |
 
 ## Relations avec autres ADRs
 
@@ -128,12 +134,14 @@ confidence = 0.72 * 0.85 + 0.059 * 0.05 + 0.5 * 0.10
 ## Consequences
 
 ### Positives
+
 - Intent-based DAG fonctionne dès le cold start
 - Alignement du comportement entre `search_tools` et `execute_dag`
 - Transition fluide vers formule mature quand le graphe se remplit
 - Observabilité via le warning dans la réponse
 
 ### Négatives
+
 - Peut suggérer des DAGs moins précis en cold start (acceptable car mode "suggestion")
 - Légère complexité ajoutée avec les 3 tiers de densité
 

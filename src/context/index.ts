@@ -13,11 +13,10 @@ export type { RelevantSchemasResult } from "./optimizer.ts";
 export { SchemaCache } from "./cache.ts";
 
 export {
-  CONTEXT_WINDOWS,
-  TOKENS_PER_SCHEMA,
   calculateP95Latency,
   calculateUsagePercent,
   compareContextUsage,
+  CONTEXT_WINDOWS,
   displayContextComparison,
   estimateTokens,
   getRecentMetrics,
@@ -25,9 +24,7 @@ export {
   logContextUsage,
   logQueryLatency,
   measureContextUsage,
+  TOKENS_PER_SCHEMA,
 } from "./metrics.ts";
 
-export type {
-  ContextComparison,
-  ContextUsage,
-} from "./metrics.ts";
+export type { ContextComparison, ContextUsage } from "./metrics.ts";

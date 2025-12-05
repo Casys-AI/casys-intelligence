@@ -6,7 +6,7 @@
 
 import { assertEquals, assertExists } from "@std/assert";
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { GraphRAGEngine } from "../../src/graphrag/graph-engine.ts";
 
 // TEST CRITIQUE: getGraphSnapshot() ne plante pas et retourne une structure valide
@@ -55,17 +55,41 @@ Deno.test("Smoke test - Fresh dashboard.tsx exists and contains required element
   const metricsCode = await Deno.readTextFile("src/web/islands/MetricsPanel.tsx");
 
   // Vérifier dashboard route
-  assertEquals(routeCode.includes("AgentCards - Graph Dashboard"), true, "Route doit avoir le titre");
+  assertEquals(
+    routeCode.includes("AgentCards - Graph Dashboard"),
+    true,
+    "Route doit avoir le titre",
+  );
   assertEquals(routeCode.includes("cytoscape"), true, "Route doit inclure Cytoscape CDN");
-  assertEquals(routeCode.includes("GraphVisualization"), true, "Route doit utiliser GraphVisualization island");
-  assertEquals(routeCode.includes("MetricsPanel"), true, "Route doit utiliser MetricsPanel island (Story 6.3)");
+  assertEquals(
+    routeCode.includes("GraphVisualization"),
+    true,
+    "Route doit utiliser GraphVisualization island",
+  );
+  assertEquals(
+    routeCode.includes("MetricsPanel"),
+    true,
+    "Route doit utiliser MetricsPanel island (Story 6.3)",
+  );
 
   // Vérifier GraphVisualization island
-  assertEquals(islandCode.includes("/api/graph/snapshot"), true, "Island doit appeler l'API snapshot");
+  assertEquals(
+    islandCode.includes("/api/graph/snapshot"),
+    true,
+    "Island doit appeler l'API snapshot",
+  );
   assertEquals(islandCode.includes("/events/stream"), true, "Island doit se connecter au SSE");
-  assertEquals(islandCode.includes("EventSource"), true, "Island doit utiliser EventSource pour SSE");
+  assertEquals(
+    islandCode.includes("EventSource"),
+    true,
+    "Island doit utiliser EventSource pour SSE",
+  );
 
   // Vérifier MetricsPanel island (Story 6.3)
-  assertEquals(metricsCode.includes("/api/metrics"), true, "MetricsPanel doit appeler l'API metrics");
+  assertEquals(
+    metricsCode.includes("/api/metrics"),
+    true,
+    "MetricsPanel doit appeler l'API metrics",
+  );
   assertEquals(metricsCode.includes("Chart"), true, "MetricsPanel doit utiliser Chart.js");
 });

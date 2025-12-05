@@ -41,7 +41,13 @@ export interface ToolEdge {
  * Execution event for timeline visualization
  */
 export interface ExecutionEvent {
-  type: "task_start" | "task_complete" | "task_error" | "layer_start" | "layer_complete" | "decision";
+  type:
+    | "task_start"
+    | "task_complete"
+    | "task_error"
+    | "layer_start"
+    | "layer_complete"
+    | "decision";
   taskId?: string;
   layerIdx?: number;
   timestamp: number;
@@ -147,7 +153,7 @@ export function layersToMermaid(layers: DAGTask[][]): string {
  */
 export function graphragToMermaid(
   edges: ToolEdge[],
-  options?: { minWeight?: number; maxNodes?: number }
+  options?: { minWeight?: number; maxNodes?: number },
 ): string {
   const minWeight = options?.minWeight ?? 0.1;
   const maxNodes = options?.maxNodes ?? 20;
@@ -162,7 +168,11 @@ export function graphragToMermaid(
   for (const edge of filteredEdges) {
     const weightLabel = edge.weight.toFixed(2);
     const relationship = edge.relationship || "co-used";
-    lines.push(`    ${sanitizeId(edge.source)} -->|${relationship}: ${weightLabel}| ${sanitizeId(edge.target)}`);
+    lines.push(
+      `    ${sanitizeId(edge.source)} -->|${relationship}: ${weightLabel}| ${
+        sanitizeId(edge.target)
+      }`,
+    );
   }
 
   if (filteredEdges.length === 0) {
@@ -233,7 +243,7 @@ export function executionTimelineToMermaid(events: ExecutionEvent[]): string {
  */
 export function graphragEvolutionToMermaid(
   before: ToolEdge[],
-  after: ToolEdge[]
+  after: ToolEdge[],
 ): string {
   const lines: string[] = ["graph TB"];
 
@@ -242,7 +252,11 @@ export function graphragEvolutionToMermaid(
 
   lines.push(`    subgraph Before["Before Execution"]`);
   for (const edge of before.slice(0, 10)) {
-    lines.push(`        B_${sanitizeId(edge.source)} -->|${edge.weight.toFixed(2)}| B_${sanitizeId(edge.target)}`);
+    lines.push(
+      `        B_${sanitizeId(edge.source)} -->|${edge.weight.toFixed(2)}| B_${
+        sanitizeId(edge.target)
+      }`,
+    );
   }
   lines.push(`    end`);
 
@@ -252,7 +266,11 @@ export function graphragEvolutionToMermaid(
     const beforeWeight = beforeMap.get(key) || 0;
     const delta = edge.weight - beforeWeight;
     const deltaStr = delta > 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2);
-    lines.push(`        A_${sanitizeId(edge.source)} -->|${edge.weight.toFixed(2)} (${deltaStr})| A_${sanitizeId(edge.target)}`);
+    lines.push(
+      `        A_${sanitizeId(edge.source)} -->|${edge.weight.toFixed(2)} (${deltaStr})| A_${
+        sanitizeId(edge.target)
+      }`,
+    );
   }
   lines.push(`    end`);
 
@@ -264,7 +282,8 @@ export function graphragEvolutionToMermaid(
  */
 export function dagStats(dag: DAGWorkflow): string {
   const totalTasks = dag.tasks.length;
-  const withDeps = dag.tasks.filter((t: DAGTask) => t.dependencies && t.dependencies.length > 0).length;
+  const withDeps =
+    dag.tasks.filter((t: DAGTask) => t.dependencies && t.dependencies.length > 0).length;
   const entryPoints = totalTasks - withDeps;
 
   return `DAG Stats:
@@ -300,7 +319,12 @@ export function mapExecutorEvent(event: Record<string, unknown>): ExecutionEvent
     case "task_start":
       return { type: "task_start", taskId: event.task_id as string, timestamp };
     case "task_complete":
-      return { type: "task_complete", taskId: event.task_id as string, timestamp, status: "success" };
+      return {
+        type: "task_complete",
+        taskId: event.task_id as string,
+        timestamp,
+        status: "success",
+      };
     case "task_error":
       return { type: "task_error", taskId: event.task_id as string, timestamp, status: "error" };
     case "layer_complete":
@@ -404,7 +428,7 @@ export async function displayLayers(layers: DAGTask[][]): Promise<unknown> {
  */
 export async function displayGraphrag(
   edges: ToolEdge[],
-  options?: { minWeight?: number; maxNodes?: number }
+  options?: { minWeight?: number; maxNodes?: number },
 ): Promise<unknown> {
   return displayMermaid(graphragToMermaid(edges, options));
 }
@@ -431,7 +455,7 @@ export async function displayTimeline(events: ExecutionEvent[]): Promise<unknown
  */
 export async function displayEvolution(
   before: ToolEdge[],
-  after: ToolEdge[]
+  after: ToolEdge[],
 ): Promise<unknown> {
   return displayMermaid(graphragEvolutionToMermaid(before, after));
 }
@@ -462,7 +486,7 @@ export interface WorkflowEdge {
  */
 export function workflowEdgesToMermaid(
   edges: WorkflowEdge[],
-  options?: { grouped?: boolean }
+  options?: { grouped?: boolean },
 ): string {
   const lines: string[] = ["graph LR"];
   const grouped = options?.grouped ?? true;
@@ -489,7 +513,9 @@ export function workflowEdgesToMermaid(
   } else {
     // Flat graph (edges can share nodes across workflows)
     for (const edge of edges) {
-      lines.push(`    ${sanitizeId(edge.from)}["${edge.from}"] --> ${sanitizeId(edge.to)}["${edge.to}"]`);
+      lines.push(
+        `    ${sanitizeId(edge.from)}["${edge.from}"] --> ${sanitizeId(edge.to)}["${edge.to}"]`,
+      );
     }
   }
 
@@ -511,7 +537,7 @@ export function workflowEdgesToMermaid(
  */
 export async function displayWorkflowEdges(
   edges: WorkflowEdge[],
-  options?: { grouped?: boolean }
+  options?: { grouped?: boolean },
 ): Promise<unknown> {
   return displayMermaid(workflowEdgesToMermaid(edges, options));
 }
@@ -520,10 +546,10 @@ export async function displayWorkflowEdges(
  * Generate stats summary for workflow templates
  */
 export function workflowStats(
-  workflows: Array<{ name: string; steps?: string[]; edges?: [string, string][] }>
+  workflows: Array<{ name: string; steps?: string[]; edges?: [string, string][] }>,
 ): string {
-  const withSteps = workflows.filter(w => w.steps && w.steps.length >= 2).length;
-  const withEdges = workflows.filter(w => w.edges && w.edges.length >= 1).length;
+  const withSteps = workflows.filter((w) => w.steps && w.steps.length >= 2).length;
+  const withEdges = workflows.filter((w) => w.edges && w.edges.length >= 1).length;
   const totalEdges = workflows.reduce((sum, w) => {
     if (w.steps) return sum + Math.max(0, w.steps.length - 1);
     if (w.edges) return sum + w.edges.length;

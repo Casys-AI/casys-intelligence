@@ -1,6 +1,7 @@
 # Create Module Workflow
 
-Interactive scaffolding system creating complete BMad modules with agents, workflows, tasks, and installation infrastructure.
+Interactive scaffolding system creating complete BMad modules with agents, workflows, tasks, and
+installation infrastructure.
 
 ## Table of Contents
 
@@ -92,18 +93,18 @@ bmad/{module-code}/
 ```yaml
 questions:
   - id: user_name
-    prompt: 'Your name?'
-    default: 'User'
+    prompt: "Your name?"
+    default: "User"
   - id: output_folder
-    prompt: 'Output location?'
-    default: './output'
+    prompt: "Output location?"
+    default: "./output"
 ```
 
 **config.yaml** - Generated from user answers during install
 
 ```yaml
-user_name: 'John Doe'
-output_folder: './my-output'
+user_name: "John Doe"
+output_folder: "./my-output"
 ```
 
 ## Module Components

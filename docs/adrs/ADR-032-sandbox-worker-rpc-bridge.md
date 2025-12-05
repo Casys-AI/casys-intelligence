@@ -1,21 +1,25 @@
 # ADR-032: Sandbox Worker RPC Bridge with Native Tracing
 
 ## Status
+
 **Proposed** - 2025-12-05
 
-**Supersedes:** ADR-027 (partially) - Replaces `__TRACE__` stdout parsing with native RPC bridge tracing
+**Supersedes:** ADR-027 (partially) - Replaces `__TRACE__` stdout parsing with native RPC bridge
+tracing
 
 ## Context
 
 ### The Problem: A Hidden Bug Since Story 3.2
 
-Story 3.2 implemented `wrapMCPClient()` in `src/sandbox/context-builder.ts` to inject MCP tools into the sandbox. **This code exists, is actively called, but has never actually worked** for the subprocess sandbox.
+Story 3.2 implemented `wrapMCPClient()` in `src/sandbox/context-builder.ts` to inject MCP tools into
+the sandbox. **This code exists, is actively called, but has never actually worked** for the
+subprocess sandbox.
 
 #### What the code does:
 
 ```typescript
 // context-builder.ts:148 - This IS called in production
-const serverToolContext = wrapMCPClient(client, tools);  // Creates JavaScript FUNCTIONS
+const serverToolContext = wrapMCPClient(client, tools); // Creates JavaScript FUNCTIONS
 context[serverId] = serverToolContext;
 // Result: { filesystem: { list_directory: async (args) => client.callTool(...) } }
 
@@ -42,22 +46,27 @@ Server log: "Security validation failed"
 Server log: "Context contains function value"
 ```
 
-The security validator in `executor.ts` catches this, but the root cause is architectural: **you cannot serialize functions to a subprocess**.
+The security validator in `executor.ts` catches this, but the root cause is architectural: **you
+cannot serialize functions to a subprocess**.
 
 ### Research Findings
 
 We evaluated three approaches based on industry best practices:
 
-| Approach | Used By | Pros | Cons |
-|----------|---------|------|------|
-| **Subprocess + stdin/stdout IPC** | Traditional | Strong isolation | Slow (process spawn), complex JSON-RPC over pipes |
-| **Web Worker + postMessage** | SandpackVM, Cloudflare | Fast, native RPC, granular permissions | Same V8 isolate (less isolation) |
-| **V8 Isolates** | Cloudflare Workers | Best isolation + performance | Requires Cloudflare runtime |
+| Approach                          | Used By                | Pros                                   | Cons                                              |
+| --------------------------------- | ---------------------- | -------------------------------------- | ------------------------------------------------- |
+| **Subprocess + stdin/stdout IPC** | Traditional            | Strong isolation                       | Slow (process spawn), complex JSON-RPC over pipes |
+| **Web Worker + postMessage**      | SandpackVM, Cloudflare | Fast, native RPC, granular permissions | Same V8 isolate (less isolation)                  |
+| **V8 Isolates**                   | Cloudflare Workers     | Best isolation + performance           | Requires Cloudflare runtime                       |
 
 **Key insight from Cloudflare's Code Mode:**
-> "The sandbox is totally isolated from the Internet. Its only access to the outside world is through TypeScript APIs representing its connected MCP servers. These APIs are backed by RPC invocation which calls back to the agent loop."
+
+> "The sandbox is totally isolated from the Internet. Its only access to the outside world is
+> through TypeScript APIs representing its connected MCP servers. These APIs are backed by RPC
+> invocation which calls back to the agent loop."
 
 **Key insight from SandpackVM:**
+
 > "True sandboxing is about controlled bridges, not walls."
 
 ### Deno Worker Permissions
@@ -68,7 +77,7 @@ Deno Workers support granular permission restrictions:
 const worker = new Worker(workerUrl, {
   type: "module",
   deno: {
-    permissions: "none",  // Fully sandboxed - no network, no filesystem, no env
+    permissions: "none", // Fully sandboxed - no network, no filesystem, no env
   },
 });
 ```
@@ -124,19 +133,19 @@ Replace the current subprocess-based sandbox with a **Web Worker + RPC Bridge** 
 // Worker → Main: Tool call request
 interface RPCCallMessage {
   type: "rpc_call";
-  id: string;           // UUID for correlation
-  server: string;       // "filesystem"
-  tool: string;         // "list_directory"
+  id: string; // UUID for correlation
+  server: string; // "filesystem"
+  tool: string; // "list_directory"
   args: Record<string, unknown>;
 }
 
 // Main → Worker: Tool call result
 interface RPCResultMessage {
   type: "rpc_result";
-  id: string;           // Matching request ID
+  id: string; // Matching request ID
   success: boolean;
-  result?: unknown;     // Tool result if success
-  error?: string;       // Error message if failure
+  result?: unknown; // Tool result if success
+  error?: string; // Error message if failure
 }
 
 // Worker → Main: Execution complete
@@ -152,8 +161,8 @@ interface ExecutionCompleteMessage {
 interface ExecuteMessage {
   type: "execute";
   code: string;
-  tools: ToolDefinition[];  // Which tools are available
-  context?: Record<string, unknown>;  // Additional context
+  tools: ToolDefinition[]; // Which tools are available
+  context?: Record<string, unknown>; // Additional context
 }
 ```
 
@@ -232,7 +241,8 @@ function generateToolProxies(tools: ToolDefinition[]): Record<string, Record<str
 
 ### Native Tracing in RPC Bridge (Main Side)
 
-**Key insight: The bridge IS the tracing point.** Every tool call passes through the bridge, so we trace there - not in the Worker. This supersedes the `__TRACE__` stdout approach from ADR-027.
+**Key insight: The bridge IS the tracing point.** Every tool call passes through the bridge, so we
+trace there - not in the Worker. This supersedes the `__TRACE__` stdout approach from ADR-027.
 
 ```typescript
 // worker-bridge.ts (runs in Main) - TRACING HAPPENS HERE
@@ -350,15 +360,15 @@ onExecutionComplete(result: unknown, error: string | undefined, traces: TraceEve
 
 ### Why Native Tracing is Better than `__TRACE__`
 
-| Aspect | `__TRACE__` (ADR-027) | Native Bridge Tracing (ADR-032) |
-|--------|----------------------|--------------------------------|
-| **Where tracing happens** | Worker (console.log) | Main (bridge) |
-| **Data format** | JSON strings in stdout | Structured objects |
-| **Parsing needed** | Yes (regex + JSON.parse) | No |
-| **Reliability** | Can break if user logs `__TRACE__` | 100% reliable |
-| **Performance** | String concat + parse overhead | Direct object push |
-| **Capability tracing** | Need separate `capability_start/end` | Same mechanism |
-| **Code complexity** | Worker + parser + filter | Bridge only |
+| Aspect                    | `__TRACE__` (ADR-027)                | Native Bridge Tracing (ADR-032) |
+| ------------------------- | ------------------------------------ | ------------------------------- |
+| **Where tracing happens** | Worker (console.log)                 | Main (bridge)                   |
+| **Data format**           | JSON strings in stdout               | Structured objects              |
+| **Parsing needed**        | Yes (regex + JSON.parse)             | No                              |
+| **Reliability**           | Can break if user logs `__TRACE__`   | 100% reliable                   |
+| **Performance**           | String concat + parse overhead       | Direct object push              |
+| **Capability tracing**    | Need separate `capability_start/end` | Same mechanism                  |
+| **Code complexity**       | Worker + parser + filter             | Bridge only                     |
 
 ### What This Replaces
 
@@ -376,6 +386,7 @@ All tracing is now handled by the bridge - simpler, more reliable, better perfor
 ### Design Principle: Maximum Reuse
 
 The existing sandbox infrastructure is well-designed. We preserve:
+
 - **Same interface** - `execute(code, context)` signature unchanged
 - **Same types** - `SandboxConfig`, `ExecutionResult` unchanged
 - **Same services** - Cache, SecurityValidator, ResourceLimiter, PIIDetector
@@ -383,12 +394,12 @@ The existing sandbox infrastructure is well-designed. We preserve:
 
 ### What Changes
 
-| Component | Current | New |
-|-----------|---------|-----|
-| Code execution | Deno subprocess | Deno Worker |
-| Tool injection | Functions in context (broken) | RPC proxies (working) |
-| Trace collection | Parse stdout `__TRACE__` | Native in bridge |
-| IPC | stdin/stdout | postMessage |
+| Component        | Current                       | New                   |
+| ---------------- | ----------------------------- | --------------------- |
+| Code execution   | Deno subprocess               | Deno Worker           |
+| Tool injection   | Functions in context (broken) | RPC proxies (working) |
+| Trace collection | Parse stdout `__TRACE__`      | Native in bridge      |
+| IPC              | stdin/stdout                  | postMessage           |
 
 ### Phase 1: Worker Bridge (Story 7.1b)
 
@@ -415,16 +426,16 @@ The existing sandbox infrastructure is well-designed. We preserve:
 4. `src/sandbox/executor.ts` - Add Worker mode
    ```typescript
    export class DenoSandboxExecutor {
-     private mode: "worker" | "subprocess" = "worker";  // New default
+     private mode: "worker" | "subprocess" = "worker"; // New default
 
      async execute(code, context) {
        // Existing validation (SecurityValidator, ResourceLimiter) - REUSED
        // Existing cache check - REUSED
 
        if (this.mode === "worker") {
-         return this.executeViaWorker(code, context);  // NEW
+         return this.executeViaWorker(code, context); // NEW
        }
-       return this.executeViaSubprocess(code, context);  // EXISTING (renamed)
+       return this.executeViaSubprocess(code, context); // EXISTING (renamed)
      }
    }
    ```
@@ -443,7 +454,7 @@ The existing sandbox infrastructure is well-designed. We preserve:
    ```typescript
    const executor = new DenoSandboxExecutor({
      ...config,
-     mcpClients: this.mcpClients,  // NEW: for Worker RPC
+     mcpClients: this.mcpClients, // NEW: for Worker RPC
    });
    ```
 
@@ -457,27 +468,27 @@ The existing sandbox infrastructure is well-designed. We preserve:
 
 ### Reuse Matrix
 
-| Existing Component | Reused? | Notes |
-|--------------------|---------|-------|
-| `types.ts` | ✅ 100% | Interface unchanged |
-| `cache.ts` | ✅ 100% | Works with any executor |
-| `security-validator.ts` | ✅ 100% | Pre-execution validation |
-| `resource-limiter.ts` | ✅ 100% | Concurrency control |
-| `pii-detector.ts` | ✅ 100% | Output sanitization |
-| `context-builder.ts` | ⚠️ 80% | Add `buildToolDefinitions()`, deprecate function wrappers |
-| `executor.ts` | ⚠️ 70% | Keep interface, add Worker mode |
+| Existing Component      | Reused? | Notes                                                     |
+| ----------------------- | ------- | --------------------------------------------------------- |
+| `types.ts`              | ✅ 100% | Interface unchanged                                       |
+| `cache.ts`              | ✅ 100% | Works with any executor                                   |
+| `security-validator.ts` | ✅ 100% | Pre-execution validation                                  |
+| `resource-limiter.ts`   | ✅ 100% | Concurrency control                                       |
+| `pii-detector.ts`       | ✅ 100% | Output sanitization                                       |
+| `context-builder.ts`    | ⚠️ 80%  | Add `buildToolDefinitions()`, deprecate function wrappers |
+| `executor.ts`           | ⚠️ 70%  | Keep interface, add Worker mode                           |
 
 ## Files Summary
 
-| File | Action | LOC |
-|------|--------|-----|
-| `src/sandbox/worker-bridge.ts` | Create | ~150 |
-| `src/sandbox/sandbox-worker.ts` | Create | ~100 |
-| `src/sandbox/types.ts` | Extend | ~50 |
-| `src/sandbox/executor.ts` | Modify | ~30 |
-| `src/sandbox/context-builder.ts` | Modify | ~20 |
-| `src/mcp/gateway-server.ts` | Modify | ~10 |
-| **Total** | | **~360 LOC**
+| File                             | Action | LOC          |
+| -------------------------------- | ------ | ------------ |
+| `src/sandbox/worker-bridge.ts`   | Create | ~150         |
+| `src/sandbox/sandbox-worker.ts`  | Create | ~100         |
+| `src/sandbox/types.ts`           | Extend | ~50          |
+| `src/sandbox/executor.ts`        | Modify | ~30          |
+| `src/sandbox/context-builder.ts` | Modify | ~20          |
+| `src/mcp/gateway-server.ts`      | Modify | ~10          |
+| **Total**                        |        | **~360 LOC** |
 
 ## Consequences
 
@@ -510,6 +521,7 @@ The existing sandbox infrastructure is well-designed. We preserve:
 Add stdin/stdout JSON-RPC to existing subprocess executor.
 
 **Rejected because:**
+
 - Subprocess spawn is slow (~50-100ms overhead)
 - stdin/stdout parsing is error-prone
 - More complex than postMessage
@@ -519,6 +531,7 @@ Add stdin/stdout JSON-RPC to existing subprocess executor.
 Execute code in same thread with restricted scope.
 
 **Rejected because:**
+
 - No isolation - code can access anything
 - Security risk too high
 - Violates sandbox principle
@@ -528,6 +541,7 @@ Execute code in same thread with restricted scope.
 Use Cloudflare Workers or similar.
 
 **Rejected because:**
+
 - External dependency
 - Latency for remote calls
 - Cost for hosted service
@@ -538,20 +552,24 @@ Use Cloudflare Workers or similar.
 When implementing ADR-032, the following code from Story 7.1 should be **removed**:
 
 ### `src/sandbox/context-builder.ts`
+
 - `wrapToolCall()` function (~40 LOC)
 - `setTracingEnabled()` / `isTracingEnabled()` functions
 - `tracingEnabled` module variable
 
 ### `src/mcp/gateway-server.ts`
+
 - `parseTraces()` function (~30 LOC)
 - `TraceEvent` interface
 - `ParsedTraces` interface
 - Trace parsing logic in `handleExecuteCode()`
 
 ### `src/sandbox/types.ts`
+
 - `rawStdout` field in `ExecutionResult` interface
 
 ### `tests/`
+
 - `tests/unit/mcp/trace_parsing_test.ts` - entire file
 - `tests/unit/sandbox/tracing_performance_test.ts` - entire file
 - Tracing-related tests in `context_builder_test.ts`
@@ -561,9 +579,11 @@ When implementing ADR-032, the following code from Story 7.1 should be **removed
 ## References
 
 - [Cloudflare: Code Mode](https://blog.cloudflare.com/code-mode/) - RPC binding pattern
-- [SandpackVM](https://dev.to/ackermannq/building-sandpackvm-how-to-build-a-lightweight-vm-88c) - Worker RPC bridge
+- [SandpackVM](https://dev.to/ackermannq/building-sandpackvm-how-to-build-a-lightweight-vm-88c) -
+  Worker RPC bridge
 - [Deno Workers](https://docs.deno.com/runtime/manual/runtime/workers) - Permission configuration
-- [Anthropic: Code Execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp) - Sandbox architecture
+- [Anthropic: Code Execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp) -
+  Sandbox architecture
 - ADR-027: Execute Code Graph Learning (superseded for tracing)
 - Epic 3 Story 3.2: MCP Tools Injection into Code Context
 - `src/sandbox/executor.ts` - Current (broken) implementation

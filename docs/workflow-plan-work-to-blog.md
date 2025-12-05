@@ -1,35 +1,35 @@
 ---
-workflowName: 'work-to-blog'
-targetModule: 'custom'
-workflowType: 'document-workflow'
-flowPattern: 'branching-linear'
+workflowName: "work-to-blog"
+targetModule: "custom"
+workflowType: "document-workflow"
+flowPattern: "branching-linear"
 date: 2025-12-05
 user_name: Erwan
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-lastStep: 'review'
+lastStep: "review"
 planApproved: true
 buildComplete: true
 workflowComplete: true
 completedAt: 2025-12-05
-associatedAgent: 'tech-blogger'
+associatedAgent: "tech-blogger"
 ---
 
 # Workflow Creation Plan: work-to-blog
 
-**Created:** 2025-12-05
-**Author:** Erwan
-**Module:** custom
-**Type:** content-generation
+**Created:** 2025-12-05 **Author:** Erwan **Module:** custom **Type:** content-generation
 
 ## Executive Summary
 
-Workflow pour transformer le travail technique en cours (décisions techniques, spikes, découvertes) en articles de blog. Supporte deux formats de sortie : posts LinkedIn courts et articles détaillés. Déclenchement manuel. Les drafts sont sauvegardés dans `docs/blog/draft/`.
+Workflow pour transformer le travail technique en cours (décisions techniques, spikes, découvertes)
+en articles de blog. Supporte deux formats de sortie : posts LinkedIn courts et articles détaillés.
+Déclenchement manuel. Les drafts sont sauvegardés dans `docs/blog/draft/`.
 
 ## Requirements Analysis
 
 ### Workflow Purpose
 
-- **Problem to Solve**: Transformer le travail technique en cours (décisions techniques, spikes, découvertes) en articles de blog publiables
+- **Problem to Solve**: Transformer le travail technique en cours (décisions techniques, spikes,
+  découvertes) en articles de blog publiables
 - **Primary Users**: Erwan (développeur/architecte)
 - **Main Outcome**: Articles de blog (LinkedIn courts + articles détaillés)
 - **Usage Frequency**: Manuel, à la demande
@@ -95,18 +95,20 @@ Workflow pour transformer le travail technique en cours (décisions techniques, 
 
 ### Selected Tools
 
-| Tool | Type | Status | Notes |
-|------|------|--------|-------|
-| `file-io` | LLM Feature | ✅ Requis | Lecture input, écriture output |
-| `sub-agents` | LLM Feature | ✅ Requis | Invocation agent `tech-blogger` |
-| `sidecar-file` | Memory | 📋 Optionnel | Persistance style/préférences |
-| `image-gen` | MCP | 📋 V2 | Cover images (quand MCP dispo) |
+| Tool           | Type        | Status       | Notes                           |
+| -------------- | ----------- | ------------ | ------------------------------- |
+| `file-io`      | LLM Feature | ✅ Requis    | Lecture input, écriture output  |
+| `sub-agents`   | LLM Feature | ✅ Requis    | Invocation agent `tech-blogger` |
+| `sidecar-file` | Memory      | 📋 Optionnel | Persistance style/préférences   |
+| `image-gen`    | MCP         | 📋 V2        | Cover images (quand MCP dispo)  |
 
 ### Installation Willingness
+
 - Pas d'installation externe requise pour V1
 - Prêt à ajouter MCP image generation pour V2
 
 ### Architecture Notes
+
 - Step optionnel prévu pour cover image (désactivé V1)
 - Agent `tech-blogger` à créer en parallèle
 
@@ -114,35 +116,35 @@ Workflow pour transformer le travail technique en cours (décisions techniques, 
 
 ### Workflows & Tasks
 
-| Tool | Status | Integration Point |
-|------|--------|-------------------|
-| **Party-Mode** | ❌ Exclu | - |
+| Tool                     | Status    | Integration Point                                    |
+| ------------------------ | --------- | ---------------------------------------------------- |
+| **Party-Mode**           | ❌ Exclu  | -                                                    |
 | **Advanced Elicitation** | ✅ Inclus | Avant génération - affiner l'angle et le message clé |
-| **Brainstorming** | ❌ Exclu | - |
+| **Brainstorming**        | ❌ Exclu  | -                                                    |
 
 ### LLM Tool Features
 
-| Tool | Status | Integration Point |
-|------|--------|-------------------|
-| **Web-Browsing** | ✅ Inclus | Pendant génération - enrichir avec sources/refs externes |
-| **File I/O** | ✅ Inclus | Lecture input (fichiers), écriture output (drafts) |
-| **Sub-Agents** | ✅ Inclus | Invocation agent `tech-blogger` pour génération |
-| **Sub-Processes** | ❌ Exclu | - |
+| Tool              | Status    | Integration Point                                        |
+| ----------------- | --------- | -------------------------------------------------------- |
+| **Web-Browsing**  | ✅ Inclus | Pendant génération - enrichir avec sources/refs externes |
+| **File I/O**      | ✅ Inclus | Lecture input (fichiers), écriture output (drafts)       |
+| **Sub-Agents**    | ✅ Inclus | Invocation agent `tech-blogger` pour génération          |
+| **Sub-Processes** | ❌ Exclu  | -                                                        |
 
 ### Tool-Memory
 
-| Tool | Status | Use Case |
-|------|--------|----------|
+| Tool             | Status    | Use Case                                  |
+| ---------------- | --------- | ----------------------------------------- |
 | **Sidecar File** | ✅ Inclus | Persistance style/préférences utilisateur |
 
 ## Memory Configuration
 
 ### Memory Requirements
 
-| Type | Status | Use Case |
-|------|--------|----------|
-| **Sidecar File** | ✅ Sélectionné | Persistance style + historique articles |
-| **Vector Database** | ❌ Non requis | Overkill pour ce workflow |
+| Type                | Status         | Use Case                                |
+| ------------------- | -------------- | --------------------------------------- |
+| **Sidecar File**    | ✅ Sélectionné | Persistance style + historique articles |
+| **Vector Database** | ❌ Non requis  | Overkill pour ce workflow               |
 
 ### Sidecar Implementation
 
@@ -164,14 +166,14 @@ Workflow pour transformer le travail technique en cours (décisions techniques, 
 
 ### V1 - Aucun MCP externe requis
 
-| MCP | Status | Notes |
-|-----|--------|-------|
-| Context-7 | ❌ | Pas de docs API |
-| Playwright | ❌ | Pas de browser automation |
-| Git | ❌ | File-io suffit |
-| Database | ❌ | Pas de DB |
-| RAG-agent (Vector) | 📋 V2 | Recherche sémantique historique |
-| Image Gen | 📋 V2 | Cover images |
+| MCP                | Status | Notes                           |
+| ------------------ | ------ | ------------------------------- |
+| Context-7          | ❌     | Pas de docs API                 |
+| Playwright         | ❌     | Pas de browser automation       |
+| Git                | ❌     | File-io suffit                  |
+| Database           | ❌     | Pas de DB                       |
+| RAG-agent (Vector) | 📋 V2  | Recherche sémantique historique |
+| Image Gen          | 📋 V2  | Cover images                    |
 
 ### V2 Roadmap
 
@@ -182,13 +184,13 @@ Workflow pour transformer le travail technique en cours (décisions techniques, 
 
 ### Tools Inventory
 
-| Catégorie | Count | Outils |
-|-----------|-------|--------|
-| Core BMAD | 1 | Advanced Elicitation |
-| LLM Features | 3 | File-io, Sub-agents, Web-browsing |
-| Memory | 1 | Sidecar file |
-| MCP externes | 0 | (V2: Image Gen, Vector DB) |
-| **Total** | **5** | |
+| Catégorie    | Count | Outils                            |
+| ------------ | ----- | --------------------------------- |
+| Core BMAD    | 1     | Advanced Elicitation              |
+| LLM Features | 3     | File-io, Sub-agents, Web-browsing |
+| Memory       | 1     | Sidecar file                      |
+| MCP externes | 0     | (V2: Image Gen, Vector DB)        |
+| **Total**    | **5** |                                   |
 
 ### Integration Strategy
 
@@ -203,14 +205,14 @@ Workflow pour transformer le travail technique en cours (décisions techniques, 
 
 ### Workflow Structure (5 Steps)
 
-| Step | Nom | But | Branching |
-|------|-----|-----|-----------|
-| 1 | init | Charger sidecar, choisir mode (Créer/Transformer) | → 2a ou 2b |
-| 2a | input-create | Collecter input (texte libre ou fichier) | → 3 |
-| 2b | input-transform | Sélectionner article existant à transformer | → 3 |
-| 3 | configure | Choisir format + langue + affiner angle | → 4 |
-| 4 | generate | Invoquer tech-blogger + web search | → 5 |
-| 5 | finalize | Preview, révision, sauvegarde | → fin |
+| Step | Nom             | But                                               | Branching  |
+| ---- | --------------- | ------------------------------------------------- | ---------- |
+| 1    | init            | Charger sidecar, choisir mode (Créer/Transformer) | → 2a ou 2b |
+| 2a   | input-create    | Collecter input (texte libre ou fichier)          | → 3        |
+| 2b   | input-transform | Sélectionner article existant à transformer       | → 3        |
+| 3    | configure       | Choisir format + langue + affiner angle           | → 4        |
+| 4    | generate        | Invoquer tech-blogger + web search                | → 5        |
+| 5    | finalize        | Preview, révision, sauvegarde                     | → fin      |
 
 ### Flow Diagram
 
@@ -291,4 +293,5 @@ bmad/custom/src/workflows/work-to-blog/
 
 ## Ready for Implementation
 
-When you approve this plan, I'll generate all the workflow files in the specified location with the exact structure and content outlined above.
+When you approve this plan, I'll generate all the workflow files in the specified location with the
+exact structure and content outlined above.

@@ -1,9 +1,7 @@
 # AgentCards - Epic Breakdown
 
-**Author:** BMad
-**Date:** 2025-11-03 (Updated: 2025-12-05)
-**Project Level:** 3
-**Target Scale:** 10 epics, 50+ stories total
+**Author:** BMad **Date:** 2025-11-03 (Updated: 2025-12-05) **Project Level:** 3 **Target Scale:**
+10 epics, 50+ stories total
 
 ---
 
@@ -11,9 +9,11 @@
 
 Ce document fournit le breakdown des epics **actifs** pour AgentCards.
 
-**Completed Epics (1-6):** Archivés dans [docs/archive/completed-epics-1-6.md](./archive/completed-epics-1-6.md)
+**Completed Epics (1-6):** Archivés dans
+[docs/archive/completed-epics-1-6.md](./archive/completed-epics-1-6.md)
 
 **Active Epics:**
+
 - **Epic 7:** Emergent Capabilities & Learning System (IN PROGRESS)
 - **Epic 8:** Hypergraph Capabilities Visualization (BACKLOG)
 
@@ -21,16 +21,16 @@ Ce document fournit le breakdown des epics **actifs** pour AgentCards.
 
 ## Completed Epics Summary
 
-| Epic | Title | Status | Key Deliverables |
-|------|-------|--------|------------------|
-| 1 | Project Foundation & Context Optimization | ✅ DONE | PGlite + pgvector, semantic search, context <5% |
-| 2 | DAG Execution & Production Readiness | ✅ DONE | Parallel execution, MCP gateway, 3-5x speedup |
-| 2.5 | Adaptive DAG Feedback Loops | ✅ DONE | AIL/HIL, checkpoint/resume, command queue |
-| 3 | Agent Code Execution & Local Processing | ✅ DONE | Deno sandbox, execute_code tool, PII protection |
-| 3.5 | Speculative Execution with Sandbox | ✅ DONE | 0ms perceived latency, safe rollback |
-| 4 | Episodic Memory & Adaptive Learning | ✅ DONE | Threshold persistence, context-aware suggestions |
-| 5 | Intelligent Tool Discovery | ✅ DONE | Hybrid search (semantic + Adamic-Adar), templates |
-| 6 | Real-time Graph Monitoring | ✅ DONE | SSE events, Cytoscape dashboard, live metrics |
+| Epic | Title                                     | Status  | Key Deliverables                                  |
+| ---- | ----------------------------------------- | ------- | ------------------------------------------------- |
+| 1    | Project Foundation & Context Optimization | ✅ DONE | PGlite + pgvector, semantic search, context <5%   |
+| 2    | DAG Execution & Production Readiness      | ✅ DONE | Parallel execution, MCP gateway, 3-5x speedup     |
+| 2.5  | Adaptive DAG Feedback Loops               | ✅ DONE | AIL/HIL, checkpoint/resume, command queue         |
+| 3    | Agent Code Execution & Local Processing   | ✅ DONE | Deno sandbox, execute_code tool, PII protection   |
+| 3.5  | Speculative Execution with Sandbox        | ✅ DONE | 0ms perceived latency, safe rollback              |
+| 4    | Episodic Memory & Adaptive Learning       | ✅ DONE | Threshold persistence, context-aware suggestions  |
+| 5    | Intelligent Tool Discovery                | ✅ DONE | Hybrid search (semantic + Adamic-Adar), templates |
+| 6    | Real-time Graph Monitoring                | ✅ DONE | SSE events, Cytoscape dashboard, live metrics     |
 
 > **Full details:** See [completed-epics-1-6.md](./archive/completed-epics-1-6.md)
 
@@ -38,17 +38,23 @@ Ce document fournit le breakdown des epics **actifs** pour AgentCards.
 
 ## Epic 7: Emergent Capabilities & Learning System
 
-> **ADRs:** ADR-027 (Execute Code Graph Learning), ADR-028 (Emergent Capabilities System), ADR-032 (Sandbox Worker RPC Bridge)
-> **Research:** docs/research/research-technical-2025-12-03.md
+> **ADRs:** ADR-027 (Execute Code Graph Learning), ADR-028 (Emergent Capabilities System), ADR-032
+> (Sandbox Worker RPC Bridge) **Research:** docs/research/research-technical-2025-12-03.md
 > **Status:** In Progress (Story 7.1 done, Story 7.1b planned)
 
 **Expanded Goal (2-3 sentences):**
 
-Transformer AgentCards en système où les capabilities **émergent de l'usage** plutôt que d'être pré-définies. Implémenter un paradigme où Claude devient un **orchestrateur de haut niveau** qui délègue l'exécution à AgentCards, récupérant des capabilities apprises et des suggestions proactives. Ce système apprend continuellement des patterns d'exécution pour cristalliser des capabilities réutilisables, offrant une différenciation unique par rapport aux solutions concurrentes (Docker Dynamic MCP, Anthropic Programmatic Tool Calling).
+Transformer AgentCards en système où les capabilities **émergent de l'usage** plutôt que d'être
+pré-définies. Implémenter un paradigme où Claude devient un **orchestrateur de haut niveau** qui
+délègue l'exécution à AgentCards, récupérant des capabilities apprises et des suggestions
+proactives. Ce système apprend continuellement des patterns d'exécution pour cristalliser des
+capabilities réutilisables, offrant une différenciation unique par rapport aux solutions
+concurrentes (Docker Dynamic MCP, Anthropic Programmatic Tool Calling).
 
 **Value Delivery:**
 
 À la fin de cet epic, AgentCards:
+
 - **Track** les tools réellement appelés via Worker RPC Bridge (native tracing)
 - **Apprend** des patterns d'exécution et les cristallise en capabilities
 - **Suggère** proactivement des capabilities et tools pertinents
@@ -96,7 +102,9 @@ Transformer AgentCards en système où les capabilities **émergent de l'usage**
 
 > **Status:** Done (2025-12-05) - BUT approach superseded by Story 7.1b
 >
-> **Hidden Bug Discovered:** `wrapMCPClient()` from Story 3.2 **never actually worked** with the subprocess sandbox:
+> **Hidden Bug Discovered:** `wrapMCPClient()` from Story 3.2 **never actually worked** with the
+> subprocess sandbox:
+>
 > ```typescript
 > // context-builder.ts:148 - Creates functions
 > const toolContext = wrapMCPClient(client, tools);
@@ -104,18 +112,23 @@ Transformer AgentCards en système où les capabilities **émergent de l'usage**
 > return `const ${key} = ${JSON.stringify(value)};`;
 > // JSON.stringify(function) → undefined! Tools silently disappear.
 > ```
-> **Why never caught:** Tests used mock data, no integration test called real MCP tools from sandbox.
+>
+> **Why never caught:** Tests used mock data, no integration test called real MCP tools from
+> sandbox.
 >
 > **Solution:** Story 7.1b implements Worker RPC Bridge (ADR-032) which solves both problems:
+>
 > 1. Tool proxies instead of serialized functions (actually works!)
 > 2. Native tracing in the bridge (no stdout parsing)
 >
 > **What to keep from 7.1:**
+>
 > - The trace event types (tool_start, tool_end)
 > - The GraphRAG integration (updateFromExecution)
 > - The test patterns
 >
 > **What to remove (Story 7.1b cleanup):**
+>
 > - `wrapMCPClient()` in context-builder.ts (broken, never worked)
 > - `wrapToolCall()` in context-builder.ts
 > - `parseTraces()` in gateway-server.ts
@@ -125,16 +138,17 @@ Transformer AgentCards en système où les capabilities **émergent de l'usage**
 
 **Story 7.1b: Worker RPC Bridge - Native Tracing (ADR-032)**
 
-As a system executing code with MCP tools,
-I want a Worker-based sandbox with RPC bridge for tool calls,
-So that MCP tools work in sandbox AND all calls are traced natively without stdout parsing.
+As a system executing code with MCP tools, I want a Worker-based sandbox with RPC bridge for tool
+calls, So that MCP tools work in sandbox AND all calls are traced natively without stdout parsing.
 
 **Why this replaces Story 7.1:**
+
 - MCP client functions cannot be JSON.stringify'd to subprocess
 - `__TRACE__` stdout parsing is fragile (collision with user console.log)
 - Native bridge tracing is 100% reliable and simpler
 
 **Architecture:**
+
 ```
 Main Process                          Worker (permissions: "none")
 ┌─────────────────┐                  ┌─────────────────────────────┐
@@ -148,6 +162,7 @@ Main Process                          Worker (permissions: "none")
 ```
 
 **Acceptance Criteria:**
+
 1. `WorkerBridge` class créée (`src/sandbox/worker-bridge.ts`)
    - Spawns Deno Worker with `permissions: "none"`
    - Handles RPC messages (rpc_call → rpc_result)
@@ -159,8 +174,20 @@ Main Process                          Worker (permissions: "none")
    - Executes user code with proxies available
 3. RPC Message Types added to `src/sandbox/types.ts`:
    ```typescript
-   interface RPCCallMessage { type: "rpc_call"; id: string; server: string; tool: string; args: unknown }
-   interface RPCResultMessage { type: "rpc_result"; id: string; success: boolean; result?: unknown; error?: string }
+   interface RPCCallMessage {
+     type: "rpc_call";
+     id: string;
+     server: string;
+     tool: string;
+     args: unknown;
+   }
+   interface RPCResultMessage {
+     type: "rpc_result";
+     id: string;
+     success: boolean;
+     result?: unknown;
+     error?: string;
+   }
    ```
 4. `DenoSandboxExecutor` extended avec mode Worker (alongside existing subprocess)
 5. Tracing: ALL tool calls traced in bridge with `{ tool, duration_ms, success }`
@@ -170,16 +197,19 @@ Main Process                          Worker (permissions: "none")
 9. **Cleanup:** Remove Story 7.1 code (wrapToolCall, parseTraces, rawStdout)
 
 **Files to Create:**
+
 - `src/sandbox/worker-bridge.ts` (~150 LOC)
 - `src/sandbox/sandbox-worker.ts` (~100 LOC)
 
 **Files to Modify:**
+
 - `src/sandbox/types.ts` - Add RPC message types (~30 LOC)
 - `src/sandbox/executor.ts` - Add Worker mode (~30 LOC)
 - `src/sandbox/context-builder.ts` - Add `buildToolDefinitions()` (~20 LOC)
 - `src/mcp/gateway-server.ts` - Remove parseTraces(), use bridge traces (~-40 LOC)
 
 **Files to Delete (Cleanup):**
+
 - `tests/unit/mcp/trace_parsing_test.ts`
 - `tests/unit/sandbox/tracing_performance_test.ts`
 
@@ -191,17 +221,18 @@ Main Process                          Worker (permissions: "none")
 
 **Story 7.2a: Capability Storage - Migration & Eager Learning**
 
-As a system persisting learned patterns,
-I want to store capabilities immediately after first successful execution,
-So that learning happens instantly without waiting for repeated patterns.
+As a system persisting learned patterns, I want to store capabilities immediately after first
+successful execution, So that learning happens instantly without waiting for repeated patterns.
 
 **Philosophy: Eager Learning**
+
 - Storage dès la 1ère exécution réussie (pas d'attente de 3+)
 - ON CONFLICT → UPDATE usage_count++ (deduplication par code_hash)
 - Storage is cheap (~2KB/capability), on garde tout
 - Le filtrage se fait au moment des suggestions, pas du stockage
 
 **Acceptance Criteria:**
+
 1. Migration 011 créée: extension table `workflow_pattern`
    - `code_snippet TEXT` - Le code exécuté
    - `parameters_schema JSONB` - Schema JSON des paramètres (nullable, rempli par Story 7.2b)
@@ -233,37 +264,35 @@ So that learning happens instantly without waiting for repeated patterns.
 
 ---
 
-**Story 7.2b: Schema Inference (ts-morph + Zod)**
+**Story 7.2b: Schema Inference (SWC-based)**
 
-As a system exposing capability interfaces,
-I want to automatically infer parameter schemas from TypeScript code,
-So that Claude knows what arguments to pass when calling capabilities.
+As a system exposing capability interfaces, I want to automatically infer parameter schemas from
+TypeScript code, So that Claude knows what arguments to pass when calling capabilities.
 
-**Stack (Deno compatible ✅):**
-- `ts-morph` via `deno.land/x/ts_morph@22.0.0` ou JSR `@ts-morph/ts-morph`
-- `zod` via `npm:zod` ou `deno.land/x/zod` ou JSR natif
-- `zod-to-json-schema` via `npm:zod-to-json-schema`
+**Stack (Deno native ✅):**
 
-> Note: ts-morph analyse du TS simple (pas d'imports Deno exotiques) - OK pour notre code généré.
+- `SWC` via `deno.land/x/swc@0.2.1` - Rust-based AST parser, 20x faster than ts-morph
+- Native JSON Schema generation (no Zod needed)
+
+> Note: SWC is Deno-native, validated in POC. ts-morph has Deno compatibility issues (#949, #950).
 
 **Acceptance Criteria:**
+
 1. `SchemaInferrer` class créée (`src/capabilities/schema-inferrer.ts`)
 2. Method `inferSchema(code: string, mcpSchemas: Map<string, JSONSchema>)` → JSONSchema
 3. Flow d'inférence:
    ```typescript
-   // 1. ts-morph parse AST → trouve args.filePath, args.debug
+   // 1. SWC parse AST → trouve args.filePath, args.debug (MemberExpression + ObjectPattern)
    // 2. Inférer types depuis MCP schemas (args.filePath → fs.read.path → string)
-   // 3. Générer Zod schema → z.object({ filePath: z.string(), ... })
-   // 4. Convertir en JSON Schema pour stockage DB
+   // 3. Générer JSON Schema directement
    ```
-4. Détection `args.xxx` via AST traversal (PropertyAccessExpression)
+4. Détection `args.xxx` via AST traversal (MemberExpression + ObjectPattern destructuring)
 5. Inférence de type depuis les MCP schemas quand possible
 6. Fallback à `unknown` si type non-inférable
-7. Génération de Zod schema avec `z.object({...})`
-8. Conversion vers JSON Schema via `zod-to-json-schema`
-9. Update `workflow_pattern.parameters_schema` après inférence
-10. Tests: code avec `args.filePath` utilisé dans `fs.read()` → schema.filePath = string
-11. Tests: code avec `args.unknown` non-mappable → schema.unknown = unknown
+7. Génération JSON Schema directe (pas de Zod intermédiaire)
+8. Update `workflow_pattern.parameters_schema` après inférence
+9. Tests: code avec `args.filePath` utilisé dans `fs.read()` → schema.filePath = string
+10. Tests: code avec `args.unknown` non-mappable → schema.unknown = unknown
 
 **Prerequisites:** Story 7.2a (storage ready)
 
@@ -273,17 +302,19 @@ So that Claude knows what arguments to pass when calling capabilities.
 
 **Story 7.3a: Capability Matching & search_capabilities Tool**
 
-As an AI agent,
-I want to search for existing capabilities matching my intent,
-So that I can discover and reuse proven code.
+As an AI agent, I want to search for existing capabilities matching my intent, So that I can
+discover and reuse proven code.
 
 **Integration avec Adaptive Thresholds (Epic 4):**
+
 - Réutilise `AdaptiveThresholdManager` existant
 - Nouveau context type: `capability_matching`
 - Seuil initial: `suggestionThreshold` (0.70 par défaut)
-- Auto-ajustement basé sur FP (capability échoue) / FN (user génère nouveau code alors que capability existait)
+- Auto-ajustement basé sur FP (capability échoue) / FN (user génère nouveau code alors que
+  capability existait)
 
 **Acceptance Criteria:**
+
 1. `CapabilityMatcher` class créée (`src/capabilities/matcher.ts`)
 2. Constructor prend `AdaptiveThresholdManager` en injection
 3. Method `findMatch(intent)` → Capability | null
@@ -293,7 +324,8 @@ So that I can discover and reuse proven code.
 5. Nouveau tool MCP `agentcards:search_capabilities` exposé
 6. Input schema: `{ intent: string, include_suggestions?: boolean }`
    - Pas de threshold en param - géré par adaptive system
-7. Output: `{ capabilities: Capability[], suggestions?: Suggestion[], threshold_used: number, parameters_schema: JSONSchema }`
+7. Output:
+   `{ capabilities: Capability[], suggestions?: Suggestion[], threshold_used: number, parameters_schema: JSONSchema }`
 8. Feedback loop: après exécution capability, appeler `adaptiveThresholds.recordExecution()`
 9. Stats update: `usage_count++`, recalc `success_rate` après exécution
 10. Tests: créer capability → search by similar intent → verify match uses adaptive threshold
@@ -306,22 +338,22 @@ So that I can discover and reuse proven code.
 
 **Story 7.3b: Capability Injection - Inline Functions (Option B)**
 
-As a code executor,
-I want capabilities injected as inline functions in the Worker context,
-So that code can call capabilities with zero RPC overhead and proper tracing.
+As a code executor, I want capabilities injected as inline functions in the Worker context, So that
+code can call capabilities with zero RPC overhead and proper tracing.
 
 **Architecture Decision: Option B (Inline Functions)**
 
 > **Why Option B instead of RPC for capabilities?**
+>
 > - **No RPC overhead** for capability → capability calls (direct function call)
 > - **Simpler** - capabilities are just functions in the same Worker context
 > - **MCP tool calls** still go through RPC bridge (and get traced there natively)
 >
-> | Call Type | Mechanism | Tracing Location |
-> |-----------|-----------|------------------|
-> | Code → MCP tool | RPC to bridge | ✅ Bridge (native) |
-> | Code → Capability | Direct function call | ✅ Worker (wrapper) |
-> | Capability → MCP tool | RPC to bridge | ✅ Bridge (native) |
+> | Call Type               | Mechanism            | Tracing Location    |
+> | ----------------------- | -------------------- | ------------------- |
+> | Code → MCP tool         | RPC to bridge        | ✅ Bridge (native)  |
+> | Code → Capability       | Direct function call | ✅ Worker (wrapper) |
+> | Capability → MCP tool   | RPC to bridge        | ✅ Bridge (native)  |
 > | Capability → Capability | Direct function call | ✅ Worker (wrapper) |
 
 **How it works with Story 7.1b Worker RPC Bridge:**
@@ -330,7 +362,7 @@ So that code can call capabilities with zero RPC overhead and proper tracing.
 // In Worker context - generated by WorkerBridge
 const mcp = {
   kubernetes: { deploy: (args) => __rpcCall("kubernetes", "deploy", args) },
-  slack: { notify: (args) => __rpcCall("slack", "notify", args) }
+  slack: { notify: (args) => __rpcCall("slack", "notify", args) },
 };
 
 // Capabilities are INLINE functions (not RPC)
@@ -347,7 +379,7 @@ const capabilities = {
     await mcp.kubernetes.deploy({ image: args.image }); // RPC → traced in bridge
     __trace({ type: "capability_end", name: "deployProd", success: true });
     return { deployed: true };
-  }
+  },
 };
 
 // User code has access to both
@@ -355,6 +387,7 @@ await capabilities.deployProd({ image: "app:v1.0" });
 ```
 
 **Acceptance Criteria:**
+
 1. `CapabilityCodeGenerator` class créée (`src/capabilities/code-generator.ts`)
    - Generates inline function code from capability `code_snippet`
    - Wraps each function with `__trace()` calls for capability_start/end
@@ -376,9 +409,11 @@ await capabilities.deployProd({ image: "app:v1.0" });
 8. Performance: capability→capability call < 1ms (no RPC)
 
 **Files to Create:**
+
 - `src/capabilities/code-generator.ts` (~80 LOC)
 
 **Files to Modify:**
+
 - `src/sandbox/worker-bridge.ts` - Add `buildCapabilityContext()` (~40 LOC)
 - `src/sandbox/sandbox-worker.ts` - Add `__trace()` function, collect traces (~20 LOC)
 
@@ -399,7 +434,7 @@ Avec le Worker RPC Bridge (Story 7.1b), le Worker a accès à deux types de fonc
 const mcp = {
   github: { createIssue: (args) => __rpcCall("github", "createIssue", args) },
   filesystem: { read: (args) => __rpcCall("filesystem", "read", args) },
-  kubernetes: { deploy: (args) => __rpcCall("kubernetes", "deploy", args) }
+  kubernetes: { deploy: (args) => __rpcCall("kubernetes", "deploy", args) },
 };
 
 // 2. Capabilities: Inline functions (traced in worker via __trace())
@@ -413,20 +448,22 @@ const capabilities = {
   },
   deployProd: async (args) => {
     __trace({ type: "capability_start", name: "deployProd" });
-    await capabilities.runTests({ path: "./tests" });   // Direct call (no RPC)
-    await capabilities.buildDocker({ tag: "v1.0" });    // Direct call (no RPC)
+    await capabilities.runTests({ path: "./tests" }); // Direct call (no RPC)
+    await capabilities.buildDocker({ tag: "v1.0" }); // Direct call (no RPC)
     await mcp.kubernetes.deploy({ image: "app:v1.0" }); // RPC
     __trace({ type: "capability_end", name: "deployProd", success: true });
-  }
+  },
 };
 ```
 
 **Key Benefits of Option B:**
+
 - **Zero overhead** for capability → capability calls (direct function call)
 - **Unified tracing** - bridge traces MCP tools, worker traces capabilities
 - **Simple architecture** - no complex RPC routing for capabilities
 
 **Limites à considérer (future story si besoin):**
+
 - Profondeur max de récursion (3 niveaux?)
 - Détection de cycles (A → B → A)
 - Call stack dans traces (parent_trace_id)
@@ -435,22 +472,24 @@ const capabilities = {
 
 **Story 7.4: Suggestion Engine & Proactive Recommendations (Lazy Suggestions)**
 
-As an AI agent,
-I want proactive suggestions based on current context,
-So that I can discover relevant capabilities and tools without searching.
+As an AI agent, I want proactive suggestions based on current context, So that I can discover
+relevant capabilities and tools without searching.
 
 **Philosophy: Lazy Suggestions**
+
 - On a TOUT stocké (eager learning), mais on ne suggère PAS tout
 - Seuil adaptatif: utilise `AdaptiveThresholdManager.getThresholds().suggestionThreshold`
 - Score combiné: `(success_rate × 0.6) + (normalized_usage × 0.4)`
 - Capability suggérée si `combined_score >= suggestionThreshold`
 
 **Integration avec Adaptive Thresholds (Epic 4):**
+
 - Réutilise `AdaptiveThresholdManager` existant
 - Feedback: si user ignore suggestion → FN, si user utilise → TP
 - Seuil s'ajuste automatiquement au fil du temps
 
 **Acceptance Criteria:**
+
 1. `SuggestionEngine` class créée (`src/capabilities/suggestion-engine.ts`)
 2. Constructor prend `AdaptiveThresholdManager` en injection
 3. Method `suggest(contextTools: string[])` → Suggestion[]
@@ -479,11 +518,11 @@ So that I can discover relevant capabilities and tools without searching.
 
 **Story 7.5a: Capability Result Cache**
 
-As a system optimizing for performance,
-I want cached capability results,
-So that repeat executions are instant.
+As a system optimizing for performance, I want cached capability results, So that repeat executions
+are instant.
 
 **Acceptance Criteria:**
+
 1. Cache multi-niveaux implémenté:
    - **Level 1:** Execution cache (existant) - hash(code + context)
    - **Level 2:** Capability result cache - capability_id + params_hash
@@ -517,14 +556,14 @@ So that repeat executions are instant.
 
 **Story 7.5b: Capability Pruning (Optional)**
 
-As a system managing storage,
-I want periodic cleanup of unused capabilities,
-So that storage stays clean.
+As a system managing storage, I want periodic cleanup of unused capabilities, So that storage stays
+clean.
 
-**Note:** Cette story est optionnelle. Avec eager learning, on stocke tout.
-Le pruning peut être activé si le stockage devient un problème.
+**Note:** Cette story est optionnelle. Avec eager learning, on stocke tout. Le pruning peut être
+activé si le stockage devient un problème.
 
 **Acceptance Criteria:**
+
 1. Pruning job configurable (cron ou trigger manuel)
 2. Pruning query:
    ```sql
@@ -588,6 +627,7 @@ Le pruning peut être activé si le stockage devient un problème.
 ```
 
 **Différence clé vs approche "3+ exécutions":**
+
 - ❌ Ancien: Attendre 3 exécutions → Pattern detection → Promotion
 - ✅ Nouveau: 1 exécution réussie → Capability créée → Filtrage au moment des suggestions
 
@@ -595,33 +635,38 @@ Le pruning peut être activé si le stockage devient un problème.
 
 ### Epic 7 Market Comparison
 
-| Feature | Docker Dynamic MCP | Anthropic PTC | **AgentCards Epic 7** |
-|---------|-------------------|---------------|----------------------|
-| **Discovery** | Runtime | Pre-config | Pre-exec + Capability Match |
-| **Learning** | ❌ None | ❌ None | ✅ GraphRAG + Capabilities |
-| **Suggestions** | ❌ None | ❌ None | ✅ Louvain + Adamic-Adar |
-| **Code Reuse** | ❌ None | ❌ None | ✅ Capability cache |
-| **Recursion Risk** | ⚠️ Possible | N/A | ❌ Impossible (scope fixe) |
-| **Security** | Container | Sandbox | Sandbox + scope fixe |
+| Feature            | Docker Dynamic MCP | Anthropic PTC | **AgentCards Epic 7**       |
+| ------------------ | ------------------ | ------------- | --------------------------- |
+| **Discovery**      | Runtime            | Pre-config    | Pre-exec + Capability Match |
+| **Learning**       | ❌ None            | ❌ None       | ✅ GraphRAG + Capabilities  |
+| **Suggestions**    | ❌ None            | ❌ None       | ✅ Louvain + Adamic-Adar    |
+| **Code Reuse**     | ❌ None            | ❌ None       | ✅ Capability cache         |
+| **Recursion Risk** | ⚠️ Possible        | N/A           | ❌ Impossible (scope fixe)  |
+| **Security**       | Container          | Sandbox       | Sandbox + scope fixe        |
 
 **Différenciateur clé:**
-> "AgentCards apprend de chaque exécution et suggère des capabilities optimisées - comme un pair-programmer qui se souvient de tout."
+
+> "AgentCards apprend de chaque exécution et suggère des capabilities optimisées - comme un
+> pair-programmer qui se souvient de tout."
 
 ---
 
 ## Epic 8: Hypergraph Capabilities Visualization
 
-> **ADR:** ADR-029 (Hypergraph Capabilities Visualization)
-> **Depends on:** Epic 6 (Dashboard), Epic 7 (Capabilities Storage)
-> **Status:** Proposed (2025-12-04)
+> **ADR:** ADR-029 (Hypergraph Capabilities Visualization) **Depends on:** Epic 6 (Dashboard), Epic
+> 7 (Capabilities Storage) **Status:** Proposed (2025-12-04)
 
 **Expanded Goal (2-3 sentences):**
 
-Visualiser les capabilities comme **hyperedges** (relations N-aires entre tools) via Cytoscape.js compound graphs, permettant aux utilisateurs de voir, explorer et réutiliser le code appris par le système. Une capability n'est pas une relation binaire mais une relation N-aire connectant plusieurs tools ensemble, nécessitant une approche de visualisation différente du graph classique.
+Visualiser les capabilities comme **hyperedges** (relations N-aires entre tools) via Cytoscape.js
+compound graphs, permettant aux utilisateurs de voir, explorer et réutiliser le code appris par le
+système. Une capability n'est pas une relation binaire mais une relation N-aire connectant plusieurs
+tools ensemble, nécessitant une approche de visualisation différente du graph classique.
 
 **Value Delivery:**
 
 À la fin de cet epic, un développeur peut:
+
 - Voir visuellement quelles capabilities ont été apprises par le système
 - Explorer les relations hypergraph entre tools et capabilities
 - Visualiser le code_snippet de chaque capability avec syntax highlighting
@@ -629,6 +674,7 @@ Visualiser les capabilities comme **hyperedges** (relations N-aires entre tools)
 - Filtrer et rechercher les capabilities par intent, success_rate, usage
 
 **Décision Architecturale (ADR-029):** Cytoscape.js Compound Graphs
+
 - Capability = parent node (violet, expandable)
 - Tools = child nodes (colored by server)
 - Click capability → Code Panel avec syntax highlighting
@@ -642,14 +688,15 @@ Visualiser les capabilities comme **hyperedges** (relations N-aires entre tools)
 
 **Story 8.1: Capability Data API**
 
-As a dashboard developer,
-I want API endpoints to fetch capabilities and hypergraph data,
-So that the frontend can visualize the learned capabilities.
+As a dashboard developer, I want API endpoints to fetch capabilities and hypergraph data, So that
+the frontend can visualize the learned capabilities.
 
 **Acceptance Criteria:**
+
 1. Endpoint `GET /api/capabilities` créé
    - Response: `{ capabilities: Capability[], total: number }`
-   - Capability includes: id, name, description, code_snippet, tools_used[], success_rate, usage_count, community_id
+   - Capability includes: id, name, description, code_snippet, tools_used[], success_rate,
+     usage_count, community_id
 2. Query parameters supportés:
    - `?community_id=N` - Filter by Louvain community
    - `?min_success_rate=0.7` - Filter by quality
@@ -669,11 +716,11 @@ So that the frontend can visualize the learned capabilities.
 
 **Story 8.2: Compound Graph Builder**
 
-As a system architect,
-I want a HypergraphBuilder class that converts capabilities to Cytoscape compound nodes,
-So that the visualization can represent N-ary relationships correctly.
+As a system architect, I want a HypergraphBuilder class that converts capabilities to Cytoscape
+compound nodes, So that the visualization can represent N-ary relationships correctly.
 
 **Acceptance Criteria:**
+
 1. `HypergraphBuilder` class créée (`src/visualization/hypergraph-builder.ts`)
 2. Method `buildCompoundGraph(capabilities: Capability[], tools: Tool[])` → CytoscapeElements
 3. Capability node structure:
@@ -711,15 +758,15 @@ So that the visualization can represent N-ary relationships correctly.
 
 **Story 8.3: Hypergraph View Mode**
 
-As a power user,
-I want a "Hypergraph" view mode in the dashboard,
-So that I can visualize capabilities as compound nodes containing their tools.
+As a power user, I want a "Hypergraph" view mode in the dashboard, So that I can visualize
+capabilities as compound nodes containing their tools.
 
 > **IMPORTANT:** Cette story DOIT intégrer le mode hypergraph dans le dashboard EXISTANT (Epic 6).
-> Pas de nouvelle page - c'est un toggle de vue dans le même dashboard.
-> **Requiert:** Consultation avec UX Designer agent avant implémentation pour valider l'intégration UI.
+> Pas de nouvelle page - c'est un toggle de vue dans le même dashboard. **Requiert:** Consultation
+> avec UX Designer agent avant implémentation pour valider l'intégration UI.
 
 **Acceptance Criteria:**
+
 1. Toggle button group in dashboard header: `[Tools] [Capabilities] [Hypergraph]`
    - **Intégration:** Utilise le header existant du dashboard Epic 6
    - **Transition:** Smooth animation entre les vues, même container graph
@@ -742,6 +789,7 @@ So that I can visualize capabilities as compound nodes containing their tools.
 **Prerequisites:** Story 8.2 (HypergraphBuilder ready)
 
 **UX Design Considerations (à valider avec UX Designer):**
+
 - Comment cohabitent les 3 vues dans le même espace?
 - Le graph container reste le même, seules les données changent
 - Les filtres existants (Epic 6) s'appliquent-ils au mode Hypergraph?
@@ -751,11 +799,11 @@ So that I can visualize capabilities as compound nodes containing their tools.
 
 **Story 8.4: Code Panel Integration**
 
-As a developer,
-I want to see the code_snippet when I click on a capability,
-So that I can understand what the capability does and copy the code.
+As a developer, I want to see the code_snippet when I click on a capability, So that I can
+understand what the capability does and copy the code.
 
 **Acceptance Criteria:**
+
 1. Code Panel component créé (sidebar or modal)
 2. Appears on capability node click
 3. Syntax highlighting using Prism.js or highlight.js (TypeScript syntax)
@@ -781,11 +829,11 @@ So that I can understand what the capability does and copy the code.
 
 **Story 8.5: Capability Explorer**
 
-As a user looking for reusable capabilities,
-I want to search and filter capabilities,
-So that I can find relevant code patterns quickly.
+As a user looking for reusable capabilities, I want to search and filter capabilities, So that I can
+find relevant code patterns quickly.
 
 **Acceptance Criteria:**
+
 1. Search bar in Hypergraph view: search by name, description, or intent
 2. Autocomplete suggestions while typing
 3. Filter controls:

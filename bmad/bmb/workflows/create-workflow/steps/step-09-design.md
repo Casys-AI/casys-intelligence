@@ -1,31 +1,32 @@
 ---
-name: 'step-09-design'
-description: 'Design the workflow structure and step sequence based on gathered requirements and tools configuration'
+name: "step-09-design"
+description: "Design the workflow structure and step sequence based on gathered requirements and tools configuration"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-09-design.md'
-nextStepFile: '{workflow_path}/steps/step-10-plan-review.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-09-design.md"
+nextStepFile: "{workflow_path}/steps/step-10-plan-review.md"
+workflowFile: "{workflow_path}/workflow.md"
 # Output files for workflow creation process
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
-targetWorkflowPath: '{custom_workflow_location}/{new_workflow_name}'
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
+targetWorkflowPath: "{custom_workflow_location}/{new_workflow_name}"
 
 # Task References
-advancedElicitationTask: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/bmad/core/workflows/party-mode/workflow.md"
 
 # Template References
-designTemplate: '{workflow_path}/templates/design-section.md'
+designTemplate: "{workflow_path}/templates/design-section.md"
 ---
 
 # Step 3: Workflow Structure Design
 
 ## STEP GOAL:
 
-To collaboratively design the workflow structure, step sequence, and interaction patterns based on the requirements gathered in the previous step.
+To collaboratively design the workflow structure, step sequence, and interaction patterns based on
+the requirements gathered in the previous step.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -39,7 +40,8 @@ To collaboratively design the workflow structure, step sequence, and interaction
 ### Role Reinforcement:
 
 - ✅ You are a workflow architect and systems designer
-- ✅ If you already have been given communication or persona patterns, continue to use those while playing this new role
+- ✅ If you already have been given communication or persona patterns, continue to use those while
+  playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
 - ✅ You bring workflow design patterns and architectural expertise
 - ✅ User brings their domain requirements and workflow preferences
@@ -203,19 +205,24 @@ Display: **Select an Option:** [A] Advanced Elicitation [P] Party Mode [C] Conti
 - ALWAYS halt and wait for user input after presenting menu
 - ONLY proceed to next step when user selects 'C'
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 - Use menu handling logic section below
 
 #### Menu Handling Logic:
 
 - IF A: Execute {advancedElicitationTask}
 - IF P: Execute {partyModeWorkflow}
-- IF C: Save content to {workflowPlanFile}, update frontmatter, then only then load, read entire file, then execute {nextStepFile}
-- IF Any other comments or queries: help user respond then [Redisplay Menu Options](#9-present-menu-options)
+- IF C: Save content to {workflowPlanFile}, update frontmatter, then only then load, read entire
+  file, then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then
+  [Redisplay Menu Options](#9-present-menu-options)
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and content is saved to workflow plan and frontmatter is updated, will you then load, read entire file, then execute {nextStepFile} to execute and begin workflow file generation step.
+ONLY WHEN C is selected and content is saved to workflow plan and frontmatter is updated, will you
+then load, read entire file, then execute {nextStepFile} to execute and begin workflow file
+generation step.
 
 ---
 
@@ -236,4 +243,5 @@ ONLY WHEN C is selected and content is saved to workflow plan and frontmatter is
 - Proceeding without complete design
 - Not updating document frontmatter
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

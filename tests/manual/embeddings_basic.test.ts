@@ -17,15 +17,17 @@ async function main() {
   const embedding1 = await model.encode(text1);
   console.log(`  Text: "${text1}"`);
   console.log(`  Embedding dimensions: ${embedding1.length}`);
-  console.log(`  First 5 values: [${embedding1.slice(0, 5).map(v => v.toFixed(4)).join(", ")}]`);
-  console.log(`  ✓ ${embedding1.length === 1024 ? "OK - 1024 dimensions" : "ERROR - Wrong dimensions!"}\n`);
+  console.log(`  First 5 values: [${embedding1.slice(0, 5).map((v) => v.toFixed(4)).join(", ")}]`);
+  console.log(
+    `  ✓ ${embedding1.length === 1024 ? "OK - 1024 dimensions" : "ERROR - Wrong dimensions!"}\n`,
+  );
 
   // Test 2: Multiple embeddings
   console.log("Test 2: Multiple embedding generation");
   const texts = [
     "read file from disk",
     "write data to database",
-    "authenticate user credentials"
+    "authenticate user credentials",
   ];
   const embeddings: number[][] = [];
   for (const text of texts) {
@@ -36,13 +38,25 @@ async function main() {
   for (let i = 0; i < embeddings.length; i++) {
     console.log(`    [${i}] "${texts[i]}" → ${embeddings[i].length} dims`);
   }
-  console.log(`  ✓ ${embeddings.length === 3 && embeddings.every(e => e.length === 1024) ? "OK - All 1024 dimensions" : "ERROR!"}\n`);
+  console.log(
+    `  ✓ ${
+      embeddings.length === 3 && embeddings.every((e) => e.length === 1024)
+        ? "OK - All 1024 dimensions"
+        : "ERROR!"
+    }\n`,
+  );
 
   // Test 3: Verify normalization
   console.log("Test 3: Verify embeddings are normalized");
   const magnitude = Math.sqrt(embedding1.reduce((sum, val) => sum + val * val, 0));
   console.log(`  Magnitude of embedding: ${magnitude.toFixed(6)}`);
-  console.log(`  ✓ ${Math.abs(magnitude - 1.0) < 0.001 ? "OK - Normalized (magnitude ≈ 1.0)" : "ERROR - Not normalized!"}\n`);
+  console.log(
+    `  ✓ ${
+      Math.abs(magnitude - 1.0) < 0.001
+        ? "OK - Normalized (magnitude ≈ 1.0)"
+        : "ERROR - Not normalized!"
+    }\n`,
+  );
 
   // Test 4: Verify model is loaded
   console.log("Test 4: Model status");

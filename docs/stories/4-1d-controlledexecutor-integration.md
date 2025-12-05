@@ -4,9 +4,8 @@ Status: done
 
 ## Story
 
-As a workflow execution system,
-I want to capture episodic events automatically during execution,
-so that learning happens without manual instrumentation.
+As a workflow execution system, I want to capture episodic events automatically during execution, so
+that learning happens without manual instrumentation.
 
 ## Acceptance Criteria
 
@@ -26,15 +25,18 @@ so that learning happens without manual instrumentation.
 
 - [x] Task 2: Capture `task_complete` events (AC: #2, #3)
   - [x] 2.1: In `executeStream()` method, after task completion, call `captureTaskComplete()` helper
-  - [x] 2.2: Include event data: `workflow_id`, `task_id`, `timestamp`, `result.status`, `executionTimeMs`
+  - [x] 2.2: Include event data: `workflow_id`, `task_id`, `timestamp`, `result.status`,
+        `executionTimeMs`
   - [x] 2.3: Include context hash from current workflow state via `getContextHash()`
   - [x] 2.4: Handle successful, failed, and failed_safe tasks
 
 - [x] Task 3: Capture `ail_decision` events (AC: #2, #3)
-  - [x] 3.1: In AIL decision point (after `waitForDecisionCommand`), capture via `captureAILDecision()` helper
+  - [x] 3.1: In AIL decision point (after `waitForDecisionCommand`), capture via
+        `captureAILDecision()` helper
   - [x] 3.2: Include decision data: `decision_type: 'ail'`, `outcome`, `reasoning`
   - [x] 3.3: Include context at decision point (completed tasks, current layer)
-  - [x] 3.4: Handle all AIL outcomes: continue, abort, replan_success, replan_failed, replan_rejected, replan_no_changes
+  - [x] 3.4: Handle all AIL outcomes: continue, abort, replan_success, replan_failed,
+        replan_rejected, replan_no_changes
 
 - [x] Task 4: Capture `hil_decision` events (AC: #2, #3)
   - [x] 4.1: In HIL approval checkpoint, capture via `captureHILDecision()` helper
@@ -63,12 +65,15 @@ so that learning happens without manual instrumentation.
 
 ### Architecture Context
 
-Story 4.1d is Phase 2 of Epic 4 (Episodic Memory & Adaptive Learning). Phase 1 (Stories 4.1a/b/c) implemented the storage foundation:
+Story 4.1d is Phase 2 of Epic 4 (Episodic Memory & Adaptive Learning). Phase 1 (Stories 4.1a/b/c)
+implemented the storage foundation:
+
 - Migration 007: `episodic_events` + `adaptive_thresholds` tables
 - `EpisodicMemoryStore` class (280 LOC, 9 tests passing)
 - `AdaptiveThresholdManager` persistence (+100 LOC)
 
-This story connects the storage layer to the execution engine, enabling automatic event capture during workflow execution.
+This story connects the storage layer to the execution engine, enabling automatic event capture
+during workflow execution.
 
 ### Key Components
 
@@ -86,12 +91,12 @@ This story connects the storage layer to the execution engine, enabling automati
 
 ```typescript
 type EpisodicEventType =
-  | 'speculation_start'  // When speculation begins (Epic 3.5)
-  | 'task_complete'      // After each task execution
-  | 'ail_decision'       // Agent decision points
-  | 'hil_decision'       // Human approval checkpoints
-  | 'workflow_start'     // Workflow begins
-  | 'workflow_complete'; // Workflow ends
+  | "speculation_start" // When speculation begins (Epic 3.5)
+  | "task_complete" // After each task execution
+  | "ail_decision" // Agent decision points
+  | "hil_decision" // Human approval checkpoints
+  | "workflow_start" // Workflow begins
+  | "workflow_complete"; // Workflow ends
 ```
 
 ### Event Data Structure (from types.ts)
@@ -106,9 +111,9 @@ interface EpisodicEvent {
   context_hash?: string;
   data: {
     context?: Record<string, unknown>;
-    prediction?: { toolId: string; confidence: number; reasoning: string; };
-    result?: { status: 'success' | 'error'; output?: unknown; executionTimeMs?: number; };
-    decision?: { type: 'ail' | 'hil'; action: string; reasoning: string; };
+    prediction?: { toolId: string; confidence: number; reasoning: string };
+    result?: { status: "success" | "error"; output?: unknown; executionTimeMs?: number };
+    decision?: { type: "ail" | "hil"; action: string; reasoning: string };
   };
 }
 ```
@@ -123,6 +128,7 @@ interface EpisodicEvent {
 ### Testing Strategy
 
 Use existing test patterns from `src/dag/controlled-executor.test.ts`:
+
 - Mock EpisodicMemoryStore with spy on `capture()` method
 - Verify events captured with correct structure
 - Test async behavior (non-blocking)
@@ -132,7 +138,8 @@ Use existing test patterns from `src/dag/controlled-executor.test.ts`:
 - Integration point: `src/dag/controlled-executor.ts`
 - Types already exist: `src/learning/types.ts`
 - Memory store: `src/learning/episodic-memory-store.ts`
-- Tests: Add to `tests/unit/dag/controlled-executor.test.ts` or create `tests/integration/episodic-integration.test.ts`
+- Tests: Add to `tests/unit/dag/controlled-executor.test.ts` or create
+  `tests/integration/episodic-integration.test.ts`
 
 ### References
 
@@ -155,7 +162,8 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### Debug Log References
 
 - Task 1: Added import for EpisodicMemoryStore, private field, and setEpisodicMemoryStore() method
-- Task 2: Created captureTaskComplete() helper with non-blocking capture, added calls for success/error/failed_safe
+- Task 2: Created captureTaskComplete() helper with non-blocking capture, added calls for
+  success/error/failed_safe
 - Task 3: Created captureAILDecision() helper, integrated at all AIL decision points
 - Task 4: Created captureHILDecision() helper, integrated at HIL approval/rejection/timeout points
 - Task 5: Created public captureSpeculationStart() method as placeholder for Epic 3.5
@@ -164,9 +172,12 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-1. **Graceful Degradation**: All capture methods check `if (!this.episodicMemory) return` to allow workflows to run without episodic memory
-2. **Non-blocking Captures**: All captures use fire-and-forget pattern with `.catch()` for error logging
-3. **Context Hash**: Implemented `getContextHash()` method matching EpisodicMemoryStore.hashContext pattern
+1. **Graceful Degradation**: All capture methods check `if (!this.episodicMemory) return` to allow
+   workflows to run without episodic memory
+2. **Non-blocking Captures**: All captures use fire-and-forget pattern with `.catch()` for error
+   logging
+3. **Context Hash**: Implemented `getContextHash()` method matching EpisodicMemoryStore.hashContext
+   pattern
 4. **PII Safety**: Task outputs are NOT stored in events - only metadata (type, size) per ADR-008
 5. **Performance**: Tests confirm <1ms overhead per capture, <20% total workflow overhead
 6. **resumeFromCheckpoint**: Also updated with task_complete event captures for consistency
@@ -174,9 +185,11 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ### File List
 
 **Modified:**
+
 - `src/dag/controlled-executor.ts` - Added episodic memory integration (~150 LOC)
 
 **Created:**
+
 - `tests/integration/episodic_integration_test.ts` - 13 test steps covering all acceptance criteria
 
 ---
@@ -184,12 +197,15 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 ## Code Review
 
 ### Reviewer
+
 Senior Developer Code Review (Claude Opus 4.5)
 
 ### Review Date
+
 2025-11-26
 
 ### Review Type
+
 Comprehensive Code Review (per bmad/bmm/workflows/4-implementation/code-review)
 
 ---
@@ -198,34 +214,36 @@ Comprehensive Code Review (per bmad/bmm/workflows/4-implementation/code-review)
 
 **Verdict: ✅ APPROVED**
 
-L'implémentation de Story 4.1d est complète, bien structurée et répond à tous les critères d'acceptation. Le code est de haute qualité, suit les conventions du projet, et est prêt pour le merge.
+L'implémentation de Story 4.1d est complète, bien structurée et répond à tous les critères
+d'acceptation. Le code est de haute qualité, suit les conventions du projet, et est prêt pour le
+merge.
 
 ---
 
 ### Acceptance Criteria Validation
 
-| AC# | Critère | Status | Notes |
-|-----|---------|--------|-------|
-| 1 | ControlledExecutor emits events to EpisodicMemoryStore | ✅ | `setEpisodicMemoryStore()` method + private field |
-| 2 | Events captured: speculation_start, task_complete, ail_decision, hil_decision | ✅ | All 4 event types implemented via helper methods |
-| 3 | Context captured at each decision point (workflow context hash) | ✅ | `getContextHash()` method + context_hash in all events |
-| 4 | Integration tests verify auto-capture works | ✅ | 13 tests passing in episodic_integration_test.ts |
-| 5 | Zero performance impact (<1ms overhead per event capture) | ✅ | Benchmarks show <1ms overhead, non-blocking writes |
-| 6 | Events include workflow_id, task_id, timestamp, metadata | ✅ | All metadata fields verified in tests |
+| AC# | Critère                                                                       | Status | Notes                                                  |
+| --- | ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| 1   | ControlledExecutor emits events to EpisodicMemoryStore                        | ✅     | `setEpisodicMemoryStore()` method + private field      |
+| 2   | Events captured: speculation_start, task_complete, ail_decision, hil_decision | ✅     | All 4 event types implemented via helper methods       |
+| 3   | Context captured at each decision point (workflow context hash)               | ✅     | `getContextHash()` method + context_hash in all events |
+| 4   | Integration tests verify auto-capture works                                   | ✅     | 13 tests passing in episodic_integration_test.ts       |
+| 5   | Zero performance impact (<1ms overhead per event capture)                     | ✅     | Benchmarks show <1ms overhead, non-blocking writes     |
+| 6   | Events include workflow_id, task_id, timestamp, metadata                      | ✅     | All metadata fields verified in tests                  |
 
 ---
 
 ### Task Verification
 
-| Task | Status | Evidence |
-|------|--------|----------|
-| Task 1: EpisodicMemoryStore dependency | ✅ | Lines 33, 74, 140-143 in controlled-executor.ts |
-| Task 2: task_complete events | ✅ | Lines 158-199, 622-629, 659-667, 690-698 |
-| Task 3: ail_decision events | ✅ | Lines 234-264, multiple capture points (790-845) |
-| Task 4: hil_decision events | ✅ | Lines 275-309, capture points (1015-1051) |
-| Task 5: speculation_start support | ✅ | Lines 325-359, public method |
-| Task 6: Performance validation | ✅ | episodic_integration_test.ts benchmark tests |
-| Task 7: Integration tests | ✅ | 13 test steps, all passing |
+| Task                                   | Status | Evidence                                         |
+| -------------------------------------- | ------ | ------------------------------------------------ |
+| Task 1: EpisodicMemoryStore dependency | ✅     | Lines 33, 74, 140-143 in controlled-executor.ts  |
+| Task 2: task_complete events           | ✅     | Lines 158-199, 622-629, 659-667, 690-698         |
+| Task 3: ail_decision events            | ✅     | Lines 234-264, multiple capture points (790-845) |
+| Task 4: hil_decision events            | ✅     | Lines 275-309, capture points (1015-1051)        |
+| Task 5: speculation_start support      | ✅     | Lines 325-359, public method                     |
+| Task 6: Performance validation         | ✅     | episodic_integration_test.ts benchmark tests     |
+| Task 7: Integration tests              | ✅     | 13 test steps, all passing                       |
 
 ---
 
@@ -255,11 +273,14 @@ L'implémentation de Story 4.1d est complète, bien structurée et répond à to
 
 #### Minor Observations
 
-1. **Ligne 74**: Le commentaire `// Story 4.1d - Episodic memory integration` est utile pour la traçabilité.
+1. **Ligne 74**: Le commentaire `// Story 4.1d - Episodic memory integration` est utile pour la
+   traçabilité.
 
-2. **Méthode getContextHash()** (lignes 207-222): Logique simple mais suffisante pour MVP. La note "consistent with EpisodicMemoryStore.hashContext" assure l'alignement.
+2. **Méthode getContextHash()** (lignes 207-222): Logique simple mais suffisante pour MVP. La note
+   "consistent with EpisodicMemoryStore.hashContext" assure l'alignement.
 
-3. **Performance**: Les tests montrent un overhead négatif dans certains cas (variance de mesure), confirmant que l'overhead est négligeable.
+3. **Performance**: Les tests montrent un overhead négatif dans certains cas (variance de mesure),
+   confirmant que l'overhead est négligeable.
 
 ---
 
@@ -271,6 +292,7 @@ ok | 5 passed (13 steps) | 0 failed (7s)
 ```
 
 Tests couverts:
+
 - Task 1: EpisodicMemoryStore Integration (2 steps)
 - Task 2: task_complete Events Captured (3 steps)
 - Task 5: speculation_start Event Support (2 steps)
@@ -292,21 +314,21 @@ Aucune erreur de type. L'import et l'utilisation de `EpisodicMemoryStore` sont c
 
 ### Architecture Conformity
 
-| Aspect | Conformité | Notes |
-|--------|------------|-------|
-| ADR-008 | ✅ | Event types, context hashing, PII safety |
-| Pattern 4.3 Loop Learning | ✅ | Integration sans impact sur Loop 1 |
-| Epic 4 Phase 2 | ✅ | Connect storage layer to execution engine |
+| Aspect                    | Conformité | Notes                                     |
+| ------------------------- | ---------- | ----------------------------------------- |
+| ADR-008                   | ✅         | Event types, context hashing, PII safety  |
+| Pattern 4.3 Loop Learning | ✅         | Integration sans impact sur Loop 1        |
+| Epic 4 Phase 2            | ✅         | Connect storage layer to execution engine |
 
 ---
 
 ### Risk Assessment
 
-| Risque | Niveau | Mitigation |
-|--------|--------|------------|
+| Risque                  | Niveau      | Mitigation                                   |
+| ----------------------- | ----------- | -------------------------------------------- |
 | Performance degradation | Très Faible | Non-blocking writes, buffered, <1ms overhead |
-| Breaking changes | Aucun | Episodic memory est optionnel |
-| PII Exposure | Aucun | Outputs non stockés, seulement métadonnées |
+| Breaking changes        | Aucun       | Episodic memory est optionnel                |
+| PII Exposure            | Aucun       | Outputs non stockés, seulement métadonnées   |
 
 ---
 
@@ -315,7 +337,9 @@ Aucune erreur de type. L'import et l'utilisation de `EpisodicMemoryStore` sont c
 **Aucun action item bloquant.**
 
 **Suggestions pour amélioration future (non-bloquant):**
-- [ ] [P3] Ajouter des tests pour AIL/HIL decision events dans un contexte réel (nécessite setup plus complexe)
+
+- [ ] [P3] Ajouter des tests pour AIL/HIL decision events dans un contexte réel (nécessite setup
+      plus complexe)
 - [ ] [P3] Considérer l'ajout de métriques de capture pour monitoring production
 
 ---

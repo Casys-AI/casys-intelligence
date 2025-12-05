@@ -9,14 +9,16 @@
 
 import * as log from "@std/log";
 import { FileHandler } from "@std/log/file-handler";
-import type { LogRecord, LevelName } from "@std/log";
+import type { LevelName, LogRecord } from "@std/log";
 import { ensureDir } from "@std/fs";
 import type { LoggerConfig } from "./types.ts";
 
 /**
  * Default log file path
  */
-const DEFAULT_LOG_FILE =  `${Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "."}/.agentcards/logs/agentcards.log`;
+const DEFAULT_LOG_FILE = `${
+  Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "."
+}/.agentcards/logs/agentcards.log`;
 
 /**
  * Maximum log file size (10MB) before rotation
@@ -56,7 +58,10 @@ async function rotateLogFile(filePath: string): Promise<void> {
 class RotatingFileHandler extends FileHandler {
   private filePath: string;
 
-  constructor(levelName: LevelName, options: { filename: string; formatter?: (record: LogRecord) => string }) {
+  constructor(
+    levelName: LevelName,
+    options: { filename: string; formatter?: (record: LogRecord) => string },
+  ) {
     super(levelName, options);
     this.filePath = options.filename;
   }
@@ -74,10 +79,10 @@ class RotatingFileHandler extends FileHandler {
  * ANSI color codes for log levels
  */
 const LEVEL_COLORS: Record<string, string> = {
-  DEBUG: "\x1b[36m",   // Cyan
-  INFO: "\x1b[32m",    // Green
-  WARN: "\x1b[33m",    // Yellow
-  ERROR: "\x1b[31m",   // Red
+  DEBUG: "\x1b[36m", // Cyan
+  INFO: "\x1b[32m", // Green
+  WARN: "\x1b[33m", // Yellow
+  ERROR: "\x1b[31m", // Red
   CRITICAL: "\x1b[35m", // Magenta
 };
 const RESET = "\x1b[0m";
@@ -90,7 +95,10 @@ class StderrHandler extends log.BaseHandler {
   private encoder = new TextEncoder();
   private useColors: boolean;
 
-  constructor(levelName: LevelName, options: { formatter?: (record: LogRecord) => string; useColors?: boolean }) {
+  constructor(
+    levelName: LevelName,
+    options: { formatter?: (record: LogRecord) => string; useColors?: boolean },
+  ) {
     super(levelName, options);
     this.useColors = options.useColors ?? Deno.stderr.isTerminal();
   }
@@ -203,7 +211,8 @@ export async function setupLogger(config?: LoggerConfig): Promise<void> {
  * @returns Logger instance
  */
 export function getLogger(
-  name: "default" | "mcp" | "vector" | "event-stream" | "command-queue" | "controlled-executor" = "default",
+  name: "default" | "mcp" | "vector" | "event-stream" | "command-queue" | "controlled-executor" =
+    "default",
 ) {
   return log.getLogger(name);
 }

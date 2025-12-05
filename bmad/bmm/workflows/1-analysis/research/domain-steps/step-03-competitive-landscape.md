@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current competitive data
 - 📋 YOU ARE A COMPETITIVE ANALYST, not content generator
 - 💬 FOCUS on key players, market share, and competitive dynamics
@@ -31,16 +33,19 @@
 
 ## YOUR TASK:
 
-Conduct competitive landscape analysis focusing on key players, market share, and competitive dynamics using current {{current_year}} web data with rigorous source verification.
+Conduct competitive landscape analysis focusing on key players, market share, and competitive
+dynamics using current {{current_year}} web data with rigorous source verification.
 
 ## COMPETITIVE LANDSCAPE ANALYSIS SEQUENCE:
 
 ### 1. Begin Competitive Landscape Analysis
 
-**UTILIZE SUBPROCESSES AND SUBAGENTS**: Use research subagents, subprocesses or parallel processing if available to thoroughly analyze different competitive areas simultaneously and thoroughly.
+**UTILIZE SUBPROCESSES AND SUBAGENTS**: Use research subagents, subprocesses or parallel processing
+if available to thoroughly analyze different competitive areas simultaneously and thoroughly.
 
-Start with competitive research approach:
-"Now I'll conduct **competitive landscape analysis** for **{{research_topic}}** using current {{current_year}} web data to understand the competitive ecosystem.
+Start with competitive research approach: "Now I'll conduct **competitive landscape analysis** for
+**{{research_topic}}** using current {{current_year}} web data to understand the competitive
+ecosystem.
 
 **Competitive Landscape Focus:**
 
@@ -73,7 +78,8 @@ Start with competitive research approach:
 
 **Collect and analyze findings from all parallel searches:**
 
-"After executing comprehensive parallel web searches, let me analyze and aggregate competitive findings:
+"After executing comprehensive parallel web searches, let me analyze and aggregate competitive
+findings:
 
 **Research Coverage:**
 
@@ -82,11 +88,10 @@ Start with competitive research approach:
 - Competitive strategies and differentiation mapping
 - Entry barriers and competitive dynamics evaluation
 
-**Cross-Competitive Analysis:**
-[Identify patterns connecting players, strategies, and market dynamics]
+**Cross-Competitive Analysis:** [Identify patterns connecting players, strategies, and market
+dynamics]
 
-**Quality Assessment:**
-[Overall confidence levels and research gaps identified]"
+**Quality Assessment:** [Overall confidence levels and research gaps identified]"
 
 ### 4. Generate Competitive Landscape Content
 
@@ -103,56 +108,45 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### Key Players and Market Leaders
 
-[Key players analysis with source citations]
-_Market Leaders: [Dominant players and their market positions]_
-_Major Competitors: [Significant competitors and their specialties]_
-_Emerging Players: [New entrants and innovative companies]_
-_Global vs Regional: [Geographic distribution of key players]_
-_Source: [URL with {{current_year}} competitive data]_
+[Key players analysis with source citations] _Market Leaders: [Dominant players and their market
+positions]_ _Major Competitors: [Significant competitors and their specialties]_ _Emerging Players:
+[New entrants and innovative companies]_ _Global vs Regional: [Geographic distribution of key
+players]_ _Source: [URL with {{current_year}} competitive data]_
 
 ### Market Share and Competitive Positioning
 
-[Market share analysis with source citations]
-_Market Share Distribution: [Current market share breakdown]_
-_Competitive Positioning: [How players position themselves in the market]_
-_Value Proposition Mapping: [Different value propositions across players]_
-_Customer Segments Served: [Different customer bases by competitor]_
-_Source: [URL with {{current_year}} market share data]_
+[Market share analysis with source citations] _Market Share Distribution: [Current market share
+breakdown]_ _Competitive Positioning: [How players position themselves in the market]_ _Value
+Proposition Mapping: [Different value propositions across players]_ _Customer Segments Served:
+[Different customer bases by competitor]_ _Source: [URL with {{current_year}} market share data]_
 
 ### Competitive Strategies and Differentiation
 
-[Competitive strategies analysis with source citations]
-_Cost Leadership Strategies: [Players competing on price and efficiency]_
-_Differentiation Strategies: [Players competing on unique value]_
-_Focus/Niche Strategies: [Players targeting specific segments]_
-_Innovation Approaches: [How different players innovate]_
-_Source: [URL with {{current_year}} competitive strategies data]_
+[Competitive strategies analysis with source citations] _Cost Leadership Strategies: [Players
+competing on price and efficiency]_ _Differentiation Strategies: [Players competing on unique
+value]_ _Focus/Niche Strategies: [Players targeting specific segments]_ _Innovation Approaches: [How
+different players innovate]_ _Source: [URL with {{current_year}} competitive strategies data]_
 
 ### Business Models and Value Propositions
 
-[Business models analysis with source citations]
-_Primary Business Models: [How competitors make money]_
-_Revenue Streams: [Different approaches to monetization]_
-_Value Chain Integration: [Vertical integration vs partnership models]_
-_Customer Relationship Models: [How competitors build customer loyalty]_
-_Source: [URL with {{current_year}} business models data]_
+[Business models analysis with source citations] _Primary Business Models: [How competitors make
+money]_ _Revenue Streams: [Different approaches to monetization]_ _Value Chain Integration:
+[Vertical integration vs partnership models]_ _Customer Relationship Models: [How competitors build
+customer loyalty]_ _Source: [URL with {{current_year}} business models data]_
 
 ### Competitive Dynamics and Entry Barriers
 
-[Competitive dynamics analysis with source citations]
-_Barriers to Entry: [Obstacles facing new market entrants]_
-_Competitive Intensity: [Level of rivalry and competitive pressure]_
-_Market Consolidation Trends: [M&A activity and market concentration]_
-_Switching Costs: [Costs for customers to switch between providers]_
-_Source: [URL with {{current_year}} competitive dynamics data]_
+[Competitive dynamics analysis with source citations] _Barriers to Entry: [Obstacles facing new
+market entrants]_ _Competitive Intensity: [Level of rivalry and competitive pressure]_ _Market
+Consolidation Trends: [M&A activity and market concentration]_ _Switching Costs: [Costs for
+customers to switch between providers]_ _Source: [URL with {{current_year}} competitive dynamics
+data]_
 
 ### Ecosystem and Partnership Analysis
 
-[Ecosystem analysis with source citations]
-_Supplier Relationships: [Key supplier partnerships and dependencies]_
-_Distribution Channels: [How competitors reach customers]_
-_Technology Partnerships: [Strategic technology alliances]_
-_Ecosystem Control: [Who controls key parts of the value chain]_
+[Ecosystem analysis with source citations] _Supplier Relationships: [Key supplier partnerships and
+dependencies]_ _Distribution Channels: [How competitors reach customers]_ _Technology Partnerships:
+[Strategic technology alliances]_ _Ecosystem Control: [Who controls key parts of the value chain]_
 _Source: [URL with {{current_year}} ecosystem data]_
 ```
 
@@ -160,7 +154,8 @@ _Source: [URL with {{current_year}} ecosystem data]_
 
 **Show analysis and present continue option:**
 
-"I've completed **competitive landscape analysis** using current {{current_year}} data to understand the competitive ecosystem for {{research_topic}}.
+"I've completed **competitive landscape analysis** using current {{current_year}} data to understand
+the competitive ecosystem for {{research_topic}}.
 
 **Key Competitive Findings:**
 
@@ -170,8 +165,8 @@ _Source: [URL with {{current_year}} ecosystem data]_
 - Business models and value propositions documented
 - Competitive dynamics and entry barriers evaluated
 
-**Ready to proceed to regulatory focus analysis?**
-[C] Continue - Save this to document and proceed to regulatory focus
+**Ready to proceed to regulatory focus analysis?** [C] Continue - Save this to document and proceed
+to regulatory focus
 
 ### 6. Handle Continue Selection
 
@@ -187,29 +182,23 @@ Content is already written to document when generated in step 4. No additional a
 
 ## SUCCESS METRICS:
 
-✅ Key players and market leaders thoroughly identified
-✅ Market share and competitive positioning clearly mapped
-✅ Competitive strategies and differentiation analyzed
-✅ Business models and value propositions documented
-✅ Competitive dynamics and entry barriers evaluated
-✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
-✅ Proper routing to next step (regulatory focus)
-✅ Research goals alignment maintained
+✅ Key players and market leaders thoroughly identified ✅ Market share and competitive positioning
+clearly mapped ✅ Competitive strategies and differentiation analyzed ✅ Business models and value
+propositions documented ✅ Competitive dynamics and entry barriers evaluated ✅ Content written
+immediately to document ✅ [C] continue option presented and handled correctly ✅ Proper routing to
+next step (regulatory focus) ✅ Research goals alignment maintained
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in competitive web searches
-❌ Missing critical key players or market leaders
-❌ Incomplete market share or positioning analysis
-❌ Not identifying competitive strategies
-❌ Not writing content immediately to document
-❌ Not presenting [C] continue option after content generation
-❌ Not routing to regulatory focus step
+❌ Not using {{current_year}} in competitive web searches ❌ Missing critical key players or market
+leaders ❌ Incomplete market share or positioning analysis ❌ Not identifying competitive strategies
+❌ Not writing content immediately to document ❌ Not presenting [C] continue option after content
+generation ❌ Not routing to regulatory focus step
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## COMPETITIVE RESEARCH PROTOCOLS:
 
@@ -232,6 +221,8 @@ Content is already written to document when generated in step 4. No additional a
 
 ## NEXT STEP:
 
-After user selects 'C', load `./step-04-regulatory-focus.md` to analyze regulatory requirements, compliance frameworks, and legal considerations for {{research_topic}}.
+After user selects 'C', load `./step-04-regulatory-focus.md` to analyze regulatory requirements,
+compliance frameworks, and legal considerations for {{research_topic}}.
 
-Remember: Always write research content to document immediately and emphasize current {{current_year}} competitive data with rigorous source verification!
+Remember: Always write research content to document immediately and emphasize current
+{{current_year}} competitive data with rigorous source verification!

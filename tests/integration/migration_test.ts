@@ -4,7 +4,7 @@
  * @module tests/integration/migration_test
  */
 
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { join } from "jsr:@std/path@1.0.8";
 import { ConfigMigrator } from "../../src/cli/config-migrator.ts";
 

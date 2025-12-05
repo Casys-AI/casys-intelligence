@@ -77,7 +77,8 @@
     <prerequisite status="done">
       <id>6.2</id>
       <title>Interactive Graph Visualization Dashboard</title>
-      <provides>Fresh dashboard, Cytoscape.js graph rendering, node/edge styling, GraphVisualization island</provides>
+      <provides
+      >Fresh dashboard, Cytoscape.js graph rendering, node/edge styling, GraphVisualization island</provides>
     </prerequisite>
     <prerequisite status="done">
       <id>6.3</id>
@@ -178,12 +179,14 @@
             <library>graphology BFS traversal</library>
           </method>
           <method name="getShortestPath">
-            <signature>getShortestPath(fromToolId: string, toToolId: string): string[] | null</signature>
+            <signature
+            >getShortestPath(fromToolId: string, toToolId: string): string[] | null</signature>
             <description>Find shortest path between two tools using Dijkstra</description>
             <library>graphology-shortest-path</library>
           </method>
           <method name="searchNodes">
-            <signature>searchNodes(query: string): Array&lt;{id: string, label: string, server: string}&gt;</signature>
+            <signature
+            >searchNodes(query: string): Array&lt;{id: string, label: string, server: string}&gt;</signature>
             <description>Search nodes by name/server prefix matching for autocomplete</description>
           </method>
         </methods-to-add>
@@ -240,7 +243,8 @@
     <interface name="PathResponse">
       <property name="from" type="string">Source tool ID</property>
       <property name="to" type="string">Target tool ID</property>
-      <property name="path" type="string[] | null">Ordered list of tool IDs or null if no path</property>
+      <property name="path" type="string[] | null"
+      >Ordered list of tool IDs or null if no path</property>
       <property name="length" type="number">Number of hops (-1 if no path)</property>
     </interface>
 
@@ -270,8 +274,10 @@
       </state>
       <props>
         <prop name="apiBase" type="string">Gateway API URL</prop>
-        <prop name="onHighlightNodes" type="(nodeIds: string[]) => void">Callback to highlight nodes in graph</prop>
-        <prop name="onShowPath" type="(path: string[]) => void">Callback to show path in graph</prop>
+        <prop name="onHighlightNodes" type="(nodeIds: string[]) => void"
+        >Callback to highlight nodes in graph</prop>
+        <prop name="onShowPath" type="(path: string[]) => void"
+        >Callback to show path in graph</prop>
       </props>
       <features>
         <feature id="F1">Search input with debounced autocomplete</feature>
@@ -288,7 +294,8 @@
       <modifications>
         <modification>
           <description>Add methods to highlight nodes and show paths</description>
-          <code-snippet>
+          <code-snippet
+          >
 // Add to GraphVisualization.tsx
 const highlightNodes = (nodeIds: string[]) => {
   if (!cyRef.current) return;
@@ -335,7 +342,8 @@ const showPath = (path: string[]) => {
         </modification>
         <modification>
           <description>Add CSS styles for highlights</description>
-          <code-snippet>
+          <code-snippet
+          >
 // Add to Cytoscape style array
 {
   selector: 'node.search-highlight',
@@ -372,11 +380,13 @@ const showPath = (path: string[]) => {
     <api-endpoints>
       <endpoint path="/api/graph/search" method="GET">
         <query-param name="q" type="string" required="true">Search query (min 2 chars)</query-param>
-        <query-param name="limit" type="number" required="false" default="10">Max results</query-param>
+        <query-param name="limit" type="number" required="false" default="10"
+        >Max results</query-param>
         <response type="SearchResult[]">Array of matching tools</response>
         <implementation>
           <description>Prefix search on tool ID and label, case-insensitive</description>
-          <code-snippet>
+          <code-snippet
+          >
 // In gateway-server.ts
 if (url.pathname === "/api/graph/search" &amp;&amp; req.method === "GET") {
   const q = url.searchParams.get("q") || "";
@@ -399,7 +409,8 @@ if (url.pathname === "/api/graph/search" &amp;&amp; req.method === "GET") {
 
       <endpoint path="/api/graph/neighbors" method="GET">
         <query-param name="tool_id" type="string" required="true">Center tool ID</query-param>
-        <query-param name="depth" type="number" required="false" default="1">Hops (1-3)</query-param>
+        <query-param name="depth" type="number" required="false" default="1"
+        >Hops (1-3)</query-param>
         <response type="NeighborsResponse">Neighbor data</response>
         <implementation>
           <description>BFS traversal to find neighbors at depth</description>
@@ -412,7 +423,8 @@ if (url.pathname === "/api/graph/search" &amp;&amp; req.method === "GET") {
         <response type="PathResponse">Shortest path data</response>
         <implementation>
           <description>Dijkstra shortest path using graphology-shortest-path</description>
-          <code-snippet>
+          <code-snippet
+          >
 // In graph-engine.ts
 import { dijkstra } from "graphology-shortest-path";
 
@@ -457,7 +469,8 @@ getShortestPath(fromToolId: string, toToolId: string): string[] | null {
       <description>Follow Fresh Islands pattern for interactive components</description>
     </constraint>
     <constraint type="architecture">
-      <description>Maintain API base hard-coded in islands (Fresh props serialization limitation)</description>
+      <description
+      >Maintain API base hard-coded in islands (Fresh props serialization limitation)</description>
     </constraint>
   </constraints>
 
@@ -673,7 +686,8 @@ getShortestPath(fromToolId: string, toToolId: string): string[] | null {
   <!-- ========================================== -->
   <reference id="dot-format">
     <description>DOT graph format example for export</description>
-    <example>
+    <example
+    >
 digraph AgentCards {
   // Nodes
   "mcp__filesystem__read_file" [label="read_file", server="filesystem"];

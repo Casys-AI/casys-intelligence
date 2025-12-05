@@ -7,12 +7,12 @@
 
 import { assert } from "jsr:@std/assert@1";
 import {
-  cleanupTestDatabase,
-  initializeTestDatabase,
-  storeSchemas,
-  loadEmbeddingModel,
-  generateEmbeddings,
   calculatePercentile,
+  cleanupTestDatabase,
+  generateEmbeddings,
+  initializeTestDatabase,
+  loadEmbeddingModel,
+  storeSchemas,
 } from "../fixtures/test-helpers.ts";
 import { MockMCPServer } from "../fixtures/mock-mcp-server.ts";
 import { VectorSearch } from "../../src/vector/search.ts";

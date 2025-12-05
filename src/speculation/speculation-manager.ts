@@ -12,7 +12,7 @@
 import * as log from "@std/log";
 import type { AdaptiveThresholdManager } from "../mcp/adaptive-threshold.ts";
 import type { GraphRAGEngine } from "../graphrag/graph-engine.ts";
-import type { SpeculationConfig, PredictedNode, SpeculationMetrics } from "../graphrag/types.ts";
+import type { PredictedNode, SpeculationConfig, SpeculationMetrics } from "../graphrag/types.ts";
 
 /**
  * Default speculation configuration (ADR-006)
@@ -112,7 +112,9 @@ export class SpeculationManager {
     const shouldTrigger = prediction.confidence >= threshold;
 
     log.debug(
-      `[SpeculationManager] shouldSpeculate(${prediction.toolId}): confidence=${prediction.confidence.toFixed(2)}, threshold=${threshold.toFixed(2)}, result=${shouldTrigger}`,
+      `[SpeculationManager] shouldSpeculate(${prediction.toolId}): confidence=${
+        prediction.confidence.toFixed(2)
+      }, threshold=${threshold.toFixed(2)}, result=${shouldTrigger}`,
     );
 
     return shouldTrigger;
@@ -167,7 +169,9 @@ export class SpeculationManager {
       }
 
       log.info(
-        `[SpeculationManager] HIT: ${outcome.toolId} (confidence=${outcome.confidence.toFixed(2)}, saved=${outcome.executionTimeMs}ms)`,
+        `[SpeculationManager] HIT: ${outcome.toolId} (confidence=${
+          outcome.confidence.toFixed(2)
+        }, saved=${outcome.executionTimeMs}ms)`,
       );
     } else {
       this.totalMisses++;
@@ -185,7 +189,9 @@ export class SpeculationManager {
       }
 
       log.info(
-        `[SpeculationManager] MISS: ${outcome.toolId} (confidence=${outcome.confidence.toFixed(2)}, wasted=${outcome.executionTimeMs}ms)`,
+        `[SpeculationManager] MISS: ${outcome.toolId} (confidence=${
+          outcome.confidence.toFixed(2)
+        }, wasted=${outcome.executionTimeMs}ms)`,
       );
     }
   }
@@ -211,7 +217,9 @@ export class SpeculationManager {
         const newCount = currentEdge.count + 1;
 
         log.debug(
-          `[SpeculationManager] Reinforcing edge ${fromToolId} -> ${toToolId}: ${currentEdge.weight.toFixed(2)} -> ${newWeight.toFixed(2)} (count: ${newCount})`,
+          `[SpeculationManager] Reinforcing edge ${fromToolId} -> ${toToolId}: ${
+            currentEdge.weight.toFixed(2)
+          } -> ${newWeight.toFixed(2)} (count: ${newCount})`,
         );
 
         // Persist the reinforced edge via GraphRAGEngine
@@ -244,9 +252,7 @@ export class SpeculationManager {
    * @returns Speculation metrics for monitoring
    */
   getMetrics(): SpeculationMetrics {
-    const hitRate = this.totalSpeculations > 0
-      ? this.totalHits / this.totalSpeculations
-      : 0;
+    const hitRate = this.totalSpeculations > 0 ? this.totalHits / this.totalSpeculations : 0;
 
     const falsePositiveRate = this.totalSpeculations > 0
       ? this.totalMisses / this.totalSpeculations

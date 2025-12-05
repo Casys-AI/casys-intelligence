@@ -53,7 +53,9 @@ export async function autoInitIfConfigChanged(
     }
 
     const reason = storedHash === null ? "first_run" : "config_changed";
-    log.info(`[auto-init] ${reason === "first_run" ? "First run" : "Config changed"}, running init...`);
+    log.info(
+      `[auto-init] ${reason === "first_run" ? "First run" : "Config changed"}, running init...`,
+    );
 
     // 4. Run init
     const toolsCount = await runInit(configPath, db);
@@ -91,7 +93,9 @@ async function runInit(configPath: string, db: PGliteClient): Promise<number> {
   const result = await extractor.extractAndStore();
   const toolsCount = result.totalToolsExtracted;
 
-  log.info(`[auto-init] Extracted ${toolsCount} tools from ${result.successfulServers}/${result.totalServers} servers`);
+  log.info(
+    `[auto-init] Extracted ${toolsCount} tools from ${result.successfulServers}/${result.totalServers} servers`,
+  );
 
   // 3. Generate embeddings for new tools
   if (toolsCount > 0) {
@@ -99,7 +103,9 @@ async function runInit(configPath: string, db: PGliteClient): Promise<number> {
     const embeddingModel = new EmbeddingModel();
     await embeddingModel.load();
     const embeddingResult = await generateEmbeddings(db, embeddingModel);
-    log.info(`[auto-init] Generated ${embeddingResult.newlyGenerated} embeddings (${embeddingResult.cachedCount} cached)`);
+    log.info(
+      `[auto-init] Generated ${embeddingResult.newlyGenerated} embeddings (${embeddingResult.cachedCount} cached)`,
+    );
   }
 
   return toolsCount;

@@ -23,7 +23,4 @@ export type {
 } from "./types.ts";
 
 // Episodic Memory Store
-export {
-  EpisodicMemoryStore,
-  type EpisodicMemoryConfig,
-} from "./episodic-memory-store.ts";
+export { type EpisodicMemoryConfig, EpisodicMemoryStore } from "./episodic-memory-store.ts";

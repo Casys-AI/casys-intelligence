@@ -54,7 +54,8 @@
   </story>
 
   <acceptanceCriteria>
-    <criterion id="1">Simple YAML format in config/workflow-templates.yaml: workflows array with name and steps</criterion>
+    <criterion id="1"
+    >Simple YAML format in config/workflow-templates.yaml: workflows array with name and steps</criterion>
     <criterion id="2">agentcards workflows sync CLI command imports YAML → DB</criterion>
     <criterion id="3">Entries marked with source='user' in tool_dependency table</criterion>
     <criterion id="4">Auto-sync on startup if file changed (checksum comparison)</criterion>
@@ -69,25 +70,29 @@
         <path>docs/adrs/ADR-022-hybrid-search-integration.md</path>
         <title>ADR-022: Hybrid Search Integration in DAG Suggester</title>
         <section>Decision</section>
-        <snippet>Extract Hybrid Search logic from GatewayServer.handleSearchTools into GraphRAGEngine.searchToolsHybrid(). Replace direct VectorSearch usage in DAGSuggester with hybrid search.</snippet>
+        <snippet
+        >Extract Hybrid Search logic from GatewayServer.handleSearchTools into GraphRAGEngine.searchToolsHybrid(). Replace direct VectorSearch usage in DAGSuggester with hybrid search.</snippet>
       </doc>
       <doc>
         <path>docs/stories/story-5.1.md</path>
         <title>Story 5.1: Search Tools - Semantic + Graph Hybrid</title>
         <section>Technical Design</section>
-        <snippet>Implements finalScore = α × semanticScore + (1-α) × graphRelatedness. Graph methods: getEdgeCount, getNeighbors, computeAdamicAdar, adamicAdarBetween, computeGraphRelatedness, bootstrapFromTemplates.</snippet>
+        <snippet
+        >Implements finalScore = α × semanticScore + (1-α) × graphRelatedness. Graph methods: getEdgeCount, getNeighbors, computeAdamicAdar, adamicAdarBetween, computeGraphRelatedness, bootstrapFromTemplates.</snippet>
       </doc>
       <doc>
         <path>docs/sprint-change-proposal-2025-11-26.md</path>
         <title>Sprint Change Proposal: ADR-022</title>
         <section>Detailed Changes</section>
-        <snippet>5 changes: ADR-022 status, GraphRAGEngine searchToolsHybrid, DAGSuggester modification, GatewayServer refactoring, story-5.2 Task 0 prerequisite.</snippet>
+        <snippet
+        >5 changes: ADR-022 status, GraphRAGEngine searchToolsHybrid, DAGSuggester modification, GatewayServer refactoring, story-5.2 Task 0 prerequisite.</snippet>
       </doc>
       <doc>
         <path>docs/spikes/spike-search-tools-graph-traversal.md</path>
         <title>Spike: Search Tools Graph Traversal</title>
         <section>Research</section>
-        <snippet>Adamic-Adar algorithm for link prediction. Adaptive alpha based on graph density.</snippet>
+        <snippet
+        >Adamic-Adar algorithm for link prediction. Adaptive alpha based on graph density.</snippet>
       </doc>
     </docs>
 
@@ -97,21 +102,24 @@
         <kind>service</kind>
         <symbol>GraphRAGEngine</symbol>
         <lines>34-551</lines>
-        <reason>Main class to extend with searchToolsHybrid() method. Contains syncFromDatabase(), getEdgeCount(), computeGraphRelatedness(), bootstrapFromTemplates().</reason>
+        <reason
+        >Main class to extend with searchToolsHybrid() method. Contains syncFromDatabase(), getEdgeCount(), computeGraphRelatedness(), bootstrapFromTemplates().</reason>
       </file>
       <file>
         <path>src/graphrag/dag-suggester.ts</path>
         <kind>service</kind>
         <symbol>DAGSuggester.suggestDAG</symbol>
         <lines>60-122</lines>
-        <reason>Method to modify - replace vectorSearch.searchTools() with graphEngine.searchToolsHybrid().</reason>
+        <reason
+        >Method to modify - replace vectorSearch.searchTools() with graphEngine.searchToolsHybrid().</reason>
       </file>
       <file>
         <path>src/mcp/gateway-server.ts</path>
         <kind>handler</kind>
         <symbol>handleSearchTools</symbol>
         <lines>911-1009</lines>
-        <reason>Contains hybrid search logic (adaptive alpha, graph scoring) to extract and share. Will be refactored to use shared method.</reason>
+        <reason
+        >Contains hybrid search logic (adaptive alpha, graph scoring) to extract and share. Will be refactored to use shared method.</reason>
       </file>
       <file>
         <path>src/vector/search.ts</path>
@@ -156,41 +164,51 @@
     <interface>
       <name>searchToolsHybrid</name>
       <kind>method signature (to create)</kind>
-      <signature>async searchToolsHybrid(vectorSearch: VectorSearch, query: string, limit?: number, contextTools?: string[]): Promise&lt;HybridSearchResult[]&gt;</signature>
+      <signature
+      >async searchToolsHybrid(vectorSearch: VectorSearch, query: string, limit?: number, contextTools?: string[]): Promise&lt;HybridSearchResult[]&gt;</signature>
       <path>src/graphrag/graph-engine.ts</path>
     </interface>
     <interface>
       <name>VectorSearch.searchTools</name>
       <kind>method signature (existing)</kind>
-      <signature>async searchTools(query: string, limit: number, threshold: number): Promise&lt;SearchResult[]&gt;</signature>
+      <signature
+      >async searchTools(query: string, limit: number, threshold: number): Promise&lt;SearchResult[]&gt;</signature>
       <path>src/vector/search.ts</path>
     </interface>
     <interface>
       <name>GraphRAGEngine.bootstrapFromTemplates</name>
       <kind>method signature (existing)</kind>
-      <signature>async bootstrapFromTemplates(templates: Record&lt;string, { edges: [string, string][] }&gt;): Promise&lt;void&gt;</signature>
+      <signature
+      >async bootstrapFromTemplates(templates: Record&lt;string, { edges: [string, string][] }&gt;): Promise&lt;void&gt;</signature>
       <path>src/graphrag/graph-engine.ts</path>
     </interface>
     <interface>
       <name>tool_dependency table</name>
       <kind>database schema</kind>
-      <signature>CREATE TABLE tool_dependency (from_tool_id TEXT, to_tool_id TEXT, observed_count INTEGER, confidence_score REAL, last_observed TIMESTAMP, source TEXT DEFAULT 'learned', PRIMARY KEY (from_tool_id, to_tool_id))</signature>
+      <signature
+      >CREATE TABLE tool_dependency (from_tool_id TEXT, to_tool_id TEXT, observed_count INTEGER, confidence_score REAL, last_observed TIMESTAMP, source TEXT DEFAULT 'learned', PRIMARY KEY (from_tool_id, to_tool_id))</signature>
       <path>src/db/migrations/003_graphrag_tables.sql</path>
     </interface>
   </interfaces>
 
   <constraints>
-    <constraint type="architecture">Hybrid search logic must be centralized in GraphRAGEngine (ADR-022)</constraint>
+    <constraint type="architecture"
+    >Hybrid search logic must be centralized in GraphRAGEngine (ADR-022)</constraint>
     <constraint type="pattern">Use existing Graphology library for graph operations</constraint>
-    <constraint type="pattern">Follow PGlite for persistence, Graphology for computation pattern</constraint>
+    <constraint type="pattern"
+    >Follow PGlite for persistence, Graphology for computation pattern</constraint>
     <constraint type="performance">searchToolsHybrid &lt;20ms overhead (ADR-022)</constraint>
-    <constraint type="graceful-degradation">Falls back to semantic-only if graph is empty (alpha=1.0)</constraint>
-    <constraint type="db-migration">Need source column in tool_dependency if not present</constraint>
-    <constraint type="yaml-format">Simple format: workflows array with name + steps only - no confidence/parallel flags</constraint>
+    <constraint type="graceful-degradation"
+    >Falls back to semantic-only if graph is empty (alpha=1.0)</constraint>
+    <constraint type="db-migration"
+    >Need source column in tool_dependency if not present</constraint>
+    <constraint type="yaml-format"
+    >Simple format: workflows array with name + steps only - no confidence/parallel flags</constraint>
   </constraints>
 
   <tests>
-    <standards>
+    <standards
+    >
       Deno test framework with @std/assert. Unit tests in tests/unit/, integration in tests/integration/.
       Mock database with PGliteClient("memory://"). Run migrations before tests.
       Test naming: [module]_test.ts. Use Deno.test() with descriptive names.

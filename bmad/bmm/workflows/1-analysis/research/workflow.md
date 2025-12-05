@@ -5,19 +5,25 @@ description: Conduct comprehensive research across multiple domains using curren
 
 # Research Workflow
 
-**Goal:** Conduct comprehensive, exhaustive research across multiple domains using current web data and verified sources to produce complete research documents with compelling narratives and proper citations.
+**Goal:** Conduct comprehensive, exhaustive research across multiple domains using current web data
+and verified sources to produce complete research documents with compelling narratives and proper
+citations.
 
 **Document Standards:**
 
 - **Comprehensive Coverage**: Exhaustive research with no critical gaps
 - **Source Verification**: Every factual claim cited with URLs from {{current_year}}
 - **Document Length**: As long as needed to fully cover the research topic
-- **Professional Structure**: Compelling narrative introduction, detailed TOC, and comprehensive summary
+- **Professional Structure**: Compelling narrative introduction, detailed TOC, and comprehensive
+  summary
 - **Authoritative Sources**: Multiple independent sources for all critical claims
 
-**Your Role:** You are a research facilitator and web data analyst working with an expert partner. This is a collaboration where you bring research methodology and web search capabilities, while your partner brings domain knowledge and research direction.
+**Your Role:** You are a research facilitator and web data analyst working with an expert partner.
+This is a collaboration where you bring research methodology and web search capabilities, while your
+partner brings domain knowledge and research direction.
 
-**Final Deliverable**: A complete research document that serves as an authoritative reference on the research topic with:
+**Final Deliverable**: A complete research document that serves as an authoritative reference on the
+research topic with:
 
 - Compelling narrative introduction
 - Comprehensive table of contents
@@ -52,7 +58,9 @@ Load config from `{project-root}/bmad/bmm/config.yaml` and resolve:
 
 - `installed_path` = `{project-root}/bmad/bmm/workflows/1-analysis/research`
 - `template_path` = `{installed_path}/research.template.md`
-- `default_output_file` = `{output_folder}/analysis/research/{{research_type}}-{{topic}}-research-{{date}}.md` (dynamic based on research type)
+- `default_output_file` =
+  `{output_folder}/analysis/research/{{research_type}}-{{topic}}-research-{{date}}.md` (dynamic
+  based on research type)
 
 ---
 
@@ -82,7 +90,9 @@ Execute research type discovery and routing:
 
 ### Research Type Discovery
 
-**Your Role:** You are a research facilitator and web data analyst working with an expert partner. This is a collaboration where you bring research methodology and web search capabilities, while your partner brings domain knowledge and research direction.
+**Your Role:** You are a research facilitator and web data analyst working with an expert partner.
+This is a collaboration where you bring research methodology and web search capabilities, while your
+partner brings domain knowledge and research direction.
 
 **Research Standards:**
 
@@ -95,7 +105,9 @@ Execute research type discovery and routing:
 
 ### Collaborative Research Discovery
 
-"Welcome {{user_name}}! I'm excited to work with you as your research partner. I bring web research capabilities with current {{current_year}} data and rigorous source verification, while you bring the domain expertise and research direction.
+"Welcome {{user_name}}! I'm excited to work with you as your research partner. I bring web research
+capabilities with current {{current_year}} data and rigorous source verification, while you bring
+the domain expertise and research direction.
 
 **Let me help you clarify what you'd like to research.**
 
@@ -119,7 +131,8 @@ Based on the user's initial topic, explore and refine the research scope:
 2. **Research Goals**: "What do you hope to achieve with this research?"
 3. **Scope**: "Should we focus broadly or dive deep into specific aspects?"
 4. **Timeline**: "Are you looking at current state, historical context, or future trends?"
-5. **Application**: "How will you use this research? (product development, strategy, academic, etc.)"
+5. **Application**: "How will you use this research? (product development, strategy, academic,
+   etc.)"
 
 #### Context Building:
 
@@ -134,16 +147,17 @@ After understanding the research topic and goals, identify the most appropriate 
 
 **Research Type Options:**
 
-1. **Market Research** - Market size, growth, competition, customer insights
-   _Best for: Understanding market dynamics, customer behavior, competitive landscape_
+1. **Market Research** - Market size, growth, competition, customer insights _Best for:
+   Understanding market dynamics, customer behavior, competitive landscape_
 
-2. **Domain Research** - Industry analysis, regulations, technology trends in specific domain
-   _Best for: Understanding industry context, regulatory environment, ecosystem_
+2. **Domain Research** - Industry analysis, regulations, technology trends in specific domain _Best
+   for: Understanding industry context, regulatory environment, ecosystem_
 
 3. **Technical Research** - Technology evaluation, architecture decisions, implementation approaches
    _Best for: Technical feasibility, technology selection, implementation strategies_
 
-**Recommendation**: Based on [topic] and [goals], I recommend [suggested research type] because [specific rationale].
+**Recommendation**: Based on [topic] and [goals], I recommend [suggested research type] because
+[specific rationale].
 
 **What type of research would work best for your needs?**
 
@@ -155,24 +169,29 @@ Based on user selection, route to appropriate sub-workflow with the discovered t
 
 - Set `research_type = "market"`
 - Set `research_topic = [discovered topic from discussion]`
-- Set output file: `{output_folder}/analysis/research/market-{{research_topic}}-research-{{date}}.md`
+- Set output file:
+  `{output_folder}/analysis/research/market-{{research_topic}}-research-{{date}}.md`
 - Load: `./market-steps/step-01-init.md` with topic context
 
 #### If Domain Research:
 
 - Set `research_type = "domain"`
 - Set `research_topic = [discovered topic from discussion]`
-- Set output file: `{output_folder}/analysis/research/domain-{{research_topic}}-research-{{date}}.md`
+- Set output file:
+  `{output_folder}/analysis/research/domain-{{research_topic}}-research-{{date}}.md`
 - Load: `./domain-steps/step-01-init.md` with topic context
 
 #### If Technical Research:
 
 - Set `research_type = "technical"`
 - Set `research_topic = [discovered topic from discussion]`
-- Set output file: `{output_folder}/analysis/research/technical-{{research_topic}}-research-{{date}}.md`
+- Set output file:
+  `{output_folder}/analysis/research/technical-{{research_topic}}-research-{{date}}.md`
 - Load: `./technical-steps/step-01-init.md` with topic context
 
-**Important**: The discovered topic from the collaborative discussion should be passed to the research initialization steps, so they don't need to ask "What do you want to research?" again - they can focus on refining the scope for their specific research type.
+**Important**: The discovered topic from the collaborative discussion should be passed to the
+research initialization steps, so they don't need to ask "What do you want to research?" again -
+they can focus on refining the scope for their specific research type.
 
 ### Document Initialization
 
@@ -195,4 +214,5 @@ source_verification: true
 ---
 ```
 
-**Note:** All research workflows emphasize current web data with {{current_year}} searches and rigorous source verification.
+**Note:** All research workflows emphasize current web data with {{current_year}} searches and
+rigorous source verification.

@@ -6,7 +6,7 @@
  */
 
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
-import { parseEnvFile, buildEnvContent, parseApiError } from "./setup-api-key.ts";
+import { buildEnvContent, parseApiError, parseEnvFile } from "./setup-api-key.ts";
 
 // =============================================================================
 // Tests: .env Parsing

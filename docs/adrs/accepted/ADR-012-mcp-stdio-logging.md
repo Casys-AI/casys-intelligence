@@ -1,18 +1,19 @@
 # ADR-012: MCP STDIO Logging Strategy
 
-**Date:** 2025-11-21
-**Status:** Accepted
-**Deciders:** Équipe AgentCards
+**Date:** 2025-11-21 **Status:** Accepted **Deciders:** Équipe AgentCards
 
 ## Context
 
-AgentCards fonctionne comme un serveur MCP (Model Context Protocol) utilisant le transport stdio. Dans ce mode :
+AgentCards fonctionne comme un serveur MCP (Model Context Protocol) utilisant le transport stdio.
+Dans ce mode :
+
 - **stdout** est réservé exclusivement aux messages JSON-RPC
 - Toute autre sortie sur stdout corrompt le protocole et casse la communication avec Claude Code
 
 ### Problème observé
 
 Les logs console (avec codes ANSI couleur) polluaient stdout, causant des erreurs :
+
 ```
 Connection error: JSON Parse error: Unexpected identifier "DEBUG"
 Connection error: JSON Parse error: Unrecognized token '\u001b'
@@ -37,6 +38,7 @@ Le token `\u001b` est un code d'échappement ANSI pour les couleurs.
    - Code exécuté pendant `serve` : Utiliser le logger ou `console.error`
 
 3. **Nouveau handler personnalisé**
+
 ```typescript
 class StderrHandler extends log.BaseHandler {
   private encoder = new TextEncoder();
@@ -50,24 +52,29 @@ class StderrHandler extends log.BaseHandler {
 ## Consequences
 
 ### Positives
+
 - ✅ Protocole MCP fonctionne correctement
 - ✅ Logs toujours visibles dans le terminal (via stderr)
 - ✅ Fichier de log toujours écrit
 - ✅ Compatible avec la spec MCP officielle
 
 ### Négatives
+
 - ⚠️ Les `console.log` dans le code serveur doivent être audités
 - ⚠️ Nouveau pattern à respecter pour les futurs développements
 
 ## Alternatives considérées
 
 ### Option 1 : Désactiver les logs console en mode serve
+
 - ❌ Rejetée : Perte de visibilité pour le debug
 
 ### Option 2 : Flag --quiet
+
 - ❌ Rejetée : Complexité supplémentaire, pas nécessaire
 
 ### Option 3 : Logs uniquement dans fichier
+
 - ❌ Rejetée : Moins pratique pour le développement
 
 ## Références
@@ -75,7 +82,8 @@ class StderrHandler extends log.BaseHandler {
 - [MCP STDIO Transport Documentation](https://modelcontextprotocol.io/docs/develop/build-server)
 - [Understanding MCP Stdio transport](https://medium.com/@laurentkubaski/understanding-mcp-stdio-transport-protocol-ae3d5daf64db)
 
-> "A critical rule: MCP servers must only write JSON-RPC messages to stdout. All logs and debugging output should go to stderr instead."
+> "A critical rule: MCP servers must only write JSON-RPC messages to stdout. All logs and debugging
+> output should go to stderr instead."
 
 ## Compliance Checklist
 

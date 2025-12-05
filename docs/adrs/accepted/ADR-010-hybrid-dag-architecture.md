@@ -1,15 +1,15 @@
 # ADR-010: Architecture DAG Hybride - Nœuds Externes vs Nœuds de Logique
 
-**Status:** ✅ Accepted
-**Date:** 2025-11-20
-**Deciders:** BMad
-**Technical Story:** Epic 3 - Agent Code Execution & Local Processing
+**Status:** ✅ Accepted **Date:** 2025-11-20 **Deciders:** BMad **Technical Story:** Epic 3 - Agent
+Code Execution & Local Processing
 
 ---
 
 ## Context
 
-AgentCards utilise un système de DAG (Directed Acyclic Graph) pour orchestrer des workflows complexes. Avec l'introduction de l'Epic 3 (code execution dans sandbox), nous avons maintenant **deux types fondamentalement différents de nœuds** dans nos DAGs qui coexistent et communiquent.
+AgentCards utilise un système de DAG (Directed Acyclic Graph) pour orchestrer des workflows
+complexes. Avec l'introduction de l'Epic 3 (code execution dans sandbox), nous avons maintenant
+**deux types fondamentalement différents de nœuds** dans nos DAGs qui coexistent et communiquent.
 
 ### État Actuel (Post-Epic 2, Pre-Epic 3)
 
@@ -26,6 +26,7 @@ const workflow: DAGStructure = {
 ```
 
 **Limitations :**
+
 - Toute logique de traitement nécessite un MCP tool dédié
 - Pas de flexibilité pour transformations ad-hoc
 - Logique métier dispersée dans multiples servers MCP
@@ -33,7 +34,8 @@ const workflow: DAGStructure = {
 
 ### Nouveau Besoin (Epic 3)
 
-Epic 3 introduit le **code execution dans sandbox** permettant aux agents d'écrire du code de traitement qui s'exécute localement. Cela crée naturellement deux catégories de nœuds :
+Epic 3 introduit le **code execution dans sandbox** permettant aux agents d'écrire du code de
+traitement qui s'exécute localement. Cela crée naturellement deux catégories de nœuds :
 
 1. **Nœuds qui interagissent avec l'externe** (API calls, DB writes, file creation)
 2. **Nœuds qui font de la logique pure** (transformations, calculs, filtrage, agrégation)
@@ -44,13 +46,15 @@ Epic 3 introduit le **code execution dans sandbox** permettant aux agents d'écr
 
 ## Decision
 
-Nous adoptons une **architecture DAG hybride** avec deux types de nœuds distincts mais interopérables :
+Nous adoptons une **architecture DAG hybride** avec deux types de nœuds distincts mais
+interopérables :
 
 ### 🔵 Nœuds Externes (MCP Tasks)
 
 **Définition :** Nœuds qui interagissent avec le monde extérieur via MCP protocol.
 
 **Caractéristiques :**
+
 - `tool: "server:tool_name"` (identifié par présence de tool field)
 - `side_effects: true` (par défaut, explicite si besoin)
 - **NOT safe-to-fail** : L'échec peut avoir des conséquences externes
@@ -58,12 +62,14 @@ Nous adoptons une **architecture DAG hybride** avec deux types de nœuds distinc
 - Communication : `$OUTPUT[task_id]` pour interpolation string
 
 **Exemples :**
+
 - GitHub API calls (`github:list_commits`, `github:create_issue`)
 - Database operations (`postgres:query`, `postgres:insert`)
 - File system (`filesystem:write_file`, `filesystem:delete`)
 - Web scraping (`puppeteer:navigate`, `puppeteer:screenshot`)
 
 **Utilisation typique :**
+
 ```typescript
 {
   id: "fetch_data",
@@ -81,6 +87,7 @@ Nous adoptons une **architecture DAG hybride** avec deux types de nœuds distinc
 **Définition :** Nœuds qui exécutent du code arbitraire dans un sandbox isolé.
 
 **Caractéristiques :**
+
 - `type: "code_execution"` (identifié par type field)
 - `side_effects: false` (par défaut pour sandbox)
 - **Safe-to-fail** : Échec n'a pas de conséquences externes (idempotent)
@@ -88,12 +95,14 @@ Nous adoptons une **architecture DAG hybride** avec deux types de nœuds distinc
 - Communication : `deps.task_id` pour accès object dans scope
 
 **Exemples :**
+
 - Data transformations (filter, map, reduce)
 - Statistical analysis, ML inference
 - Validation, parsing, formatting
 - Aggregation de résultats multiples (resilient patterns)
 
 **Utilisation typique :**
+
 ```typescript
 {
   id: "analyze_data",
@@ -151,9 +160,11 @@ Injection d'objects JavaScript dans le scope d'exécution :
 }
 ```
 
-**Implémentation :** `ControlledExecutor.executeCodeTask()` (ligne ~1080 de `src/dag/controlled-executor.ts`)
+**Implémentation :** `ControlledExecutor.executeCodeTask()` (ligne ~1080 de
+`src/dag/controlled-executor.ts`)
 
 **Important (Story 3.5) :** `deps` contient le **TaskResult complet** :
+
 ```typescript
 deps[taskId] = {
   status: "success" | "error" | "failed_safe",
@@ -215,11 +226,13 @@ Cela permet les **resilient patterns** (aggregation partielle, graceful degradat
 #### 1. Séparation des Responsabilités (SRP)
 
 **🔵 MCP Tasks :**
+
 - Responsabilité : Gérer interactions avec systèmes externes
 - Complexité : Protocole MCP, rate limiting, error handling externe
 - Expertise : Connaissance des APIs spécifiques
 
 **🟢 Code Execution :**
+
 - Responsabilité : Logique métier, transformations de données
 - Complexité : Algorithmes, business rules, calculs
 - Expertise : Domain knowledge, data science
@@ -227,11 +240,13 @@ Cela permet les **resilient patterns** (aggregation partielle, graceful degradat
 #### 2. Safe-to-Fail vs Side Effects (Story 3.5)
 
 **🔵 MCP Tasks (NOT safe-to-fail) :**
+
 - Side effects externes (créer GitHub issue, écrire DB, envoyer email)
 - Échec peut avoir des conséquences irréversibles
 - Nécessite rollback complexe ou compensation
 
 **🟢 Code Execution (Safe-to-fail) :**
+
 - Sandbox isolé sans accès filesystem/network
 - Idempotent : re-exécution produit même résultat
 - Échec n'affecte pas l'état système
@@ -240,11 +255,13 @@ Cela permet les **resilient patterns** (aggregation partielle, graceful degradat
 #### 3. Flexibilité vs Standardisation
 
 **🔵 MCP Tasks :**
+
 - Schema fixe imposé par le server
 - Versioning et compatibilité gérés par MCP
 - Réutilisabilité entre agents/workflows
 
 **🟢 Code Execution :**
+
 - Code arbitraire généré par l'agent
 - Adaptation dynamique aux besoins spécifiques
 - Logique métier inline (pas besoin de créer MCP tool)
@@ -254,6 +271,7 @@ Cela permet les **resilient patterns** (aggregation partielle, graceful degradat
 **Problème :** Appeler MCP tool qui retourne 1000 commits (1.2MB) sature le contexte LLM.
 
 **Solution hybride :**
+
 ```typescript
 // 🔵 Fetch externe (unavoidable)
 { id: "fetch", tool: "github:list_commits", limit: 1000 }
@@ -312,6 +330,7 @@ Cela permet les **resilient patterns** (aggregation partielle, graceful degradat
 **Risque :** Confusion sur quel type de nœud utiliser.
 
 **Mitigation :**
+
 - Documentation claire (ce ADR)
 - Exemples dans stories (Story 3.5)
 - Linting rules possibles (detect side effects in code_execution)
@@ -321,6 +340,7 @@ Cela permet les **resilient patterns** (aggregation partielle, graceful degradat
 **Impact :** `deps` structure change (output → full TaskResult).
 
 **Migration :**
+
 ```typescript
 // Avant (Story 3.4)
 const data = deps.fetch;
@@ -330,6 +350,7 @@ const data = deps.fetch.output;
 ```
 
 **Mitigation :**
+
 - Tests existants identifiés (3 locations)
 - Migration path documented in Story 3.5
 - Could add Proxy getter for backward compat (defer decision)
@@ -339,6 +360,7 @@ const data = deps.fetch.output;
 **Risque :** Code execution tasks pourraient tenter d'accéder externe.
 
 **Mitigation :**
+
 - Deno sandbox avec permissions explicites (--allow-read=[], --allow-net=[])
 - Filesystem virtuel (hooks dans Story 3.4)
 - Runtime validation (detect network calls → error)
@@ -354,7 +376,7 @@ const data = deps.fetch.output;
 export interface Task {
   id: string;
   depends_on: string[];
-  side_effects?: boolean;  // Default: true for MCP, false for code_execution
+  side_effects?: boolean; // Default: true for MCP, false for code_execution
 
   // MCP Task fields (mutually exclusive with code_execution)
   tool?: string;
@@ -364,7 +386,7 @@ export interface Task {
   type?: "code_execution";
   code?: string;
   context?: Record<string, unknown>;
-  intent?: string;  // Intent-based mode (vector search tools)
+  intent?: string; // Intent-based mode (vector search tools)
   sandbox_config?: {
     timeout?: number;
     memoryLimit?: number;
@@ -404,15 +426,15 @@ function isCodeExecutionTask(task: Task): boolean {
 [
   {
     id: "fetch",
-    tool: "github:list_commits"
+    tool: "github:list_commits",
   },
   {
     id: "analyze",
     type: "code_execution",
     code: "return processCommits(deps.fetch.output);",
-    depends_on: ["fetch"]
-  }
-]
+    depends_on: ["fetch"],
+  },
+];
 ```
 
 #### Pattern 2: Code Execution → MCP
@@ -422,18 +444,18 @@ function isCodeExecutionTask(task: Task): boolean {
   {
     id: "analyze",
     type: "code_execution",
-    code: "return { insights: [...] };"
+    code: "return { insights: [...] };",
   },
   {
     id: "create_issue",
     tool: "github:create_issue",
     arguments: {
       title: "Analysis Results",
-      body: "$OUTPUT[analyze]"  // String interpolation
+      body: "$OUTPUT[analyze]", // String interpolation
     },
-    depends_on: ["analyze"]
-  }
-]
+    depends_on: ["analyze"],
+  },
+];
 ```
 
 #### Pattern 3: Code Execution → Code Execution (Resilient)
@@ -454,9 +476,9 @@ function isCodeExecutionTask(task: Task): boolean {
       return results.length > 0 ? results[0] : null;
     `,
     depends_on: ["fast", "ml", "stats"],
-    side_effects: false
-  }
-]
+    side_effects: false,
+  },
+];
 ```
 
 ---

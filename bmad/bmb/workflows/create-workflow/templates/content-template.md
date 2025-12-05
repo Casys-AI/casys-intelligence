@@ -1,8 +1,6 @@
 # {{documentTitle}}
 
-**Created:** {{date}}
-**Author:** {{user_name}}
-**Workflow:** {{workflowName}}
+**Created:** {{date}} **Author:** {{user_name}} **Workflow:** {{workflowName}}
 
 ## Executive Summary
 

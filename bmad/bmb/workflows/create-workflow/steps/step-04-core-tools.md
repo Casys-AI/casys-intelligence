@@ -1,25 +1,26 @@
 ---
-name: 'step-04-core-tools'
-description: 'Configure always-available core tools and their integration points'
+name: "step-04-core-tools"
+description: "Configure always-available core tools and their integration points"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-04-core-tools.md'
-nextStepFile: '{workflow_path}/steps/step-05-memory-requirements.md'
-workflowFile: '{workflow_path}/workflow.md'
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
+thisStepFile: "{workflow_path}/steps/step-04-core-tools.md"
+nextStepFile: "{workflow_path}/steps/step-05-memory-requirements.md"
+workflowFile: "{workflow_path}/workflow.md"
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
 
 # Documentation References
-commonToolsCsv: '{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv'
+commonToolsCsv: "{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv"
 ---
 
 # Step 4: Core Tools Configuration
 
 ## STEP GOAL:
 
-Configure always-available core tools (party-mode, advanced-elicitation, brainstorming, and LLM features) with specific integration points in the workflow.
+Configure always-available core tools (party-mode, advanced-elicitation, brainstorming, and LLM
+features) with specific integration points in the workflow.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -48,7 +49,8 @@ Configure always-available core tools (party-mode, advanced-elicitation, brainst
 
 "Configuring **Core BMAD Tools and Features**
 
-These core tools significantly enhance workflow quality. Let's configure each one for optimal integration into your workflow."
+These core tools significantly enhance workflow quality. Let's configure each one for optimal
+integration into your workflow."
 
 ### 2. Present Core Tools from CSV
 
@@ -81,13 +83,21 @@ For each tool, ask about integration:
 
 **Workflows & Tasks:**
 
-1. **Party-Mode** - Where should collaborative AI sessions be offered? [decision points, creative phases]
-2. **Advanced Elicitation** - Where should critical evaluation checkpoints be placed? [after content creation, quality gates]
-3. **Brainstorming** - Where should creative ideation be integrated? [idea generation phases, innovation points]
+1. **Party-Mode** - Where should collaborative AI sessions be offered? [decision points, creative
+   phases]
+2. **Advanced Elicitation** - Where should critical evaluation checkpoints be placed? [after content
+   creation, quality gates]
+3. **Brainstorming** - Where should creative ideation be integrated? [idea generation phases,
+   innovation points]
 
-**LLM Features:** 4. **Web-Browsing** - When is current information needed? [real-time data, current events] 5. **File I/O** - What document operations are required? [file creation, data management] 6. **Sub-Agents** - Where would specialized delegation help? [complex tasks, parallel processing] 7. **Sub-Processes** - Where would parallel processing improve performance? [long operations, resource optimization]
+**LLM Features:** 4. **Web-Browsing** - When is current information needed? [real-time data, current
+events] 5. **File I/O** - What document operations are required? [file creation, data management] 6.
+**Sub-Agents** - Where would specialized delegation help? [complex tasks, parallel processing] 7.
+**Sub-Processes** - Where would parallel processing improve performance? [long operations, resource
+optimization]
 
-**Tool-Memory:** 8. **Sidecar File** - Does your workflow need persistent state? [session continuity, agent initialization]"
+**Tool-Memory:** 8. **Sidecar File** - Does your workflow need persistent state? [session
+continuity, agent initialization]"
 
 ### 4. Document Core Tools Configuration
 
@@ -98,16 +108,16 @@ Append to {workflowPlanFile}:
 
 ### Workflows & Tasks
 
-**Party-Mode:** [included/excluded] - Integration points: [specific phases]
-**Advanced Elicitation:** [included/excluded] - Integration points: [specific phases]
-**Brainstorming:** [included/excluded] - Integration points: [specific phases]
+**Party-Mode:** [included/excluded] - Integration points: [specific phases] **Advanced
+Elicitation:** [included/excluded] - Integration points: [specific phases] **Brainstorming:**
+[included/excluded] - Integration points: [specific phases]
 
 ### LLM Tool Features
 
-**Web-Browsing:** [included/excluded] - Integration points: [specific phases]
-**File I/O:** [included/excluded] - Integration points: [specific phases]
-**Sub-Agents:** [included/excluded] - Integration points: [specific phases]
-**Sub-Processes:** [included/excluded] - Integration points: [specific phases]
+**Web-Browsing:** [included/excluded] - Integration points: [specific phases] **File I/O:**
+[included/excluded] - Integration points: [specific phases] **Sub-Agents:** [included/excluded] -
+Integration points: [specific phases] **Sub-Processes:** [included/excluded] - Integration points:
+[specific phases]
 
 ### Tool-Memory
 
@@ -120,12 +130,14 @@ Display: **Select an Option:** [C] Continue to Memory Configuration [M] Modify C
 
 #### Menu Handling Logic:
 
-- IF C: Append core tools configuration to {workflowPlanFile}, update frontmatter, then load {nextStepFile}
+- IF C: Append core tools configuration to {workflowPlanFile}, update frontmatter, then load
+  {nextStepFile}
 - IF M: Return to tool configuration
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and core tools are documented will you load {nextStepFile} to configure memory requirements.
+ONLY WHEN C is selected and core tools are documented will you load {nextStepFile} to configure
+memory requirements.
 
 ---
 

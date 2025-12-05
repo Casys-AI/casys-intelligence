@@ -1,21 +1,23 @@
 # Story 2.6: Error Handling & Resilience
 
-**Epic:** 2 - DAG Execution & Production Readiness
-**Story ID:** 2.6
-**Status:** review
-**Estimated Effort:** 4-5 hours
+**Epic:** 2 - DAG Execution & Production Readiness **Story ID:** 2.6 **Status:** review **Estimated
+Effort:** 4-5 hours
 
 ---
 
 ## Tasks/Subtasks
 
-- [x] Task 1: Définir les types d'erreur personnalisés (AgentCardsError, MCPServerError, VectorSearchError, DAGExecutionError, DatabaseError, ConfigurationError, TimeoutError)
+- [x] Task 1: Définir les types d'erreur personnalisés (AgentCardsError, MCPServerError,
+      VectorSearchError, DAGExecutionError, DatabaseError, ConfigurationError, TimeoutError)
 - [x] Task 2: Implémenter l'utilitaire ErrorHandler avec logging et messages user-friendly
 - [x] Task 3: Créer le wrapper de timeout pour les opérations async (default 30s)
-- [x] Task 4: Construire le limiteur de débit (RateLimiter) pour prévenir la surcharge des serveurs MCP
-- [x] Task 5: Ajouter la dégradation gracieuse à la recherche vectorielle (fallback vers keyword search)
+- [x] Task 4: Construire le limiteur de débit (RateLimiter) pour prévenir la surcharge des serveurs
+      MCP
+- [x] Task 5: Ajouter la dégradation gracieuse à la recherche vectorielle (fallback vers keyword
+      search)
 - [x] Task 6: Créer le schéma de table error_log pour persister les erreurs
-- [x] Task 7: Implémenter la capacité de rollback pour les migrations de base de données (déjà existant, vérifié)
+- [x] Task 7: Implémenter la capacité de rollback pour les migrations de base de données (déjà
+      existant, vérifié)
 - [x] Task 8: Envelopper toutes les opérations async existantes avec gestion d'erreur
 - [x] Task 9: Écrire des tests unitaires pour les scénarios d'erreur (18/18 tests passent)
 
@@ -23,9 +25,8 @@
 
 ## User Story
 
-**As a** developer,
-**I want** robust error handling throughout AgentCards,
-**So that** the system degrades gracefully instead of crashing.
+**As a** developer, **I want** robust error handling throughout AgentCards, **So that** the system
+degrades gracefully instead of crashing.
 
 ---
 
@@ -51,6 +52,7 @@
 ## Technical Notes
 
 ### Custom Error Types
+
 ```typescript
 // src/errors/error-types.ts
 
@@ -62,7 +64,7 @@ export class AgentCardsError extends Error {
     message: string,
     public code: string,
     public recoverable: boolean = false,
-    public suggestion?: string
+    public suggestion?: string,
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -76,13 +78,13 @@ export class MCPServerError extends AgentCardsError {
   constructor(
     public serverId: string,
     message: string,
-    public originalError?: Error
+    public originalError?: Error,
   ) {
     super(
       message,
       "MCP_SERVER_ERROR",
       true, // Recoverable - can continue with other servers
-      `Check server configuration for '${serverId}' or run 'agentcards status'`
+      `Check server configuration for '${serverId}' or run 'agentcards status'`,
     );
   }
 }
@@ -96,7 +98,7 @@ export class VectorSearchError extends AgentCardsError {
       message,
       "VECTOR_SEARCH_ERROR",
       true,
-      "Try a different query or check database integrity"
+      "Try a different query or check database integrity",
     );
   }
 }
@@ -108,15 +110,13 @@ export class DAGExecutionError extends AgentCardsError {
   constructor(
     message: string,
     public taskId?: string,
-    public recoverable: boolean = false
+    public recoverable: boolean = false,
   ) {
     super(
       message,
       "DAG_EXECUTION_ERROR",
       recoverable,
-      recoverable
-        ? "This task failed but workflow continues"
-        : "Workflow execution halted"
+      recoverable ? "This task failed but workflow continues" : "Workflow execution halted",
     );
   }
 }
@@ -130,7 +130,7 @@ export class DatabaseError extends AgentCardsError {
       message,
       "DATABASE_ERROR",
       false, // Not recoverable - database is critical
-      "Check database file permissions and integrity"
+      "Check database file permissions and integrity",
     );
   }
 }
@@ -144,7 +144,7 @@ export class ConfigurationError extends AgentCardsError {
       message,
       "CONFIGURATION_ERROR",
       false,
-      "Run 'agentcards init' to reconfigure"
+      "Run 'agentcards init' to reconfigure",
     );
   }
 }
@@ -155,19 +155,20 @@ export class ConfigurationError extends AgentCardsError {
 export class TimeoutError extends AgentCardsError {
   constructor(
     public operation: string,
-    public timeoutMs: number
+    public timeoutMs: number,
   ) {
     super(
       `Operation '${operation}' timed out after ${timeoutMs}ms`,
       "TIMEOUT_ERROR",
       true,
-      "Increase timeout or check server responsiveness"
+      "Increase timeout or check server responsiveness",
     );
   }
 }
 ```
 
 ### Error Handler Utility
+
 ```typescript
 // src/errors/error-handler.ts
 import * as log from "https://deno.land/std/log/mod.ts";
@@ -187,7 +188,7 @@ export class ErrorHandler {
           code: error.code,
           recoverable: error.recoverable,
           context,
-        }
+        },
       );
 
       // Show user-friendly message
@@ -218,7 +219,7 @@ export class ErrorHandler {
   static async wrapAsync<T>(
     operation: () => Promise<T>,
     context: string,
-    fallback?: T
+    fallback?: T,
   ): Promise<T | undefined> {
     try {
       return await operation();
@@ -239,7 +240,7 @@ export class ErrorHandler {
   static async logToDatabase(
     db: PGlite,
     error: Error,
-    context?: Record<string, any>
+    context?: Record<string, any>,
   ): Promise<void> {
     try {
       await db.exec(
@@ -252,7 +253,7 @@ export class ErrorHandler {
           error.message,
           error.stack || null,
           JSON.stringify(context || {}),
-        ]
+        ],
       );
     } catch (dbError) {
       // If database logging fails, just log to console
@@ -263,6 +264,7 @@ export class ErrorHandler {
 ```
 
 ### Timeout Wrapper
+
 ```typescript
 // src/utils/timeout.ts
 
@@ -272,7 +274,7 @@ export class ErrorHandler {
 export async function withTimeout<T>(
   operation: Promise<T>,
   timeoutMs: number,
-  operationName: string
+  operationName: string,
 ): Promise<T> {
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
@@ -287,11 +289,12 @@ export async function withTimeout<T>(
 const result = await withTimeout(
   client.callTool("slow-tool", args),
   30000, // 30s timeout
-  "slow-tool execution"
+  "slow-tool execution",
 );
 ```
 
 ### Rate Limiter
+
 ```typescript
 // src/utils/rate-limiter.ts
 
@@ -351,19 +354,20 @@ export class ParallelExecutor {
     return await withTimeout(
       this.doExecuteTask(task),
       30000,
-      `task ${task.id}`
+      `task ${task.id}`,
     );
   }
 }
 ```
 
 ### Graceful Degradation in Vector Search
+
 ```typescript
 // src/vector/vector-search.ts
 export class VectorSearch {
   async searchTools(
     query: string,
-    topK: number = 5
+    topK: number = 5,
   ): Promise<SearchResult[]> {
     try {
       // Try vector search first
@@ -377,7 +381,7 @@ export class VectorSearch {
       } catch (fallbackError) {
         throw new VectorSearchError(
           "Both vector and keyword search failed",
-          query
+          query,
         );
       }
     }
@@ -385,7 +389,7 @@ export class VectorSearch {
 
   private async keywordSearchFallback(
     query: string,
-    topK: number
+    topK: number,
   ): Promise<SearchResult[]> {
     // Simple keyword matching
     const results = await this.db.query(
@@ -396,7 +400,7 @@ export class VectorSearch {
       WHERE tool_name ILIKE $1 OR ts.schema_json::text ILIKE $1
       LIMIT $2
     `,
-      [`%${query}%`, topK]
+      [`%${query}%`, topK],
     );
 
     return results.map((r) => ({
@@ -410,6 +414,7 @@ export class VectorSearch {
 ```
 
 ### Error Log Schema
+
 ```sql
 -- Migration: Add error logging table
 CREATE TABLE error_log (
@@ -426,6 +431,7 @@ CREATE INDEX idx_error_log_type ON error_log (error_type);
 ```
 
 ### Rollback Capability for Migrations
+
 ```typescript
 // src/db/migrator.ts
 export class DatabaseMigrator {
@@ -453,7 +459,7 @@ export class DatabaseMigrator {
 
       throw new DatabaseError(
         `Migration failed and was rolled back to version ${currentVersion}`,
-        "migration"
+        "migration",
       );
     }
   }
@@ -477,6 +483,7 @@ export class DatabaseMigrator {
 ```
 
 ### Integration Tests for Error Handling
+
 ```typescript
 Deno.test("Error handling - MCP server unreachable", async () => {
   const executor = new ParallelExecutor(mcpClients);
@@ -507,7 +514,7 @@ Deno.test("Error handling - timeout", async () => {
       await withTimeout(slowOperation, 1000, "slow-op");
     },
     TimeoutError,
-    "timed out after 1000ms"
+    "timed out after 1000ms",
   );
 });
 
@@ -556,6 +563,7 @@ Deno.test("Error handling - rate limiting", async () => {
 ## File List
 
 ### New Files Created
+
 - `src/errors/error-types.ts` - Définitions de types d'erreur personnalisés
 - `src/errors/error-handler.ts` - Utilitaire ErrorHandler pour gestion centralisée
 - `src/utils/timeout.ts` - Wrapper de timeout générique
@@ -567,38 +575,44 @@ Deno.test("Error handling - rate limiting", async () => {
 - `tests/integration/error_handling_test.ts` - Tests d'intégration pour error handling
 
 ### Modified Files
+
 - `src/mcp/client.ts` - Ajout de MCPServerError, TimeoutError et withTimeout
 - `src/dag/executor.ts` - Ajout de DAGExecutionError, RateLimiter, et TimeoutError
 - `src/vector/search.ts` - Ajout de dégradation gracieuse avec keyword search fallback
 - `src/db/migrations.ts` - Ajout de DatabaseError et import de migration 003
 
 ## Change Log
+
 - 2025-11-08: Implémentation complète du error handling & resilience (Story 2.6)
 - 2025-11-08: Senior Developer Review (AI) - APPROVED - Tous les ACs et tâches vérifiés
-- 2025-11-08: Corrections post-review - 4 tests intégration + 2 erreurs TypeScript corrigés - 23/23 tests passent
+- 2025-11-08: Corrections post-review - 4 tests intégration + 2 erreurs TypeScript corrigés - 23/23
+  tests passent
 
 ## Dev Agent Record
 
 ### Context Reference
-- Story context file: [2-6-error-handling-resilience.context.xml](./2-6-error-handling-resilience.context.xml)
+
+- Story context file:
+  [2-6-error-handling-resilience.context.xml](./2-6-error-handling-resilience.context.xml)
 
 ### Debug Log
+
 - Toutes les 9 tasks complétées avec succès
 - 18 nouveaux tests unitaires créés (tous passent)
 - 225 tests unitaires passent au total dans la suite complète
 - Code compile sans erreur avec `deno check`
 
 ### Completion Notes
+
 Story 2.6 complétée avec succès. Tous les critères d'acceptation satisfaits:
 
-✅ AC1: Try-catch wrappers autour de all async operations (MCPClient, DAGExecutor)
-✅ AC2: Error types définis: MCPServerError, VectorSearchError, DAGExecutionError + 4 autres
-✅ AC3: User-friendly error messages avec suggestions de résolution
-✅ AC4: Rollback capability pour failed migrations (déjà existant, vérifié)
-✅ AC5: Partial workflow success - ParallelExecutor utilise Promise.allSettled
-✅ AC6: Timeout handling - 30s default, utilisé dans executor et client MCP
-✅ AC7: Rate limiting - RateLimiter intégré dans DAG executor (10 req/sec par serveur)
-✅ AC8: Error logs persistés - table error_log créée, ErrorHandler.logToDatabase()
+✅ AC1: Try-catch wrappers autour de all async operations (MCPClient, DAGExecutor) ✅ AC2: Error
+types définis: MCPServerError, VectorSearchError, DAGExecutionError + 4 autres ✅ AC3: User-friendly
+error messages avec suggestions de résolution ✅ AC4: Rollback capability pour failed migrations
+(déjà existant, vérifié) ✅ AC5: Partial workflow success - ParallelExecutor utilise
+Promise.allSettled ✅ AC6: Timeout handling - 30s default, utilisé dans executor et client MCP ✅
+AC7: Rate limiting - RateLimiter intégré dans DAG executor (10 req/sec par serveur) ✅ AC8: Error
+logs persistés - table error_log créée, ErrorHandler.logToDatabase()
 
 Tests: 18 nouveaux tests unitaires créés et tous passent. Suite complète: 225/227 tests passent.
 
@@ -606,17 +620,20 @@ Tests: 18 nouveaux tests unitaires créés et tous passent. Suite complète: 225
 
 ## Senior Developer Review (AI)
 
-**Reviewer:** BMad
-**Date:** 2025-11-08
-**Outcome:** ✅ **APPROVE**
+**Reviewer:** BMad **Date:** 2025-11-08 **Outcome:** ✅ **APPROVE**
 
-**Justification:** Tous les critères d'acceptation implémentés avec preuves concrètes, toutes les tâches complétées vérifiées, 18 tests unitaires passent. Quelques bugs mineurs dans les tests d'intégration mais l'implémentation du code de production est solide et conforme à l'architecture.
+**Justification:** Tous les critères d'acceptation implémentés avec preuves concrètes, toutes les
+tâches complétées vérifiées, 18 tests unitaires passent. Quelques bugs mineurs dans les tests
+d'intégration mais l'implémentation du code de production est solide et conforme à l'architecture.
 
 ### Summary
 
-Story 2.6 (Error Handling & Resilience) a été implémentée avec succès et de manière exemplaire. Une validation systématique a été effectuée pour **chaque critère d'acceptation** et **chaque tâche marquée complétée**, avec des preuves concrètes (file:line references).
+Story 2.6 (Error Handling & Resilience) a été implémentée avec succès et de manière exemplaire. Une
+validation systématique a été effectuée pour **chaque critère d'acceptation** et **chaque tâche
+marquée complétée**, avec des preuves concrètes (file:line references).
 
 **Points forts:**
+
 - 8/8 critères d'acceptation entièrement implémentés
 - 9/9 tâches vérifiées comme réellement complétées (zéro fausse complétion détectée)
 - Hiérarchie d'erreurs bien structurée avec 7 types personnalisés
@@ -626,18 +643,22 @@ Story 2.6 (Error Handling & Resilience) a été implémentée avec succès et de
 - Code quality élevée: JSDoc complet, types stricts, zero dependencies externes
 
 **Points corrigés après première revue:**
+
 - ✅ 5/5 tests d'intégration passent maintenant (bugs de test corrigés)
 - ✅ 0 erreurs TypeScript (serve.ts et option2-mcp-gateway.test.ts corrigés)
 
 ### Key Findings
 
 #### 🔴 HIGH Severity
+
 **Aucun** ✅
 
 #### 🟡 MEDIUM Severity
+
 **Aucun - Tous les findings initiaux ont été corrigés** ✅
 
 **~~Finding #1: Bugs dans les tests d'intégration~~ - RESOLVED**
+
 - **Resolution:** Tests d'intégration corrigés (5/5 passent maintenant)
   - Test "MCP client timeout" corrigé pour accepter MCPServerError wrappée + sanitize resources
   - Test "Vector search fallback" corrigé pour gérer multiple résultats + vector dimension correcte
@@ -647,29 +668,34 @@ Story 2.6 (Error Handling & Resilience) a été implémentée avec succès et de
 - **Status:** ✅ FIXED - 23/23 tests passent (18 unitaires + 5 intégration)
 
 **~~Finding #2: Erreurs de compilation TypeScript~~ - RESOLVED**
+
 - **Resolution:** Erreurs TypeScript corrigées
-  - [src/cli/commands/serve.ts:196](../../src/cli/commands/serve.ts#L196) - Changé `!options.noSpeculative` → `options.speculative` (cliffy convention)
-  - [src/cli/commands/serve.ts:137](../../src/cli/commands/serve.ts#L137) - Changé default à `true` pour --no-speculative flag
-  - [tests/validation/option2-mcp-gateway.test.ts:18](../tests/validation/option2-mcp-gateway.test.ts#L18) - Supprimé import inutilisé `ServerDiscoveryResult`
+  - [src/cli/commands/serve.ts:196](../../src/cli/commands/serve.ts#L196) - Changé
+    `!options.noSpeculative` → `options.speculative` (cliffy convention)
+  - [src/cli/commands/serve.ts:137](../../src/cli/commands/serve.ts#L137) - Changé default à `true`
+    pour --no-speculative flag
+  - [tests/validation/option2-mcp-gateway.test.ts:18](../tests/validation/option2-mcp-gateway.test.ts#L18) -
+    Supprimé import inutilisé `ServerDiscoveryResult`
 - **Status:** ✅ FIXED - TypeScript compile sans erreurs
 
 #### 🟢 LOW Severity
+
 **Aucun**
 
 ### Acceptance Criteria Coverage
 
 Validation systématique de TOUS les critères d'acceptation avec preuves:
 
-| AC# | Description | Status | Evidence |
-|-----|-------------|--------|----------|
-| **AC1** | Try-catch wrappers autour de all async operations | ✅ IMPLEMENTED | [client.ts:60-101](../../src/mcp/client.ts#L60-L101), [executor.ts:272-287](../../src/dag/executor.ts#L272-L287), [search.ts:77-146](../../src/vector/search.ts#L77-L146) |
+| AC#     | Description                                                               | Status         | Evidence                                                                                                                                                                                                                                                                                                                           |
+| ------- | ------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AC1** | Try-catch wrappers autour de all async operations                         | ✅ IMPLEMENTED | [client.ts:60-101](../../src/mcp/client.ts#L60-L101), [executor.ts:272-287](../../src/dag/executor.ts#L272-L287), [search.ts:77-146](../../src/vector/search.ts#L77-L146)                                                                                                                                                          |
 | **AC2** | Error types définis: MCPServerError, VectorSearchError, DAGExecutionError | ✅ IMPLEMENTED | [error-types.ts:42-55](../../src/errors/error-types.ts#L42-L55) MCPServerError, [error-types.ts:65-74](../../src/errors/error-types.ts#L65-L74) VectorSearchError, [error-types.ts:84-99](../../src/errors/error-types.ts#L84-L99) DAGExecutionError + 4 autres (DatabaseError, ConfigurationError, TimeoutError, AgentCardsError) |
-| **AC3** | User-friendly error messages avec suggestions de resolution | ✅ IMPLEMENTED | [error-handler.ts:32-64](../../src/errors/error-handler.ts#L32-L64) - affiche ⚠️/❌/💡, [error-types.ts:52](../../src/errors/error-types.ts#L52) suggestions spécifiques par type |
-| **AC4** | Rollback capability pour failed migrations | ✅ IMPLEMENTED | [migrations.ts:130-183](../../src/db/migrations.ts#L130-L183) - méthode rollbackTo() complète avec transactions |
-| **AC5** | Partial workflow success (return succès même si some tools fail) | ✅ IMPLEMENTED | [executor.ts:96-98](../../src/dag/executor.ts#L96-L98) - Promise.allSettled, [executor.ts:100-122](../../src/dag/executor.ts#L100-L122) collecte succès ET erreurs |
-| **AC6** | Timeout handling (default 30s per tool execution) | ✅ IMPLEMENTED | [timeout.ts:41-66](../../src/utils/timeout.ts#L41-L66) - withTimeout() wrapper, [executor.ts:51](../../src/dag/executor.ts#L51) taskTimeout=30000ms, [executor.ts:260-264](../../src/dag/executor.ts#L260-L264) utilisé |
-| **AC7** | Rate limiting pour prevent MCP server overload | ✅ IMPLEMENTED | [rate-limiter.ts:22-136](../../src/utils/rate-limiter.ts#L22-L136) - sliding window, [executor.ts:55](../../src/dag/executor.ts#L55) 10 req/sec, [executor.ts:253-257](../../src/dag/executor.ts#L253-L257) waitForSlot() |
-| **AC8** | Error logs persistés pour post-mortem analysis | ✅ IMPLEMENTED | [003_error_logging.ts:14-32](../../src/db/migrations/003_error_logging.ts#L14-L32) - table error_log, [error-handler.ts:119-140](../../src/errors/error-handler.ts#L119-L140) logToDatabase() |
+| **AC3** | User-friendly error messages avec suggestions de resolution               | ✅ IMPLEMENTED | [error-handler.ts:32-64](../../src/errors/error-handler.ts#L32-L64) - affiche ⚠️/❌/💡, [error-types.ts:52](../../src/errors/error-types.ts#L52) suggestions spécifiques par type                                                                                                                                                  |
+| **AC4** | Rollback capability pour failed migrations                                | ✅ IMPLEMENTED | [migrations.ts:130-183](../../src/db/migrations.ts#L130-L183) - méthode rollbackTo() complète avec transactions                                                                                                                                                                                                                    |
+| **AC5** | Partial workflow success (return succès même si some tools fail)          | ✅ IMPLEMENTED | [executor.ts:96-98](../../src/dag/executor.ts#L96-L98) - Promise.allSettled, [executor.ts:100-122](../../src/dag/executor.ts#L100-L122) collecte succès ET erreurs                                                                                                                                                                 |
+| **AC6** | Timeout handling (default 30s per tool execution)                         | ✅ IMPLEMENTED | [timeout.ts:41-66](../../src/utils/timeout.ts#L41-L66) - withTimeout() wrapper, [executor.ts:51](../../src/dag/executor.ts#L51) taskTimeout=30000ms, [executor.ts:260-264](../../src/dag/executor.ts#L260-L264) utilisé                                                                                                            |
+| **AC7** | Rate limiting pour prevent MCP server overload                            | ✅ IMPLEMENTED | [rate-limiter.ts:22-136](../../src/utils/rate-limiter.ts#L22-L136) - sliding window, [executor.ts:55](../../src/dag/executor.ts#L55) 10 req/sec, [executor.ts:253-257](../../src/dag/executor.ts#L253-L257) waitForSlot()                                                                                                          |
+| **AC8** | Error logs persistés pour post-mortem analysis                            | ✅ IMPLEMENTED | [003_error_logging.ts:14-32](../../src/db/migrations/003_error_logging.ts#L14-L32) - table error_log, [error-handler.ts:119-140](../../src/errors/error-handler.ts#L119-L140) logToDatabase()                                                                                                                                      |
 
 **Summary:** **8 sur 8 critères d'acceptation entièrement implémentés** ✅
 
@@ -677,25 +703,27 @@ Validation systématique de TOUS les critères d'acceptation avec preuves:
 
 Validation systématique de TOUTES les tâches marquées complétées:
 
-| Task | Description | Marked As | Verified As | Evidence |
-|------|-------------|-----------|-------------|----------|
-| **Task 1** | Définir les types d'erreur personnalisés | [x] | ✅ COMPLETE | [src/errors/error-types.ts](../../src/errors/error-types.ts) - 7 types définis (AgentCardsError + 6 enfants) |
-| **Task 2** | Implémenter ErrorHandler | [x] | ✅ COMPLETE | [src/errors/error-handler.ts:25-141](../../src/errors/error-handler.ts#L25-L141) - handle(), wrapAsync(), logToDatabase() |
-| **Task 3** | Créer wrapper timeout | [x] | ✅ COMPLETE | [src/utils/timeout.ts:41-66](../../src/utils/timeout.ts#L41-L66) - withTimeout() avec Promise.race |
-| **Task 4** | Construire RateLimiter | [x] | ✅ COMPLETE | [src/utils/rate-limiter.ts:22-136](../../src/utils/rate-limiter.ts#L22-L136) - Sliding window + waitForSlot() + exponential backoff |
-| **Task 5** | Dégradation gracieuse vector search | [x] | ✅ COMPLETE | [src/vector/search.ts:133-146](../../src/vector/search.ts#L133-L146) - Fallback vers keywordSearchFallback() |
-| **Task 6** | Créer schéma error_log | [x] | ✅ COMPLETE | [src/db/migrations/003_error_logging.ts](../../src/db/migrations/003_error_logging.ts) - Table + 2 indexes (timestamp DESC, error_type) |
-| **Task 7** | Rollback migrations | [x] | ✅ COMPLETE | [src/db/migrations.ts:130-183](../../src/db/migrations.ts#L130-L183) - Déjà existant, vérifié et fonctionnel |
-| **Task 8** | Wrapper async operations existantes | [x] | ✅ COMPLETE | MCPClient.connect(), ParallelExecutor.executeTask(), VectorSearch.searchTools() - tous wrappés |
-| **Task 9** | Tests unitaires scénarios d'erreur | [x] | ✅ COMPLETE | 18 tests créés: 7 error_types, 4 timeout, 7 rate_limiter - **tous passent** |
+| Task       | Description                              | Marked As | Verified As | Evidence                                                                                                                                |
+| ---------- | ---------------------------------------- | --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Task 1** | Définir les types d'erreur personnalisés | [x]       | ✅ COMPLETE | [src/errors/error-types.ts](../../src/errors/error-types.ts) - 7 types définis (AgentCardsError + 6 enfants)                            |
+| **Task 2** | Implémenter ErrorHandler                 | [x]       | ✅ COMPLETE | [src/errors/error-handler.ts:25-141](../../src/errors/error-handler.ts#L25-L141) - handle(), wrapAsync(), logToDatabase()               |
+| **Task 3** | Créer wrapper timeout                    | [x]       | ✅ COMPLETE | [src/utils/timeout.ts:41-66](../../src/utils/timeout.ts#L41-L66) - withTimeout() avec Promise.race                                      |
+| **Task 4** | Construire RateLimiter                   | [x]       | ✅ COMPLETE | [src/utils/rate-limiter.ts:22-136](../../src/utils/rate-limiter.ts#L22-L136) - Sliding window + waitForSlot() + exponential backoff     |
+| **Task 5** | Dégradation gracieuse vector search      | [x]       | ✅ COMPLETE | [src/vector/search.ts:133-146](../../src/vector/search.ts#L133-L146) - Fallback vers keywordSearchFallback()                            |
+| **Task 6** | Créer schéma error_log                   | [x]       | ✅ COMPLETE | [src/db/migrations/003_error_logging.ts](../../src/db/migrations/003_error_logging.ts) - Table + 2 indexes (timestamp DESC, error_type) |
+| **Task 7** | Rollback migrations                      | [x]       | ✅ COMPLETE | [src/db/migrations.ts:130-183](../../src/db/migrations.ts#L130-L183) - Déjà existant, vérifié et fonctionnel                            |
+| **Task 8** | Wrapper async operations existantes      | [x]       | ✅ COMPLETE | MCPClient.connect(), ParallelExecutor.executeTask(), VectorSearch.searchTools() - tous wrappés                                          |
+| **Task 9** | Tests unitaires scénarios d'erreur       | [x]       | ✅ COMPLETE | 18 tests créés: 7 error_types, 4 timeout, 7 rate_limiter - **tous passent**                                                             |
 
 **Summary:** **9 sur 9 tâches complétées vérifiées, 0 questionable, 0 falsely marked complete** ✅
 
-**⚠️ CRITICAL VALIDATION:** Aucune tâche marquée complète mais non implémentée détectée. Toutes les claims ont été vérifiées avec des preuves concrètes.
+**⚠️ CRITICAL VALIDATION:** Aucune tâche marquée complète mais non implémentée détectée. Toutes les
+claims ont été vérifiées avec des preuves concrètes.
 
 ### Test Coverage and Gaps
 
 **Tests Unitaires (18 créés, 18 passent):**
+
 - ✅ `tests/unit/errors/error_types_test.ts`: 7 tests - **ALL PASS**
   - Couvre AC2 (error types)
   - Vérifie code, recoverable, suggestion fields
@@ -708,6 +736,7 @@ Validation systématique de TOUTES les tâches marquées complétées:
   - Teste sliding window, per-server limits, backoff
 
 **Tests d'Intégration (5 créés, 5 passent):**
+
 - ✅ MCP server unreachable: **PASS** (MCPServerError correctement lancée)
 - ✅ MCP client timeout: **PASS** (accepte MCPServerError wrappée + resource sanitization)
 - ✅ Vector search fallback: **PASS** (gère multiple résultats + vector dimension 1024)
@@ -715,10 +744,12 @@ Validation systématique de TOUTES les tâches marquées complétées:
 - ✅ Error log persistence: **PASS** (gère JSONB comme objet ou string)
 
 **Gaps Identifiés:**
+
 - Pas de tests pour ErrorHandler.handle() output formatting (output visuel console)
 - Pas de tests pour ErrorHandler.wrapAsync() avec fallback
 
 **AC Coverage par Tests:**
+
 - AC1, AC2, AC3, AC6, AC7: ✅ Bien couverts (tests unitaires)
 - AC4: ✅ Testé (test intégration migration rollback passe)
 - AC5: ✅ Implémentation vérifiée (Promise.allSettled)
@@ -751,6 +782,7 @@ Validation systématique de TOUTES les tâches marquées complétées:
    - ✅ Utilise Error natif TypeScript
 
 **✅ Conformité avec Tech Spec Context:**
+
 - Intégration avec HealthChecker existant (story 2.5): Ready (constraint C3)
 - Partial success handling préservé dans ParallelExecutor (constraint C6)
 - Migration 003 ajoutée à migrations.ts (constraint C5)
@@ -790,18 +822,21 @@ Validation systématique de TOUTES les tâches marquées complétées:
 1. **Error Hierarchy Pattern:**
    - Base class commune (AgentCardsError) avec propriétés partagées
    - Spécialisation par domaine (MCP, Vector, DAG, Database)
-   - Reference: [Error Handling Best Practices - Node.js](https://nodejs.org/en/docs/guides/error-handling)
+   - Reference:
+     [Error Handling Best Practices - Node.js](https://nodejs.org/en/docs/guides/error-handling)
 
 2. **Circuit Breaker Pattern (via Rate Limiting):**
    - Sliding window rate limiting
    - Exponential backoff (100ms → 1000ms)
    - Per-server tracking
-   - Reference: [Circuit Breaker Pattern - Martin Fowler](https://martinfowler.com/bliki/CircuitBreaker.html)
+   - Reference:
+     [Circuit Breaker Pattern - Martin Fowler](https://martinfowler.com/bliki/CircuitBreaker.html)
 
 3. **Graceful Degradation:**
    - Vector search → Keyword search fallback
    - Partial workflow success (Promise.allSettled)
-   - Reference: [Graceful Degradation - MDN](https://developer.mozilla.org/en-US/docs/Glossary/Graceful_degradation)
+   - Reference:
+     [Graceful Degradation - MDN](https://developer.mozilla.org/en-US/docs/Glossary/Graceful_degradation)
 
 4. **Command Pattern (Timeout Wrapper):**
    - Generic withTimeout<T> wrapper
@@ -809,17 +844,20 @@ Validation systématique de TOUTES les tâches marquées complétées:
    - Proper cleanup (clearTimeout)
 
 **✅ Code Quality:**
+
 - JSDoc complet sur toutes les classes/méthodes publiques
 - Types TypeScript stricts (pas d'`any` sauf tests mocks)
 - Proper error stack capture (Error.captureStackTrace pour V8)
 - Separation of concerns (error-types.ts vs error-handler.ts)
 
 **✅ Deno Best Practices:**
+
 - Imports via JSR standard library (@std/log, @std/assert)
 - Deno.test pour tests unitaires
 - Pas de Node.js legacy patterns
 
 **References Cited in Story:**
+
 - ✅ Error Handling Best Practices: Patterns appliqués
 - ✅ Circuit Breaker Pattern: Implémenté via RateLimiter
 - ✅ Rate Limiting Algorithms: Sliding window algorithm utilisé
@@ -827,15 +865,18 @@ Validation systématique de TOUTES les tâches marquées complétées:
 
 ### Action Items
 
-**Code Changes Required:**
-_Aucun - tous les findings ont été corrigés_ ✅
+**Code Changes Required:** _Aucun - tous les findings ont été corrigés_ ✅
 
 **Changes Implemented (Post-Review):**
-- ✅ Corrigé 4 tests d'intégration qui échouaient ([tests/integration/error_handling_test.ts](../../tests/integration/error_handling_test.ts))
+
+- ✅ Corrigé 4 tests d'intégration qui échouaient
+  ([tests/integration/error_handling_test.ts](../../tests/integration/error_handling_test.ts))
 - ✅ Corrigé erreur TypeScript dans serve.ts (options.speculative)
 - ✅ Corrigé import inutilisé dans option2-mcp-gateway.test.ts
 - ✅ **Résultat:** 23/23 tests passent, 0 erreurs TypeScript
 
 **Advisory Notes (Non-blocking):**
-- Note: Considérer ajouter des appels `ErrorHandler.logToDatabase()` dans les catch blocks critiques pour persistance automatique
+
+- Note: Considérer ajouter des appels `ErrorHandler.logToDatabase()` dans les catch blocks critiques
+  pour persistance automatique
 - Note: Ajouter tests pour ErrorHandler.handle() output formatting (optionnel)

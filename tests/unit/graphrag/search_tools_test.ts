@@ -9,10 +9,10 @@
  * - AC5: Adaptive alpha based on graph density
  */
 
-import { assertEquals, assertExists, assert } from "@std/assert";
+import { assert, assertEquals, assertExists } from "@std/assert";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { PGliteClient } from "../../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 async function createTestDb(): Promise<PGliteClient> {
   const db = new PGliteClient("memory://");
@@ -37,14 +37,14 @@ async function insertTestTools(db: PGliteClient): Promise<void> {
     await db.query(
       `INSERT INTO tool_schema (tool_id, server_id, name, description, input_schema)
        VALUES ($1, $2, $3, $4, $5)`,
-      [tool.id, tool.server, tool.name, `${tool.name} description`, "{}"]
+      [tool.id, tool.server, tool.name, `${tool.name} description`, "{}"],
     );
 
     // Insert dummy embedding (1024 dimensions for BGE-M3)
     const embedding = new Array(1024).fill(0.1);
     await db.query(
       `INSERT INTO tool_embedding (tool_id, server_id, tool_name, embedding) VALUES ($1, $2, $3, $4)`,
-      [tool.id, tool.server, tool.name, JSON.stringify(embedding)]
+      [tool.id, tool.server, tool.name, JSON.stringify(embedding)],
     );
   }
 }
@@ -193,7 +193,7 @@ Deno.test("Adaptive alpha - changes with graph density", async () => {
 
     assert(
       alpha >= testCase.expectedAlphaRange[0] && alpha <= testCase.expectedAlphaRange[1],
-      `Alpha ${alpha} should be in range ${testCase.expectedAlphaRange} for ${testCase.edges} edges`
+      `Alpha ${alpha} should be in range ${testCase.expectedAlphaRange} for ${testCase.edges} edges`,
     );
   }
 

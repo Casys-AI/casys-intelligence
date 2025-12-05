@@ -17,7 +17,7 @@ import { createSpeculationCommand } from "./cli/commands/speculation.ts";
 import { setupLogger } from "./telemetry/index.ts";
 import { createDefaultClient } from "./db/client.ts";
 import { TelemetryService } from "./telemetry/telemetry.ts";
-import { MigrationRunner, getAllMigrations } from "./db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "./db/migrations.ts";
 import { initSentry } from "./telemetry/sentry.ts";
 
 /**
@@ -50,7 +50,7 @@ async function handleTelemetryFlags(): Promise<void> {
   const enabled = hasTelemetryFlag;
   await telemetry.setEnabled(enabled);
 
-  console.log(`✓ Telemetry ${enabled ? 'enabled' : 'disabled'}`);
+  console.log(`✓ Telemetry ${enabled ? "enabled" : "disabled"}`);
 
   await db.close();
 }

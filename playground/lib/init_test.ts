@@ -4,15 +4,8 @@
  * @module playground/lib/init_test
  */
 
-import {
-  assertEquals,
-  assertExists,
-  assert,
-} from "jsr:@std/assert@1.0.11";
-import {
-  ensurePlaygroundReady,
-  getPlaygroundDbPath,
-} from "./init.ts";
+import { assert, assertEquals, assertExists } from "jsr:@std/assert@1.0.11";
+import { ensurePlaygroundReady, getPlaygroundDbPath } from "./init.ts";
 
 // ============================================================================
 // Unit Tests - getPlaygroundDbPath
@@ -41,7 +34,10 @@ Deno.test("getPlaygroundDbPath - falls back to default when env var not set", ()
 
   try {
     const path = getPlaygroundDbPath();
-    assert(path.endsWith(".agentcards.db"), `Expected path to end with .agentcards.db, got: ${path}`);
+    assert(
+      path.endsWith(".agentcards.db"),
+      `Expected path to end with .agentcards.db, got: ${path}`,
+    );
     assert(path.includes(".agentcards"), `Expected path to include .agentcards, got: ${path}`);
   } finally {
     if (originalValue) {
@@ -113,7 +109,10 @@ Deno.test("ensurePlaygroundReady - loads workflow templates when file exists", a
 
   assertExists(status);
   // Should have loaded some workflows
-  assert(status.workflowsLoaded > 0, `Expected workflows to be loaded, got: ${status.workflowsLoaded}`);
+  assert(
+    status.workflowsLoaded > 0,
+    `Expected workflows to be loaded, got: ${status.workflowsLoaded}`,
+  );
 });
 
 Deno.test("ensurePlaygroundReady - elapsedMs is reasonable", async () => {

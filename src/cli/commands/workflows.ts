@@ -9,7 +9,7 @@
 import { Command } from "@cliffy/command";
 import * as log from "@std/log";
 import { createDefaultClient } from "../../db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../db/migrations.ts";
 import { WorkflowSyncService } from "../../graphrag/workflow-sync.ts";
 import { WorkflowLoader } from "../../graphrag/workflow-loader.ts";
 import { getWorkflowTemplatesPath } from "../utils.ts";
@@ -193,9 +193,7 @@ function createStatsSubcommand() {
         console.log(`   User-defined (from YAML): ${stats.user}`);
         console.log(`   Learned (from executions): ${stats.learned}`);
 
-        const userPct = stats.total > 0
-          ? ((stats.user / stats.total) * 100).toFixed(1)
-          : "0.0";
+        const userPct = stats.total > 0 ? ((stats.user / stats.total) * 100).toFixed(1) : "0.0";
         console.log(`   User-defined percentage: ${userPct}%`);
 
         // Check if graph is empty

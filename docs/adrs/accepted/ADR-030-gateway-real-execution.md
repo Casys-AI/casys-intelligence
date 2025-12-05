@@ -1,11 +1,14 @@
 # ADR-030: Gateway Real Execution Implementation
 
 ## Status
+
 **Approved** - 2025-12-05 (Updated from Proposed 2025-12-04)
 
 ## Context
 
-During deployment investigation, we discovered that the `GatewayHandler` in `src/mcp/gateway-handler.ts` uses a **placeholder** for tool execution instead of actually calling MCP tools.
+During deployment investigation, we discovered that the `GatewayHandler` in
+`src/mcp/gateway-handler.ts` uses a **placeholder** for tool execution instead of actually calling
+MCP tools.
 
 ### Current State
 
@@ -28,8 +31,10 @@ private async simulateToolExecution(task: Task): Promise<unknown> {
 ### The Gap
 
 1. **DAG Suggestion works**: `DAGSuggester` correctly identifies tools and builds execution plans
-2. **Tools are indexed**: All MCP tools (playwright, filesystem, memory, etc.) are properly indexed in the graph
-3. **Confidence thresholds work**: The system correctly decides between `explicit_required`, `suggestion`, and `speculative_execution` modes
+2. **Tools are indexed**: All MCP tools (playwright, filesystem, memory, etc.) are properly indexed
+   in the graph
+3. **Confidence thresholds work**: The system correctly decides between `explicit_required`,
+   `suggestion`, and `speculative_execution` modes
 4. **Execution is simulated**: Even in `speculative_execution` mode, tools are never actually called
 
 ### Why This Matters
@@ -40,7 +45,8 @@ private async simulateToolExecution(task: Task): Promise<unknown> {
 
 ## Decision
 
-Implement real tool execution in `GatewayHandler` while **keeping simulation mode** for dry-run scenarios:
+Implement real tool execution in `GatewayHandler` while **keeping simulation mode** for dry-run
+scenarios:
 
 ### 1. Inject MCPClients into GatewayHandler
 
@@ -60,7 +66,7 @@ type ExecutionMode = "real" | "dry_run";
 
 interface GatewayConfig {
   // ... existing
-  executionMode: ExecutionMode;  // default: "real"
+  executionMode: ExecutionMode; // default: "real"
 }
 ```
 
@@ -121,16 +127,19 @@ This enables a "think before acting" pattern where the agent can explore consequ
 ## Consequences
 
 ### Positive
+
 - DAG workflows will actually execute tools (when `dry_run=false`)
 - Speculative execution becomes meaningful
 - Full end-to-end workflow automation
 - Dry-run mode preserved for safe exploration
 
 ### Negative
+
 - Increased risk with real execution (mitigated by HIL checkpoints)
 - Must handle MCP client connection failures gracefully
 
 ### Risks
+
 - Destructive operations need HIL checkpoints (existing mechanism)
 - Rate limiting for expensive operations (use existing RateLimiter)
 - Timeout handling (use existing sandbox timeout patterns)
@@ -140,21 +149,27 @@ This enables a "think before acting" pattern where the agent can explore consequ
 **Estimated effort:** ~20 LOC
 
 **Files to modify:**
-- `src/mcp/gateway-handler.ts` - Add MCPClient injection, `executeToolReal()`, `executionMode` config
+
+- `src/mcp/gateway-handler.ts` - Add MCPClient injection, `executeToolReal()`, `executionMode`
+  config
 - `src/mcp/gateway-server.ts` - Pass MCPClients to GatewayHandler constructor
 
 **Integration with Story 7.1b (ADR-032):**
-- Tool calls via `mcpClient.callTool()` are automatically traced by the Worker RPC Bridge (Story 7.1b)
+
+- Tool calls via `mcpClient.callTool()` are automatically traced by the Worker RPC Bridge (Story
+  7.1b)
 - No additional tracing code needed in `executeToolReal()`
 - Note: Original Story 7.1 `wrapMCPClient()` approach superseded by ADR-032
 
 **Related files:**
+
 - `src/dag/controlled-executor.ts` - Reference implementation for real execution
 - `src/sandbox/worker-bridge.ts` - Native tracing in RPC bridge (Story 7.1b / ADR-032)
 
 ## Future Enhancement
 
 See **ADR-031: Intelligent Dry-Run with MCP Mocking** for the evolution of dry_run mode:
+
 - Type-checking against inferred schemas (Story 7.2b)
 - Cached real responses from `capability_cache` (Story 7.5a)
 - Full pre-flight validation before execution

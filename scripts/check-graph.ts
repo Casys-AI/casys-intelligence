@@ -28,7 +28,9 @@ if (parseInt(deps[0].count as string) > 0) {
   `);
 
   for (const dep of allDeps) {
-    console.log(`  ${dep.from_tool_id} → ${dep.to_tool_id} (count: ${dep.observed_count}, score: ${dep.confidence_score})`);
+    console.log(
+      `  ${dep.from_tool_id} → ${dep.to_tool_id} (count: ${dep.observed_count}, score: ${dep.confidence_score})`,
+    );
   }
 } else {
   console.log("\n⚠️  No edges found in database");

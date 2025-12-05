@@ -1,15 +1,16 @@
 # Option D : GraphRAG-Assisted DAG Construction
 
-**Date:** 2025-11-03
-**Auteur:** BMad + User Insight
-**Concept:** Utiliser le vector store local (PGlite + pgvector) pour faire du GraphRAG et assister Claude dans la construction du DAG
+**Date:** 2025-11-03 **Auteur:** BMad + User Insight **Concept:** Utiliser le vector store local
+(PGlite + pgvector) pour faire du GraphRAG et assister Claude dans la construction du DAG
 
 ---
 
 ## 🧠 L'Insight Clé
 
 **Question posée :**
-> "Si c'est Claude qui fait le graph de dépendances, est-ce pas mieux d'avoir un GraphRAG dans notre vector store local ?"
+
+> "Si c'est Claude qui fait le graph de dépendances, est-ce pas mieux d'avoir un GraphRAG dans notre
+> vector store local ?"
 
 **Réponse : OUI ! Absolument brillant !** 🎯
 
@@ -118,6 +119,7 @@ CREATE TABLE tool_cooccurrence (
 ### Scenario : Claude veut construire workflow
 
 **Input (from Claude) :**
+
 ```json
 {
   "intent": "Read config file, parse JSON, create GitHub issue",
@@ -136,7 +138,8 @@ CREATE TABLE tool_cooccurrence (
 const intentEmbedding = await embedModel.encode(request.intent);
 
 // Query similar workflow patterns
-const similarPatterns = await db.query(`
+const similarPatterns = await db.query(
+  `
   SELECT
     wp.pattern_id,
     wp.dag_structure,
@@ -145,10 +148,13 @@ const similarPatterns = await db.query(`
   WHERE 1 - (wp.pattern_embedding <=> $1) > 0.7
   ORDER BY similarity DESC
   LIMIT 5
-`, [intentEmbedding]);
+`,
+  [intentEmbedding],
+);
 
 // Query tool dependencies
-const dependencies = await db.query(`
+const dependencies = await db.query(
+  `
   SELECT
     td.from_tool_id,
     td.to_tool_id,
@@ -159,7 +165,9 @@ const dependencies = await db.query(`
   WHERE td.from_tool_id = ANY($1)
     AND td.to_tool_id = ANY($1)
   ORDER BY td.confidence_score DESC
-`, [request.tools_considered]);
+`,
+  [request.tools_considered],
+);
 ```
 
 **Step 2 : AgentCards Suggests DAG**
@@ -178,7 +186,7 @@ const dependencies = await db.query(`
         "id": "parse",
         "tool": "json:parse",
         "depends_on": ["read"],
-        "confidence": 0.98  // High confidence based on 147 observed patterns
+        "confidence": 0.98 // High confidence based on 147 observed patterns
       },
       {
         "id": "create",
@@ -203,6 +211,7 @@ const dependencies = await db.query(`
 **Step 3 : Claude Reviews & Confirms**
 
 Claude voit la suggestion, peut :
+
 - ✅ Accept as-is
 - ⚠️ Adjust dependencies
 - ❌ Reject and provide explicit DAG
@@ -224,7 +233,7 @@ const result = await executeDAG(suggestedDAG);
 await storeWorkflowPattern({
   dag_structure: suggestedDAG,
   success: result.success,
-  execution_time_ms: result.time
+  execution_time_ms: result.time,
 });
 
 // Update dependency confidence scores
@@ -237,13 +246,13 @@ await updateDependencyStats(suggestedDAG);
 
 ### vs Option A (Explicit)
 
-| Aspect | Option A | Option D |
-|--------|----------|----------|
-| **Cognitive load Claude** | Medium-High | **Low** (suggestions) |
-| **First use** | Must learn format | Suggests patterns |
-| **Learning curve** | Steep | Gentle |
-| **Long-term efficiency** | Static | **Improves with usage** |
-| **Debugging** | Explicit DAG | Explicit + confidence scores |
+| Aspect                    | Option A          | Option D                     |
+| ------------------------- | ----------------- | ---------------------------- |
+| **Cognitive load Claude** | Medium-High       | **Low** (suggestions)        |
+| **First use**             | Must learn format | Suggests patterns            |
+| **Learning curve**        | Steep             | Gentle                       |
+| **Long-term efficiency**  | Static            | **Improves with usage**      |
+| **Debugging**             | Explicit DAG      | Explicit + confidence scores |
 
 **Winner : Option D** (meilleur UX, learning loop)
 
@@ -251,13 +260,13 @@ await updateDependencyStats(suggestedDAG);
 
 ### vs Option B (Auto-Detect Pure)
 
-| Aspect | Option B | Option D |
-|--------|----------|----------|
-| **Reliability** | Black box inference | **Transparent suggestions** |
-| **False positives** | Risk élevé | Claude can reject |
-| **Trust** | "Hope it works" | **See confidence scores** |
-| **Control** | Lost | **Claude has final say** |
-| **Learning** | Static rules | **Adaptive learning** |
+| Aspect              | Option B            | Option D                    |
+| ------------------- | ------------------- | --------------------------- |
+| **Reliability**     | Black box inference | **Transparent suggestions** |
+| **False positives** | Risk élevé          | Claude can reject           |
+| **Trust**           | "Hope it works"     | **See confidence scores**   |
+| **Control**         | Lost                | **Claude has final say**    |
+| **Learning**        | Static rules        | **Adaptive learning**       |
 
 **Winner : Option D** (control + adaptability)
 
@@ -270,12 +279,13 @@ await updateDependencyStats(suggestedDAG);
 **State :** Aucun pattern historique
 
 **Behavior :**
+
 ```typescript
 if (historicalPatterns.length === 0) {
   // Fallback to explicit mode
   return {
     message: "No patterns yet. Please provide explicit DAG.",
-    mode: "explicit_required"
+    mode: "explicit_required",
   };
 }
 ```
@@ -289,13 +299,14 @@ Claude doit construire DAG explicitement (comme Option A).
 **State :** Patterns émergent
 
 **Behavior :**
+
 ```typescript
 if (confidence > 0.85 && historicalPatterns.length > 50) {
   return {
     suggested_dag: suggestedDAG,
     confidence: 0.87,
     similar_patterns_count: 73,
-    mode: "suggestion_high_confidence"
+    mode: "suggestion_high_confidence",
   };
 }
 ```
@@ -311,13 +322,14 @@ Claude peut one-click approve.
 **State :** Système mature
 
 **Behavior :**
+
 ```typescript
 if (confidence > 0.95 && observedCount > 200) {
   return {
     suggested_dag: suggestedDAG,
     confidence: 0.97,
-    auto_apply: true,  // Optional: auto-apply if user enables
-    mode: "suggestion_very_high_confidence"
+    auto_apply: true, // Optional: auto-apply if user enables
+    mode: "suggestion_very_high_confidence",
   };
 }
 ```
@@ -334,11 +346,11 @@ Utilisateur peut opt-in "auto-apply suggestions >0.95 confidence".
 
 ```typescript
 interface ConfidenceFactors {
-  historicalFrequency: number;    // 0-1: How often this pattern observed
-  semanticSimilarity: number;     // 0-1: Vector similarity to past patterns
-  toolCooccurrence: number;       // 0-1: Tools used together frequently
-  recentSuccess: number;          // 0-1: Recent executions succeeded
-  userConfirmations: number;      // 0-1: User accepted suggestions ratio
+  historicalFrequency: number; // 0-1: How often this pattern observed
+  semanticSimilarity: number; // 0-1: Vector similarity to past patterns
+  toolCooccurrence: number; // 0-1: Tools used together frequently
+  recentSuccess: number; // 0-1: Recent executions succeeded
+  userConfirmations: number; // 0-1: User accepted suggestions ratio
 }
 
 function calculateConfidence(factors: ConfidenceFactors): number {
@@ -347,7 +359,7 @@ function calculateConfidence(factors: ConfidenceFactors): number {
     semanticSimilarity: 0.25,
     toolCooccurrence: 0.20,
     recentSuccess: 0.15,
-    userConfirmations: 0.10
+    userConfirmations: 0.10,
   };
 
   return Object.entries(factors).reduce((score, [key, value]) => {
@@ -362,11 +374,11 @@ function calculateConfidence(factors: ConfidenceFactors): number {
 
 ```typescript
 const factors = {
-  historicalFrequency: 0.89,     // Observed 147 times out of 165 total
-  semanticSimilarity: 0.92,      // Very similar to past "read then parse" patterns
-  toolCooccurrence: 0.95,        // These tools used together 95% of the time
-  recentSuccess: 0.98,           // Last 50 executions all succeeded
-  userConfirmations: 0.94        // Claude accepted 94% of suggestions
+  historicalFrequency: 0.89, // Observed 147 times out of 165 total
+  semanticSimilarity: 0.92, // Very similar to past "read then parse" patterns
+  toolCooccurrence: 0.95, // These tools used together 95% of the time
+  recentSuccess: 0.98, // Last 50 executions all succeeded
+  userConfirmations: 0.94, // Claude accepted 94% of suggestions
 };
 
 const confidence = calculateConfidence(factors);
@@ -374,7 +386,8 @@ const confidence = calculateConfidence(factors);
 ```
 
 **Interpretation :**
-- >0.95 : Auto-apply safe (if user opted in)
+
+- 0.95 : Auto-apply safe (if user opted in)
 - 0.85-0.95 : Suggest with high confidence
 - 0.70-0.85 : Suggest with caution
 - <0.70 : Fallback to explicit mode
@@ -405,8 +418,7 @@ Claude: *constructs explicit DAG manually*
 AgentCards: ✅ Executed, stored pattern for learning
 ```
 
-**Friction :** Medium (explicit mode)
-**Benefit :** Starts learning loop
+**Friction :** Medium (explicit mode) **Benefit :** Starts learning loop
 
 ---
 
@@ -438,8 +450,7 @@ Option 3: {"action": "reject", "explicit_dag": {...}}
 AgentCards: ✅ Executed, updated confidence scores
 ```
 
-**Friction :** Low (one-click confirm)
-**Benefit :** Fast workflow, learning improves
+**Friction :** Low (one-click confirm) **Benefit :** Fast workflow, learning improves
 
 ---
 
@@ -469,8 +480,7 @@ AgentCards → Claude: {
 Claude → User: "Done! (AgentCards auto-suggested workflow)"
 ```
 
-**Friction :** Zero (fully automated)
-**Benefit :** Maximum efficiency, trust established
+**Friction :** Zero (fully automated) **Benefit :** Maximum efficiency, trust established
 
 ---
 
@@ -478,15 +488,15 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 
 ### MVP Timeline Comparison
 
-| Component | Option A | Option D | Delta |
-|-----------|----------|----------|-------|
-| **DAG Parser** | 100 LOC | 100 LOC | 0 |
-| **Executor** | 200 LOC | 200 LOC | 0 |
-| **GraphRAG Schema** | 0 | 50 LOC SQL | +1 hour |
-| **Pattern Storage** | 0 | 100 LOC | +2 hours |
-| **Confidence Algo** | 0 | 150 LOC | +3 hours |
-| **Query/Suggestion** | 0 | 200 LOC | +4 hours |
-| **Total** | ~300 LOC | ~800 LOC | **+1 jour** |
+| Component            | Option A | Option D   | Delta       |
+| -------------------- | -------- | ---------- | ----------- |
+| **DAG Parser**       | 100 LOC  | 100 LOC    | 0           |
+| **Executor**         | 200 LOC  | 200 LOC    | 0           |
+| **GraphRAG Schema**  | 0        | 50 LOC SQL | +1 hour     |
+| **Pattern Storage**  | 0        | 100 LOC    | +2 hours    |
+| **Confidence Algo**  | 0        | 150 LOC    | +3 hours    |
+| **Query/Suggestion** | 0        | 200 LOC    | +4 hours    |
+| **Total**            | ~300 LOC | ~800 LOC   | **+1 jour** |
 
 **Conclusion :** Option D ajoute seulement **+1 jour** au MVP timeline !
 
@@ -495,17 +505,20 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 ### Incremental Implementation Strategy
 
 **Phase 1 (MVP Week 1) : Explicit Mode Only**
+
 - Implement Option A (explicit DAG)
 - Store executed workflows dans DB (passive learning)
 - **No suggestions yet**
 
 **Phase 2 (MVP Week 2) : Add GraphRAG Suggestions**
+
 - Implement pattern storage
 - Implement confidence calculation
 - Implement suggestion API
 - **Suggestions available, Claude can accept/reject**
 
 **Phase 3 (Post-MVP v1.1) : Auto-Pilot Mode**
+
 - Add auto-apply for high confidence (>0.95)
 - User preference toggle
 - **Fully autonomous for common workflows**
@@ -519,14 +532,17 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 ### Epic 1 Already Provides
 
 ✅ **Vector store (PGlite + pgvector)**
+
 - Tool embeddings déjà là
 - HNSW index operational
 
 ✅ **Embedding model (BGE-Large-EN-v1.5)**
+
 - Peut encoder workflow intents
 - Peut encoder DAG patterns
 
 ✅ **Semantic search (<100ms)**
+
 - Query similar patterns fast
 - P95 <100ms target maintenu
 
@@ -539,6 +555,7 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 **Story 2.1 : DAG Builder**
 
 **AC Original :**
+
 ```
 1. DAG builder module créé
 2. Parsing workflow JSON explicit
@@ -546,6 +563,7 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 ```
 
 **AC Extended (Option D) :**
+
 ```
 1. DAG builder module créé
 2. Parsing workflow JSON explicit OR suggestion acceptance
@@ -563,16 +581,16 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 
 ### Criteria Comparison
 
-| Criterion | Option A | Option B | Option D |
-|-----------|----------|----------|----------|
-| **MVP Timeline** | 2-3 days | 1-2 weeks | **4-5 days** |
-| **Reliability** | High (explicit) | Low (inference) | **Very High (human-in-loop)** |
-| **UX Friction** | Medium | Low | **Very Low (suggestions)** |
-| **Learning Loop** | ❌ No | ❌ No | **✅ Yes** |
-| **Long-term Value** | Static | Static | **Improves over time** |
-| **Debuggability** | High | Low | **Very High (confidence)** |
-| **Trust** | High | Low | **Very High (transparent)** |
-| **Innovation** | Standard | Standard | **Novel (GraphRAG)** |
+| Criterion           | Option A        | Option B        | Option D                      |
+| ------------------- | --------------- | --------------- | ----------------------------- |
+| **MVP Timeline**    | 2-3 days        | 1-2 weeks       | **4-5 days**                  |
+| **Reliability**     | High (explicit) | Low (inference) | **Very High (human-in-loop)** |
+| **UX Friction**     | Medium          | Low             | **Very Low (suggestions)**    |
+| **Learning Loop**   | ❌ No           | ❌ No           | **✅ Yes**                    |
+| **Long-term Value** | Static          | Static          | **Improves over time**        |
+| **Debuggability**   | High            | Low             | **Very High (confidence)**    |
+| **Trust**           | High            | Low             | **Very High (transparent)**   |
+| **Innovation**      | Standard        | Standard        | **Novel (GraphRAG)**          |
 
 ---
 
@@ -583,6 +601,7 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 **AIRIS, Smithery, Unla :** Tous font auto-detection ou explicit
 
 **AgentCards Option D :**
+
 - ✅ GraphRAG-assisted suggestions (unique!)
 - ✅ Learning loop (s'améliore avec usage)
 - ✅ Confidence scores (transparent)
@@ -590,7 +609,9 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 - ✅ Zero-config cold start → auto-pilot hot state
 
 **Market Positioning :**
-> "AgentCards learns your workflow patterns and suggests optimized DAGs, becoming smarter with every execution."
+
+> "AgentCards learns your workflow patterns and suggests optimized DAGs, becoming smarter with every
+> execution."
 
 **This is a KILLER FEATURE** 🔥
 
@@ -610,11 +631,13 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 6. **Long-term Value :** Learning loop = continuous improvement
 
 **Trade-offs accepted :**
+
 - Slightly more complex than Option A
 - Requires pattern storage infrastructure
 - Cold start still needs explicit mode
 
 **Evolution path :**
+
 - v1.0 : Explicit + passive learning
 - v1.1 : Suggestions enabled
 - v1.2 : Auto-pilot mode for high confidence
@@ -722,7 +745,5 @@ Claude → User: "Done! (AgentCards auto-suggested workflow)"
 
 ---
 
-**Status :** 🟢 RECOMMENDED APPROACH
-**Innovation Score :** 🔥🔥🔥 (Market differentiator)
-**Complexity :** ⚠️ Medium (+1-2 days)
-**Long-term Value :** 📈 High (learning loop)
+**Status :** 🟢 RECOMMENDED APPROACH **Innovation Score :** 🔥🔥🔥 (Market differentiator)
+**Complexity :** ⚠️ Medium (+1-2 days) **Long-term Value :** 📈 High (learning loop)

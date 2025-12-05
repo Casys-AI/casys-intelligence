@@ -4,8 +4,10 @@
 
 - 🛑 NEVER generate content without web search verification
 
-- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding leads to incomplete decisions
-- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before proceeding
+- 📖 CRITICAL: ALWAYS read the complete step file before taking any action - partial understanding
+  leads to incomplete decisions
+- 🔄 CRITICAL: When loading next step with 'C', ensure the entire file is read and understood before
+  proceeding
 - ✅ ALWAYS use {{current_year}} web searches for current technical data
 - 📋 YOU ARE A TECHNOLOGY ANALYST, not content generator
 - 💬 FOCUS on emerging technologies and innovation patterns
@@ -31,14 +33,15 @@
 
 ## YOUR TASK:
 
-Conduct comprehensive technical trends analysis using current {{current_year}} web data with emphasis on innovations and emerging technologies impacting {{research_topic}}.
+Conduct comprehensive technical trends analysis using current {{current_year}} web data with
+emphasis on innovations and emerging technologies impacting {{research_topic}}.
 
 ## TECHNICAL TRENDS SEQUENCE:
 
 ### 1. Begin Technical Trends Analysis
 
-Start with technology research approach:
-"Now I'll conduct **technical trends and emerging technologies** analysis for **{{research_topic}}** using current {{current_year}} data.
+Start with technology research approach: "Now I'll conduct **technical trends and emerging
+technologies** analysis for **{{research_topic}}** using current {{current_year}} data.
 
 **Technical Trends Focus:**
 
@@ -101,33 +104,33 @@ When saving to document, append these Level 2 and Level 3 sections:
 
 ### Emerging Technologies
 
-[Emerging technologies analysis with source citations]
-_Source: [URL with {{current_year}} technology data]_
+[Emerging technologies analysis with source citations] _Source: [URL with {{current_year}}
+technology data]_
 
 ### Digital Transformation
 
-[Digital transformation analysis with source citations]
-_Source: [URL with {{current_year}} transformation data]_
+[Digital transformation analysis with source citations] _Source: [URL with {{current_year}}
+transformation data]_
 
 ### Innovation Patterns
 
-[Innovation patterns analysis with source citations]
-_Source: [URL with {{current_year}} innovation data]_
+[Innovation patterns analysis with source citations] _Source: [URL with {{current_year}} innovation
+data]_
 
 ### Future Outlook
 
-[Future outlook and projections with source citations]
-_Source: [URL with {{current_year}} outlook data]_
+[Future outlook and projections with source citations] _Source: [URL with {{current_year}} outlook
+data]_
 
 ### Implementation Opportunities
 
-[Implementation opportunity analysis with source citations]
-_Source: [URL with {{current_year}} implementation data]_
+[Implementation opportunity analysis with source citations] _Source: [URL with {{current_year}}
+implementation data]_
 
 ### Challenges and Risks
 
-[Challenges and risks assessment with source citations]
-_Source: [URL with {{current_year}} risk data]_
+[Challenges and risks assessment with source citations] _Source: [URL with {{current_year}} risk
+data]_
 
 ## Recommendations
 
@@ -146,8 +149,9 @@ _Source: [URL with {{current_year}} risk data]_
 
 ### 6. Present Analysis and Complete Option
 
-Show the generated technical analysis and present complete option:
-"I've completed **technical trends and innovation analysis** using current {{current_year}} data to understand technology patterns for {{research_topic}}.
+Show the generated technical analysis and present complete option: "I've completed **technical
+trends and innovation analysis** using current {{current_year}} data to understand technology
+patterns for {{research_topic}}.
 
 **Technical Highlights:**
 
@@ -164,8 +168,8 @@ Show the generated technical analysis and present complete option:
 - Future outlook and projections analyzed
 - Implementation opportunities and challenges documented
 
-**Ready to proceed to research synthesis and recommendations?**
-[C] Continue - Save this to document and proceed to synthesis
+**Ready to proceed to research synthesis and recommendations?** [C] Continue - Save this to document
+and proceed to synthesis
 
 ### 7. Handle Continue Selection
 
@@ -181,28 +185,23 @@ Content is already written to document when generated in step 5. No additional a
 
 ## SUCCESS METRICS:
 
-✅ Emerging technologies identified with current {{current_year}} data
-✅ Digital transformation trends clearly documented
-✅ Future outlook and projections analyzed
-✅ Implementation opportunities and challenges mapped
-✅ Strategic recommendations provided
-✅ Content written immediately to document
-✅ [C] continue option presented and handled correctly
-✅ Proper routing to next step (research synthesis)
-✅ Research goals alignment maintained
+✅ Emerging technologies identified with current {{current_year}} data ✅ Digital transformation
+trends clearly documented ✅ Future outlook and projections analyzed ✅ Implementation opportunities
+and challenges mapped ✅ Strategic recommendations provided ✅ Content written immediately to
+document ✅ [C] continue option presented and handled correctly ✅ Proper routing to next step
+(research synthesis) ✅ Research goals alignment maintained
 
 ## FAILURE MODES:
 
-❌ Not using {{current_year}} in technology web searches
-❌ Missing critical emerging technologies in the domain
-❌ Not providing practical implementation recommendations
-❌ Not completing strategic recommendations
-❌ Not presenting completion option for research workflow
-❌ Appending content without user selecting 'C'
+❌ Not using {{current_year}} in technology web searches ❌ Missing critical emerging technologies
+in the domain ❌ Not providing practical implementation recommendations ❌ Not completing strategic
+recommendations ❌ Not presenting completion option for research workflow ❌ Appending content
+without user selecting 'C'
 
-❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor decisions
-❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step file
-❌ **CRITICAL**: Making decisions without complete understanding of step requirements and protocols
+❌ **CRITICAL**: Reading only partial step file - leads to incomplete understanding and poor
+decisions ❌ **CRITICAL**: Proceeding with 'C' without fully reading and understanding the next step
+file ❌ **CRITICAL**: Making decisions without complete understanding of step requirements and
+protocols
 
 ## TECHNICAL RESEARCH PROTOCOLS:
 

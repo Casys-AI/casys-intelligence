@@ -4,12 +4,9 @@
  * @module tests/unit/cli/migrate-config_test
  */
 
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { parse as parseYAML } from "@std/yaml";
-import {
-  getAgentCardsConfigPath,
-  getLegacyConfigPath,
-} from "../../../src/cli/utils.ts";
+import { getAgentCardsConfigPath, getLegacyConfigPath } from "../../../src/cli/utils.ts";
 
 /**
  * Test YAML → JSON migration logic

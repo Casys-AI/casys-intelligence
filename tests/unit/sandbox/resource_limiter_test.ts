@@ -8,10 +8,7 @@
  */
 
 import { assertEquals, assertExists, assertRejects } from "@std/assert";
-import {
-  ResourceLimiter,
-  ResourceLimitError,
-} from "../../../src/sandbox/resource-limiter.ts";
+import { ResourceLimiter, ResourceLimitError } from "../../../src/sandbox/resource-limiter.ts";
 
 // Reset singleton before each test
 function resetLimiter() {
@@ -39,7 +36,7 @@ Deno.test({
     await assertRejects(
       () => limiter.acquire(512),
       ResourceLimitError,
-      "CONCURRENT_EXECUTIONS"
+      "CONCURRENT_EXECUTIONS",
     );
 
     // Release one slot
@@ -76,7 +73,7 @@ Deno.test({
     await assertRejects(
       () => limiter.acquire(100),
       ResourceLimitError,
-      "TOTAL_MEMORY"
+      "TOTAL_MEMORY",
     );
 
     // Release one slot
@@ -244,7 +241,7 @@ Deno.test({
     await assertRejects(
       () => limiter.acquireWithWait(512, 300), // 300ms timeout
       ResourceLimitError,
-      "ACQUIRE_TIMEOUT"
+      "ACQUIRE_TIMEOUT",
     );
 
     // Cleanup

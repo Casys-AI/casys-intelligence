@@ -21,7 +21,7 @@ import { DAGSuggester } from "../../../src/graphrag/dag-suggester.ts";
 import { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import { VectorSearch } from "../../../src/vector/search.ts";
 import type { DAGStructure } from "../../../src/graphrag/types.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 /**
  * Setup test database with migrations
@@ -154,7 +154,9 @@ Deno.test("E2E GraphRAG Feedback: Workflow execution updates knowledge graph", a
 
     console.log(`Updated edge state:`);
     console.log(`  - observed_count: ${updatedCount} (was ${initialCount})`);
-    console.log(`  - confidence_score: ${updatedConfidence.toFixed(2)} (was ${initialConfidence.toFixed(2)})`);
+    console.log(
+      `  - confidence_score: ${updatedConfidence.toFixed(2)} (was ${initialConfidence.toFixed(2)})`,
+    );
 
     // 7. Assertions
     assertEquals(

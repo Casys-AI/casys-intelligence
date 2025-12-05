@@ -117,7 +117,11 @@ export class AdaptiveThresholdManager {
           suggestionThreshold: stored.suggestionThreshold,
           explicitThreshold: stored.explicitThreshold,
         };
-        log.info(`[AdaptiveThreshold] Loaded thresholds for context ${contextHash}: suggestion=${stored.suggestionThreshold.toFixed(2)}, explicit=${stored.explicitThreshold.toFixed(2)}`);
+        log.info(
+          `[AdaptiveThreshold] Loaded thresholds for context ${contextHash}: suggestion=${
+            stored.suggestionThreshold.toFixed(2)
+          }, explicit=${stored.explicitThreshold.toFixed(2)}`,
+        );
         return stored;
       }
     } catch (error) {
@@ -273,13 +277,17 @@ export class AdaptiveThresholdManager {
 
     // False positives: Speculative executions that failed
     const falsePositives = speculativeExecs.filter((e) => !e.success).length;
-    const falsePositiveRate = speculativeExecs.length > 0 ? falsePositives / speculativeExecs.length : 0;
+    const falsePositiveRate = speculativeExecs.length > 0
+      ? falsePositives / speculativeExecs.length
+      : 0;
 
     // False negatives: Suggestions with high confidence that user accepted
     const falseNegatives = suggestionExecs.filter(
       (e) => e.userAccepted && e.confidence >= (this.config.initialSuggestionThreshold - 0.1),
     ).length;
-    const falseNegativeRate = suggestionExecs.length > 0 ? falseNegatives / suggestionExecs.length : 0;
+    const falseNegativeRate = suggestionExecs.length > 0
+      ? falseNegatives / suggestionExecs.length
+      : 0;
 
     // Adjustment logic
     const adjustment: ThresholdAdjustment = { reason: "" };
@@ -288,22 +296,28 @@ export class AdaptiveThresholdManager {
       // Too many failed speculative executions → Increase threshold
       const increase = this.config.learningRate * falsePositiveRate;
       const newThreshold = Math.min(
-        (this.currentThresholds.suggestionThreshold ?? this.config.initialSuggestionThreshold) + increase,
+        (this.currentThresholds.suggestionThreshold ?? this.config.initialSuggestionThreshold) +
+          increase,
         this.config.maxThreshold,
       );
 
       adjustment.suggestionThreshold = newThreshold;
-      adjustment.reason = `High false positive rate (${(falsePositiveRate * 100).toFixed(0)}%) → Increased threshold to ${newThreshold.toFixed(2)}`;
+      adjustment.reason = `High false positive rate (${
+        (falsePositiveRate * 100).toFixed(0)
+      }%) → Increased threshold to ${newThreshold.toFixed(2)}`;
     } else if (falseNegativeRate > 0.3) {
       // Too many unnecessary manual confirmations → Decrease threshold
       const decrease = this.config.learningRate * falseNegativeRate;
       const newThreshold = Math.max(
-        (this.currentThresholds.suggestionThreshold ?? this.config.initialSuggestionThreshold) - decrease,
+        (this.currentThresholds.suggestionThreshold ?? this.config.initialSuggestionThreshold) -
+          decrease,
         this.config.minThreshold,
       );
 
       adjustment.suggestionThreshold = newThreshold;
-      adjustment.reason = `High false negative rate (${(falseNegativeRate * 100).toFixed(0)}%) → Decreased threshold to ${newThreshold.toFixed(2)}`;
+      adjustment.reason = `High false negative rate (${
+        (falseNegativeRate * 100).toFixed(0)
+      }%) → Decreased threshold to ${newThreshold.toFixed(2)}`;
     }
 
     // Apply adjustment
@@ -325,8 +339,10 @@ export class AdaptiveThresholdManager {
    */
   getThresholds(): { explicitThreshold?: number; suggestionThreshold?: number } {
     return {
-      explicitThreshold: this.currentThresholds.explicitThreshold ?? this.config.initialExplicitThreshold,
-      suggestionThreshold: this.currentThresholds.suggestionThreshold ?? this.config.initialSuggestionThreshold,
+      explicitThreshold: this.currentThresholds.explicitThreshold ??
+        this.config.initialExplicitThreshold,
+      suggestionThreshold: this.currentThresholds.suggestionThreshold ??
+        this.config.initialSuggestionThreshold,
     };
   }
 
@@ -342,7 +358,8 @@ export class AdaptiveThresholdManager {
     const failedExecutions = speculativeExecs.filter((e) => !e.success).length;
 
     const avgExecutionTime = speculativeExecs.length > 0
-      ? speculativeExecs.reduce((sum, e) => sum + (e.executionTime || 0), 0) / speculativeExecs.length
+      ? speculativeExecs.reduce((sum, e) => sum + (e.executionTime || 0), 0) /
+        speculativeExecs.length
       : 0;
 
     const avgConfidence = speculativeExecs.length > 0

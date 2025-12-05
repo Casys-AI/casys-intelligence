@@ -1,18 +1,15 @@
 # Story 2.5-3: AIL/HIL Integration
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops
-**Story ID:** 2.5-3
-**Status:** drafted
-**Estimated Effort:** 2-3 heures
-**Priority:** P1 (Depends on 2.5-1, 2.5-2)
+**Epic:** 2.5 - Adaptive DAG Feedback Loops **Story ID:** 2.5-3 **Status:** drafted **Estimated
+Effort:** 2-3 heures **Priority:** P1 (Depends on 2.5-1, 2.5-2)
 
 ---
 
 ## User Story
 
-**As a** developer building interactive agent workflows,
-**I want** agent-in-the-loop (AIL) and human-in-the-loop (HIL) decision points during execution,
-**So that** workflows can adapt dynamically based on runtime discoveries and human approvals.
+**As a** developer building interactive agent workflows, **I want** agent-in-the-loop (AIL) and
+human-in-the-loop (HIL) decision points during execution, **So that** workflows can adapt
+dynamically based on runtime discoveries and human approvals.
 
 ---
 
@@ -38,12 +35,12 @@
   - [ ] Create `src/dag/types.ts` decision interfaces:
     ```typescript
     interface Decision {
-      id: string;              // UUID
-      type: 'ail' | 'hil';     // Agent or Human
-      action: 'approve' | 'reject' | 'modify' | 'change_plan';
-      taskId?: string;         // Task being decided on
-      requirement?: string;    // For change_plan: new requirement
-      reasoning: string;       // Why this decision
+      id: string; // UUID
+      type: "ail" | "hil"; // Agent or Human
+      action: "approve" | "reject" | "modify" | "change_plan";
+      taskId?: string; // Task being decided on
+      requirement?: string; // For change_plan: new requirement
+      reasoning: string; // Why this decision
       timestamp: number;
       metadata?: Record<string, any>;
     }
@@ -64,13 +61,13 @@
   - [ ] Agent injects decision command:
     ```typescript
     commandQueue.enqueue({
-      type: 'agent_decision',
+      type: "agent_decision",
       decision: {
-        type: 'ail',
-        action: 'change_plan',
-        reasoning: 'Found XML files, need parser',
-        requirement: 'parse XML files'
-      }
+        type: "ail",
+        action: "change_plan",
+        reasoning: "Found XML files, need parser",
+        requirement: "parse XML files",
+      },
     });
     ```
   - [ ] Executor processes decision and triggers replan
@@ -87,10 +84,10 @@
   - [ ] Before task execution, pause and request approval:
     ```typescript
     const decision = await this.awaitDecision({
-      type: 'hil',
+      type: "hil",
       taskId: task.id,
-      message: 'Approve deployment to production?',
-      options: ['approve', 'reject', 'modify']
+      message: "Approve deployment to production?",
+      options: ["approve", "reject", "modify"],
     });
     ```
   - [ ] Resume only if approved
@@ -194,24 +191,26 @@ ControlledExecutor.mergeDynamicNodes(new nodes)
 Execution continues with augmented DAG
 ```
 
-**Key Insight:** DAGSuggester is the workflow layer that **queries** GraphRAG knowledge graph. This story integrates them for dynamic adaptation.
+**Key Insight:** DAGSuggester is the workflow layer that **queries** GraphRAG knowledge graph. This
+story integrates them for dynamic adaptation.
 
 ### Decision Patterns
 
 **Pattern 1: Discovery-Driven (AIL)**
+
 ```typescript
 // Agent observes task result
 eventStream.subscribe((event) => {
-  if (event.type === 'task_completed' && event.taskId === 'list_dir') {
+  if (event.type === "task_completed" && event.taskId === "list_dir") {
     const files = event.result.files;
-    const hasXML = files.some(f => f.endsWith('.xml'));
+    const hasXML = files.some((f) => f.endsWith(".xml"));
 
     if (hasXML) {
       // Agent decides to add XML parser
       commandQueue.enqueue({
-        type: 'replan_dag',
-        requirement: 'parse XML files',
-        reasoning: 'Discovered XML files in directory'
+        type: "replan_dag",
+        requirement: "parse XML files",
+        reasoning: "Discovered XML files in directory",
       });
     }
   }
@@ -219,18 +218,19 @@ eventStream.subscribe((event) => {
 ```
 
 **Pattern 2: Human Approval (HIL)**
+
 ```typescript
 // Before dangerous operation
 if (task.requiresApproval) {
   const decision = await this.awaitDecision({
-    type: 'hil',
+    type: "hil",
     taskId: task.id,
     message: `Deploy ${task.inputs.service} to production?`,
-    context: { service: task.inputs.service, env: 'prod' }
+    context: { service: task.inputs.service, env: "prod" },
   });
 
-  if (decision.action === 'reject') {
-    throw new Error('Deployment rejected by human');
+  if (decision.action === "reject") {
+    throw new Error("Deployment rejected by human");
   }
 }
 ```
@@ -238,12 +238,14 @@ if (task.requiresApproval) {
 ### Project Structure
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts   # Add AIL/HIL logic, replan handler
 src/dag/types.ts                 # Decision interfaces
 ```
 
 **New Files:**
+
 ```
 src/dag/decision-manager.ts      # Decision orchestration
 ```
@@ -261,35 +263,37 @@ src/dag/decision-manager.ts      # Decision orchestration
 ```typescript
 // Turn 1: Agent discovers XML
 state.messages.push({
-  role: 'agent',
-  content: 'Found XML files in data/. Should I parse them?',
-  timestamp: Date.now()
+  role: "agent",
+  content: "Found XML files in data/. Should I parse them?",
+  timestamp: Date.now(),
 });
 
 // Turn 2: Human responds
 state.messages.push({
-  role: 'human',
-  content: 'Yes, but skip files larger than 10MB',
-  timestamp: Date.now()
+  role: "human",
+  content: "Yes, but skip files larger than 10MB",
+  timestamp: Date.now(),
 });
 
 // Turn 3: Agent acknowledges
 state.context.fileFilter = { maxSize: 10 * 1024 * 1024 };
 state.messages.push({
-  role: 'agent',
-  content: 'Filtering XML files by size...',
-  timestamp: Date.now()
+  role: "agent",
+  content: "Filtering XML files by size...",
+  timestamp: Date.now(),
 });
 ```
 
 ### Error Handling
 
 **Failed Replan:**
+
 - DAGSuggester returns null → Log error, continue without replan
 - GraphRAG timeout → Fall back to manual tool selection
 - Invalid DAG (cycle detected) → Reject replan, continue with original DAG
 
 **Rejected Decisions:**
+
 - HIL rejects → Stop workflow, emit `workflow_cancelled` event
 - AIL invalid decision → Log warning, ignore decision
 

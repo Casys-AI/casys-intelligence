@@ -4,19 +4,19 @@
  * Tests semantic search functionality with real embeddings.
  */
 
-import { assertEquals, assert, assertExists } from "jsr:@std/assert@1";
+import { assert, assertEquals, assertExists } from "jsr:@std/assert@1";
 import {
-  cleanupTestDatabase,
-  initializeTestDatabase,
-  storeSchemas,
-  loadEmbeddingModel,
-  generateEmbeddings,
   calculatePercentile,
+  cleanupTestDatabase,
+  generateEmbeddings,
+  initializeTestDatabase,
+  loadEmbeddingModel,
+  storeSchemas,
 } from "../fixtures/test-helpers.ts";
 import {
+  createMockApiServer,
   createMockFilesystemServer,
   createMockJsonServer,
-  createMockApiServer,
 } from "../fixtures/mock-mcp-server.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
 
@@ -75,7 +75,11 @@ Deno.test("E2E 04: Vector search and semantic retrieval", async (t) => {
         `Top result should be file-related, got: ${topResult.toolName}`,
       );
 
-      console.log(`  Found ${results.length} results, top: ${topResult.toolName} (score: ${topResult.score.toFixed(3)})`);
+      console.log(
+        `  Found ${results.length} results, top: ${topResult.toolName} (score: ${
+          topResult.score.toFixed(3)
+        })`,
+      );
     });
 
     await t.step("6. Test semantic search for JSON operations", async () => {
@@ -89,7 +93,9 @@ Deno.test("E2E 04: Vector search and semantic retrieval", async (t) => {
         `Top result should be JSON-related, got: ${topResult.toolName}`,
       );
 
-      console.log(`  Top JSON result: ${topResult.toolName} (score: ${topResult.score.toFixed(3)})`);
+      console.log(
+        `  Top JSON result: ${topResult.toolName} (score: ${topResult.score.toFixed(3)})`,
+      );
     });
 
     await t.step("7. Test search with custom topK", async () => {

@@ -13,7 +13,7 @@
  */
 
 import { PGliteClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { EmbeddingModel } from "../../src/vector/embeddings.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
 import type { MCPTool } from "../../src/mcp/types.ts";
@@ -287,11 +287,11 @@ async function runValidation(): Promise<ValidationResults> {
 
       // Check if any expected tool is in top-5
       const resultNames = results.map((r) => r.toolName);
-      const relevant = testQuery.expectedTools.some((expected) =>
-        resultNames.includes(expected)
-      );
+      const relevant = testQuery.expectedTools.some((expected) => resultNames.includes(expected));
 
-      console.log(`   ✓ Results: ${resultNames.slice(0, 3).join(", ")}${results.length > 3 ? ", ..." : ""}`);
+      console.log(
+        `   ✓ Results: ${resultNames.slice(0, 3).join(", ")}${results.length > 3 ? ", ..." : ""}`,
+      );
       console.log(`   Top: ${topResult} (score: ${topScore.toFixed(3)})`);
       console.log(`   Latency: ${queryLatency.toFixed(2)}ms`);
       console.log(`   Relevant: ${relevant ? "✅ YES" : "❌ NO"}`);
@@ -367,7 +367,9 @@ async function runValidation(): Promise<ValidationResults> {
   const latencyPass = p95 <= 150;
   const crashPass = crashes === 0;
 
-  console.log(`Accuracy >= 80%:     ${accuracyPass ? "✅ PASS" : "❌ FAIL"} (${accuracy.toFixed(1)}%)`);
+  console.log(
+    `Accuracy >= 80%:     ${accuracyPass ? "✅ PASS" : "❌ FAIL"} (${accuracy.toFixed(1)}%)`,
+  );
   console.log(`P95 Latency <= 150ms: ${latencyPass ? "✅ PASS" : "❌ FAIL"} (${p95.toFixed(2)}ms)`);
   console.log(`Zero Crashes:        ${crashPass ? "✅ PASS" : "❌ FAIL"} (${crashes} crashes)`);
   console.log("");

@@ -75,9 +75,7 @@ export async function handleSSERequest(
       const eventStream = new WritableStream<SSEEvent>({
         write(event) {
           // Format as SSE specification
-          const sseData = `event: ${event.type}\ndata: ${
-            JSON.stringify(event.data)
-          }\n\n`;
+          const sseData = `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
           return writer.write(sseData);
         },
       });

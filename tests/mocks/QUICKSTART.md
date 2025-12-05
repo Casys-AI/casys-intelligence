@@ -8,6 +8,7 @@ deno task cli:init:dry:mocks
 ```
 
 **Résultat:**
+
 ```
 📊 Migration Preview:
   Servers to migrate: 3
@@ -25,27 +26,37 @@ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}\n{"jsonrpc":"
 ```
 
 **Résultat:**
+
 ```json
-{"jsonrpc":"2.0","id":2,"result":{"tools":[
-  {"name":"read_file","description":"Read contents of a file..."},
-  {"name":"write_file","description":"Write contents to a file..."},
-  {"name":"list_directory","description":"List files and directories..."}
-]}}
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "tools": [
+      { "name": "read_file", "description": "Read contents of a file..." },
+      { "name": "write_file", "description": "Write contents to a file..." },
+      { "name": "list_directory", "description": "List files and directories..." }
+    ]
+  }
+}
 ```
 
 ## 🎯 Ce Qui Est Testé
 
 ✅ **3 Mock Servers**
+
 - Filesystem (3 tools) - Rapide
 - Database (4 tools) - Lent (teste parallélisation)
 - API (3 tools) - Moyen (schemas complexes)
 
 ✅ **Parallélisation**
+
 - Les 3 servers s'exécutent en parallèle
 - Temps total ≈ max(100ms, 50ms, 0ms) = ~100ms
 - Sans parallélisation: ~150ms
 
 ✅ **10 Tools Total**
+
 - Extraction de schemas
 - Génération d'embeddings
 - Storage en base de données
@@ -58,6 +69,7 @@ time deno run --allow-all src/main.ts init --config tests/fixtures/mcp-config-mo
 ```
 
 **Attendu:**
+
 - Parallèle: <200ms (juste extraction, sans embeddings)
 - Séquentiel: >300ms
 
@@ -70,6 +82,7 @@ deno task test:e2e
 ```
 
 **Ce qui se passe:**
+
 1. Crée `/tmp/agentcards-e2e-test/.agentcards/`
 2. Parse le config avec 3 mocks
 3. Extrait 10 tools en parallèle
@@ -79,6 +92,7 @@ deno task test:e2e
 7. Nettoie automatiquement
 
 **Sortie attendue:**
+
 ```
 ✅ E2E Test Results:
    Servers migrated: 3
@@ -91,17 +105,20 @@ deno task test:e2e
 ## 🎓 Use Cases
 
 ### Dev: Test Rapide Sans Installation
+
 ```bash
 deno task cli:init:dry:mocks
 ```
 
 ### CI/CD: Tests Automatisés
+
 ```bash
 deno task test              # Unit + integration (pas E2E)
 deno task test:e2e          # E2E complet (optionnel, lent)
 ```
 
 ### Debug: Test un Mock Spécifique
+
 ```bash
 deno task mock:fs
 deno task mock:db
@@ -109,6 +126,7 @@ deno task mock:api
 ```
 
 ### Performance: Benchmark Parallélisation
+
 ```bash
 time deno task cli:init:dry:mocks
 ```

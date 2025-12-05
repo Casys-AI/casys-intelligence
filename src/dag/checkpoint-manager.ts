@@ -91,7 +91,9 @@ export class CheckpointManager {
 
       const elapsedMs = performance.now() - startTime;
       log.debug(
-        `Checkpoint saved: ${id} (workflow: ${workflow_id}, layer: ${layer}, ${elapsedMs.toFixed(2)}ms)`,
+        `Checkpoint saved: ${id} (workflow: ${workflow_id}, layer: ${layer}, ${
+          elapsedMs.toFixed(2)
+        }ms)`,
       );
 
       // Note: Auto-pruning disabled in constructor by default
@@ -142,9 +144,7 @@ export class CheckpointManager {
       }
 
       // Deserialize JSONB state
-      const state = typeof row.state === "string"
-        ? JSON.parse(row.state as string)
-        : row.state;
+      const state = typeof row.state === "string" ? JSON.parse(row.state as string) : row.state;
 
       // Validate state structure
       this.validateStateStructure(state);
@@ -188,9 +188,7 @@ export class CheckpointManager {
       }
 
       // Deserialize JSONB state
-      const state = typeof row.state === "string"
-        ? JSON.parse(row.state as string)
-        : row.state;
+      const state = typeof row.state === "string" ? JSON.parse(row.state as string) : row.state;
 
       // Validate state structure
       this.validateStateStructure(state);
@@ -234,7 +232,9 @@ export class CheckpointManager {
       const totalCheckpoints = (countResult?.count as number) || 0;
 
       if (totalCheckpoints <= keepCount) {
-        log.debug(`No checkpoints to prune for workflow: ${workflow_id} (${totalCheckpoints} <= ${keepCount})`);
+        log.debug(
+          `No checkpoints to prune for workflow: ${workflow_id} (${totalCheckpoints} <= ${keepCount})`,
+        );
         return 0;
       }
 

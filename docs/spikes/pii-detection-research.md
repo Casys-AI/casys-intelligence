@@ -1,8 +1,7 @@
 # PII Detection Research - MISE À JOUR
 
-**Date:** 2025-11-11 (Updated)
-**Owners:** John (PM) + Winston (Architect)
-**Status:** ✅ COMPLETE (REVISED)
+**Date:** 2025-11-11 (Updated) **Owners:** John (PM) + Winston (Architect) **Status:** ✅ COMPLETE
+(REVISED)
 
 ---
 
@@ -13,6 +12,7 @@
 **Nouvelle recommandation:** **validator.js via npm** ✅
 
 **Raison du changement:** Découverte de validator.js qui est:
+
 - ✅ Le STANDARD de l'industrie (validatorjs/validator.js)
 - ✅ 93M downloads/semaine npm
 - ✅ Maintenu activement (v13.15.22 en 2025)
@@ -64,18 +64,18 @@ isSSN("123-45-6789"); // true
 
 ### Fonctions Disponibles (PII-relevant)
 
-| Fonction | Description | Pertinence PII |
-|----------|-------------|----------------|
-| `isEmail()` | Email validation (RFC5322) | ✅ Priority 1 |
-| `isCreditCard()` | Credit card with Luhn check | ✅ Priority 1 |
-| `isMobilePhone()` | Phone (100+ locales) | ✅ Priority 1 |
-| `isIP()` | IPv4/IPv6 | ✅ Priority 1 |
-| `isIdentityCard()` | ID cards (20+ countries) | ✅ Priority 2 |
-| `isPassportNumber()` | Passport numbers | ✅ Priority 2 |
-| `isPostalCode()` | Postal codes (80+ locales) | ⚠️ Priority 2 |
-| `isIBAN()` | IBAN validation | ⚠️ Priority 2 |
-| `isURL()` | URL validation | ⚠️ Low priority |
-| `matches(pattern)` | Custom regex | ✅ For SSN, etc. |
+| Fonction             | Description                 | Pertinence PII   |
+| -------------------- | --------------------------- | ---------------- |
+| `isEmail()`          | Email validation (RFC5322)  | ✅ Priority 1    |
+| `isCreditCard()`     | Credit card with Luhn check | ✅ Priority 1    |
+| `isMobilePhone()`    | Phone (100+ locales)        | ✅ Priority 1    |
+| `isIP()`             | IPv4/IPv6                   | ✅ Priority 1    |
+| `isIdentityCard()`   | ID cards (20+ countries)    | ✅ Priority 2    |
+| `isPassportNumber()` | Passport numbers            | ✅ Priority 2    |
+| `isPostalCode()`     | Postal codes (80+ locales)  | ⚠️ Priority 2    |
+| `isIBAN()`           | IBAN validation             | ⚠️ Priority 2    |
+| `isURL()`            | URL validation              | ⚠️ Low priority  |
+| `matches(pattern)`   | Custom regex                | ✅ For SSN, etc. |
 
 ---
 
@@ -95,7 +95,7 @@ src/pii/
 ```typescript
 // src/pii/detector.ts
 import validator from "npm:validator@13.15.22";
-import type { PIIMatch, PIIDetectionResult, PIIType } from "./types.ts";
+import type { PIIDetectionResult, PIIMatch, PIIType } from "./types.ts";
 
 export class PIIDetector {
   /**
@@ -208,7 +208,7 @@ export class PIIDetector {
     const words = code.split(/\s+/);
     tokens.push(...words);
 
-    return tokens.filter(t => t.length > 0);
+    return tokens.filter((t) => t.length > 0);
   }
 
   /**
@@ -216,7 +216,7 @@ export class PIIDetector {
    */
   private deduplicateMatches(matches: PIIMatch[]): PIIMatch[] {
     const seen = new Set<string>();
-    return matches.filter(m => {
+    return matches.filter((m) => {
       const key = `${m.type}:${m.value}:${m.position}`;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -239,8 +239,7 @@ export class PIIDetector {
 
     for (const match of sorted) {
       const replacement = this.getReplacementText(match, strategy);
-      redacted =
-        redacted.slice(0, match.position) +
+      redacted = redacted.slice(0, match.position) +
         replacement +
         redacted.slice(match.position + match.length);
     }
@@ -276,7 +275,7 @@ export class PIIDetector {
         const encoder = new TextEncoder();
         const data = encoder.encode(match.value);
         return Array.from(data)
-          .map(b => b.toString(16).padStart(2, "0"))
+          .map((b) => b.toString(16).padStart(2, "0"))
           .join("")
           .slice(0, 16);
       }
@@ -289,15 +288,15 @@ export class PIIDetector {
 
 ## Comparative Analysis UPDATED
 
-| Criteria | Weight | Custom Regex | validator.js | Presidio | AWS/Google |
-|----------|--------|--------------|--------------|----------|------------|
-| **Cost** | 25% | ✅ 5/5 | ✅ 5/5 | ⚠️ 3/5 | ❌ 2/5 |
-| **Performance** | 25% | ✅ 5/5 | ✅ 4.5/5 | ⚠️ 3/5 | ❌ 2/5 |
-| **Accuracy** | 20% | ⚠️ 3/5 | ✅ 4.5/5 | ✅ 5/5 | ✅ 5/5 |
-| **Integration** | 15% | ✅ 5/5 | ✅ 5/5 | ❌ 2/5 | ⚠️ 3/5 |
-| **Maintenance** | 10% | ❌ 2/5 | ✅ 5/5 | ⚠️ 3/5 | ✅ 5/5 |
-| **Maturity** | 5% | ❌ 1/5 | ✅ 5/5 | ✅ 4/5 | ✅ 5/5 |
-| **Weighted Score** | | **3.85** | **4.75** ⭐ | **3.35** | **3.15** |
+| Criteria           | Weight | Custom Regex | validator.js | Presidio | AWS/Google |
+| ------------------ | ------ | ------------ | ------------ | -------- | ---------- |
+| **Cost**           | 25%    | ✅ 5/5       | ✅ 5/5       | ⚠️ 3/5   | ❌ 2/5     |
+| **Performance**    | 25%    | ✅ 5/5       | ✅ 4.5/5     | ⚠️ 3/5   | ❌ 2/5     |
+| **Accuracy**       | 20%    | ⚠️ 3/5       | ✅ 4.5/5     | ✅ 5/5   | ✅ 5/5     |
+| **Integration**    | 15%    | ✅ 5/5       | ✅ 5/5       | ❌ 2/5   | ⚠️ 3/5     |
+| **Maintenance**    | 10%    | ❌ 2/5       | ✅ 5/5       | ⚠️ 3/5   | ✅ 5/5     |
+| **Maturity**       | 5%     | ❌ 1/5       | ✅ 5/5       | ✅ 4/5   | ✅ 5/5     |
+| **Weighted Score** |        | **3.85**     | **4.75** ⭐  | **3.35** | **3.15**   |
 
 **Winner:** validator.js 🏆
 
@@ -344,11 +343,11 @@ export class PIIDetector {
 
 ## Performance Benchmarks (Estimés)
 
-| Scenario | Code Size | validator.js | Custom Regex | Difference |
-|----------|-----------|--------------|--------------|------------|
-| Small (1KB) | 3 PII | ~2ms | ~1ms | +1ms |
-| Medium (10KB) | 10 PII | ~4ms | ~3ms | +1ms |
-| Large (100KB) | 50 PII | ~8ms | ~7ms | +1ms |
+| Scenario      | Code Size | validator.js | Custom Regex | Difference |
+| ------------- | --------- | ------------ | ------------ | ---------- |
+| Small (1KB)   | 3 PII     | ~2ms         | ~1ms         | +1ms       |
+| Medium (10KB) | 10 PII    | ~4ms         | ~3ms         | +1ms       |
+| Large (100KB) | 50 PII    | ~8ms         | ~7ms         | +1ms       |
 
 **Conclusion:** Overhead minimal (<1-2ms) pour gain énorme en robustesse.
 
@@ -362,11 +361,12 @@ export class PIIDetector {
 const EMAIL_PATTERN = /\b[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}\b/g;
 
 function detectEmail(code: string): string[] {
-  return Array.from(code.matchAll(EMAIL_PATTERN), m => m[0]);
+  return Array.from(code.matchAll(EMAIL_PATTERN), (m) => m[0]);
 }
 ```
 
 **Problèmes:**
+
 - ❌ Pattern incomplet (manque edge cases)
 - ❌ Pas de validation sémantique
 - ❌ Maintenance burden
@@ -378,11 +378,12 @@ import validator from "npm:validator";
 
 function detectEmail(code: string): string[] {
   const tokens = tokenize(code); // Extract strings
-  return tokens.filter(t => validator.isEmail(t));
+  return tokens.filter((t) => validator.isEmail(t));
 }
 ```
 
 **Avantages:**
+
 - ✅ RFC5322 compliant
 - ✅ Gère edge cases (internationalized domains, etc.)
 - ✅ Zero maintenance
@@ -396,6 +397,7 @@ function detectEmail(code: string): string[] {
 **MVP Approach:** **validator.js via npm** (not custom regex)
 
 **Scope PII:**
+
 - Email: `validator.isEmail()`
 - Credit card: `validator.isCreditCard()` (avec Luhn)
 - Phone: `validator.isMobilePhone(locale)`
@@ -403,6 +405,7 @@ function detectEmail(code: string): string[] {
 - SSN: `validator.matches(pattern)` (custom pattern)
 
 **Dependencies:**
+
 ```json
 {
   "imports": {
@@ -419,13 +422,13 @@ function detectEmail(code: string): string[] {
 
 ## Risks (Comparaison)
 
-| Risk | Custom Regex | validator.js |
-|------|--------------|--------------|
-| **False negatives** | HIGH | LOW |
-| **False positives** | MEDIUM | LOW |
-| **Maintenance** | HIGH | NONE |
-| **Security vulns** | HIGH | LOW (community patches) |
-| **Accuracy drift** | HIGH | NONE (maintained) |
+| Risk                | Custom Regex | validator.js            |
+| ------------------- | ------------ | ----------------------- |
+| **False negatives** | HIGH         | LOW                     |
+| **False positives** | MEDIUM       | LOW                     |
+| **Maintenance**     | HIGH         | NONE                    |
+| **Security vulns**  | HIGH         | LOW (community patches) |
+| **Accuracy drift**  | HIGH         | NONE (maintained)       |
 
 ---
 
@@ -434,6 +437,7 @@ function detectEmail(code: string): string[] {
 **Recommandation FINALE:** ✅ **validator.js**
 
 **Pourquoi pas regex homemade:**
+
 - Moins robuste
 - Plus de maintenance
 - Pas de Luhn algorithm built-in
@@ -441,6 +445,7 @@ function detectEmail(code: string): string[] {
 - Réinventer la roue
 
 **Avantages validator.js:**
+
 - Standard de l'industrie
 - Zero config avec Deno 2
 - Meilleure accuracy
@@ -448,6 +453,7 @@ function detectEmail(code: string): string[] {
 - Performance acceptable
 
 **Next Steps:**
+
 1. ✅ Adopter validator.js pour Story 3.5
 2. ✅ Implement PIIDetector avec validator.js
 3. ✅ Tests avec validations complètes
@@ -455,6 +461,4 @@ function detectEmail(code: string): string[] {
 
 ---
 
-**Document Status:** ✅ UPDATED
-**Date:** 2025-11-11
-**Authors:** John (PM) + Winston (Architect)
+**Document Status:** ✅ UPDATED **Date:** 2025-11-11 **Authors:** John (PM) + Winston (Architect)

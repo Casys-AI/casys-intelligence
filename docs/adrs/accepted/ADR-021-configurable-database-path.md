@@ -1,19 +1,21 @@
 # ADR-021: Configurable Database Path via Environment Variable
 
-**Status:** ✅ Accepted
-**Date:** 2025-12-01
-**Context:** Story 1.3 - Workflow Templates Configuration (Playground)
-**Decision Makers:** Dev Team
+**Status:** ✅ Accepted **Date:** 2025-12-01 **Context:** Story 1.3 - Workflow Templates
+Configuration (Playground) **Decision Makers:** Dev Team
 
 ---
 
 ## Context and Problem Statement
 
-AgentCards stores its PGlite database in a hardcoded location: `~/.agentcards/.agentcards.db` (user home directory).
+AgentCards stores its PGlite database in a hardcoded location: `~/.agentcards/.agentcards.db` (user
+home directory).
 
-**Problem:** In ephemeral environments like **GitHub Codespaces**, the home directory (`/home/ubuntu/`) is **not persisted** between sessions. Only the workspace directory (`/workspaces/<project>/`) is persisted.
+**Problem:** In ephemeral environments like **GitHub Codespaces**, the home directory
+(`/home/ubuntu/`) is **not persisted** between sessions. Only the workspace directory
+(`/workspaces/<project>/`) is persisted.
 
 This causes:
+
 - ❌ Database loss on Codespace restart
 - ❌ Loss of synced workflow templates
 - ❌ Need to re-initialize on every session
@@ -36,9 +38,11 @@ This causes:
 ## Considered Options
 
 ### Option 1: ✅ Environment Variable (CHOSEN)
+
 **Implementation:** Add `AGENTCARDS_DB_PATH` env var support to `getAgentCardsDatabasePath()`
 
 **Pros:**
+
 - ✅ Simple implementation (5 lines of code)
 - ✅ Zero breaking changes (default behavior unchanged)
 - ✅ Flexible for all use cases (Codespace, testing, custom deployments)
@@ -46,40 +50,50 @@ This causes:
 - ✅ Easy to configure in `.devcontainer.json`
 
 **Cons:**
+
 - ⚠️ Requires documentation
 - ⚠️ Users must set env var manually (but Story 1.5 will automate)
 
 ### Option 2: Config File Option
+
 **Implementation:** Add `database.path` to `~/.agentcards/config.json`
 
 **Pros:**
+
 - ✅ Persistent configuration
 - ✅ User-friendly for non-technical users
 
 **Cons:**
+
 - ❌ Config file is also in `~/.agentcards/` (same persistence problem!)
 - ❌ Chicken-and-egg: Can't read config if DB path is in config
 - ❌ More complex implementation
 
 ### Option 3: Automatic Detection
+
 **Implementation:** Auto-detect Codespace environment and use `/workspaces/` path
 
 **Pros:**
+
 - ✅ Zero configuration needed
 
 **Cons:**
+
 - ❌ Magic behavior (harder to debug)
 - ❌ Fragile (relies on environment detection)
 - ❌ Less flexible (what about other ephemeral environments?)
 - ❌ Doesn't help with testing use case
 
 ### Option 4: Change Default Path
+
 **Implementation:** Move default to project directory (e.g., `./.agentcards.db`)
 
 **Pros:**
+
 - ✅ Simple
 
 **Cons:**
+
 - ❌ **BREAKING CHANGE** for existing users
 - ❌ Pollutes project directories
 - ❌ Multiple DBs per user (confusing)
@@ -114,6 +128,7 @@ export function getAgentCardsDatabasePath(): string {
 ```
 
 **Added Tests:** `tests/unit/cli/utils_test.ts`
+
 - Test env var is respected when set
 - Test default path is used when env var not set
 
@@ -124,6 +139,7 @@ export function getAgentCardsDatabasePath(): string {
 ### Positive
 
 ✅ **Codespace Persistence:** Playground users can persist data across sessions
+
 ```bash
 # In .devcontainer.json
 "remoteEnv": {
@@ -132,6 +148,7 @@ export function getAgentCardsDatabasePath(): string {
 ```
 
 ✅ **Test Isolation:** Parallel tests can use isolated databases
+
 ```bash
 AGENTCARDS_DB_PATH=/tmp/test-db-${TEST_ID}.db deno test
 ```
@@ -139,6 +156,7 @@ AGENTCARDS_DB_PATH=/tmp/test-db-${TEST_ID}.db deno test
 ✅ **Zero Breaking Changes:** Existing users unaffected (default unchanged)
 
 ✅ **Deployment Flexibility:** Production deployments can customize DB location
+
 ```bash
 # Production server
 AGENTCARDS_DB_PATH=/var/lib/agentcards/agentcards.db agentcards serve
@@ -147,25 +165,30 @@ AGENTCARDS_DB_PATH=/var/lib/agentcards/agentcards.db agentcards serve
 ### Negative
 
 ⚠️ **Documentation Burden:** Need to document this feature in:
+
 - README.md
 - Playground setup guide
 - CLI help text (future)
 
-⚠️ **User Responsibility:** Users must set env var (but Story 1.5 `ensurePlaygroundReady()` will handle this automatically for notebooks)
+⚠️ **User Responsibility:** Users must set env var (but Story 1.5 `ensurePlaygroundReady()` will
+handle this automatically for notebooks)
 
 ### Neutral
 
-🔄 **Story 1.5 Integration:** `ensurePlaygroundReady()` helper can leverage this to automatically configure playground environment
+🔄 **Story 1.5 Integration:** `ensurePlaygroundReady()` helper can leverage this to automatically
+configure playground environment
 
 ---
 
 ## Validation
 
 **Tests:** ✅ 10/10 passing (`tests/unit/cli/utils_test.ts`)
+
 - Existing tests continue to pass (default behavior unchanged)
 - New tests validate env var behavior
 
 **Manual Testing:**
+
 ```bash
 # Test 1: Default behavior (unchanged)
 deno task cli workflows sync --file playground/config/workflow-templates.yaml
@@ -211,5 +234,4 @@ AGENTCARDS_DB_PATH=/workspaces/AgentCards/.agentcards.db \
 
 ---
 
-**Date Approved:** 2025-12-01
-**Approved By:** Dev Team (during Story 1.3 implementation)
+**Date Approved:** 2025-12-01 **Approved By:** Dev Team (during Story 1.3 implementation)

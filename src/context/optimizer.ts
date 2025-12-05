@@ -106,7 +106,11 @@ export class ContextOptimizer {
       );
       const searchTime = performance.now() - searchStart;
 
-      log.debug(`Vector search completed in ${searchTime.toFixed(2)}ms, found ${searchResults.length} results`);
+      log.debug(
+        `Vector search completed in ${
+          searchTime.toFixed(2)
+        }ms, found ${searchResults.length} results`,
+      );
 
       // AC2: Step 2 - Load only matched schemas (AC3: not all-at-once)
       const schemas: MCPTool[] = [];
@@ -142,9 +146,13 @@ export class ContextOptimizer {
 
       // Display summary
       log.info(
-        `✓ Loaded ${schemas.length} schemas in ${totalLatency.toFixed(2)}ms (cache: ${cacheHits} hits, ${cacheMisses} misses)`,
+        `✓ Loaded ${schemas.length} schemas in ${
+          totalLatency.toFixed(2)
+        }ms (cache: ${cacheHits} hits, ${cacheMisses} misses)`,
       );
-      log.info(`  Context usage: ${usage.usagePercent.toFixed(2)}% (${usage.estimatedTokens} tokens)`);
+      log.info(
+        `  Context usage: ${usage.usagePercent.toFixed(2)}% (${usage.estimatedTokens} tokens)`,
+      );
 
       // AC4: Warn if usage exceeds target
       if (usage.usagePercent >= 5) {

@@ -9,7 +9,7 @@
 
 import * as log from "@std/log";
 import type { PGliteClient } from "../db/client.ts";
-import { WorkflowLoader, type WorkflowEdge } from "./workflow-loader.ts";
+import { type WorkflowEdge, WorkflowLoader } from "./workflow-loader.ts";
 import { EmbeddingModel, schemaToText } from "../vector/embeddings.ts";
 
 /**
@@ -89,7 +89,9 @@ export class WorkflowSyncService {
       // 2. Load known tools from tool_schema for strict validation
       const knownTools = await this.loadKnownTools();
       if (knownTools.length === 0) {
-        log.warn("[WorkflowSync] No tools found in tool_schema. Run 'agentcards serve' first to discover tools.");
+        log.warn(
+          "[WorkflowSync] No tools found in tool_schema. Run 'agentcards serve' first to discover tools.",
+        );
         return {
           success: false,
           edgesCreated: 0,
@@ -103,7 +105,9 @@ export class WorkflowSyncService {
       this.loader.setKnownTools(knownTools);
 
       // 3. Load and validate workflows (now with strict tool validation)
-      const { validWorkflows, validationResults, edges } = await this.loader.loadAndProcess(yamlPath);
+      const { validWorkflows, validationResults, edges } = await this.loader.loadAndProcess(
+        yamlPath,
+      );
 
       // Collect warnings and errors
       const warnings: string[] = [];

@@ -100,7 +100,7 @@ export function progressBar(
   current: number,
   total: number,
   label?: string,
-  options?: ProgressBarOptions
+  options?: ProgressBarOptions,
 ): string {
   const width = options?.width ?? 20;
   const showPercent = options?.showPercent ?? true;
@@ -164,7 +164,7 @@ export function progressBar(
 export function compareMetrics(
   before: Record<string, number>,
   after: Record<string, number>,
-  options?: CompareMetricsOptions
+  options?: CompareMetricsOptions,
 ): string {
   const labels = options?.labels ?? { before: "Before", after: "After" };
   const colors = options?.colors ?? false;
@@ -252,7 +252,7 @@ export function compareMetrics(
 export function speedupChart(
   sequential: number,
   parallel: number,
-  options?: SpeedupChartOptions
+  options?: SpeedupChartOptions,
 ): string {
   const width = options?.width ?? 30;
   const colors = options?.colors ?? false;
@@ -313,7 +313,9 @@ export function speedupChart(
     }
     lines.push(savedStr);
   } else if (timeSaved < 0) {
-    let lostStr = `Time lost: ${formatNumber(Math.abs(timeSaved))}${unit} (${Math.abs(percentSaved).toFixed(0)}%)`;
+    let lostStr = `Time lost: ${formatNumber(Math.abs(timeSaved))}${unit} (${
+      Math.abs(percentSaved).toFixed(0)
+    }%)`;
     if (colors) {
       lostStr = colorize(lostStr, ANSI.red, true);
     }
@@ -342,7 +344,7 @@ export function metricLine(
   label: string,
   value: number,
   unit?: string,
-  options?: { colors?: boolean; positive?: boolean }
+  options?: { colors?: boolean; positive?: boolean },
 ): string {
   const colors = options?.colors ?? false;
   const positive = options?.positive ?? true;
@@ -378,7 +380,7 @@ export function reductionSummary(
   before: number,
   after: number,
   unit: string,
-  options?: { colors?: boolean }
+  options?: { colors?: boolean },
 ): string {
   const colors = options?.colors ?? false;
   const reduction = before === 0 ? 0 : ((before - after) / before) * 100;
@@ -426,7 +428,7 @@ if (import.meta.main) {
   console.log(compareMetrics(
     { tokens: 45000, latency: 2500, tools: 25 },
     { tokens: 12000, latency: 1800, tools: 3 },
-    { labels: { before: "Without Gateway", after: "With Gateway" } }
+    { labels: { before: "Without Gateway", after: "With Gateway" } },
   ));
 
   // Speedup chart demo

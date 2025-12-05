@@ -1,13 +1,12 @@
 # ADR-007: DAG Adaptatif avec Feedback Loops AIL/HIL et Re-planification Dynamique
 
-**Status:** ✅ Accepted - Implementation Complete (3/4 stories done)
-**Date:** 2025-11-13
-**Updated:** 2025-11-13 (Ready for formal approval)
-**Updated:** 2025-11-24 (AIL/HIL implementation details superseded by ADR-019)
-**Deciders:** BMad
-**Technical Review:** Complete
+**Status:** ✅ Accepted - Implementation Complete (3/4 stories done) **Date:** 2025-11-13
+**Updated:** 2025-11-13 (Ready for formal approval) **Updated:** 2025-11-24 (AIL/HIL implementation
+details superseded by ADR-019) **Deciders:** BMad **Technical Review:** Complete
 
-> **⚠️ UPDATE 2025-11-24:** AIL/HIL implementation approach clarified in **ADR-019: Two-Level AIL Architecture**. SSE streaming pattern incompatible with MCP one-shot protocol. Use Gateway HTTP response pattern for production MCP compatibility.
+> **⚠️ UPDATE 2025-11-24:** AIL/HIL implementation approach clarified in **ADR-019: Two-Level AIL
+> Architecture**. SSE streaming pattern incompatible with MCP one-shot protocol. Use Gateway HTTP
+> response pattern for production MCP compatibility.
 
 ---
 
@@ -15,13 +14,14 @@
 
 ### Système Actuel
 
-Le système AgentCards utilise un `ParallelExecutor` qui exécute un DAG de manière linéaire et complète en une seule passe:
+Le système AgentCards utilise un `ParallelExecutor` qui exécute un DAG de manière linéaire et
+complète en une seule passe:
 
 ```typescript
 class ParallelExecutor {
   async execute(dag: DAGStructure): Promise<DAGExecutionResult> {
     for (const layer of topologicalLayers) {
-      await Promise.all(layer.map(task => executeTask(task)));
+      await Promise.all(layer.map((task) => executeTask(task)));
     }
     return results;
   }
@@ -29,6 +29,7 @@ class ParallelExecutor {
 ```
 
 **Performances actuelles:**
+
 - ✅ Speedup 5x grâce au parallélisme par layer
 - ✅ Exécution déterministe et prévisible
 - ✅ Simple à comprendre et débugger
@@ -36,6 +37,7 @@ class ParallelExecutor {
 ### Gap Identifié
 
 **Limitations critiques:**
+
 1. **Pas de feedback loops:** Exécution linéaire sans possibilité d'interaction
 2. **Pas de points de décision:** L'IA ne peut pas faire de choix stratégiques
 3. **Pas de multi-turn:** Aucune conversation au sein de l'exécution
@@ -47,7 +49,9 @@ class ParallelExecutor {
 
 ### Déclencheur
 
-Un spike technique (`docs/spikes/spike-agent-human-dag-feedback-loop.md`) a exploré 3 design options et identifié le besoin d'une architecture supportant:
+Un spike technique (`docs/spikes/spike-agent-human-dag-feedback-loop.md`) a exploré 3 design options
+et identifié le besoin d'une architecture supportant:
+
 - Feedback loops agent et humain
 - Multi-turn conversations
 - Modification dynamique du DAG
@@ -82,6 +86,7 @@ Un spike technique (`docs/spikes/spike-agent-human-dag-feedback-loop.md`) a expl
 **Description:** Pause synchrone après chaque layer pour validation.
 
 **Architecture:**
+
 ```typescript
 for (const layer of layers) {
   await executeLayer(layer);
@@ -93,11 +98,13 @@ for (const layer of layers) {
 **Score:** 68/100
 
 **Avantages:**
+
 - 🟢 Très simple à implémenter (2-3h)
 - 🟢 Compatible architecture existante
 - 🟢 Facile à débugger
 
 **Inconvénients:**
+
 - 🔴 Bloque l'exécution (1-3s attente agent/humain)
 - 🔴 Pas de contrôle task-level (seulement layer-level)
 - 🔴 Incompatible avec speculative execution
@@ -111,6 +118,7 @@ for (const layer of layers) {
 **Description:** Event stream asynchrone + command queue pour control dynamique.
 
 **Architecture:**
+
 ```typescript
 class ControlledExecutor extends ParallelExecutor {
   private commandQueue: AsyncQueue<Command>;
@@ -142,6 +150,7 @@ class ControlledExecutor extends ParallelExecutor {
 **Score:** 92/100 (initial) → **95/100** (with MessagesState patterns)
 
 **Avantages:**
+
 - ✅ Non-blocking, haute performance
 - ✅ Flexible et extensible
 - ✅ Agent + Human control simultané
@@ -150,6 +159,7 @@ class ControlledExecutor extends ParallelExecutor {
 - ✅ Pas de breaking changes
 
 **Inconvénients:**
+
 - ⚠️ Complexité moyenne (event-driven + reducers)
 - ⚠️ Race conditions possibles (mitigable avec AsyncQueue thread-safe)
 - ⚠️ State bloat possible (nécessite pruning)
@@ -173,23 +183,24 @@ class ControlledExecutor extends ParallelExecutor {
 **Description:** Modéliser le DAG comme une state machine explicite avec nodes/edges.
 
 **Architecture:**
+
 ```typescript
 const graph = new StateGraph<WorkflowState>();
 graph.addNode("task1", async (state) => ({ ...state, result1: "..." }));
-graph.addConditionalEdge("task1",
-  (state) => state.condition ? "task2" : "task3"
-);
+graph.addConditionalEdge("task1", (state) => state.condition ? "task2" : "task3");
 ```
 
 **Score:** 80/100
 
 **Avantages:**
+
 - ✅ State-first design élégant
 - ✅ Checkpointing automatique
 - ✅ HIL natif (interrupt pattern)
 - ✅ Visualisable
 
 **Inconvénients:**
+
 - 🔴 Breaking changes majeurs (refactoring complet)
 - 🔴 Migration coûteuse (20-30h)
 - 🟡 Parallélisme moins naturel
@@ -205,12 +216,14 @@ graph.addConditionalEdge("task1",
 **Score:** 75/100
 
 **Avantages:**
+
 - ✅ Reducers automatiques (add_messages)
 - ✅ Moins de boilerplate (15% reduction)
 - ✅ Multi-turn natif
 - ✅ Type safety
 
 **Inconvénients:**
+
 - 🔴 Pas d'observability temps réel
 - 🟡 State bloat (messages s'accumulent)
 - 🟡 Moins de contrôle sur event flow
@@ -230,6 +243,7 @@ graph.addConditionalEdge("task1",
 ### Architecture Choisie: **Option 2 Enhanced - Async Event Stream + Commands + MessagesState-inspired Reducers** ⭐⭐
 
 **Rationale:** Combine le meilleur des deux mondes:
+
 - Event Stream → Observability temps réel
 - MessagesState Reducers → State management robuste
 
@@ -239,9 +253,9 @@ graph.addConditionalEdge("task1",
 
 ```typescript
 interface WorkflowState {
-  messages: Message[];       // Reducer: add_messages (append)
-  tasks: TaskResult[];       // Reducer: add_tasks (append)
-  decisions: Decision[];     // Reducer: add_decisions (append)
+  messages: Message[]; // Reducer: add_messages (append)
+  tasks: TaskResult[]; // Reducer: add_tasks (append)
+  decisions: Decision[]; // Reducer: add_decisions (append)
   context: Record<string, any>; // Reducer: merge (deep merge)
   checkpoint_id?: string;
 }
@@ -250,11 +264,12 @@ const reducers = {
   messages: (existing, update) => [...existing, ...update],
   tasks: (existing, update) => [...existing, ...update],
   decisions: (existing, update) => [...existing, ...update],
-  context: (existing, update) => ({ ...existing, ...update })
+  context: (existing, update) => ({ ...existing, ...update }),
 };
 ```
 
 **Inspiration:** LangGraph v1.0 MessagesState best practices
+
 - "Keep state minimal, explicit, and typed"
 - "Use reducer helpers only where you truly need accumulation"
 
@@ -322,7 +337,7 @@ class ControlledExecutor extends ParallelExecutor {
 
       // Execute layer in parallel
       const results = await Promise.all(
-        layer.map(task => this.executeTask(task))
+        layer.map((task) => this.executeTask(task)),
       );
 
       // Update state avec reducers
@@ -351,26 +366,27 @@ Les checkpoints sauvegardent l'**état complet du workflow** dans PGlite :
 
 ```typescript
 interface Checkpoint {
-  id: string;                    // Unique checkpoint ID
-  workflow_id: string;           // Parent workflow
-  timestamp: Date;               // When checkpoint was created
-  layer: number;                 // Current DAG layer (0, 1, 2...)
-  state: WorkflowState;          // Complete workflow state
+  id: string; // Unique checkpoint ID
+  workflow_id: string; // Parent workflow
+  timestamp: Date; // When checkpoint was created
+  layer: number; // Current DAG layer (0, 1, 2...)
+  state: WorkflowState; // Complete workflow state
 }
 
 interface WorkflowState {
   workflow_id: string;
   current_layer: number;
-  tasks: TaskResult[];           // Completed tasks with results
-  decisions: Decision[];         // AIL/HIL decisions made
-  commands: Command[];           // Pending commands
-  messages: Message[];           // Multi-turn conversation history
-  context: Record<string, any>;  // Workflow context
+  tasks: TaskResult[]; // Completed tasks with results
+  decisions: Decision[]; // AIL/HIL decisions made
+  commands: Command[]; // Pending commands
+  messages: Message[]; // Multi-turn conversation history
+  context: Record<string, any>; // Workflow context
   checkpoint_id?: string;
 }
 ```
 
 **Storage:**
+
 - PGlite database (persistent)
 - Saved after each DAG layer execution
 - Retention: Keep 5 most recent checkpoints per workflow
@@ -389,11 +405,13 @@ interface WorkflowState {
 #### ✅ Workflows Read-Only (Ideal Case)
 
 **Exemples:**
+
 - Analyse de codebase (queries GraphRAG, vector search)
 - Data extraction (scraping, parsing)
 - Reporting (generate docs from existing data)
 
 **Comportement au Resume:**
+
 ```
 Layer 0: Query GraphRAG → Checkpoint saved
 Layer 1: Analyze results → Crash ❌
@@ -405,11 +423,13 @@ Resume: Relance Layer 1 avec state de Layer 0
 #### ⚠️ Workflows avec Modifications (Problematic)
 
 **Exemples:**
+
 - Code generation (write files)
 - Refactoring (modify multiple files)
 - Database migrations (schema changes)
 
 **Comportement au Resume:**
+
 ```
 Layer 0: Modify A.ts, B.ts → Checkpoint saved
 Layer 1: Modify C.ts → Crash ❌ (C.ts partiellement écrit)
@@ -421,11 +441,13 @@ Mais C.ts est dans un état inconsistant !
 
 ### Stratégies de Mitigation pour Epic 2.5
 
-Epic 2.5 (ADR-007) se concentre sur **l'orchestration et la décision**, pas sur l'exécution de code :
+Epic 2.5 (ADR-007) se concentre sur **l'orchestration et la décision**, pas sur l'exécution de code
+:
 
 #### 1. Workflows Primaires = Orchestration (✅ Safe)
 
 Les workflows principaux d'Epic 2.5 sont :
+
 - **Loop 1 (Execution):** Command queue, event stream, state management
 - **Loop 2 (Adaptation):** AIL/HIL decisions, DAG replanning, GraphRAG queries
 - **Loop 3 (Meta-Learning):** GraphRAG updates, pattern learning
@@ -454,6 +476,7 @@ const dag = {
 ```
 
 **Avantage:**
+
 - Epic 2.5 checkpoint = orchestration state uniquement
 - Epic 3 (Sandbox) gère l'isolation et la persistance des modifications
 
@@ -464,7 +487,7 @@ Si une task Epic 2.5 écrit directement des fichiers (non-délégué), elle **DO
 ```typescript
 // ❌ Non-idempotent (échoue au re-run)
 async function writeConfig() {
-  fs.appendFileSync("config.json", newData);  // Duplicate au resume!
+  fs.appendFileSync("config.json", newData); // Duplicate au resume!
 }
 
 // ✅ Idempotent (safe au re-run)
@@ -485,7 +508,7 @@ async function writeConfig() {
 // Epic 3: Sandbox Executor (à venir)
 const sandbox = new DenoSandbox({
   permissions: { read: true, write: true },
-  isolation: "complete"  // Filesystem virtuel isolé
+  isolation: "complete", // Filesystem virtuel isolé
 });
 
 // Modifications isolées
@@ -494,12 +517,13 @@ const result = await sandbox.execute(agentCode);
 // Checkpoint sauvegarde les résultats, pas les fichiers
 checkpoint.tasks = [{
   task_id: "code_gen",
-  result: result.output,           // Output data
-  sandbox_snapshot: result.state   // Virtual FS state (optional)
+  result: result.output, // Output data
+  sandbox_snapshot: result.state, // Virtual FS state (optional)
 }];
 ```
 
 **Avantages Epic 3:**
+
 - ✅ Filesystem isolé → Modifications sûres
 - ✅ Rollback natif → Abort sans corruption
 - ✅ Checkpoint light → Pas besoin de sauvegarder tous les fichiers
@@ -515,6 +539,7 @@ checkpoint.tasks = [{
 4. **Tests de resume** → Inclure scenarios avec crash mid-layer
 
 **Note dans les stories :**
+
 - Stories 2.5-1 à 2.5-4 = orchestration primarily → ✅ Checkpoints safe
 - Toute task qui modifie des fichiers → ⚠️ Documenter idempotence requirement
 
@@ -522,7 +547,8 @@ checkpoint.tasks = [{
 
 **Architecture : Un Seul Agent en Conversation Continue**
 
-Epic 2.5 utilise un seul agent qui exécute le DAG via ses MCP tools et prend les décisions dans sa conversation continue.
+Epic 2.5 utilise un seul agent qui exécute le DAG via ses MCP tools et prend les décisions dans sa
+conversation continue.
 
 ```typescript
 class ControlledExecutor {
@@ -551,12 +577,14 @@ class ControlledExecutor {
 ```
 
 **Principes :**
+
 - ✅ **Agent voit tous les MCP results** : Comportement normal de Claude (comme Bash, Read, etc.)
 - ✅ **Conversation continue** : Pas de re-contexte, pas de pruning
 - ✅ **Décisions informées** : Agent a accès à l'intégralité des résultats pour décider
 - ✅ **Summary pour HIL uniquement** : Génération de résumés pour affichage humain (UI)
 
 **Coût contexte :**
+
 - AIL : Minimal (agent continue sa conversation)
 - HIL : ~500-1000 tokens (génération summary pour affichage UI)
 
@@ -584,7 +612,8 @@ class ControlledExecutor {
 - ⚠️ **Complexité moyenne** - Event-driven + reducers (mais patterns standards)
 - ⚠️ **State bloat possible** - Nécessite pruning strategy (LangGraph même issue)
 - ⚠️ **Race conditions possibles** - Nécessite careful design (AsyncQueue thread-safe)
-- ⚠️ **Debugging async flows** - Plus complexe que linéaire (event logs + state snapshots compensent)
+- ⚠️ **Debugging async flows** - Plus complexe que linéaire (event logs + state snapshots
+  compensent)
 
 ### Neutral
 
@@ -599,12 +628,14 @@ class ControlledExecutor {
 ### Phase 1: Sprint 1 - State Management & Checkpoints (2-3h)
 
 **Objectifs:**
+
 - ✅ Définir `WorkflowState` interface
 - ✅ Implémenter reducers automatiques
 - ✅ Refactor `ParallelExecutor` pour extension
 - ✅ Checkpoint infrastructure
 
 **Livrables:**
+
 - `src/dag/state.ts` - WorkflowState + reducers
 - `src/dag/controlled-executor.ts` - Base class
 - Tests unitaires (state updates, reducers)
@@ -612,11 +643,13 @@ class ControlledExecutor {
 ### Phase 2: Sprint 2 - Command Queue & Agent Control (2-3h)
 
 **Objectifs:**
+
 - ✅ AsyncQueue implementation
 - ✅ Command types et processors
 - ✅ Agent decision loop
 
 **Livrables:**
+
 - `src/dag/command-queue.ts`
 - `src/dag/commands.ts`
 - Integration tests
@@ -624,11 +657,13 @@ class ControlledExecutor {
 ### Phase 3: Sprint 3 - Full Event-Driven + Human Loop (2-3h)
 
 **Objectifs:**
+
 - ✅ Event stream implementation
 - ✅ Human-in-the-loop UI
 - ✅ Multi-turn state management
 
 **Livrables:**
+
 - `src/dag/event-stream.ts`
 - `src/ui/checkpoint-prompt.ts`
 - End-to-end tests
@@ -636,6 +671,7 @@ class ControlledExecutor {
 ### Phase 4: Sprint 4 - Speculative Execution + GraphRAG Integration (3-4h)
 
 **Objectifs:**
+
 - ✅ GraphRAG next-node prediction (graph suggester)
 - ✅ Speculative task execution
 - ✅ Speculation resolution
@@ -643,6 +679,7 @@ class ControlledExecutor {
 - ✅ Feedback loop enrichment du graph
 
 **Livrables:**
+
 - `src/dag/speculation.ts`
 - `src/dag/graph-suggester.ts` - Interface avec GraphRAG
 - Performance benchmarks
@@ -667,6 +704,7 @@ class ControlledExecutor {
   - Created by: `DAGSuggester` (queries GraphRAG)
 
 **Flow:**
+
 ```
 User Intent → DAGSuggester → Query GraphRAG → Build Workflow DAG → Execute
                                     ↑                                  │
@@ -679,12 +717,12 @@ User Intent → DAGSuggester → Query GraphRAG → Build Workflow DAG → Execu
 // src/graphrag/dag-suggester.ts - ÉTENDRE la classe existante
 export class DAGSuggester {
   // ✅ EXISTE DÉJÀ
-  async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null>
+  async suggestDAG(intent: WorkflowIntent): Promise<SuggestedDAG | null>;
 
   // ✅ NOUVELLE MÉTHODE - Prédire prochains nodes pour speculation
   async predictNextNodes(
     currentState: WorkflowState,
-    completedTasks: TaskResult[]
+    completedTasks: TaskResult[],
   ): Promise<PredictedNode[]> {
     // 1. Get tools utilisés from completedTasks
     // 2. Query GraphEngine pour adjacency (PageRank sur neighbors)
@@ -699,7 +737,7 @@ export class DAGSuggester {
       completedTasks: TaskResult[];
       newRequirement: string;
       availableContext: Record<string, any>;
-    }
+    },
   ): Promise<DAGStructure> {
     // 1. Extract new requirements from context
     // 2. VectorSearch pour tools pertinents (utilise this.vectorSearch existant)
@@ -789,6 +827,7 @@ export class GraphRAGEngine {
 **Impact:** Implémentation devient trop complexe, timeline dépasse 13h.
 
 **Mitigation:**
+
 - Implémentation progressive en 4 sprints indépendants
 - Chaque sprint peut fonctionner standalone
 - Fallback: Rester sur Sprint 1 (MVP checkpoints) si besoin
@@ -800,6 +839,7 @@ export class GraphRAGEngine {
 **Impact:** Commands ou state updates concurrent causent inconsistencies.
 
 **Mitigation:**
+
 - AsyncQueue thread-safe avec locks
 - Command versioning (optimistic locking)
 - State updates atomic via reducers
@@ -811,6 +851,7 @@ export class GraphRAGEngine {
 **Impact:** Checkpoints/events dégradent le speedup 5x.
 
 **Mitigation:**
+
 - Checkpoints configurable (ON/OFF)
 - Speculation opt-in (feature flag)
 - Benchmarks avant/après chaque phase
@@ -822,6 +863,7 @@ export class GraphRAGEngine {
 **Impact:** Messages/tasks s'accumulent, memory overflow.
 
 **Mitigation:**
+
 - Pruning strategy (keep last N items)
 - Configurable retention policy
 - Periodic state cleanup
@@ -833,6 +875,7 @@ export class GraphRAGEngine {
 **Impact:** Speculative execution gaspille compute sans bénéfice.
 
 **Mitigation:**
+
 - Confidence threshold >0.7
 - Safety whitelist (read-only operations uniquement)
 - Track hit rate et net benefit
@@ -844,24 +887,29 @@ export class GraphRAGEngine {
 ## Related Decisions
 
 ### ADR-001: DAG-Based Workflow Execution
+
 - **Status:** Accepted
 - **Impact:** Base architecture que nous étendons
 
 ### ADR-003: GraphRAG for Tool Discovery
+
 - **Status:** Accepted
 - **Impact:** GraphRAG peut être redéclenché pour re-planification
 
 ### ADR-005: Parallel Layer Execution
+
 - **Status:** Accepted
 - **Impact:** Speedup 5x à préserver
 
 ### ADR-008: Episodic Memory & Adaptive Thresholds (Extension)
+
 - **Status:** Proposed
 - **Impact:** Extends Loop 3 (Meta-Learning) with:
   - Episodic memory for historical context retrieval
   - Adaptive thresholds for self-improving speculation
   - Replaces fixed threshold (0.7) with learned thresholds (0.70-0.95)
-- **Scope:** ADR-007 covers Loop 1-2 + base Loop 3. ADR-008 extends Loop 3 with enhanced learning mechanisms.
+- **Scope:** ADR-007 covers Loop 1-2 + base Loop 3. ADR-008 extends Loop 3 with enhanced learning
+  mechanisms.
 - **Timeline:** Implement after ADR-007 stories (2.5-1 to 2.5-4) are complete
 
 ---
@@ -906,14 +954,19 @@ export class GraphRAGEngine {
 ## Change Log
 
 ### v1.0 (2025-11-13 initial)
+
 - Option 2 Hybridée - Event Stream + Commands
 - Score: 92/100
 - Status: Proposed
 
 ### v2.0 (2025-11-13 updated)
-- + MessagesState-inspired reducers
-- + State-first design
-- + 15% code reduction
+
+-
+  - MessagesState-inspired reducers
+-
+  - State-first design
+-
+  - 15% code reduction
 - Score: **95/100**
 - Status: Proposed v2
 
@@ -921,14 +974,13 @@ export class GraphRAGEngine {
 
 ## Approval
 
-**Proposed by:** Technical Research Team
-**Date:** 2025-11-13
-**Approved by:** BMad
-**Approval date:** 2025-11-13
+**Proposed by:** Technical Research Team **Date:** 2025-11-13 **Approved by:** BMad **Approval
+date:** 2025-11-13
 
 **Status:** ✅ Approved for implementation
 
 **Implementation Plan:**
+
 1. ✅ Epic 2.5 created in sprint-status.yaml
 2. ⏳ Update PRD with Epic 2.5 scope (Loop 1, Loop 2, base Loop 3)
 3. ⏳ Update `docs/architecture.md` with Pattern 4 details
@@ -936,7 +988,8 @@ export class GraphRAGEngine {
 5. ⏳ Generate 4 stories following BMM process (2.5-1 to 2.5-4)
 6. ⏳ Begin implementation after story generation
 
-**Note:** ADR-008 (Episodic Memory & Adaptive Thresholds) will extend Loop 3 after ADR-007 implementation is complete.
+**Note:** ADR-008 (Episodic Memory & Adaptive Thresholds) will extend Loop 3 after ADR-007
+implementation is complete.
 
 ---
 

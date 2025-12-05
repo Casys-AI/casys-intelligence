@@ -15,7 +15,7 @@
 import { assertEquals, assertExists } from "@std/assert";
 import { ControlledExecutor } from "../../src/dag/controlled-executor.ts";
 import { createDefaultClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
 import { EmbeddingModel } from "../../src/vector/embeddings.ts";
 import type { PGliteClient } from "../../src/db/client.ts";
@@ -117,9 +117,7 @@ Deno.test({
     }
 
     // Verify workflow completed
-    const workflowComplete = events.find((e) =>
-      e.type === "workflow_complete"
-    ) as any;
+    const workflowComplete = events.find((e) => e.type === "workflow_complete") as any;
     assertExists(workflowComplete, "Workflow should complete");
     assertEquals(
       workflowComplete.successful_tasks,
@@ -135,9 +133,7 @@ Deno.test({
     const state = executor.getState();
     assertExists(state, "State should exist");
 
-    const processDataResult = state.tasks.find((t) =>
-      t.taskId === "process_data"
-    );
+    const processDataResult = state.tasks.find((t) => t.taskId === "process_data");
     assertExists(processDataResult, "Code execution task result should exist");
     assertEquals(processDataResult.status, "success", "Task should succeed");
 
@@ -186,17 +182,13 @@ Deno.test({
     }
 
     // Verify completion
-    const workflowComplete = events.find((e) =>
-      e.type === "workflow_complete"
-    ) as any;
+    const workflowComplete = events.find((e) => e.type === "workflow_complete") as any;
     assertExists(workflowComplete, "Workflow should complete");
     assertEquals(workflowComplete.successful_tasks, 1, "Task should succeed");
 
     // Verify result
     const state = executor.getState();
-    const taskResult = state?.tasks.find((t) =>
-      t.taskId === "analyze_with_intent"
-    );
+    const taskResult = state?.tasks.find((t) => t.taskId === "analyze_with_intent");
     assertExists(taskResult, "Task result should exist");
 
     const output = taskResult.output as any;
@@ -233,7 +225,7 @@ Deno.test({
           `,
           arguments: {},
           depends_on: ["fetch_value"],
-          side_effects: true,  // NOT safe-to-fail → should fail immediately
+          side_effects: true, // NOT safe-to-fail → should fail immediately
         },
       ],
     };
@@ -262,9 +254,7 @@ Deno.test({
 
     // Verify state preserves error information
     const state = executor.getState();
-    const errorTask = state?.tasks.find((t) =>
-      t.taskId === "process_with_error"
-    );
+    const errorTask = state?.tasks.find((t) => t.taskId === "process_with_error");
     assertExists(errorTask, "Error task should be in state");
     assertEquals(errorTask.status, "error", "Task status should be error");
   },
@@ -322,9 +312,7 @@ Deno.test({
     }
 
     // Verify all tasks completed
-    const workflowComplete = events.find((e) =>
-      e.type === "workflow_complete"
-    ) as any;
+    const workflowComplete = events.find((e) => e.type === "workflow_complete") as any;
     assertExists(workflowComplete, "Workflow should complete");
     assertEquals(
       workflowComplete.successful_tasks,

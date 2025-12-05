@@ -44,8 +44,14 @@ export class SemanticMockEmbedding {
     this.embeddingCache.set("xml parser", this.generateCluster(0.8, 0.1, 0.05));
     this.embeddingCache.set("parse_xml", this.generateCluster(0.8, 0.1, 0.05));
     this.embeddingCache.set("xml:parse", this.generateCluster(0.8, 0.1, 0.05));
-    this.embeddingCache.set("parse xml documents and extract data", this.generateCluster(0.8, 0.1, 0.05));
-    this.embeddingCache.set("parse xml files found in directory", this.generateCluster(0.8, 0.1, 0.05));
+    this.embeddingCache.set(
+      "parse xml documents and extract data",
+      this.generateCluster(0.8, 0.1, 0.05),
+    );
+    this.embeddingCache.set(
+      "parse xml files found in directory",
+      this.generateCluster(0.8, 0.1, 0.05),
+    );
 
     // Cluster 2: JSON Processing (dim1=0.1, dim2=0.85, dim3=0.05)
     this.embeddingCache.set("parse json files", this.generateCluster(0.1, 0.85, 0.05));
@@ -60,7 +66,10 @@ export class SemanticMockEmbedding {
     this.embeddingCache.set("list_directory", this.generateCluster(0.06, 0.06, 0.88));
     this.embeddingCache.set("list files", this.generateCluster(0.05, 0.07, 0.89));
     this.embeddingCache.set("filesystem:list_directory", this.generateCluster(0.06, 0.05, 0.90));
-    this.embeddingCache.set("list files and detect file types", this.generateCluster(0.05, 0.06, 0.90));
+    this.embeddingCache.set(
+      "list files and detect file types",
+      this.generateCluster(0.05, 0.06, 0.90),
+    );
 
     this.embeddingCache.set("read file", this.generateCluster(0.07, 0.06, 0.87));
     this.embeddingCache.set("read_file", this.generateCluster(0.08, 0.05, 0.86));
@@ -82,7 +91,10 @@ export class SemanticMockEmbedding {
     this.embeddingCache.set("validate data", this.generateCluster(0.2, 0.2, 0.6));
     this.embeddingCache.set("validate_data", this.generateCluster(0.21, 0.19, 0.61));
     this.embeddingCache.set("data:validate", this.generateCluster(0.20, 0.20, 0.60));
-    this.embeddingCache.set("validate data structure and schema", this.generateCluster(0.20, 0.20, 0.60));
+    this.embeddingCache.set(
+      "validate data structure and schema",
+      this.generateCluster(0.20, 0.20, 0.60),
+    );
   }
 
   /**

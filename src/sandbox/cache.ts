@@ -534,7 +534,7 @@ function fastHash(str: string): string {
     // Mix character into hash
     h32 = h32 ^ char;
     h32 = Math.imul(h32, PRIME1);
-    h32 = ((h32 << 13) | (h32 >>> 19)); // Rotate left 13 bits
+    h32 = (h32 << 13) | (h32 >>> 19); // Rotate left 13 bits
     h32 = Math.imul(h32, PRIME2);
   }
 

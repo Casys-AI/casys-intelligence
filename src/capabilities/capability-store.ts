@@ -12,11 +12,7 @@
 import type { PGliteClient } from "../db/client.ts";
 import type { EmbeddingModel } from "../vector/embeddings.ts";
 import type { Row } from "../db/client.ts";
-import type {
-  Capability,
-  CacheConfig,
-  SaveCapabilityInput,
-} from "./types.ts";
+import type { CacheConfig, Capability, SaveCapabilityInput } from "./types.ts";
 import { hashCode } from "./hash.ts";
 import { getLogger } from "../telemetry/logger.ts";
 
@@ -76,7 +72,17 @@ export class CapabilityStore {
     const codeHash = await hashCode(code);
 
     // Generate intent embedding for semantic search
-    const embedding = await this.embeddingModel.encode(intent);
+    let embedding: number[];
+    try {
+      embedding = await this.embeddingModel.encode(intent);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error("Failed to generate embedding for capability", {
+        intent: intent.substring(0, 50),
+        error: errorMsg,
+      });
+      throw new Error(`Embedding generation failed: ${errorMsg}`);
+    }
     const embeddingStr = `[${embedding.join(",")}]`;
 
     // Build dag_structure with tools used (for graph analysis)
@@ -194,15 +200,17 @@ export class CapabilityStore {
     success: boolean,
     durationMs: number,
   ): Promise<void> {
-    await this.db.exec(`
-      UPDATE workflow_pattern SET
+    // Use parameterized query to prevent SQL injection
+    await this.db.query(
+      `UPDATE workflow_pattern SET
         usage_count = usage_count + 1,
-        success_count = success_count + ${success ? 1 : 0},
+        success_count = success_count + $1,
         last_used = NOW(),
-        success_rate = (success_count + ${success ? 1 : 0})::real / (usage_count + 1)::real,
-        avg_duration_ms = ((avg_duration_ms * usage_count) + ${durationMs}) / (usage_count + 1)
-      WHERE code_hash = '${codeHash}'
-    `);
+        success_rate = (success_count + $1)::real / (usage_count + 1)::real,
+        avg_duration_ms = ((avg_duration_ms * usage_count) + $2) / (usage_count + 1)
+      WHERE code_hash = $3`,
+      [success ? 1 : 0, durationMs, codeHash],
+    );
 
     logger.debug("Capability usage updated", { codeHash, success, durationMs });
   }

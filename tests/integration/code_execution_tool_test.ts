@@ -12,7 +12,7 @@
 import { assertEquals, assertExists } from "@std/assert";
 import { AgentCardsGatewayServer } from "../../src/mcp/gateway-server.ts";
 import { createDefaultClient } from "../../src/db/client.ts";
-import { MigrationRunner, getAllMigrations } from "../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../src/db/migrations.ts";
 import { VectorSearch } from "../../src/vector/search.ts";
 import { EmbeddingModel } from "../../src/vector/embeddings.ts";
 import { GraphRAGEngine } from "../../src/graphrag/graph-engine.ts";
@@ -79,9 +79,7 @@ Deno.test({
     const result = await listToolsMethod({});
 
     // Verify execute_code tool is registered
-    const executeCodeTool = result.tools.find((t: any) =>
-      t.name === "agentcards:execute_code"
-    );
+    const executeCodeTool = result.tools.find((t: any) => t.name === "agentcards:execute_code");
 
     assertExists(executeCodeTool, "execute_code tool should be registered");
     assertEquals(

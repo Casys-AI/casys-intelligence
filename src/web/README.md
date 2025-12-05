@@ -34,6 +34,7 @@ deno run -A src/web/dev.ts
 ```
 
 The dashboard will be available at:
+
 - **Dashboard:** http://localhost:8080/dashboard
 - **Gateway API:** http://localhost:3001
 
@@ -78,13 +79,13 @@ src/web/
 The dashboard listens to SSE events from the gateway:
 
 ```typescript
-const eventSource = new EventSource('/events/stream');
+const eventSource = new EventSource("/events/stream");
 
-eventSource.addEventListener('node_created', (event) => {
+eventSource.addEventListener("node_created", (event) => {
   // Add new node to graph
 });
 
-eventSource.addEventListener('edge_created', (event) => {
+eventSource.addEventListener("edge_created", (event) => {
   // Add new edge to graph
 });
 ```
@@ -126,15 +127,18 @@ deployctl deploy
 
 ## Migration from HTML Dashboard
 
-The original HTML dashboard (`public/dashboard.html`) is now replaced with this Fresh implementation:
+The original HTML dashboard (`public/dashboard.html`) is now replaced with this Fresh
+implementation:
 
 **Before (HTML):**
+
 - 530 lines of HTML/CSS/JS in one file
 - Manual DOM manipulation
 - No component structure
 - Hard to test and maintain
 
 **After (Fresh):**
+
 - Clean component architecture
 - TypeScript type safety
 - Hot reload in development

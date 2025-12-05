@@ -1,13 +1,11 @@
 # ADR-008: Episodic Memory & Adaptive Thresholds for Meta-Learning
 
-**Status:** ✅ Fully Implemented
-**Date:** 2025-11-13
-**Updated:** 2025-12-05 (Phase 1 + Phase 2 complete)
-**Deciders:** BMad
-**Technical Review:** Complete
-**Prerequisite:** ADR-007 implementation + Epic 3 (Sandbox) completion
+**Status:** ✅ Fully Implemented **Date:** 2025-11-13 **Updated:** 2025-12-05 (Phase 1 + Phase 2
+complete) **Deciders:** BMad **Technical Review:** Complete **Prerequisite:** ADR-007
+implementation + Epic 3 (Sandbox) completion
 
 **Implementation Status (2025-12-05):**
+
 - ✅ **Phase 1 (Storage Foundation):** DONE
   - Migration 007: `episodic_events` + `adaptive_thresholds` tables
   - `EpisodicMemoryStore` class (280 LOC, 9 tests passing)
@@ -30,6 +28,7 @@ AgentCards implements a 3-loop learning architecture (ADR-007):
 - **Loop 3 (Meta-Learning):** GraphRAGEngine.updateFromExecution() updates knowledge graph
 
 **Current Loop 3 Implementation:**
+
 ```typescript
 // src/graphrag/graph-engine.ts
 async updateFromExecution(execution: WorkflowExecution): Promise<void> {
@@ -40,6 +39,7 @@ async updateFromExecution(execution: WorkflowExecution): Promise<void> {
 ```
 
 **Current Speculation (Story 2.5-4):**
+
 ```typescript
 // Fixed confidence threshold
 if (prediction.confidence > 0.7) {
@@ -61,10 +61,12 @@ Loop 3 meta-learning is **incomplete**:
 **CoALA Framework Insight (from spike-coala-comparison-adaptive-feedback.md):**
 
 CoALA agents use:
+
 - **Episodic Memory:** Store execution trajectories for retrieval during planning
 - **Learning Loop:** Reflect on experiences → Update long-term memory → Improve future cycles
 
 **Our Gap:**
+
 - ✅ We have checkpoints (for resume), but NOT for learning retrieval
 - ❌ Fixed thresholds waste compute (too aggressive) or miss opportunities (too conservative)
 - ❌ No mechanism to capture "what worked" for similar contexts
@@ -86,7 +88,8 @@ Week 4: Same workflow type
 
 ### Trigger
 
-1. **Spike Analysis:** `spike-episodic-memory-adaptive-thresholds.md` identified architectural options
+1. **Spike Analysis:** `spike-episodic-memory-adaptive-thresholds.md` identified architectural
+   options
 2. **CoALA Comparison:** Framework recommends episodic memory for context-aware decisions
 3. **Performance Opportunity:** Adaptive thresholds can improve speculation hit rate by 15-25%
 4. **Stories Ready:** 2.5-5 (Episodic Memory) and 2.5-6 (Adaptive Thresholds) drafted
@@ -120,6 +123,7 @@ Week 4: Same workflow type
 #### Option 1A: Pure JSONB (Flexible Schema)
 
 **Architecture:**
+
 ```sql
 CREATE TABLE episodic_events (
   id TEXT PRIMARY KEY,
@@ -133,11 +137,13 @@ CREATE INDEX idx_episodic_data ON episodic_events USING GIN (data);
 **Score:** 72/100
 
 **Pros:**
+
 - 🟢 Maximum flexibility (schema can evolve)
 - 🟢 No migrations needed for new event types
 - 🟢 GIN index for fast JSONB queries
 
 **Cons:**
+
 - 🔴 No type safety at DB level
 - 🔴 Complex queries (JSONB path expressions)
 - 🟡 Harder to analyze data
@@ -147,6 +153,7 @@ CREATE INDEX idx_episodic_data ON episodic_events USING GIN (data);
 #### Option 1B: Typed Columns Only
 
 **Architecture:**
+
 ```sql
 CREATE TABLE episodic_events (
   id TEXT PRIMARY KEY,
@@ -163,11 +170,13 @@ CREATE TABLE episodic_events (
 **Score:** 68/100
 
 **Pros:**
+
 - 🟢 Type safety at DB level
 - 🟢 Simple queries (standard SQL)
 - 🟢 Easy analytics
 
 **Cons:**
+
 - 🔴 Rigid schema (migration needed for changes)
 - 🔴 Event types have different fields (NULL proliferation)
 - 🟡 Less flexible for future needs
@@ -177,6 +186,7 @@ CREATE TABLE episodic_events (
 #### Option 1C: Hybrid (Typed + JSONB) ⭐ RECOMMENDED
 
 **Architecture:**
+
 ```sql
 CREATE TABLE episodic_events (
   id TEXT PRIMARY KEY,
@@ -201,6 +211,7 @@ CREATE INDEX idx_episodic_data ON episodic_events USING GIN (data);
 **Score:** 85/100
 
 **Pros:**
+
 - ✅ Type safety for common fields (workflow_id, event_type, task_id)
 - ✅ Flexibility for event-specific data (JSONB)
 - ✅ Fast queries on typed columns
@@ -208,6 +219,7 @@ CREATE INDEX idx_episodic_data ON episodic_events USING GIN (data);
 - ✅ Best of both worlds
 
 **Cons:**
+
 - ⚠️ Slightly more complex (but manageable)
 
 **Verdict:** ⭐ **Option 1C - Hybrid approach**
@@ -219,6 +231,7 @@ CREATE INDEX idx_episodic_data ON episodic_events USING GIN (data);
 #### Option 2A: Exact Context Hash Matching
 
 **Architecture:**
+
 ```typescript
 async retrieveRelevant(context: Record<string, any>): Promise<EpisodicEvent[]> {
   const contextHash = hashContext(context); // Hash key features
@@ -235,11 +248,13 @@ async retrieveRelevant(context: Record<string, any>): Promise<EpisodicEvent[]> {
 **Score:** 82/100
 
 **Pros:**
+
 - 🟢 Fast (index lookup)
 - 🟢 Deterministic (exact matches)
 - 🟢 Low overhead (<5ms)
 
 **Cons:**
+
 - 🔴 No fuzzy matching (similar workflows not found)
 - 🟡 Context definition critical (hash keys)
 
@@ -248,6 +263,7 @@ async retrieveRelevant(context: Record<string, any>): Promise<EpisodicEvent[]> {
 #### Option 2B: Vector Embeddings + Similarity
 
 **Architecture:**
+
 ```typescript
 async retrieveRelevant(context: Record<string, any>): Promise<EpisodicEvent[]> {
   const contextEmbedding = await embedContext(context);
@@ -264,10 +280,12 @@ async retrieveRelevant(context: Record<string, any>): Promise<EpisodicEvent[]> {
 **Score:** 76/100
 
 **Pros:**
+
 - 🟢 Fuzzy matching (similar workflows found)
 - 🟢 Semantic understanding
 
 **Cons:**
+
 - 🔴 Embedding overhead (50-100ms)
 - 🔴 Requires pgvector
 - 🔴 Storage overhead (embeddings)
@@ -278,18 +296,23 @@ async retrieveRelevant(context: Record<string, any>): Promise<EpisodicEvent[]> {
 #### Option 2C: Hybrid (Hash for MVP, Embeddings Phase 2) ⭐ RECOMMENDED
 
 **MVP (Phase 1):**
+
 ```typescript
 // Fast exact matching
 const contextHash = hashContext({ workflowType, domain });
-const events = await this.db.query(`
+const events = await this.db.query(
+  `
   SELECT * FROM episodic_events
   WHERE data->>'contextHash' = $1
   ORDER BY timestamp DESC
   LIMIT 100
-`, [contextHash]);
+`,
+  [contextHash],
+);
 ```
 
 **Phase 2 Enhancement:**
+
 ```typescript
 // Add vector similarity for fuzzy matching
 if (events.length < 10) {
@@ -301,6 +324,7 @@ if (events.length < 10) {
 **Score:** 87/100
 
 **Pros:**
+
 - ✅ Fast MVP (exact matching)
 - ✅ Evolvable (add embeddings later)
 - ✅ Pragmatic (start simple, enhance if needed)
@@ -314,6 +338,7 @@ if (events.length < 10) {
 #### Option 3A: Simple Gradient Descent
 
 **Algorithm:**
+
 ```typescript
 adjustThreshold(currentThreshold: number, successRate: number): number {
   if (successRate > 0.90) {
@@ -328,11 +353,13 @@ adjustThreshold(currentThreshold: number, successRate: number): number {
 **Score:** 78/100
 
 **Pros:**
+
 - 🟢 Simple to understand
 - 🟢 Predictable behavior
 - 🟢 Easy to debug
 
 **Cons:**
+
 - 🔴 Can oscillate around optimal
 - 🟡 Fixed step size (0.02)
 - 🟡 Slow convergence
@@ -342,6 +369,7 @@ adjustThreshold(currentThreshold: number, successRate: number): number {
 #### Option 3B: Exponential Moving Average (EMA) ⭐ RECOMMENDED
 
 **Algorithm:**
+
 ```typescript
 adjustThreshold(currentThreshold: number, successRate: number): number {
   const targetSuccessRate = 0.85;
@@ -369,12 +397,14 @@ adjustThreshold(currentThreshold: number, successRate: number): number {
 **Score:** 86/100
 
 **Pros:**
+
 - 🟢 Smooth convergence (no oscillation)
 - 🟢 Adaptive step size (proportional to error)
 - 🟢 Stable in presence of noise
 - 🟢 Industry-proven (RL, control systems)
 
 **Cons:**
+
 - ⚠️ Slightly more complex
 - ⚠️ Learning rate tuning needed
 
@@ -393,6 +423,7 @@ adjustThreshold(currentThreshold: number, successRate: number): number {
 #### Option 4A: Per Workflow Type ⭐ RECOMMENDED
 
 **Example:**
+
 ```typescript
 context = { workflowType: 'data_analysis' } → threshold: 0.82
 context = { workflowType: 'web_scraping' } → threshold: 0.91
@@ -401,12 +432,14 @@ context = { workflowType: 'web_scraping' } → threshold: 0.91
 **Score:** 80/100
 
 **Pros:**
+
 - 🟢 Shared learning across users
 - 🟢 Fast convergence (more data)
 - 🟢 Privacy-friendly (no user data)
 - 🟢 Simpler implementation
 
 **Cons:**
+
 - 🟡 No personalization
 
 **Verdict:** ⭐ **Option 4A - Per workflow type for MVP**
@@ -429,7 +462,8 @@ context = { workflowType: 'web_scraping' } → threshold: 0.91
 
 ### Architecture Choisie: **Episodic Memory with Adaptive Thresholds (Hybrid Storage + EMA Learning)** ⭐⭐
 
-**Rationale:** Combines pragmatic MVP (fast, simple) with clear evolution path (Phase 2 enhancements).
+**Rationale:** Combines pragmatic MVP (fast, simple) with clear evolution path (Phase 2
+enhancements).
 
 ### Architecture Détaillée
 
@@ -438,10 +472,10 @@ context = { workflowType: 'web_scraping' } → threshold: 0.91
 ```typescript
 // src/learning/types.ts
 export interface EpisodicEvent {
-  id: string;                    // UUID
-  workflow_id: string;            // Links to workflow execution
-  event_type: 'speculation_start' | 'task_complete' | 'ail_decision' | 'hil_decision';
-  task_id?: string;               // Optional task reference
+  id: string; // UUID
+  workflow_id: string; // Links to workflow execution
+  event_type: "speculation_start" | "task_complete" | "ail_decision" | "hil_decision";
+  task_id?: string; // Optional task reference
   timestamp: number;
   data: {
     context?: Record<string, any>;
@@ -451,12 +485,12 @@ export interface EpisodicEvent {
       reasoning: string;
     };
     result?: {
-      status: 'success' | 'error';
+      status: "success" | "error";
       output?: unknown;
       executionTimeMs?: number;
     };
     decision?: {
-      type: 'ail' | 'hil';
+      type: "ail" | "hil";
       action: string;
       reasoning: string;
     };
@@ -465,6 +499,7 @@ export interface EpisodicEvent {
 ```
 
 **PGlite Schema:**
+
 ```sql
 CREATE TABLE episodic_events (
   id TEXT PRIMARY KEY,
@@ -496,17 +531,17 @@ export class EpisodicMemoryStore {
   /**
    * Capture event (non-blocking, buffered)
    */
-  async capture(event: Omit<EpisodicEvent, 'id'>): Promise<void> {
+  async capture(event: Omit<EpisodicEvent, "id">): Promise<void> {
     const fullEvent: EpisodicEvent = {
       id: crypto.randomUUID(),
-      ...event
+      ...event,
     };
 
     this.buffer.push(fullEvent);
 
     // Flush if buffer full (non-blocking)
     if (this.buffer.length >= this.bufferSize) {
-      this.flush().catch(err => console.error('Episodic flush error:', err));
+      this.flush().catch((err) => console.error("Episodic flush error:", err));
     }
   }
 
@@ -522,17 +557,20 @@ export class EpisodicMemoryStore {
     // Batch insert
     await this.db.transaction(async (tx) => {
       for (const event of toFlush) {
-        await tx.query(`
+        await tx.query(
+          `
           INSERT INTO episodic_events (id, workflow_id, event_type, task_id, timestamp, data)
           VALUES ($1, $2, $3, $4, to_timestamp($5), $6)
-        `, [
-          event.id,
-          event.workflow_id,
-          event.event_type,
-          event.task_id,
-          event.timestamp / 1000,
-          JSON.stringify(event.data)
-        ]);
+        `,
+          [
+            event.id,
+            event.workflow_id,
+            event.event_type,
+            event.task_id,
+            event.timestamp / 1000,
+            JSON.stringify(event.data),
+          ],
+        );
       }
     });
   }
@@ -545,7 +583,7 @@ export class EpisodicMemoryStore {
     options: {
       limit?: number;
       eventTypes?: string[];
-    } = {}
+    } = {},
   ): Promise<EpisodicEvent[]> {
     const { limit = 100, eventTypes } = options;
 
@@ -563,19 +601,17 @@ export class EpisodicMemoryStore {
 
     query += ` ORDER BY timestamp DESC LIMIT $${eventTypes ? 3 : 2}`;
 
-    const params = eventTypes
-      ? [contextHash, eventTypes, limit]
-      : [contextHash, limit];
+    const params = eventTypes ? [contextHash, eventTypes, limit] : [contextHash, limit];
 
     const result = await this.db.query(query, params);
 
-    return result.rows.map(row => ({
+    return result.rows.map((row) => ({
       id: row.id,
       workflow_id: row.workflow_id,
       event_type: row.event_type,
       task_id: row.task_id,
       timestamp: new Date(row.timestamp).getTime(),
-      data: row.data
+      data: row.data,
     }));
   }
 
@@ -583,13 +619,16 @@ export class EpisodicMemoryStore {
    * Get workflow events (all events for a workflow)
    */
   async getWorkflowEvents(workflowId: string): Promise<EpisodicEvent[]> {
-    const result = await this.db.query(`
+    const result = await this.db.query(
+      `
       SELECT * FROM episodic_events
       WHERE workflow_id = $1
       ORDER BY timestamp ASC
-    `, [workflowId]);
+    `,
+      [workflowId],
+    );
 
-    return result.rows.map(row => this.deserialize(row));
+    return result.rows.map((row) => this.deserialize(row));
   }
 
   /**
@@ -606,10 +645,10 @@ export class EpisodicMemoryStore {
   }
 
   private hashContext(context: Record<string, any>): string {
-    const keys = ['workflowType', 'domain', 'complexity'];
+    const keys = ["workflowType", "domain", "complexity"];
     return keys
-      .map(k => `${k}:${context[k] ?? 'default'}`)
-      .join('|');
+      .map((k) => `${k}:${context[k] ?? "default"}`)
+      .join("|");
   }
 
   private deserialize(row: any): EpisodicEvent {
@@ -619,7 +658,7 @@ export class EpisodicMemoryStore {
       event_type: row.event_type,
       task_id: row.task_id,
       timestamp: new Date(row.timestamp).getTime(),
-      data: row.data
+      data: row.data,
     };
   }
 }
@@ -630,12 +669,12 @@ export class EpisodicMemoryStore {
 ```typescript
 // src/learning/adaptive-threshold-manager.ts
 export interface ThresholdConfig {
-  initial: number;           // 0.92 (conservative start)
-  min: number;               // 0.70
-  max: number;               // 0.95
+  initial: number; // 0.92 (conservative start)
+  min: number; // 0.70
+  max: number; // 0.95
   targetSuccessRate: number; // 0.85
-  learningRate: number;      // 0.05 (EMA smoothing)
-  evaluationWindow: number;  // 50 (samples before adjustment)
+  learningRate: number; // 0.05 (EMA smoothing)
+  evaluationWindow: number; // 50 (samples before adjustment)
 }
 
 export interface ThresholdRecord {
@@ -658,8 +697,8 @@ export class AdaptiveThresholdManager {
       max: 0.95,
       targetSuccessRate: 0.85,
       learningRate: 0.05,
-      evaluationWindow: 50
-    }
+      evaluationWindow: 50,
+    },
   ) {}
 
   /**
@@ -674,10 +713,13 @@ export class AdaptiveThresholdManager {
     }
 
     // Query database
-    const result = await this.db.query(`
+    const result = await this.db.query(
+      `
       SELECT * FROM adaptive_thresholds
       WHERE context_hash = $1
-    `, [contextHash]);
+    `,
+      [contextHash],
+    );
 
     if (result.rows.length > 0) {
       const record = this.deserialize(result.rows[0]);
@@ -694,13 +736,13 @@ export class AdaptiveThresholdManager {
    */
   async updateFromEpisodes(
     context: Record<string, any>,
-    episodes: EpisodicEvent[]
+    episodes: EpisodicEvent[],
   ): Promise<void> {
     const contextHash = this.hashContext(context);
 
     // Filter speculation events
     const speculationEvents = episodes.filter(
-      e => e.event_type === 'speculation_start' && e.data.prediction
+      (e) => e.event_type === "speculation_start" && e.data.prediction,
     );
 
     if (speculationEvents.length < this.config.evaluationWindow) {
@@ -709,9 +751,8 @@ export class AdaptiveThresholdManager {
     }
 
     // Calculate success rate
-    const successful = speculationEvents.filter(e =>
-      e.data.prediction?.wasCorrect === true
-    ).length;
+    const successful =
+      speculationEvents.filter((e) => e.data.prediction?.wasCorrect === true).length;
     const successRate = successful / speculationEvents.length;
 
     // Get current threshold
@@ -720,7 +761,7 @@ export class AdaptiveThresholdManager {
     // Apply EMA learning algorithm
     const newThreshold = this.adjustThreshold(
       currentThreshold,
-      successRate
+      successRate,
     );
 
     // Save to database
@@ -729,10 +770,14 @@ export class AdaptiveThresholdManager {
       context,
       newThreshold,
       successRate,
-      speculationEvents.length
+      speculationEvents.length,
     );
 
-    console.log(`[AdaptiveThreshold] Context: ${contextHash}, Success: ${(successRate * 100).toFixed(1)}%, Threshold: ${currentThreshold.toFixed(3)} → ${newThreshold.toFixed(3)}`);
+    console.log(
+      `[AdaptiveThreshold] Context: ${contextHash}, Success: ${
+        (successRate * 100).toFixed(1)
+      }%, Threshold: ${currentThreshold.toFixed(3)} → ${newThreshold.toFixed(3)}`,
+    );
   }
 
   /**
@@ -740,7 +785,7 @@ export class AdaptiveThresholdManager {
    */
   private adjustThreshold(
     currentThreshold: number,
-    successRate: number
+    successRate: number,
   ): number {
     const { targetSuccessRate, learningRate, min, max } = this.config;
 
@@ -789,13 +834,13 @@ export class AdaptiveThresholdManager {
     `);
 
     return {
-      contexts: result.rows.map(row => ({
+      contexts: result.rows.map((row) => ({
         context: row.context_hash,
         threshold: row.threshold,
         successRate: row.success_rate,
         sampleCount: row.sample_count,
-        converged: this.isConverged(row.threshold, row.success_rate)
-      }))
+        converged: this.isConverged(row.threshold, row.success_rate),
+      })),
     };
   }
 
@@ -805,10 +850,10 @@ export class AdaptiveThresholdManager {
   }
 
   private hashContext(context: Record<string, any>): string {
-    const keys = ['workflowType', 'domain', 'complexity'];
+    const keys = ["workflowType", "domain", "complexity"];
     return keys
-      .map(k => `${k}:${context[k] ?? 'default'}`)
-      .join('|');
+      .map((k) => `${k}:${context[k] ?? "default"}`)
+      .join("|");
   }
 
   private async saveThreshold(
@@ -816,9 +861,10 @@ export class AdaptiveThresholdManager {
     context: Record<string, any>,
     threshold: number,
     successRate: number,
-    sampleCount: number
+    sampleCount: number,
   ): Promise<void> {
-    await this.db.query(`
+    await this.db.query(
+      `
       INSERT INTO adaptive_thresholds (
         context_hash,
         context_keys,
@@ -832,13 +878,15 @@ export class AdaptiveThresholdManager {
         success_rate = $4,
         sample_count = adaptive_thresholds.sample_count + $5,
         updated_at = NOW()
-    `, [
-      contextHash,
-      JSON.stringify(context),
-      threshold,
-      successRate,
-      sampleCount
-    ]);
+    `,
+      [
+        contextHash,
+        JSON.stringify(context),
+        threshold,
+        successRate,
+        sampleCount,
+      ],
+    );
 
     // Update cache
     this.cache.set(contextHash, {
@@ -847,7 +895,7 @@ export class AdaptiveThresholdManager {
       threshold,
       successRate,
       sampleCount,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
   }
 
@@ -858,13 +906,14 @@ export class AdaptiveThresholdManager {
       threshold: row.threshold,
       successRate: row.success_rate,
       sampleCount: row.sample_count,
-      updatedAt: new Date(row.updated_at)
+      updatedAt: new Date(row.updated_at),
     };
   }
 }
 ```
 
 **PGlite Schema:**
+
 ```sql
 CREATE TABLE adaptive_thresholds (
   context_hash TEXT PRIMARY KEY,
@@ -886,12 +935,13 @@ CREATE INDEX idx_adaptive_threshold_context ON adaptive_thresholds USING GIN (co
 #### 4. Integration with Loops
 
 **Loop 1 (Execution) - Capture Events:**
+
 ```typescript
 // src/dag/controlled-executor.ts
 class ControlledExecutor extends ParallelExecutor {
   constructor(
     toolExecutor: ToolExecutor,
-    private episodicMemory: EpisodicMemoryStore
+    private episodicMemory: EpisodicMemoryStore,
   ) {}
 
   async executeTask(task: Task): Promise<TaskResult> {
@@ -900,16 +950,16 @@ class ControlledExecutor extends ParallelExecutor {
     // Capture event (non-blocking)
     await this.episodicMemory.capture({
       workflow_id: this.executionId,
-      event_type: 'task_complete',
+      event_type: "task_complete",
       task_id: task.id,
       timestamp: Date.now(),
       data: {
         result: {
-          status: result.success ? 'success' : 'error',
+          status: result.success ? "success" : "error",
           output: result.output,
-          executionTimeMs: result.executionTimeMs
-        }
-      }
+          executionTimeMs: result.executionTimeMs,
+        },
+      },
     });
 
     return result;
@@ -918,22 +968,23 @@ class ControlledExecutor extends ParallelExecutor {
 ```
 
 **Loop 2 (Adaptation) - Retrieve Context:**
+
 ```typescript
 // src/graphrag/dag-suggester.ts
 class DAGSuggester {
   constructor(
     private graphEngine: GraphRAGEngine,
-    private episodicMemory: EpisodicMemoryStore
+    private episodicMemory: EpisodicMemoryStore,
   ) {}
 
   async predictNextNodes(
     state: WorkflowState,
-    completed: TaskResult[]
+    completed: TaskResult[],
   ): Promise<PredictedNode[]> {
     // Retrieve relevant episodes
     const episodes = await this.episodicMemory.retrieveRelevant(
       state.context,
-      { eventTypes: ['task_complete', 'speculation_start'], limit: 50 }
+      { eventTypes: ["task_complete", "speculation_start"], limit: 50 },
     );
 
     // Boost confidence based on episodic patterns
@@ -944,11 +995,11 @@ class DAGSuggester {
 
   private boostWithEpisodicContext(
     predictions: PredictedNode[],
-    episodes: EpisodicEvent[]
+    episodes: EpisodicEvent[],
   ): PredictedNode[] {
     // Boost confidence if similar context succeeded before
-    return predictions.map(pred => {
-      const successCount = episodes.filter(e =>
+    return predictions.map((pred) => {
+      const successCount = episodes.filter((e) =>
         e.data.prediction?.toolId === pred.task.toolId &&
         e.data.prediction?.wasCorrect === true
       ).length;
@@ -966,13 +1017,14 @@ class DAGSuggester {
 ```
 
 **Loop 3 (Meta-Learning) - Update Thresholds:**
+
 ```typescript
 // src/graphrag/graph-engine.ts
 class GraphRAGEngine {
   constructor(
     private storage: GraphStorage,
     private episodicMemory: EpisodicMemoryStore,
-    private adaptiveThresholds: AdaptiveThresholdManager
+    private adaptiveThresholds: AdaptiveThresholdManager,
   ) {}
 
   async updateFromExecution(execution: WorkflowExecution): Promise<void> {
@@ -981,38 +1033,42 @@ class GraphRAGEngine {
 
     // NEW: Update adaptive thresholds
     const episodes = await this.episodicMemory.getWorkflowEvents(
-      execution.workflow_id
+      execution.workflow_id,
     );
 
     await this.adaptiveThresholds.updateFromEpisodes(
       execution.context,
-      episodes
+      episodes,
     );
   }
 }
 ```
 
 **SpeculativeExecutor - Use Adaptive Threshold:**
+
 ```typescript
 // src/dag/speculative-executor.ts
 class SpeculativeExecutor {
   constructor(
     private executor: ParallelExecutor,
-    private adaptiveThresholds: AdaptiveThresholdManager
+    private adaptiveThresholds: AdaptiveThresholdManager,
   ) {}
 
   async start(
     predictions: PredictedNode[],
-    context: Record<string, any>
+    context: Record<string, any>,
   ): Promise<void> {
     // Get adaptive threshold for context
     const threshold = await this.adaptiveThresholds.getThreshold(context);
 
-    console.log(`[Speculation] Using adaptive threshold: ${threshold.toFixed(3)} for context:`, context);
+    console.log(
+      `[Speculation] Using adaptive threshold: ${threshold.toFixed(3)} for context:`,
+      context,
+    );
 
     // Only speculate on high-confidence predictions
     const highConfidence = predictions.filter(
-      p => p.confidence > threshold
+      (p) => p.confidence > threshold,
     );
 
     for (const pred of highConfidence) {
@@ -1061,32 +1117,38 @@ class SpeculativeExecutor {
 ### Phase 1: Episodic Memory Foundation (2.5-3h) - Story 2.5-5
 
 **Sprint 1: Storage & Data Model (1h)**
+
 - Create migration `006_episodic_events.sql`
 - Define `EpisodicEvent` interface
 - Implement `EpisodicMemoryStore` class
 
 **Sprint 2: Integration (1-1.5h)**
+
 - Integrate with `ControlledExecutor` (capture events)
 - Integrate with `DAGSuggester` (retrieve context)
 - Unit tests (capture, flush, retrieve)
 
 **Sprint 3: Retention & Cleanup (0.5h)**
+
 - Implement pruning policy
 - Scheduled cleanup task
 
 ### Phase 2: Adaptive Thresholds Learning (2-2.5h) - Story 2.5-6
 
 **Sprint 1: Threshold Storage & Manager (1h)**
+
 - Create migration `007_adaptive_thresholds.sql`
 - Define `ThresholdConfig` interface
 - Implement `AdaptiveThresholdManager` class
 
 **Sprint 2: Learning Algorithm (0.5-1h)**
+
 - Implement EMA adjustment algorithm
 - Convergence detection
 - Metrics tracking
 
 **Sprint 3: Integration (0.5h)**
+
 - Integrate with `SpeculativeExecutor` (use threshold)
 - Integrate with `GraphRAGEngine` (update threshold)
 - Unit tests (learning algorithm, bounds)
@@ -1141,6 +1203,7 @@ class SpeculativeExecutor {
 **Impact:** First workflows use conservative threshold (0.92) → miss speculation opportunities
 
 **Mitigation:**
+
 - Acceptable trade-off (safety > speed for new workflows)
 - Pre-seed with default thresholds per domain
 - Monitor convergence time, optimize if >3 weeks
@@ -1152,6 +1215,7 @@ class SpeculativeExecutor {
 **Impact:** Episodic events accumulate → PGlite file grows
 
 **Mitigation:**
+
 - Retention policy: 30 days OR 10,000 events (hybrid)
 - Automated pruning (scheduled cleanup)
 - Monitoring alerts if storage >50MB
@@ -1163,6 +1227,7 @@ class SpeculativeExecutor {
 **Impact:** EMA algorithm doesn't converge or oscillates
 
 **Mitigation:**
+
 - Conservative learning rate (0.05)
 - Evaluation window (50 samples minimum)
 - Bounds enforcement (0.70-0.95)
@@ -1174,6 +1239,7 @@ class SpeculativeExecutor {
 **Impact:** Different workflows share same hash → incorrect learning
 
 **Mitigation:**
+
 - Include multiple context keys (workflowType, domain, complexity)
 - Monitor collision rate
 - Add more keys if collisions >5%
@@ -1185,10 +1251,12 @@ class SpeculativeExecutor {
 ## Related Decisions
 
 ### ADR-007: DAG Adaptive Feedback Loops
+
 - **Status:** Accepted
 - **Impact:** Provides Loop 1-2 foundation, this ADR extends Loop 3
 
 ### Related Spikes
+
 - **spike-agent-human-dag-feedback-loop.md** - Execution & Control (Stories 2.5-1 to 2.5-4)
 - **spike-episodic-memory-adaptive-thresholds.md** - Detailed architecture analysis
 - **spike-coala-comparison-adaptive-feedback.md** - Theoretical foundation
@@ -1198,17 +1266,20 @@ class SpeculativeExecutor {
 ## References
 
 ### Architectural Decisions
+
 - ADR-007: DAG Adaptive Feedback Loops
 - Spike: Episodic Memory & Adaptive Thresholds Architecture
 - Spike: CoALA Comparison
 
 ### Research & Patterns
+
 - **CoALA Framework:** Episodic memory for learning retrieval
 - **Reinforcement Learning:** EMA for value estimation
 - **Control Systems:** PID controllers for adaptive thresholds
 - **LangGraph v1.0:** MessagesState patterns for event accumulation
 
 ### Implementation
+
 - Story 2.5-5: Episodic Memory Foundation
 - Story 2.5-6: Adaptive Thresholds Learning
 - `src/graphrag/graph-engine.ts` - Existing Loop 3 implementation
@@ -1219,6 +1290,7 @@ class SpeculativeExecutor {
 ## Change Log
 
 ### v1.0 (2025-11-13)
+
 - Initial proposal
 - Hybrid storage (typed + JSONB)
 - EMA learning algorithm
@@ -1229,19 +1301,19 @@ class SpeculativeExecutor {
 
 ## Approval
 
-**Proposed by:** System Architect
-**Date:** 2025-11-13
-**Approved by:** BMad
-**Approval date:** 2025-11-13
+**Proposed by:** System Architect **Date:** 2025-11-13 **Approved by:** BMad **Approval date:**
+2025-11-13
 
 **Status:** ✅ Approved for implementation (after ADR-007 completion)
 
 **Implementation Prerequisites:**
+
 1. ✅ ADR-007 approved
 2. ⏳ Stories 2.5-1 to 2.5-4 completed (Loop 1, Loop 2, base Loop 3)
 3. ⏳ SpeculativeExecutor with fixed threshold (0.7) working
 
 **Implementation Plan:**
+
 1. ⏳ Update PRD with Loop 3 extended scope
 2. ⏳ Update architecture.md with episodic memory + adaptive thresholds
 3. ⏳ Create workflow for Stories 2.5-5 and 2.5-6
@@ -1250,6 +1322,7 @@ class SpeculativeExecutor {
 6. ⏳ Begin implementation after ADR-007 stories complete
 
 **Success Criteria:**
+
 - Week 1: Conservative threshold (0.92), event capture working
 - Week 2-3: First threshold adjustments, convergence observable
 - Week 4+: Thresholds converged (0.80-0.88), stable 80-90% success rate

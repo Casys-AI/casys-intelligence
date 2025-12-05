@@ -17,7 +17,9 @@ import type { TelemetryConfig } from "./types.ts";
 /**
  * Default config file path
  */
-const DEFAULT_CONFIG_PATH = `${Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "."}/.agentcards/config.yaml`;
+const DEFAULT_CONFIG_PATH = `${
+  Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "."
+}/.agentcards/config.yaml`;
 
 /**
  * Telemetry Service
@@ -65,7 +67,11 @@ export class TelemetryService {
    * @param value Numeric value
    * @param metadata Optional additional context
    */
-  async track(metricName: string, value: number, metadata?: Record<string, unknown>): Promise<void> {
+  async track(
+    metricName: string,
+    value: number,
+    metadata?: Record<string, unknown>,
+  ): Promise<void> {
     if (!this.enabled) {
       return; // Telemetry disabled, skip tracking
     }

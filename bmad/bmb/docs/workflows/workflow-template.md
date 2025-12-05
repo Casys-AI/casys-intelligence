@@ -1,6 +1,7 @@
 # BMAD Workflow Template
 
-This template provides the standard structure for all BMAD workflow files. Copy and modify this template for each new workflow you create.
+This template provides the standard structure for all BMAD workflow files. Copy and modify this
+template for each new workflow you create.
 
 ## Frontmatter Structure
 
@@ -100,7 +101,8 @@ Copy the template above and replace:
 Update the last line to point to your actual first step file:
 
 ```markdown
-Load, read the full file and then execute `{workflow_path}/steps/step-01-init.md` to begin the workflow.
+Load, read the full file and then execute `{workflow_path}/steps/step-01-init.md` to begin the
+workflow.
 ```
 
 ## Examples
@@ -147,6 +149,9 @@ web_bundle: false
 
 ## Example Implementation
 
-See the [Meal Prep & Nutrition Plan workflow](../reference/workflows/meal-prep-nutrition/workflow.md) for a complete implementation of this template.
+See the
+[Meal Prep & Nutrition Plan workflow](../reference/workflows/meal-prep-nutrition/workflow.md) for a
+complete implementation of this template.
 
-Remember: This template is the STANDARD for all BMAD workflows. Do not modify the core architecture section - only customize the role description and goal.
+Remember: This template is the STANDARD for all BMAD workflows. Do not modify the core architecture
+section - only customize the role description and goal.

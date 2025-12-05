@@ -1,17 +1,15 @@
 # Story 6.3: Live Metrics & Analytics Panel
 
-**Epic:** 6 - Real-time Graph Monitoring & Observability
-**Story ID:** 6.3
-**Status:** done  <!-- Approved by Senior Developer Review 2025-12-02 -->
-**Estimated Effort:** 3-4 hours
+**Epic:** 6 - Real-time Graph Monitoring & Observability **Story ID:** 6.3 **Status:** done
+
+<!-- Approved by Senior Developer Review 2025-12-02 --> **Estimated Effort:** 3-4 hours
 
 ---
 
 ## User Story
 
-**As a** developer,
-**I want** to see live metrics about graph health and recommendations,
-**So that** I can monitor system performance and debug issues.
+**As a** developer, **I want** to see live metrics about graph health and recommendations, **So
+that** I can monitor system performance and debug issues.
 
 ---
 
@@ -48,7 +46,8 @@
 
 ### Fresh Architecture (Story 6.2 Migration)
 
-**IMPORTANT:** Le dashboard a migré de `public/dashboard.html` vers Fresh en Story 6.2. Cette story doit suivre les patterns Fresh établis:
+**IMPORTANT:** Le dashboard a migré de `public/dashboard.html` vers Fresh en Story 6.2. Cette story
+doit suivre les patterns Fresh établis:
 
 ```
 src/web/
@@ -67,6 +66,7 @@ src/web/
 ### Metrics Panel Island
 
 Le MetricsPanel doit être un **island** (pas un component) car il:
+
 - Fetch données dynamiquement
 - Se met à jour via SSE ou polling
 - Gère état local (date range, expanded/collapsed)
@@ -136,12 +136,14 @@ interface GraphMetricsResponse {
 ### GraphRAGEngine Extensions
 
 Méthodes existantes à réutiliser (Story 6.1/6.2):
+
 - `getDensity()` - Density calculation
 - `getTopPageRank(n)` - Top N tools by PageRank
 - `getCommunitiesCount()` - Number of Louvain communities
 - `getStats()` - Node/edge counts
 
 Nouvelles méthodes à ajouter:
+
 ```typescript
 // src/graphrag/graph-engine.ts
 
@@ -165,10 +167,12 @@ getMetricsTimeSeries(range: string): Promise<TimeSeriesData[]>
 ### Chart Library Choice
 
 **Option 1: Chart.js (via CDN)**
+
 - Pros: Lightweight (~60KB), no build step, familiar API
 - Cons: Requires CDN load in route
 
 **Option 2: Recharts (via npm)**
+
 - Pros: React-native, composable, declarative
 - Cons: Larger bundle, requires Preact compat
 
@@ -200,17 +204,17 @@ ORDER BY hour;
 Utiliser l'événement `metrics_updated` existant (Story 6.1):
 
 ```typescript
-eventSource.addEventListener('metrics_updated', (event) => {
+eventSource.addEventListener("metrics_updated", (event) => {
   const data = JSON.parse(event.data);
   // Update metrics state without full refetch
-  setMetrics(prev => ({
+  setMetrics((prev) => ({
     ...prev,
     current: {
       ...prev?.current,
       edge_count: data.edge_count,
       density: data.density,
       pagerank_top_10: data.pagerank_top_10,
-    }
+    },
   }));
 });
 ```
@@ -221,20 +225,20 @@ eventSource.addEventListener('metrics_updated', (event) => {
 const exportMetricsCSV = () => {
   if (!metrics) return;
 
-  const headers = ['timestamp', 'edge_count', 'node_count', 'density', 'alpha'];
+  const headers = ["timestamp", "edge_count", "node_count", "density", "alpha"];
   const rows = metrics.timeseries.edge_count.map((point, i) => [
     point.timestamp,
     point.value,
-    metrics.timeseries.node_count?.[i]?.value || '',
+    metrics.timeseries.node_count?.[i]?.value || "",
     metrics.current.density,
     metrics.current.adaptive_alpha,
   ]);
 
-  const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
+  const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
 
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `agentcards-metrics-${dateRange}.csv`;
   a.click();
@@ -301,6 +305,7 @@ const exportMetricsCSV = () => {
 ## Dev Notes
 
 <!-- Notes added during development -->
+
 - Implementation started: 2025-12-02
 - Implementation completed: 2025-12-02
 - Key decisions made:
@@ -311,23 +316,28 @@ const exportMetricsCSV = () => {
   - Adaptive alpha formula: `max(0.5, 1.0 - density * 2)` based on graph density
   - MetricsPanel is self-contained island (no separate MetricCard/TimeSeriesChart components)
 - Challenges encountered:
-  - Migration tables not all created in unit test setup - handled with graceful error handling in getMetricsTimeSeries() and getPeriodStats()
+  - Migration tables not all created in unit test setup - handled with graceful error handling in
+    getMetricsTimeSeries() and getPeriodStats()
   - TypeScript types for Chart.js from CDN - used @ts-ignore for window.Chart access
 
 ### Implementation Summary
 
 **Files Created:**
+
 - `src/web/islands/MetricsPanel.tsx` - Island component with live metrics, charts, export
 - `tests/unit/graphrag/graph_engine_metrics_test.ts` - 15 unit tests
 - `tests/integration/dashboard_metrics_test.ts` - 8 integration tests
 
 **Files Modified:**
+
 - `src/graphrag/types.ts` - Added `GraphMetricsResponse`, `MetricsTimeRange`, `TimeSeriesPoint`
-- `src/graphrag/graph-engine.ts` - Added `getMetrics()`, `getAdaptiveAlpha()`, `getGraphDensity()`, `getPageRankTop()`, `getTotalCommunities()`, `getMetricsTimeSeries()`, `getPeriodStats()`
+- `src/graphrag/graph-engine.ts` - Added `getMetrics()`, `getAdaptiveAlpha()`, `getGraphDensity()`,
+  `getPageRankTop()`, `getTotalCommunities()`, `getMetricsTimeSeries()`, `getPeriodStats()`
 - `src/mcp/gateway-server.ts` - Added `/api/metrics` endpoint
 - `src/web/routes/dashboard.tsx` - Integrated MetricsPanel, added Chart.js CDN, responsive layout
 
 **Test Results:**
+
 - 23 tests passing (15 unit + 8 integration)
 - Coverage: API endpoint, GraphRAGEngine methods, edge cases (empty graph, ranges)
 
@@ -347,6 +357,7 @@ const exportMetricsCSV = () => {
 ### Telemetry Data Requirements
 
 La table `telemetry_metrics` (Story 1.8) doit contenir:
+
 - `graph_edge_count` - Nombre d'edges au moment T
 - `graph_node_count` - Nombre de nodes au moment T
 - `graph_density` - Densité calculée
@@ -354,15 +365,19 @@ La table `telemetry_metrics` (Story 1.8) doit contenir:
 - `workflow_success` - 1 si succès, 0 si échec
 
 Si ces métriques ne sont pas encore enregistrées, ajouter:
+
 ```typescript
 // Dans GraphRAGEngine.updateFromExecution() ou ControlledExecutor
-await this.db.query(`
+await this.db.query(
+  `
   INSERT INTO telemetry_metrics (metric_name, value, tags, timestamp)
   VALUES
     ('graph_edge_count', $1, '{}', NOW()),
     ('graph_node_count', $2, '{}', NOW()),
     ('workflow_execution', 1, $3, NOW())
-`, [edgeCount, nodeCount, JSON.stringify({ workflow_id: workflowId })]);
+`,
+  [edgeCount, nodeCount, JSON.stringify({ workflow_id: workflowId })],
+);
 ```
 
 ### Project Structure Notes
@@ -386,12 +401,14 @@ await this.db.query(`
 - **Testing:** 7 tests (5 unit + 2 smoke) - suivre même pattern
 
 **Files Created in Story 6.2:**
+
 - src/web/routes/dashboard.tsx
 - src/web/islands/GraphVisualization.tsx
 - src/web/components/Legend.tsx
 - src/web/components/NodeDetails.tsx
 
 **Reuse from Story 6.2:**
+
 - SSE event handling pattern
 - Tailwind styling conventions
 - CDN library loading in route Head
@@ -432,6 +449,7 @@ await this.db.query(`
 ## Change Log
 
 **2025-12-02** - Senior Developer Review APPROVED
+
 - Code review completed by BMad
 - All 8 ACs verified with evidence
 - 38/38 tasks verified complete
@@ -440,6 +458,7 @@ await this.db.query(`
 - No blocking issues found
 
 **2025-12-02** - Story drafted
+
 - Created from Epic 6 requirements in epics.md
 - Updated for Fresh architecture (migration from Story 6.2)
 - Learnings from Story 6.2 incorporated (island pattern, SSE, CDN loading)
@@ -451,58 +470,74 @@ await this.db.query(`
 ## Senior Developer Review (AI)
 
 ### Reviewer
+
 BMad
 
 ### Date
+
 2025-12-02
 
 ### Outcome
-**APPROVE** - All acceptance criteria implemented, all tasks verified, tests passing, code quality meets standards.
+
+**APPROVE** - All acceptance criteria implemented, all tasks verified, tests passing, code quality
+meets standards.
 
 ### Summary
-Story 6.3 implements a comprehensive live metrics dashboard panel that integrates seamlessly with the existing Fresh-based dashboard. The implementation follows established patterns from Story 6.2 (CDN loading, Fresh Islands architecture, CSS-in-JS) and delivers all 8 acceptance criteria with 23 passing tests.
+
+Story 6.3 implements a comprehensive live metrics dashboard panel that integrates seamlessly with
+the existing Fresh-based dashboard. The implementation follows established patterns from Story 6.2
+(CDN loading, Fresh Islands architecture, CSS-in-JS) and delivers all 8 acceptance criteria with 23
+passing tests.
 
 ### Key Findings
 
 **Code Changes Required:**
+
 - None - implementation is complete and meets quality standards
 
 **Advisory Notes:**
+
 - Note: Hard-coded `apiBase` URL is documented Fresh limitation, not a defect
 
 **Infrastructure Issue Discovered:**
-- **Root Cause:** Le fichier `src/db/migrations/003_graphrag_tables.sql` (Epic 2) contenait les tables `workflow_execution`, `workflow_pattern`, et `adaptive_config` mais n'a **jamais été intégré** au système de migrations TypeScript
-- **Impact:** Les requêtes time-series (`getMetricsTimeSeries`, `getPeriodStats`) échouent silencieusement car la table `workflow_execution` n'existe pas
-- **Responsabilité:** Dette technique Epic 2 (fichier créé mais pas intégré) + Story 6.3 (code ajouté sans vérifier l'existence)
-- **Correction:** Migration 010 créée pour intégrer les tables manquantes - sera appliquée au prochain `init` de la DB
+
+- **Root Cause:** Le fichier `src/db/migrations/003_graphrag_tables.sql` (Epic 2) contenait les
+  tables `workflow_execution`, `workflow_pattern`, et `adaptive_config` mais n'a **jamais été
+  intégré** au système de migrations TypeScript
+- **Impact:** Les requêtes time-series (`getMetricsTimeSeries`, `getPeriodStats`) échouent
+  silencieusement car la table `workflow_execution` n'existe pas
+- **Responsabilité:** Dette technique Epic 2 (fichier créé mais pas intégré) + Story 6.3 (code
+  ajouté sans vérifier l'existence)
+- **Correction:** Migration 010 créée pour intégrer les tables manquantes - sera appliquée au
+  prochain `init` de la DB
 
 ### Acceptance Criteria Coverage
 
-| AC# | Description | Status | Evidence |
-|-----|-------------|--------|----------|
-| AC1 | Metrics panel dans dashboard | IMPLEMENTED | `islands/MetricsPanel.tsx:290-451`, `routes/dashboard.tsx:134` |
-| AC2 | Live metrics (edge/node/density/alpha/pagerank/communities/success_rate) | IMPLEMENTED | `MetricsPanel.tsx:342-413` |
-| AC3 | Time-series charts (Chart.js) | IMPLEMENTED | `MetricsPanel.tsx:133-218`, `dashboard.tsx:21` |
-| AC4 | API endpoint GET /api/metrics | IMPLEMENTED | `gateway-server.ts:1930-1950` |
-| AC5 | Auto-refresh 5s + SSE | IMPLEMENTED | `MetricsPanel.tsx:89-131` |
-| AC6 | Export CSV button | IMPLEMENTED | `MetricsPanel.tsx:221-260, 296-300` |
-| AC7 | Date range selector 1h/24h/7d | IMPLEMENTED | `MetricsPanel.tsx:310-319` |
-| AC8 | Tests for metrics endpoint | IMPLEMENTED | 23 tests (15 unit + 8 integration) |
+| AC# | Description                                                              | Status      | Evidence                                                       |
+| --- | ------------------------------------------------------------------------ | ----------- | -------------------------------------------------------------- |
+| AC1 | Metrics panel dans dashboard                                             | IMPLEMENTED | `islands/MetricsPanel.tsx:290-451`, `routes/dashboard.tsx:134` |
+| AC2 | Live metrics (edge/node/density/alpha/pagerank/communities/success_rate) | IMPLEMENTED | `MetricsPanel.tsx:342-413`                                     |
+| AC3 | Time-series charts (Chart.js)                                            | IMPLEMENTED | `MetricsPanel.tsx:133-218`, `dashboard.tsx:21`                 |
+| AC4 | API endpoint GET /api/metrics                                            | IMPLEMENTED | `gateway-server.ts:1930-1950`                                  |
+| AC5 | Auto-refresh 5s + SSE                                                    | IMPLEMENTED | `MetricsPanel.tsx:89-131`                                      |
+| AC6 | Export CSV button                                                        | IMPLEMENTED | `MetricsPanel.tsx:221-260, 296-300`                            |
+| AC7 | Date range selector 1h/24h/7d                                            | IMPLEMENTED | `MetricsPanel.tsx:310-319`                                     |
+| AC8 | Tests for metrics endpoint                                               | IMPLEMENTED | 23 tests (15 unit + 8 integration)                             |
 
 **Summary: 8 of 8 ACs fully implemented**
 
 ### Task Completion Validation
 
-| Category | Verified | Questionable | False Completions |
-|----------|----------|--------------|-------------------|
-| Task 1 (API endpoint) | 5/5 | 0 | 0 |
-| Task 2 (MetricsPanel island) | 4/4 | 0 | 0 |
-| Task 3 (Live metrics display) | 6/6 | 0 | 0 |
-| Task 4 (Time-series charts) | 5/5 | 0 | 0 |
-| Task 5 (Date range/refresh) | 4/4 | 0 | 0 |
-| Task 6 (Export CSV) | 3/3 | 0 | 0 |
-| Task 7 (Dashboard integration) | 4/4 | 0 | 0 |
-| Task 8 (Tests) | 4/4 | 0 | 0 |
+| Category                       | Verified | Questionable | False Completions |
+| ------------------------------ | -------- | ------------ | ----------------- |
+| Task 1 (API endpoint)          | 5/5      | 0            | 0                 |
+| Task 2 (MetricsPanel island)   | 4/4      | 0            | 0                 |
+| Task 3 (Live metrics display)  | 6/6      | 0            | 0                 |
+| Task 4 (Time-series charts)    | 5/5      | 0            | 0                 |
+| Task 5 (Date range/refresh)    | 4/4      | 0            | 0                 |
+| Task 6 (Export CSV)            | 3/3      | 0            | 0                 |
+| Task 7 (Dashboard integration) | 4/4      | 0            | 0                 |
+| Task 8 (Tests)                 | 4/4      | 0            | 0                 |
 
 **Summary: 38 of 38 completed tasks verified, 0 questionable, 0 false completions**
 
@@ -552,9 +587,12 @@ Story 6.3 implements a comprehensive live metrics dashboard panel that integrate
 ### Action Items
 
 **Code Changes Required:**
+
 - None
 
 **Advisory Notes:**
+
 - Note: Consider adding `workflow_execution` table if time-series workflow data is needed
-- Note: Consider adding metrics recording in `updateFromExecution()` if edge/confidence tracking is needed
+- Note: Consider adding metrics recording in `updateFromExecution()` if edge/confidence tracking is
+  needed
 - Note: The `@ts-ignore` for Chart.js CDN is acceptable pattern for external libraries

@@ -16,7 +16,7 @@ import { PGliteClient } from "../../../src/db/client.ts";
 import { ControlledExecutor } from "../../../src/dag/controlled-executor.ts";
 import type { DAGStructure } from "../../../src/graphrag/types.ts";
 import type { ExecutionEvent } from "../../../src/dag/types.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 /**
  * Setup test database with migrations

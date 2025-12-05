@@ -1,31 +1,32 @@
 ---
-name: 'step-12-review'
-description: 'Review the generated workflow and provide final validation and next steps'
+name: "step-12-review"
+description: "Review the generated workflow and provide final validation and next steps"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-12-review.md'
-workflowFile: '{workflow_path}/workflow.md'
+thisStepFile: "{workflow_path}/steps/step-12-review.md"
+workflowFile: "{workflow_path}/workflow.md"
 # Output files for workflow creation process
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
-targetWorkflowPath: '{custom_workflow_location}/{new_workflow_name}'
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
+targetWorkflowPath: "{custom_workflow_location}/{new_workflow_name}"
 
 # Task References
-advancedElicitationTask: '{project-root}/bmad/core/tasks/advanced-elicitation.xml'
-partyModeWorkflow: '{project-root}/bmad/core/workflows/party-mode/workflow.md'
+advancedElicitationTask: "{project-root}/bmad/core/tasks/advanced-elicitation.xml"
+partyModeWorkflow: "{project-root}/bmad/core/workflows/party-mode/workflow.md"
 
 # Template References
-reviewTemplate: '{workflow_path}/templates/review-section.md'
-completionTemplate: '{workflow_path}/templates/completion-section.md'
+reviewTemplate: "{workflow_path}/templates/review-section.md"
+completionTemplate: "{workflow_path}/templates/completion-section.md"
 ---
 
 # Step 6: Workflow Review and Completion
 
 ## STEP GOAL:
 
-To review the generated workflow for completeness, accuracy, and adherence to best practices, then provide next steps for deployment and usage.
+To review the generated workflow for completeness, accuracy, and adherence to best practices, then
+provide next steps for deployment and usage.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -39,7 +40,8 @@ To review the generated workflow for completeness, accuracy, and adherence to be
 ### Role Reinforcement:
 
 - ✅ You are a workflow architect and systems designer
-- ✅ If you already have been given communication or persona patterns, continue to use those while playing this new role
+- ✅ If you already have been given communication or persona patterns, continue to use those while
+  playing this new role
 - ✅ We engage in collaborative dialogue, not command-response
 - ✅ You bring quality assurance expertise and validation knowledge
 - ✅ User provides final approval and feedback
@@ -210,23 +212,24 @@ Display: **All Files Created Successfully!** [C] Complete & Get Validation Instr
 - ALWAYS halt and wait for user input after presenting menu
 - Provide compliance check guidance for new context execution
 - After other menu items execution, return to this menu
-- User can chat or ask questions - always respond and then end with display again of the menu options
+- User can chat or ask questions - always respond and then end with display again of the menu
+  options
 - Use menu handling logic section below
 
 #### Menu Handling Logic:
 
-- IF C: Save content to {workflowPlanFile}, update frontmatter, then provide validation instructions for running in new context
+- IF C: Save content to {workflowPlanFile}, update frontmatter, then provide validation instructions
+  for running in new context
 - IF Any other comments or queries: respond and redisplay menu
 
 ## COMPLIANCE CHECK INSTRUCTIONS
 
 When user selects [C], provide these instructions:
 
-**🎯 Workflow Creation Complete! Your new workflow is ready at:**
-`{target_workflow_path}`
+**🎯 Workflow Creation Complete! Your new workflow is ready at:** `{target_workflow_path}`
 
-**⚠️ IMPORTANT - Run Compliance Check in New Context:**
-To validate your workflow meets BMAD standards:
+**⚠️ IMPORTANT - Run Compliance Check in New Context:** To validate your workflow meets BMAD
+standards:
 
 1. **Start a new Claude conversation** (fresh context)
 2. **Use this command:** `/bmad:bmm:workflows:workflow-compliance-check`
@@ -267,4 +270,5 @@ Ready to validate when you are! [Start new context and run compliance check]
 - Ending without user approval
 - Not providing next steps
 
-**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is FORBIDDEN and constitutes SYSTEM FAILURE.
+**Master Rule:** Skipping steps, optimizing sequences, or not following exact instructions is
+FORBIDDEN and constitutes SYSTEM FAILURE.

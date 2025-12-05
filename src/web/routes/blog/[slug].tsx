@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { page, HttpError } from "fresh";
+import { HttpError, page } from "fresh";
 import { Head } from "fresh/runtime";
-import { getPost, formatDate, type Post } from "../../utils/posts.ts";
-import { CSS as gfmCSS } from "$gfm";
+import { PRISM_THEME_CSS } from "../../utils/prism-theme.ts";
+import { formatDate, getPost, type Post } from "../../utils/posts.ts";
 
 export const handler = {
   async GET(ctx: any) {
@@ -39,19 +39,20 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
         <meta property="og:type" content="article" />
         <meta property="article:published_time" content={post.date.toISOString()} />
         <meta property="article:author" content={post.author} />
-        {post.tags.map((tag) => (
-          <meta property="article:tag" content={tag} key={tag} />
-        ))}
+        {post.tags.map((tag) => <meta property="article:tag" content={tag} key={tag} />)}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
-        <style dangerouslySetInnerHTML={{ __html: gfmCSS }} />
+        <style dangerouslySetInnerHTML={{ __html: PRISM_THEME_CSS }} />
       </Head>
 
       <div class="page">
+        {/* Reading progress bar */}
+        <div class="reading-progress" id="reading-progress"></div>
+
         <header class="header">
           <div class="header-inner">
             <a href="/" class="logo">
@@ -78,9 +79,7 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
               <h1 class="article-title">{post.title}</h1>
               <p class="article-snippet">{post.snippet}</p>
               <div class="article-tags">
-                {post.tags.map((tag) => (
-                  <span class="article-tag" key={tag}>#{tag}</span>
-                ))}
+                {post.tags.map((tag) => <span class="article-tag" key={tag}>#{tag}</span>)}
               </div>
             </header>
 
@@ -94,7 +93,9 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
                 <span class="share-label">Share this article:</span>
                 <div class="share-links">
                   <a
-                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://intelligence.casys.ai/blog/${post.slug}`)}`}
+                    href={`https://twitter.com/intent/tweet?text=${
+                      encodeURIComponent(post.title)
+                    }&url=${encodeURIComponent(`https://intelligence.casys.ai/blog/${post.slug}`)}`}
                     target="_blank"
                     rel="noopener"
                     class="share-link"
@@ -102,7 +103,9 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
                     Twitter
                   </a>
                   <a
-                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://intelligence.casys.ai/blog/${post.slug}`)}`}
+                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${
+                      encodeURIComponent(`https://intelligence.casys.ai/blog/${post.slug}`)
+                    }`}
                     target="_blank"
                     rel="noopener"
                     class="share-link"
@@ -124,13 +127,20 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
             </div>
             <div class="footer-links">
               <a href="https://casys.ai" target="_blank" rel="noopener">Casys.ai</a>
-              <a href="https://github.com/Casys-AI/casys-intelligence" target="_blank" rel="noopener">GitHub</a>
+              <a
+                href="https://github.com/Casys-AI/casys-intelligence"
+                target="_blank"
+                rel="noopener"
+              >
+                GitHub
+              </a>
               <a href="/dashboard">Dashboard</a>
             </div>
           </div>
         </footer>
 
-        <style>{`
+        <style>
+          {`
           :root {
             --bg: #08080a;
             --bg-elevated: #0f0f12;
@@ -158,6 +168,18 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
             font-family: var(--font-sans);
             display: flex;
             flex-direction: column;
+          }
+
+          /* Reading Progress */
+          .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease-out;
           }
 
           /* Header */
@@ -303,8 +325,16 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
             background: transparent !important;
             color: var(--text) !important;
             font-family: var(--font-sans);
-            font-size: 1.0625rem;
-            line-height: 1.8;
+            font-size: 1.125rem;
+            line-height: 1.9;
+            max-width: 70ch;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out 0.2s forwards;
+          }
+
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
 
           .markdown-body h1,
@@ -341,30 +371,55 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
             font-weight: 600;
           }
 
-          .markdown-body code {
+          /* Inline code */
+          .markdown-body code:not(pre code) {
             background: var(--bg-elevated);
             border: 1px solid var(--border);
             padding: 0.2em 0.4em;
             border-radius: 4px;
             font-family: var(--font-mono);
             font-size: 0.875em;
+            color: #ce9178;
           }
 
-          .markdown-body pre {
-            background: var(--bg-elevated) !important;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
+          /* Code blocks - Container styling with VS Code Dark+ */
+          .markdown-body pre,
+          .markdown-body pre[class*="language-"],
+          .markdown-body .highlight {
+            background: #1e1e1e !important;
+            border: 1px solid rgba(255, 184, 111, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem !important;
             overflow-x: auto;
-            margin: 1.5rem 0;
+            margin: 2rem 0 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           }
 
-          .markdown-body pre code {
-            background: transparent;
-            border: none;
-            padding: 0;
-            font-size: 0.875rem;
-            line-height: 1.6;
+          .markdown-body .highlight {
+            padding: 0 !important;
+          }
+
+          .markdown-body .highlight pre {
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+
+          .markdown-body pre:hover,
+          .markdown-body .highlight:hover {
+            border-color: var(--accent);
+            transition: border-color 0.3s;
+          }
+
+          .markdown-body pre code,
+          .markdown-body pre[class*="language-"] code {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            font-size: 14px !important;
+            line-height: 1.6 !important;
+            color: #d4d4d4 !important;
+            font-family: 'Geist Mono', 'Consolas', 'Monaco', monospace !important;
           }
 
           .markdown-body blockquote {
@@ -483,7 +538,36 @@ export default function BlogPost({ data }: { data: { post: Post } }) {
             .article-meta { gap: 0.5rem; }
             .footer-inner { flex-direction: column; gap: 1.5rem; text-align: center; }
           }
-        `}</style>
+        `}
+        </style>
+
+        <script
+          type="module"
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Reading progress bar
+              window.addEventListener('scroll', () => {
+                const article = document.querySelector('.article-content');
+                if (!article) return;
+
+                const articleTop = article.offsetTop;
+                const articleHeight = article.offsetHeight;
+                const scrollPosition = window.scrollY;
+                const windowHeight = window.innerHeight;
+
+                const progress = Math.min(
+                  100,
+                  Math.max(0, ((scrollPosition - articleTop + windowHeight) / articleHeight) * 100)
+                );
+
+                const progressBar = document.getElementById('reading-progress');
+                if (progressBar) {
+                  progressBar.style.width = progress + '%';
+                }
+              });
+            `,
+          }}
+        />
       </div>
     </>
   );

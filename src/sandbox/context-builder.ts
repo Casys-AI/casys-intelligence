@@ -16,7 +16,7 @@
  */
 
 import type { MCPClient } from "../mcp/client.ts";
-import type { VectorSearch, SearchResult } from "../vector/search.ts";
+import type { SearchResult, VectorSearch } from "../vector/search.ts";
 import type { ToolDefinition } from "./types.ts";
 import { getLogger } from "../telemetry/logger.ts";
 
@@ -155,7 +155,11 @@ export class ContextBuilder {
       }
 
       const elapsed = performance.now() - startTime;
-      logger.info(`Context built successfully (${elapsed.toFixed(1)}ms, ${Object.keys(context).length} servers)`);
+      logger.info(
+        `Context built successfully (${elapsed.toFixed(1)}ms, ${
+          Object.keys(context).length
+        } servers)`,
+      );
 
       return context;
     } catch (error) {
@@ -219,7 +223,11 @@ export class ContextBuilder {
       }
 
       const elapsed = performance.now() - startTime;
-      logger.info(`Context built successfully (${elapsed.toFixed(1)}ms, ${Object.keys(context).length} servers)`);
+      logger.info(
+        `Context built successfully (${elapsed.toFixed(1)}ms, ${
+          Object.keys(context).length
+        } servers)`,
+      );
 
       return context;
     } catch (error) {
@@ -291,7 +299,7 @@ export class ContextBuilder {
     }
 
     logger.debug(`Built ${definitions.length} tool definitions for Worker`, {
-      servers: [...new Set(definitions.map(d => d.server))],
+      servers: [...new Set(definitions.map((d) => d.server))],
     });
 
     return definitions;
@@ -393,9 +401,7 @@ export function wrapMCPClient(
   const wrapped: { [key: string]: ToolFunction } = {};
 
   // Get list of tools to wrap
-  const toolsToWrap = specificTools
-    ? specificTools.map((t) => t.toolName)
-    : []; // If specificTools provided, use those; otherwise empty for now
+  const toolsToWrap = specificTools ? specificTools.map((t) => t.toolName) : []; // If specificTools provided, use those; otherwise empty for now
 
   if (toolsToWrap.length === 0 && !specificTools) {
     // No tools specified - would need to query client, but we don't have schema info here

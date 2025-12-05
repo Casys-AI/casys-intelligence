@@ -1,25 +1,26 @@
 ---
-name: 'step-03-tools-overview'
-description: 'Present available tools from CSV and gather initial user requirements'
+name: "step-03-tools-overview"
+description: "Present available tools from CSV and gather initial user requirements"
 
 # Path Definitions
-workflow_path: '{project-root}/bmad/bmb/workflows/create-workflow'
+workflow_path: "{project-root}/bmad/bmb/workflows/create-workflow"
 
 # File References
-thisStepFile: '{workflow_path}/steps/step-03-tools-overview.md'
-nextStepFile: '{workflow_path}/steps/step-04-core-tools.md'
-workflowFile: '{workflow_path}/workflow.md'
-workflowPlanFile: '{output_folder}/workflow-plan-{new_workflow_name}.md'
+thisStepFile: "{workflow_path}/steps/step-03-tools-overview.md"
+nextStepFile: "{workflow_path}/steps/step-04-core-tools.md"
+workflowFile: "{workflow_path}/workflow.md"
+workflowPlanFile: "{output_folder}/workflow-plan-{new_workflow_name}.md"
 
 # Documentation References
-commonToolsCsv: '{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv'
+commonToolsCsv: "{project-root}/bmad/bmb/docs/workflows/common-workflow-tools.csv"
 ---
 
 # Step 3: Tools Overview
 
 ## STEP GOAL:
 
-Load and present available tools from the CSV, then gather the user's general tool requirements for their workflow.
+Load and present available tools from the CSV, then gather the user's general tool requirements for
+their workflow.
 
 ## MANDATORY EXECUTION RULES (READ FIRST):
 
@@ -49,7 +50,8 @@ Load and present available tools from the CSV, then gather the user's general to
 
 "Beginning **Tools Integration and Configuration**
 
-Based on your workflow requirements, I'll help identify the best tools and integrations. Let me first load the available tools from our reference."
+Based on your workflow requirements, I'll help identify the best tools and integrations. Let me
+first load the available tools from our reference."
 
 ### 2. Load and Present Available Tools
 
@@ -73,10 +75,12 @@ Load `{commonToolsCsv}` and present tools organized by type:
 
 Based on your workflow type and goals, what tools do you anticipate needing?
 
-1. **Core BMAD Tools:** Do you want collaborative idea generation, critical evaluation, or brainstorming capabilities?
+1. **Core BMAD Tools:** Do you want collaborative idea generation, critical evaluation, or
+   brainstorming capabilities?
 2. **LLM Features:** Will you need web access, file management, sub-agents, or parallel processing?
 3. **Memory:** Does your workflow need persistent state across sessions?
-4. **External Tools:** Will you need MCP integrations like documentation access, browser automation, or database connections?
+4. **External Tools:** Will you need MCP integrations like documentation access, browser automation,
+   or database connections?
 
 **Initial Tool Preferences:** [gather user's general requirements]"
 
@@ -92,8 +96,8 @@ Append to {workflowPlanFile}:
 - Core BMAD Tools: [user selections]
 - LLM Features: [user selections]
 - Memory Requirements: [user selections]
-- External Tools: [user selections]
-  **Installation Willingness:** [user comfort level with installing tools]
+- External Tools: [user selections] **Installation Willingness:** [user comfort level with
+  installing tools]
 ```
 
 ### 5. Menu Options
@@ -107,7 +111,8 @@ Display: **Select an Option:** [C] Continue to Core Tools [M] Modify Requirement
 
 ## CRITICAL STEP COMPLETION NOTE
 
-ONLY WHEN C is selected and requirements are documented will you load {nextStepFile} to configure core tools.
+ONLY WHEN C is selected and requirements are documented will you load {nextStepFile} to configure
+core tools.
 
 ---
 

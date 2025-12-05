@@ -14,7 +14,7 @@
 import { assert, assertEquals, assertExists } from "@std/assert";
 import { AgentCardsGatewayServer } from "../../../src/mcp/gateway-server.ts";
 import type { PGliteClient } from "../../../src/db/client.ts";
-import type { VectorSearch, SearchResult } from "../../../src/vector/search.ts";
+import type { SearchResult, VectorSearch } from "../../../src/vector/search.ts";
 import type { GraphRAGEngine } from "../../../src/graphrag/graph-engine.ts";
 import type { DAGSuggester } from "../../../src/graphrag/dag-suggester.ts";
 import type { ParallelExecutor } from "../../../src/dag/executor.ts";
@@ -169,9 +169,7 @@ Deno.test("AgentCardsGatewayServer - list_tools without query", async () => {
   assert(result.tools.length >= 3); // Should include workflow tool + 2 DB tools
 
   // Verify workflow tool is included
-  const workflowTool = result.tools.find((t: MCPTool) =>
-    t.name === "agentcards:execute_workflow"
-  );
+  const workflowTool = result.tools.find((t: MCPTool) => t.name === "agentcards:execute_workflow");
   assertExists(workflowTool);
   assertEquals(workflowTool.name, "agentcards:execute_workflow");
 });
@@ -200,9 +198,7 @@ Deno.test("AgentCardsGatewayServer - list_tools with query", async () => {
   assert(Array.isArray(result.tools));
 
   // Should include workflow tool + semantic search results
-  const workflowTool = result.tools.find((t: MCPTool) =>
-    t.name === "agentcards:execute_workflow"
-  );
+  const workflowTool = result.tools.find((t: MCPTool) => t.name === "agentcards:execute_workflow");
   assertExists(workflowTool);
 });
 

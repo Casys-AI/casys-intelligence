@@ -141,7 +141,9 @@ export class WorkflowLoader {
 
       // Must have either steps or edges, not both, not neither
       if (hasSteps && hasEdges) {
-        errors.push(`Workflow '${workflow.name}' has both 'steps' and 'edges' - use one or the other`);
+        errors.push(
+          `Workflow '${workflow.name}' has both 'steps' and 'edges' - use one or the other`,
+        );
       } else if (!hasSteps && !hasEdges) {
         errors.push(`Workflow '${workflow.name}' missing 'steps' or 'edges' array`);
       } else if (hasSteps) {
@@ -194,7 +196,9 @@ export class WorkflowLoader {
         errors.push(`Step ${i} in workflow '${workflow.name}' is not a valid string`);
       } else if (this.knownTools.size > 0 && !this.knownTools.has(step)) {
         // Strict validation: unknown tools are errors (ADR-021)
-        errors.push(`Unknown tool ID '${step}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
+        errors.push(
+          `Unknown tool ID '${step}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`,
+        );
       }
     }
   }
@@ -227,14 +231,18 @@ export class WorkflowLoader {
         errors.push(`Edge ${i} 'from' in workflow '${workflow.name}' is not a valid string`);
       } else if (this.knownTools.size > 0 && !this.knownTools.has(from)) {
         // Strict validation: unknown tools are errors (ADR-021)
-        errors.push(`Unknown tool ID '${from}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
+        errors.push(
+          `Unknown tool ID '${from}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`,
+        );
       }
 
       if (!to || typeof to !== "string") {
         errors.push(`Edge ${i} 'to' in workflow '${workflow.name}' is not a valid string`);
       } else if (this.knownTools.size > 0 && !this.knownTools.has(to)) {
         // Strict validation: unknown tools are errors (ADR-021)
-        errors.push(`Unknown tool ID '${to}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`);
+        errors.push(
+          `Unknown tool ID '${to}' in workflow '${workflow.name}'. Tool must exist in tool_schema.`,
+        );
       }
     }
   }

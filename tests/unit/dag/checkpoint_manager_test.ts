@@ -17,7 +17,7 @@ import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { PGliteClient } from "../../../src/db/client.ts";
 import { CheckpointManager } from "../../../src/dag/checkpoint-manager.ts";
 import { createInitialState, updateState } from "../../../src/dag/state.ts";
-import { MigrationRunner, getAllMigrations } from "../../../src/db/migrations.ts";
+import { getAllMigrations, MigrationRunner } from "../../../src/db/migrations.ts";
 
 /**
  * Setup in-memory test database with checkpoint schema

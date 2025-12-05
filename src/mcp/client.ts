@@ -76,7 +76,7 @@ export class MCPClient {
       if (!this.process.stdin || !this.process.stdout) {
         throw new MCPServerError(
           this.server.id,
-          "Failed to initialize stdio streams"
+          "Failed to initialize stdio streams",
         );
       }
       this.writer = this.process.stdin.getWriter();
@@ -92,7 +92,7 @@ export class MCPClient {
       await withTimeout(
         this.sendInitializeRequest(),
         this.timeout,
-        `MCP initialize for ${this.server.id}`
+        `MCP initialize for ${this.server.id}`,
       );
 
       log.debug(`Connected to ${this.server.id}`);
@@ -106,7 +106,7 @@ export class MCPClient {
       throw new MCPServerError(
         this.server.id,
         `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -204,7 +204,7 @@ export class MCPClient {
       if (response.error) {
         throw new MCPServerError(
           this.server.id,
-          `list_tools failed: ${response.error.message}`
+          `list_tools failed: ${response.error.message}`,
         );
       }
 
@@ -228,7 +228,7 @@ export class MCPClient {
       throw new MCPServerError(
         this.server.id,
         `Failed to list tools: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -278,7 +278,11 @@ export class MCPClient {
             if (line.trim()) {
               try {
                 const response = JSON.parse(line) as JSONRPCResponse;
-                log.debug(`[${this.server.id}:stdout] ← ${line.substring(0, 500)}${line.length > 500 ? '...' : ''}`);
+                log.debug(
+                  `[${this.server.id}:stdout] ← ${line.substring(0, 500)}${
+                    line.length > 500 ? "..." : ""
+                  }`,
+                );
                 clearTimeout(timeoutId);
                 resolve(response);
                 return;
@@ -341,7 +345,7 @@ export class MCPClient {
       if (response.error) {
         throw new MCPServerError(
           this.server.id,
-          `tools/call failed for ${toolName}: ${response.error.message}`
+          `tools/call failed for ${toolName}: ${response.error.message}`,
         );
       }
 
@@ -357,8 +361,10 @@ export class MCPClient {
 
       throw new MCPServerError(
         this.server.id,
-        `Failed to call tool ${toolName}: ${error instanceof Error ? error.message : String(error)}`,
-        error instanceof Error ? error : undefined
+        `Failed to call tool ${toolName}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        error instanceof Error ? error : undefined,
       );
     }
   }

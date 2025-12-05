@@ -1,23 +1,24 @@
 # ADR-015: Dynamic Alpha Based on Graph Density
 
-**Status:** Accepted
-**Date:** 2025-11-21
-**Context:** Story 5.1 - search_tools hybrid scoring
+**Status:** Accepted **Date:** 2025-11-21 **Context:** Story 5.1 - search_tools hybrid scoring
 
 ## Context
 
-The `search_tools` tool combines semantic similarity with graph-based relatedness using a weighted formula:
+The `search_tools` tool combines semantic similarity with graph-based relatedness using a weighted
+formula:
 
 ```
 finalScore = α × semanticScore + (1-α) × graphScore
 ```
 
 The initial implementation used hardcoded thresholds:
+
 - `edgeCount > 50` → α = 0.6
 - `edgeCount > 10` → α = 0.8
 - else → α = 1.0
 
 This approach has limitations:
+
 1. Arbitrary thresholds don't adapt to graph size
 2. Step functions create discontinuities
 3. Doesn't account for graph sparsity vs density
@@ -36,7 +37,7 @@ const alpha = Math.max(0.5, 1.0 - density * 2);
 ### Formula Behavior
 
 | Nodes | Edges | Max Edges | Density | Alpha |
-|-------|-------|-----------|---------|-------|
+| ----- | ----- | --------- | ------- | ----- |
 | 50    | 0     | 2450      | 0%      | 1.00  |
 | 50    | 50    | 2450      | 2%      | 0.96  |
 | 50    | 250   | 2450      | 10%     | 0.80  |
@@ -53,11 +54,13 @@ const alpha = Math.max(0.5, 1.0 - density * 2);
 ## Consequences
 
 ### Positive
+
 - Better adaptation to actual graph richness
 - Smooth degradation as graph grows
 - No magic numbers to tune
 
 ### Negative
+
 - Requires `nodeCount` in addition to `edgeCount`
 - Slightly more computation (negligible)
 

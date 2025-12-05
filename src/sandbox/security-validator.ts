@@ -26,9 +26,7 @@ export class SecurityValidationError extends Error {
 
   constructor(violationType: string, pattern: string, details?: string) {
     super(
-      `Security violation detected: ${violationType} - ${pattern}${
-        details ? ` (${details})` : ""
-      }`
+      `Security violation detected: ${violationType} - ${pattern}${details ? ` (${details})` : ""}`,
     );
     this.name = "SecurityValidationError";
     this.violationType = violationType;
@@ -172,9 +170,11 @@ export interface SecurityValidatorConfig {
  * - Malicious patterns
  */
 export class SecurityValidator {
-  private config: Required<
-    Omit<SecurityValidatorConfig, "customPatterns">
-  > & { customPatterns: SecurityValidatorConfig["customPatterns"] };
+  private config:
+    & Required<
+      Omit<SecurityValidatorConfig, "customPatterns">
+    >
+    & { customPatterns: SecurityValidatorConfig["customPatterns"] };
 
   constructor(config?: SecurityValidatorConfig) {
     this.config = {
@@ -217,7 +217,7 @@ export class SecurityValidator {
       throw new SecurityValidationError(
         "CODE_TOO_LONG",
         `Code length ${code.length} exceeds maximum ${this.config.maxCodeLength}`,
-        "Reduce code size or increase maxCodeLength"
+        "Reduce code size or increase maxCodeLength",
       );
     }
 
@@ -238,7 +238,7 @@ export class SecurityValidator {
         throw new SecurityValidationError(
           pattern.type,
           pattern.description,
-          `Severity: ${pattern.severity}`
+          `Severity: ${pattern.severity}`,
         );
       }
     }
@@ -262,7 +262,7 @@ export class SecurityValidator {
    * @returns Sanitized context (same object if no changes needed)
    */
   validateContext(
-    context: Record<string, unknown> | undefined
+    context: Record<string, unknown> | undefined,
   ): Record<string, unknown> | undefined {
     if (!context || !this.config.enableContextSanitization) {
       return context;
@@ -282,7 +282,7 @@ export class SecurityValidator {
           throw new SecurityValidationError(
             "DANGEROUS_CONTEXT_KEY",
             `Context contains dangerous key: ${key}`,
-            `Remove key or rename to avoid ${dangerous}`
+            `Remove key or rename to avoid ${dangerous}`,
           );
         }
       }
@@ -295,7 +295,7 @@ export class SecurityValidator {
         throw new SecurityValidationError(
           "INVALID_CONTEXT_KEY",
           `Invalid context variable name: ${key}`,
-          "Variable names must be alphanumeric with underscores only"
+          "Variable names must be alphanumeric with underscores only",
         );
       }
     }
@@ -319,7 +319,7 @@ export class SecurityValidator {
    */
   private validateContextValues(
     obj: Record<string, unknown>,
-    depth = 0
+    depth = 0,
   ): void {
     // Prevent infinite recursion
     if (depth > 10) {
@@ -327,7 +327,7 @@ export class SecurityValidator {
       throw new SecurityValidationError(
         "CONTEXT_TOO_DEEP",
         "Context object nesting exceeds maximum depth of 10",
-        "Flatten context structure"
+        "Flatten context structure",
       );
     }
 
@@ -344,7 +344,7 @@ export class SecurityValidator {
         throw new SecurityValidationError(
           "FUNCTION_IN_CONTEXT",
           `Context key '${key}' contains function value`,
-          "Context must be JSON-serializable (no functions)"
+          "Context must be JSON-serializable (no functions)",
         );
       }
     }
@@ -362,7 +362,7 @@ export class SecurityValidator {
    */
   validate(
     code: string,
-    context?: Record<string, unknown>
+    context?: Record<string, unknown>,
   ): Record<string, unknown> | undefined {
     // Validate code first (fail fast on code issues)
     this.validateCode(code);

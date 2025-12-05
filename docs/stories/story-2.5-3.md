@@ -1,12 +1,9 @@
 # Story 2.5.3: Agent-in-the-Loop (AIL) / Human-in-the-Loop (HIL) Integration + DAG Replanning
 
-**Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation)
-**Story ID:** 2.5.3
-**Status:** done (with known limitations - see below)
-**Estimated Effort:** 3-4 heures
-**Actual Effort:** ~4h (including E2E test implementation)
-**Priority:** P1 (Depends on 2.5-2)
-**Story Key:** 2.5-3-ail-hil-integration-dag-replanning
+**Epic:** 2.5 - Adaptive DAG Feedback Loops (Foundation) **Story ID:** 2.5.3 **Status:** done (with
+known limitations - see below) **Estimated Effort:** 3-4 heures **Actual Effort:** ~4h (including
+E2E test implementation) **Priority:** P1 (Depends on 2.5-2) **Story Key:**
+2.5-3-ail-hil-integration-dag-replanning
 
 ---
 
@@ -14,36 +11,46 @@
 
 **Level 2 AIL Pattern - Internal Native Agents:**
 
-This story implements **Level 2 AIL** (Runtime AIL with Internal Native Agents) per **ADR-019: Three-Level AIL Architecture**. The SSE + Commands pattern is designed for **internal native agents** (JS/TS code running within Gateway), NOT for external MCP clients.
+This story implements **Level 2 AIL** (Runtime AIL with Internal Native Agents) per **ADR-019:
+Three-Level AIL Architecture**. The SSE + Commands pattern is designed for **internal native
+agents** (JS/TS code running within Gateway), NOT for external MCP clients.
 
 **Valid Use Cases:**
+
 - ✅ **Internal rule-based agents** - State machines, business logic decision engines
-- ✅ **Multi-agent collaboration** - Security, performance, cost agents coordinating via SSE + Commands
+- ✅ **Multi-agent collaboration** - Security, performance, cost agents coordinating via SSE +
+  Commands
 - ✅ **Background autonomous workflows** - Long-running pipelines with self-recovery
 - ✅ **LLM agents via API directe** - Anthropic API calls (not via MCP)
-- ✅ **Internal Gateway aggregation** - SSE used internally to aggregate parallel task execution (LangGraph pattern)
+- ✅ **Internal Gateway aggregation** - SSE used internally to aggregate parallel task execution
+  (LangGraph pattern)
 
 **Cannot Be Used With:**
+
 - ❌ **External MCP agents** (Claude Code) - Use Level 1 Gateway HTTP (Story 2.5-4)
 - ❌ **Embedded MCP agents** (haiku/sonnet tasks) - Use Level 3 Task Delegation (Epic 3.5+)
 
 **Why External MCP Agents Cannot Use SSE:**
+
 - MCP is Request → Response protocol (one-shot)
 - MCP clients cannot receive SSE events mid-execution
 - External agents must use HTTP responses (ADR-019 Level 1)
 
 **Why This Implementation is Still Valuable:**
+
 - Internal native agents (JS/TS code) CAN subscribe to SSE - no MCP limitation
 - Commands enable actor model pattern for multi-agent coordination (ADR-018)
 - Gateway uses SSE internally for parallel task aggregation
 - Story 2.5-3 implementation NOT wasted - critical for Level 2 AIL
 
 **Architecture References:**
+
 - **ADR-018**: Command Handlers Minimalism (Level 2 internal control plane)
 - **ADR-019**: Three-Level AIL Architecture (when to use SSE vs HTTP vs Task Delegation)
 - **Story 2.5-4**: Gateway HTTP + BUG-001 fix (Level 1 for external MCP agents)
 
 **Implementation Status:**
+
 - ✅ SSE pattern implemented and working
 - ✅ Commands queue operational (continue, abort, replan_dag, approval_response)
 - ✅ Type-safe, high code quality (see Code Review Record)
@@ -53,9 +60,10 @@ This story implements **Level 2 AIL** (Runtime AIL with Internal Native Agents) 
 
 ## User Story
 
-**As a** developer building adaptive AI workflows,
-**I want** agent and human decision points integrated into DAG execution with dynamic replanning capability,
-**So that** workflows can adapt in real-time to discoveries, get human approval for critical operations, and self-improve through GraphRAG feedback loops.
+**As a** developer building adaptive AI workflows, **I want** agent and human decision points
+integrated into DAG execution with dynamic replanning capability, **So that** workflows can adapt in
+real-time to discoveries, get human approval for critical operations, and self-improve through
+GraphRAG feedback loops.
 
 ---
 
@@ -130,22 +138,27 @@ This story implements **Level 2 AIL** (Runtime AIL with Internal Native Agents) 
 
 ### Architecture Pattern
 
-Cette story complète **Loop 2 (Adaptation)** et **Loop 3 (Meta-Learning)** de l'architecture 3-Loop Learning (Pattern 4):
+Cette story complète **Loop 2 (Adaptation)** et **Loop 3 (Meta-Learning)** de l'architecture 3-Loop
+Learning (Pattern 4):
 
 **Loop 2 (Adaptation - Runtime Décisions):**
+
 - AIL Decision Points → Agent autonome décide de continuer, replanner, ou abandonner
 - HIL Approval Checkpoints → Validation humaine pour opérations critiques
 - DAG Replanning Dynamique → `DAGSuggester.replanDAG()` requête GraphRAG et injecte nouveaux nodes
 - Multi-Turn State Persistence → Conversations survivent aux checkpoints
 
 **Loop 3 (Meta-Learning - Basic Foundation):**
+
 - GraphRAG Updates → `GraphRAGEngine.updateFromExecution()` après workflow complet
 - Tool Co-occurrence Learning → Détecte patterns d'utilisation (tool A suivi de tool B)
 - PageRank Recomputation → Ajuste importance des tools basée sur succès réels
 
-Cette story transforme le DAG executor d'un système linéaire en un système adaptatif capable d'apprendre et d'évoluer.
+Cette story transforme le DAG executor d'un système linéaire en un système adaptatif capable
+d'apprendre et d'évoluer.
 
-**Source:** [Architecture - Pattern 4 (3-Loop Learning)](../architecture.md#pattern-4-3-loop-learning-architecture)
+**Source:**
+[Architecture - Pattern 4 (3-Loop Learning)](../architecture.md#pattern-4-3-loop-learning-architecture)
 **Source:** [Tech-Spec Epic 2.5 - Overview](../tech-spec-epic-2.5.md#overview)
 
 ### Key Design Decisions (ADR-007 v2.0)
@@ -153,6 +166,7 @@ Cette story transforme le DAG executor d'un système linéaire en un système ad
 **Decision: Un seul agent en conversation continue (pas de filtering contexte)**
 
 **Rationale:**
+
 - Agent voit TOUS les MCP results dans sa conversation (comportement naturel Claude Code)
 - Pas de context pruning, pas de summarization pour agent
 - Décisions AIL informées avec contexte complet
@@ -160,9 +174,10 @@ Cette story transforme le DAG executor d'un système linéaire en un système ad
 - Summary généré UNIQUEMENT pour HIL (affichage UI humain)
 
 **Context Management:**
+
 ```typescript
 class ControlledExecutor {
-  private agent: ClaudeAgent;  // Un seul agent, une conversation
+  private agent: ClaudeAgent; // Un seul agent, une conversation
 
   async executeStream(dag: DAGStructure) {
     for (const layer of layers) {
@@ -172,7 +187,7 @@ class ControlledExecutor {
 
       // AIL: Agent continue sa conversation naturellement
       const decision = await this.agent.continue(
-        `Layer ${layer} completed. Continue or replan?`
+        `Layer ${layer} completed. Continue or replan?`,
       );
 
       // ✅ Agent a accès à tous les MCP results
@@ -183,18 +198,22 @@ class ControlledExecutor {
 }
 ```
 
-**Source:** [ADR-007 - Context Management](../adrs/ADR-007-dag-adaptive-feedback-loops.md#context-management--agent-architecture)
-**Source:** [Architecture - Pattern 4 Context Notes](../architecture.md#context-management--agent-architecture)
+**Source:**
+[ADR-007 - Context Management](../adrs/ADR-007-dag-adaptive-feedback-loops.md#context-management--agent-architecture)
+**Source:**
+[Architecture - Pattern 4 Context Notes](../architecture.md#context-management--agent-architecture)
 
 **Decision: DAGSuggester re-queries GraphRAG pour dynamic replanning**
 
 **Rationale:**
+
 - GraphRAG (Knowledge Graph) = Source de vérité permanente pour tools disponibles
 - DAG (Workflow Graph) = Plan d'exécution éphémère pour workflow actuel
 - Replanning = DAGSuggester requête GraphRAG → trouve nouveaux tools → injecte dans DAG
 - Feedback Loop = Après exécution → GraphRAG enrichi avec patterns découverts
 
 **Two-Layer Architecture:**
+
 ```
 DAGSuggester (Workflow Layer - src/graphrag/dag-suggester.ts)
     ↓ queries
@@ -203,8 +222,10 @@ GraphRAGEngine (Knowledge Graph Layer - src/graphrag/graph-engine.ts)
 PGlite (Storage: tools, edges, embeddings)
 ```
 
-**Source:** [ADR-007 - GraphRAG vs DAG Distinction](../adrs/ADR-007-dag-adaptive-feedback-loops.md#critical-distinction-knowledge-graph-vs-workflow-graph)
-**Source:** [Architecture - Pattern 4 GraphRAG Integration](../architecture.md#pattern-4-3-loop-learning-architecture)
+**Source:**
+[ADR-007 - GraphRAG vs DAG Distinction](../adrs/ADR-007-dag-adaptive-feedback-loops.md#critical-distinction-knowledge-graph-vs-workflow-graph)
+**Source:**
+[Architecture - Pattern 4 GraphRAG Integration](../architecture.md#pattern-4-3-loop-learning-architecture)
 
 ### Component Architecture
 
@@ -271,12 +292,14 @@ PGlite (Storage: tools, edges, embeddings)
 ### Zero New External Dependencies
 
 Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
+
 - ✅ AIL/HIL logic → Pure TypeScript (conditional execution)
 - ✅ Summary generation → String template (no LLM API calls needed for MVP)
 - ✅ DAG replanning → Existing GraphRAGEngine + DAGSuggester
 - ✅ Feedback loop → PGlite updates (already available)
 
-**Source:** [Tech-Spec Epic 2.5 - External Dependencies](../tech-spec-epic-2.5.md#external-dependencies)
+**Source:**
+[Tech-Spec Epic 2.5 - External Dependencies](../tech-spec-epic-2.5.md#external-dependencies)
 
 ---
 
@@ -285,6 +308,7 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 **From Story 2.5-2 (Checkpoint & Resume) - Status: review**
 
 **Architectural Patterns Established:**
+
 - ✅ CheckpointManager intégré dans ControlledExecutor via `setCheckpointManager()`
 - ✅ WorkflowState serialization/deserialization éprouvée (JSONB round-trip)
 - ✅ Performance exceptionnelle (P95 = 0.50ms vs 50ms target - 100x mieux!)
@@ -292,42 +316,50 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 - ✅ Graceful degradation patterns (checkpoint failures logged, execution continues)
 
 **State Management Learnings:**
+
 - ✅ Reducers automatiques fonctionnent parfaitement (messages, tasks, decisions, context)
 - ✅ State invariants validation assure cohérence
 - ✅ Checkpoints sauvegardent WorkflowState complet (conversation multi-turn preserved)
 - ⚠️ Filesystem state NOT saved → Idempotence required (Epic 3 résout)
 
 **Testing Infrastructure Available:**
+
 - ✅ 19 tests passing (11 unit + 8 integration)
 - ✅ Chaos testing patterns établis (inject crashes, verify resume)
 - ✅ Performance benchmarks framework en place
 - ✅ Integration test patterns pour EventStream et CommandQueue
 
 **Integration Points for Story 2.5-3:**
+
 - ✅ `ControlledExecutor.executeStream()` - Extend avec AIL/HIL decision points
 - ✅ CommandQueue - Already handles commands (extend with replan_dag command)
 - ✅ EventStream - Already emits events (add decision_required event)
 - ✅ WorkflowState.decisions[] - Reducer ready to append AIL/HIL decisions
 
 **Files to Modify:**
+
 - `src/dag/controlled-executor.ts` - Add AIL/HIL decision logic
 - `src/graphrag/dag-suggester.ts` - Add replanDAG() method
 - `src/graphrag/graph-engine.ts` - Add updateFromExecution() method (if not exists)
 - `src/dag/types.ts` - Add Decision types, ReplanCommand
 
 **Performance Targets to Maintain:**
+
 - ✅ Speedup 5x preserved (async AIL/HIL, non-blocking)
 - ✅ State update <1ms (reducers proven fast)
 - ✅ Checkpoint save <50ms (achieved 0.50ms - keep this!)
 - 🎯 NEW: GraphRAG replan <200ms P95
 
 **Security Patterns from 2.5-2:**
+
 - ✅ Parameterized queries for PGlite (NO string concatenation!)
 - ✅ State validation before operations
 - ✅ Error sanitization (no sensitive data in error messages)
 - ✅ Type guards for runtime validation
 
-**Key Takeaway:** Story 2.5-2 proved that async checkpoint infrastructure works exceptionally well. Story 2.5-3 should follow same patterns: async decision points, graceful degradation, comprehensive tests.
+**Key Takeaway:** Story 2.5-2 proved that async checkpoint infrastructure works exceptionally well.
+Story 2.5-3 should follow same patterns: async decision points, graceful degradation, comprehensive
+tests.
 
 [Source: stories/story-2.5-2.md#Dev-Agent-Record]
 
@@ -369,7 +401,8 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 
 **Acceptance Criteria:** AC-3.1, AC-3.5 (partial)
 
-**Source:** [Tech-Spec Epic 2.5 - AC-3.1 Details](../tech-spec-epic-2.5.md#ac-31-agent-in-the-loop-ail)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-3.1 Details](../tech-spec-epic-2.5.md#ac-31-agent-in-the-loop-ail)
 
 ### Task 2: Human-in-the-Loop (HIL) Approval Checkpoints (1h) ✅
 
@@ -395,7 +428,8 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
   - Limit to 500-1000 tokens
 
 - [x] **Subtask 2.4:** Process HIL responses
-  - Add command: `{ type: "approval_response", checkpoint_id, approved: boolean, feedback?: string }`
+  - Add command:
+    `{ type: "approval_response", checkpoint_id, approved: boolean, feedback?: string }`
   - If approved: Continue execution
   - If rejected: Abort workflow gracefully
   - Log decision to WorkflowState.decisions[]
@@ -410,7 +444,8 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 
 **Acceptance Criteria:** AC-3.2, AC-3.5 (partial)
 
-**Source:** [Tech-Spec Epic 2.5 - AC-3.2 Details](../tech-spec-epic-2.5.md#ac-32-human-in-the-loop-hil)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-3.2 Details](../tech-spec-epic-2.5.md#ac-32-human-in-the-loop-hil)
 
 ### Task 3: DAG Replanning with GraphRAG (1-1.5h) ✅
 
@@ -486,7 +521,8 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 
 **Acceptance Criteria:** AC-3.4
 
-**Source:** [Tech-Spec Epic 2.5 - AC-3.4 Details](../tech-spec-epic-2.5.md#ac-34-graphrag-feedback-loop)
+**Source:**
+[Tech-Spec Epic 2.5 - AC-3.4 Details](../tech-spec-epic-2.5.md#ac-34-graphrag-feedback-loop)
 
 ### Task 5: End-to-End Integration Tests (0.5-1h)
 
@@ -507,7 +543,8 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 
 - [x] **Subtask 5.3:** E2E Test: Dynamic DAG Replanning (discovery pattern)
   - Scenario: list_directory finds XML → Agent triggers replan → parse_xml added
-  - Full workflow: Layer 0 (list_dir) → AIL decision → replan → Layer 1 (parse_json + parse_xml parallel)
+  - Full workflow: Layer 0 (list_dir) → AIL decision → replan → Layer 1 (parse_json + parse_xml
+    parallel)
   - Verify: DAG structure updated mid-execution
   - Verify: Parallel execution maintained (speedup 5x)
 
@@ -528,12 +565,14 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 ### Implementation Strategy
 
 **Phase 1: AIL Decision Points (Task 1, ~1-1.5h)**
+
 1. Extend ExecutionConfig avec AIL options
 2. Implement AIL decision point emission dans executeStream()
 3. Extend CommandQueue processing avec AIL commands (continue, abort)
 4. Unit tests pour AIL logic
 
 **Phase 2: HIL Approval Checkpoints (Task 2, ~1h)**
+
 1. Extend ExecutionConfig avec HIL options
 2. Implement HIL checkpoint logic (after layer + checkpoint save)
 3. Generate summary template (500-1000 tokens)
@@ -541,6 +580,7 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 5. Integration tests pour HIL workflow
 
 **Phase 3: DAG Replanning (Task 3, ~1-1.5h)**
+
 1. Implement DAGSuggester.replanDAG() method
 2. Query GraphRAG (vectorSearch + PageRank)
 3. Merge new nodes avec existing DAG
@@ -548,6 +588,7 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 5. Performance benchmarks (<200ms target)
 
 **Phase 4: GraphRAG Feedback Loop (Task 4, ~1h)**
+
 1. Implement GraphRAGEngine.updateFromExecution()
 2. Extract tool co-occurrence patterns
 3. Update PGlite edges (parameterized queries!)
@@ -555,6 +596,7 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 5. Integrate dans ControlledExecutor (after workflow completion)
 
 **Phase 5: E2E Integration Tests (Task 5, ~0.5-1h)**
+
 1. E2E test: AIL workflow (agent replan)
 2. E2E test: HIL workflow (human approve/reject)
 3. E2E test: Dynamic replanning (discovery pattern)
@@ -565,6 +607,7 @@ Cette story continue la philosophie **zero new dependencies** d'Epic 2.5:
 ### File Structure
 
 **New Files Created:**
+
 ```
 tests/integration/dag/
 ├── ail_workflow_test.ts              # E2E AIL tests
@@ -576,6 +619,7 @@ tests/unit/graphrag/
 ```
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts        # + AIL/HIL logic, handleReplanCommand()
 src/dag/types.ts                       # + Decision types, ReplanCommand
@@ -587,6 +631,7 @@ mod.ts                                 # Export new types if needed
 ### AIL/HIL Decision Flow
 
 **Agent-in-the-Loop (AIL) Pattern:**
+
 ```typescript
 // In ControlledExecutor.executeStream()
 for (const layer of layers) {
@@ -616,6 +661,7 @@ for (const layer of layers) {
 ```
 
 **Human-in-the-Loop (HIL) Pattern:**
+
 ```typescript
 // In ControlledExecutor.executeStream()
 if (config.hil.enabled && shouldRequireApproval(config.hil.approval_required, layer)) {
@@ -657,17 +703,20 @@ if (config.hil.enabled && shouldRequireApproval(config.hil.approval_required, la
 }
 ```
 
-**Source:** [Tech-Spec Epic 2.5 - Workflow 1 (AIL)](../tech-spec-epic-2.5.md#workflow-1-normal-execution-with-ail-agent-in-the-loop)
-**Source:** [Tech-Spec Epic 2.5 - Workflow 2 (HIL)](../tech-spec-epic-2.5.md#workflow-2-hil-approval-for-critical-operations)
+**Source:**
+[Tech-Spec Epic 2.5 - Workflow 1 (AIL)](../tech-spec-epic-2.5.md#workflow-1-normal-execution-with-ail-agent-in-the-loop)
+**Source:**
+[Tech-Spec Epic 2.5 - Workflow 2 (HIL)](../tech-spec-epic-2.5.md#workflow-2-hil-approval-for-critical-operations)
 
 ### DAG Replanning Logic
 
 **DAGSuggester.replanDAG() Implementation:**
+
 ```typescript
 export class DAGSuggester {
   constructor(
     private graphEngine: GraphRAGEngine,
-    private vectorSearch: VectorSearch
+    private vectorSearch: VectorSearch,
   ) {}
 
   async replanDAG(
@@ -676,26 +725,26 @@ export class DAGSuggester {
       completedTasks: TaskResult[];
       newRequirement: string;
       availableContext: Record<string, any>;
-    }
+    },
   ): Promise<DAGStructure> {
     // 1. Query GraphRAG for relevant tools
     const tools = await this.vectorSearch.search(
       newContext.newRequirement,
-      topK = 5
+      topK = 5,
     );
 
     // 2. Rank by importance (PageRank)
-    const rankedTools = tools.map(tool => ({
+    const rankedTools = tools.map((tool) => ({
       ...tool,
-      importance: this.graphEngine.getPageRank(tool.tool_id)
+      importance: this.graphEngine.getPageRank(tool.tool_id),
     }));
 
     // 3. Build new DAG nodes
-    const newNodes = rankedTools.slice(0, 3).map(tool => ({
+    const newNodes = rankedTools.slice(0, 3).map((tool) => ({
       taskId: `${tool.tool_id}_${Date.now()}`,
       toolId: tool.tool_id,
       inputs: this.deriveInputsFromContext(tool, newContext.availableContext),
-      dependencies: this.detectDependencies(tool, currentDAG)
+      dependencies: this.detectDependencies(tool, currentDAG),
     }));
 
     // 4. Merge with existing DAG
@@ -706,7 +755,7 @@ export class DAGSuggester {
 
   private mergeDagWithNewNodes(
     currentDAG: DAGStructure,
-    newNodes: DAGNode[]
+    newNodes: DAGNode[],
   ): DAGStructure {
     // Append new nodes to appropriate layer
     // Preserve completed layers (immutable)
@@ -716,12 +765,15 @@ export class DAGSuggester {
 }
 ```
 
-**Source:** [Tech-Spec Epic 2.5 - DAGSuggester Extended API](../tech-spec-epic-2.5.md#dagsuggest-extended-api)
-**Source:** [Tech-Spec Epic 2.5 - Workflow 4 (Dynamic Replanning)](../tech-spec-epic-2.5.md#workflow-4-dynamic-dag-replanning-agent-discovery)
+**Source:**
+[Tech-Spec Epic 2.5 - DAGSuggester Extended API](../tech-spec-epic-2.5.md#dagsuggest-extended-api)
+**Source:**
+[Tech-Spec Epic 2.5 - Workflow 4 (Dynamic Replanning)](../tech-spec-epic-2.5.md#workflow-4-dynamic-dag-replanning-agent-discovery)
 
 ### GraphRAG Feedback Loop Logic
 
 **GraphRAGEngine.updateFromExecution() Implementation:**
+
 ```typescript
 export class GraphRAGEngine {
   async updateFromExecution(execution: WorkflowExecution): Promise<void> {
@@ -737,7 +789,7 @@ export class GraphRAGEngine {
          DO UPDATE SET
            observed_count = tool_dependency.observed_count + 1,
            confidence_score = LEAST(1.0, tool_dependency.confidence_score + 0.1)`,
-        [edge.from, edge.to]
+        [edge.from, edge.to],
       );
     }
 
@@ -761,20 +813,23 @@ export class GraphRAGEngine {
 }
 ```
 
-**Source:** [Tech-Spec Epic 2.5 - GraphRAG Feedback Loop](../tech-spec-epic-2.5.md#ac-34-graphrag-feedback-loop)
-**Source:** [Architecture - Pattern 4 GraphRAG Integration](../architecture.md#5-graphrag-integration-feedback-loop)
+**Source:**
+[Tech-Spec Epic 2.5 - GraphRAG Feedback Loop](../tech-spec-epic-2.5.md#ac-34-graphrag-feedback-loop)
+**Source:**
+[Architecture - Pattern 4 GraphRAG Integration](../architecture.md#5-graphrag-integration-feedback-loop)
 
 ### Performance Targets
 
-| Metric | Target | Test Method |
-|--------|--------|-------------|
-| AIL decision latency | <10ms | Emit decision_required event, measure time |
-| HIL summary generation | <100ms | Template-based summary, measure time |
-| DAG replan latency | <200ms P95 | Benchmark: vectorSearch + PageRank + merge |
-| GraphRAG update latency | <300ms | Update edges + PageRank recomputation |
-| Total feedback loop | <300ms end-to-end | AIL decision → replan → continue |
+| Metric                  | Target            | Test Method                                |
+| ----------------------- | ----------------- | ------------------------------------------ |
+| AIL decision latency    | <10ms             | Emit decision_required event, measure time |
+| HIL summary generation  | <100ms            | Template-based summary, measure time       |
+| DAG replan latency      | <200ms P95        | Benchmark: vectorSearch + PageRank + merge |
+| GraphRAG update latency | <300ms            | Update edges + PageRank recomputation      |
+| Total feedback loop     | <300ms end-to-end | AIL decision → replan → continue           |
 
-**Source:** [Tech-Spec Epic 2.5 - Performance Budget](../tech-spec-epic-2.5.md#performance-budget-summary)
+**Source:**
+[Tech-Spec Epic 2.5 - Performance Budget](../tech-spec-epic-2.5.md#performance-budget-summary)
 
 ### Edge Cases to Handle
 
@@ -811,22 +866,26 @@ export class GraphRAGEngine {
 ### Error Handling
 
 **AIL Decision Failures:**
+
 - Agent command malformed → Log error, continue with default action (continue)
 - Agent command timeout → Default to "continue" after timeout
 - Emit event: `{ type: "ail_failed", error, action_taken: "continue" }`
 
 **HIL Approval Failures:**
+
 - Human command malformed → Log error, request re-send
 - Human timeout → Abort workflow OR auto-approve (based on config)
 - Emit event: `{ type: "hil_timeout", action_taken: "abort" }`
 
 **DAG Replanning Failures:**
+
 - Vector search timeout → Fallback to continue with current DAG
 - Cycle detected → Reject replan, log error
 - Merge failure → Continue with current DAG
 - Emit event: `{ type: "replan_failed", error, action_taken: "continue" }`
 
 **GraphRAG Update Failures:**
+
 - PGlite write error → Log error (non-critical)
 - PageRank timeout → Skip recomputation this time
 - Don't block workflow completion
@@ -835,7 +894,8 @@ export class GraphRAGEngine {
 ### Security Considerations
 
 - ✅ **Parameterized Queries:** All PGlite queries use $1, $2 (learned from Story 2.5-2!)
-- ✅ **Command Validation:** Type guards for all commands (continue, abort, replan_dag, checkpoint_response)
+- ✅ **Command Validation:** Type guards for all commands (continue, abort, replan_dag,
+  checkpoint_response)
 - ✅ **Summary Sanitization:** Strip sensitive data from HIL summary (no credentials, no PII)
 - ✅ **Rate Limiting:** Max 3 replans per workflow (prevent resource exhaustion)
 - ✅ **Error Sanitization:** No sensitive data in error messages
@@ -844,18 +904,21 @@ export class GraphRAGEngine {
 ### Testing Strategy Summary
 
 **Unit Tests (40% of effort, >80% coverage):**
+
 - AIL decision point logic (emit event, process commands)
 - HIL summary generation (template, token limit)
 - DAGSuggester.replanDAG() (query GraphRAG, merge DAG)
 - GraphRAGEngine.updateFromExecution() (extract edges, update PGlite, PageRank)
 
 **Integration Tests (40% of effort):**
+
 - AIL workflow (agent triggers replan)
 - HIL workflow (human approves/rejects)
 - Dynamic DAG replanning (discovery pattern)
 - GraphRAG feedback loop (update + subsequent suggestions)
 
 **E2E Tests (20% of effort):**
+
 - Complete adaptive workflow (AIL + HIL + replan + feedback)
 - Multi-layer discovery pattern (XML files → replan → parallel parsing)
 - Learning validation (workflow 1 → update graph → workflow 2 uses learned patterns)
@@ -879,7 +942,8 @@ export class GraphRAGEngine {
 - [x] Multi-turn conversation state persists (WorkflowState.messages[] from Story 2.5-1)
 - [x] AIL/HIL decisions logged to WorkflowState.decisions[]
 - [x] Unit tests >80% coverage (Command validation extended, core tests passing)
-- [x] Integration tests verify E2E workflows (ALL COMPLETE: AIL 2/2, HIL 3/3, Replanning 4/4, GraphRAG 4/4 = 13/13 passing)
+- [x] Integration tests verify E2E workflows (ALL COMPLETE: AIL 2/2, HIL 3/3, Replanning 4/4,
+      GraphRAG 4/4 = 13/13 passing)
 - [x] Performance targets optimized (replan <200ms validated, feedback fire-and-forget non-blocking)
 - [x] Code type-checks successfully (all files pass `deno check`)
 - [x] All existing tests passing (state, event-stream, command-queue validated)
@@ -890,17 +954,22 @@ export class GraphRAGEngine {
 ## References
 
 **BMM Documentation:**
+
 - [PRD Epic 2.5](../PRD.md#epic-25-adaptive-dag-feedback-loops-foundation)
 - [Tech-Spec Epic 2.5](../tech-spec-epic-2.5.md)
 - [ADR-007: DAG Adaptive Feedback Loops v2.0](../adrs/ADR-007-dag-adaptive-feedback-loops.md)
 - [Architecture - Pattern 4](../architecture.md#pattern-4-3-loop-learning-architecture)
 
 **Technical References:**
-- [LangGraph MessagesState](https://langchain-ai.github.io/langgraphjs/concepts/low_level/#messagesstate) - Reducer pattern inspiration
-- [Graphology PageRank](https://graphology.github.io/standard-library/metrics.html#pagerank) - Graph algorithms
+
+- [LangGraph MessagesState](https://langchain-ai.github.io/langgraphjs/concepts/low_level/#messagesstate) -
+  Reducer pattern inspiration
+- [Graphology PageRank](https://graphology.github.io/standard-library/metrics.html#pagerank) - Graph
+  algorithms
 - [PGlite Documentation](https://electric-sql.com/docs/pglite) - Database operations
 
 **Testing References:**
+
 - [Deno Testing Guide](https://deno.land/manual/testing)
 - [Integration Testing Patterns](https://deno.land/manual/testing/behavior_driven_development)
 
@@ -909,6 +978,7 @@ export class GraphRAGEngine {
 ## Change Log
 
 **2025-11-14 - Story Created (drafted)**
+
 - ✅ Story generated via BMM `create-story` workflow
 - ✅ Tech-Spec Epic 2.5 used as primary source (AC-3.1 through AC-3.6)
 - ✅ ADR-007 v2.0 architecture incorporated (3-Loop Learning)
@@ -936,12 +1006,18 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 **Actual Effort:** ~3h (within estimate)
 
 **Core Implementation (Tasks 1-4):**
-1. ✅ AIL/HIL Decision Points - Extended ExecutorConfig with AIL & HIL configuration, implemented decision logic in `executeStream()`
-2. ✅ DAG Replanning - Implemented `DAGSuggester.replanDAG()` with GraphRAG query, PageRank ranking, cycle validation
-3. ✅ GraphRAG Feedback Loop - Integrated existing `updateFromExecution()` via fire-and-forget pattern after workflow completion
-4. ✅ Command Queue Extension - Added `continue`, `approval_response` commands, updated `replan_dag` signature
+
+1. ✅ AIL/HIL Decision Points - Extended ExecutorConfig with AIL & HIL configuration, implemented
+   decision logic in `executeStream()`
+2. ✅ DAG Replanning - Implemented `DAGSuggester.replanDAG()` with GraphRAG query, PageRank ranking,
+   cycle validation
+3. ✅ GraphRAG Feedback Loop - Integrated existing `updateFromExecution()` via fire-and-forget
+   pattern after workflow completion
+4. ✅ Command Queue Extension - Added `continue`, `approval_response` commands, updated `replan_dag`
+   signature
 
 **Key Design Decisions:**
+
 - AIL/HIL integrated as middleware in layer execution loop (after checkpoint)
 - Rate limiting: Max 3 replans per workflow (prevents resource exhaustion)
 - Fire-and-forget feedback loop (non-blocking, preserves performance)
@@ -949,11 +1025,13 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - Template-based HIL summary (500-1000 tokens, no LLM needed)
 
 **Test Strategy:**
+
 - Existing unit tests updated (command-queue validation extended)
 - Core logic validated via type-checking (all files pass `deno check`)
 - Integration testing deferred to E2E suite (timing complexity in async patterns)
 
 **Files Modified:**
+
 - `src/dag/types.ts` - Added AIL/HIL config, extended Command types
 - `src/dag/controlled-executor.ts` - AIL/HIL logic, replan handler, feedback loop
 - `src/dag/command-queue.ts` - Updated isValidCommand() for new types
@@ -963,6 +1041,7 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - `tests/unit/dag/ail_hil_test.ts` - Created (async timing complexity, deferred)
 
 **Performance Characteristics:**
+
 - Type-checking: ✅ All files pass
 - Existing tests: ✅ State, EventStream, CommandQueue all passing
 - DAG replanning target: <200ms P95 (implementation optimized)
@@ -970,15 +1049,18 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Completion Notes List
 
-1. **AIL/HIL Integration Complete** - Decision points emit events correctly, commands processed via CommandQueue
+1. **AIL/HIL Integration Complete** - Decision points emit events correctly, commands processed via
+   CommandQueue
 2. **Replanning Logic Solid** - GraphRAG query + PageRank + cycle validation working
 3. **Feedback Loop Integrated** - Fire-and-forget pattern preserves performance
-4. **Command Validation Extended** - All 8 command types recognized (continue, abort, replan_dag, approval_response, etc.)
+4. **Command Validation Extended** - All 8 command types recognized (continue, abort, replan_dag,
+   approval_response, etc.)
 5. **Backward Compatibility Maintained** - All existing tests pass, zero breaking changes
 
 ### File List
 
 **Modified Files:**
+
 ```
 src/dag/controlled-executor.ts       # +200 lines (AIL/HIL logic, replan handler)
 src/dag/types.ts                      # +80 lines (AIL/HIL config, Command extensions)
@@ -989,8 +1071,7 @@ tests/unit/dag/command_queue_test.ts # +15 lines (Extended validation)
 tests/unit/dag/ail_hil_test.ts       # +380 lines (Created)
 ```
 
-**Total LOC Added:** ~850 lines
-**Zero New Dependencies** - Pure TypeScript implementation
+**Total LOC Added:** ~850 lines **Zero New Dependencies** - Pure TypeScript implementation
 
 ---
 
@@ -998,10 +1079,9 @@ tests/unit/dag/ail_hil_test.ts       # +380 lines (Created)
 
 ### Senior Developer Review - 2025-11-14
 
-**Reviewer:** BMad (via /bmad:bmm:workflows:code-review)
-**Review Duration:** ~45 minutes (systematic validation)
-**Review Type:** Comprehensive code review per BMM workflow
-**Model Used:** Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
+**Reviewer:** BMad (via /bmad:bmm:workflows:code-review) **Review Duration:** ~45 minutes
+(systematic validation) **Review Type:** Comprehensive code review per BMM workflow **Model Used:**
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ---
 
@@ -1009,11 +1089,18 @@ tests/unit/dag/ail_hil_test.ts       # +380 lines (Created)
 
 **Review Outcome:** **CHANGES REQUESTED** (Sévérité MEDIUM)
 
-L'implémentation est **techniquement solide** avec une couverture complète des acceptance criteria AC-3.1 à AC-3.5. Cependant, **AC-3.6 (tests d'intégration E2E) n'est PAS COMPLET** - les tests sont explicitement marqués comme "deferred" dans la Definition of Done. Le code type-checks correctement, les tests unitaires existants passent avec d'excellentes performances (P95 injection = 0.00ms, batch processing = 0.51ms pour 1000 commandes).
+L'implémentation est **techniquement solide** avec une couverture complète des acceptance criteria
+AC-3.1 à AC-3.5. Cependant, **AC-3.6 (tests d'intégration E2E) n'est PAS COMPLET** - les tests sont
+explicitement marqués comme "deferred" dans la Definition of Done. Le code type-checks correctement,
+les tests unitaires existants passent avec d'excellentes performances (P95 injection = 0.00ms, batch
+processing = 0.51ms pour 1000 commandes).
 
 **Critical Findings:**
-1. ❌ **AC-3.6 NOT COMPLETE** - Integration tests explicitly deferred despite being acceptance criteria
-2. ❌ **Tasks 5.1-5.4 marked complete but NOT DONE** - Story checkboxes still `[ ]` unchecked (high severity)
+
+1. ❌ **AC-3.6 NOT COMPLETE** - Integration tests explicitly deferred despite being acceptance
+   criteria
+2. ❌ **Tasks 5.1-5.4 marked complete but NOT DONE** - Story checkboxes still `[ ]` unchecked (high
+   severity)
 3. ⚠️ **Performance benchmarks not run** - Cannot verify <200ms P95 replanning target
 4. ✅ **Core implementation excellent** - Type safety, architecture, security all strong
 
@@ -1024,14 +1111,20 @@ L'implémentation est **techniquement solide** avec une couverture complète des
 **Decision:** **CHANGES REQUESTED** (Medium Severity)
 
 **Justification:**
-1. ❌ **AC-3.6 Integration Tests NOT COMPLETE** - E2E workflows not validated (AIL replan, HIL approval, replanning, GraphRAG feedback)
-2. ❌ **Tasks 5.1-5.4 Falsely Marked Complete** - Checkboxes `[ ]` unchecked, DoD states "deferred" - This is a "zero tolerance" violation
-3. ⚠️ **Performance Benchmarks Not Run** - Cannot verify <200ms P95 replanning target (AC-3.3 partially unmet)
-4. ✅ **Core Implementation Excellent** - Type safety, architecture, security all strong, unit tests passing
+
+1. ❌ **AC-3.6 Integration Tests NOT COMPLETE** - E2E workflows not validated (AIL replan, HIL
+   approval, replanning, GraphRAG feedback)
+2. ❌ **Tasks 5.1-5.4 Falsely Marked Complete** - Checkboxes `[ ]` unchecked, DoD states
+   "deferred" - This is a "zero tolerance" violation
+3. ⚠️ **Performance Benchmarks Not Run** - Cannot verify <200ms P95 replanning target (AC-3.3
+   partially unmet)
+4. ✅ **Core Implementation Excellent** - Type safety, architecture, security all strong, unit tests
+   passing
 
 **Next Steps (Choose One):**
 
 **Option A: Complete Story Before Approval (Recommended)**
+
 1. Implement E2E integration tests (Tasks 5.1-5.4) - estimated 1-2h
 2. Run performance benchmarks - estimated 30 minutes
 3. Check Task 5.1-5.4 checkboxes `[x]` in story
@@ -1039,6 +1132,7 @@ L'implémentation est **techniquement solide** avec une couverture complète des
 5. Re-review → Mark story "done"
 
 **Option B: Accept Deferral with Documentation**
+
 1. Update story to accurately reflect incomplete status
 2. Uncheck Tasks 5.1-5.4 in task list (currently false positive)
 3. Create Epic 2.6 story "E2E Integration Tests for Adaptive Feedback Loops"
@@ -1046,18 +1140,24 @@ L'implémentation est **techniquement solide** avec une couverture complète des
 5. Mark story "done with limitations"
 6. Document known limitation in Architecture.md
 
-**Reviewer Preference:** **Option A** (complete story) - E2E tests critical for async workflow validation
+**Reviewer Preference:** **Option A** (complete story) - E2E tests critical for async workflow
+validation
 
 **Risk Assessment if Approved As-Is:**
-- **Medium Risk:** Complex async interactions (AIL/HIL decision points, replanning, GraphRAG updates) not validated end-to-end
-- **Mitigation:** Core logic validated via type-checking + unit tests, but integration bugs may surface in production
-- **Recommendation:** Do NOT approve until at least 2 of 4 E2E tests implemented (AIL + HIL workflows minimum)
+
+- **Medium Risk:** Complex async interactions (AIL/HIL decision points, replanning, GraphRAG
+  updates) not validated end-to-end
+- **Mitigation:** Core logic validated via type-checking + unit tests, but integration bugs may
+  surface in production
+- **Recommendation:** Do NOT approve until at least 2 of 4 E2E tests implemented (AIL + HIL
+  workflows minimum)
 
 ---
 
 ### Detailed Review (Full Report)
 
 For the complete systematic validation including:
+
 - Acceptance Criteria validation (AC-3.1 to AC-3.6) with file:line evidence
 - Task Verification Matrix (all 21 tasks checked)
 - Code Quality Assessment (Type Safety 10/10, Performance 10/10, Architecture 9/10, Security 9/10)
@@ -1068,6 +1168,7 @@ For the complete systematic validation including:
 See the comprehensive review notes compiled during the review session.
 
 **Key Metrics:**
+
 - **Type-Checking:** ✅ PASS (all files)
 - **Unit Tests:** ✅ PASS (CommandQueue: 6 suites, 24 steps, P95=0.00ms)
 - **Integration Tests:** ❌ DEFERRED (AC-3.6 gap)
@@ -1077,10 +1178,10 @@ See the comprehensive review notes compiled during the review session.
 
 ---
 
-**Reviewer Signature:** BMad (Senior Developer Review via BMM Code Review Workflow)
-**Review Date:** 2025-11-14
-**Review Method:** Systematic evidence-based validation per bmad/bmm/workflows/4-implementation/code-review/workflow.yaml
+**Reviewer Signature:** BMad (Senior Developer Review via BMM Code Review Workflow) **Review Date:**
+2025-11-14 **Review Method:** Systematic evidence-based validation per
+bmad/bmm/workflows/4-implementation/code-review/workflow.yaml
 
 ---
 
-*End of Code Review Record*
+_End of Code Review Record_

@@ -1,8 +1,7 @@
 # Spike: MCP Workflow State Persistence
 
-**Status:** In Progress
-**Created:** 2025-11-25
-**Story:** 2.5-4 (MCP Control Tools & Per-Layer Validation)
+**Status:** In Progress **Created:** 2025-11-25 **Story:** 2.5-4 (MCP Control Tools & Per-Layer
+Validation)
 
 ## Problem Statement
 
@@ -20,7 +19,7 @@ interface Checkpoint {
   workflow_id: string;
   timestamp: Date;
   layer: number;
-  state: WorkflowState;  // Tasks, decisions, context - mais PAS le DAG!
+  state: WorkflowState; // Tasks, decisions, context - mais PAS le DAG!
 }
 ```
 
@@ -63,16 +62,18 @@ interface Checkpoint {
   timestamp: Date;
   layer: number;
   state: WorkflowState;
-  dag: DAGStructure;  // ← NOUVEAU
+  dag: DAGStructure; // ← NOUVEAU
 }
 ```
 
 **Avantages:**
+
 - Simple, tout au même endroit
 - Survit au restart
 - Auto-cleanup avec pruning existant
 
 **Inconvénients:**
+
 - Duplication: même DAG pour chaque checkpoint
 - Taille: DAG peut être gros
 - Migration nécessaire
@@ -83,15 +84,17 @@ interface Checkpoint {
 // Dans execute()
 state.context = {
   ...state.context,
-  __dag: dag  // Convention: préfixe __
+  __dag: dag, // Convention: préfixe __
 };
 ```
 
 **Avantages:**
+
 - Pas de migration
 - Pas de nouveau champ
 
 **Inconvénients:**
+
 - Hacky, pollution du context
 - Pas explicite
 - Fragile
@@ -108,11 +111,13 @@ CREATE TABLE workflow_dags (
 ```
 
 **Avantages:**
+
 - Propre, séparation des concerns
 - Un seul DAG par workflow (pas de duplication)
 - TTL explicite
 
 **Inconvénients:**
+
 - Nouvelle table, nouvelle migration
 - Cleanup séparé des checkpoints
 
@@ -120,17 +125,19 @@ CREATE TABLE workflow_dags (
 
 ```typescript
 const activeWorkflows = new Map<string, {
-  dag: DAGStructure,
-  executor: ControlledExecutor,
+  dag: DAGStructure;
+  executor: ControlledExecutor;
   // ...
 }>();
 ```
 
 **Avantages:**
+
 - Simple, rapide
 - Pas de persistence
 
 **Inconvénients:**
+
 - Perdu au restart
 - Pas de recovery possible
 - C'était l'approche rushée qu'on a supprimée
@@ -140,12 +147,14 @@ const activeWorkflows = new Map<string, {
 **Choix:** Table `workflow_dags` séparée des checkpoints.
 
 **Raisons:**
+
 1. **Pas de duplication** - Un workflow = un DAG (vs 5x dans checkpoints)
 2. **Séparation des concerns** - DAG ≠ Checkpoint state
 3. **Cleanup indépendant** - TTL propre, pas lié au pruning checkpoints
 4. **Plus propre architecturalement** - Normalisation des données
 
 **Schéma:**
+
 ```sql
 CREATE TABLE workflow_dags (
   workflow_id TEXT PRIMARY KEY,
@@ -160,6 +169,7 @@ CREATE INDEX idx_workflow_dags_expires ON workflow_dags(expires_at);
 ```
 
 **Flow:**
+
 ```
 execute(intent, per_layer_validation: true)
   │
@@ -183,6 +193,7 @@ continue(workflow_id)
 ```
 
 **Estimation impact:**
+
 - Migration 008: CREATE TABLE workflow_dags
 - Nouveau module: `src/mcp/workflow-dag-store.ts`
 - Modifier handlers dans `gateway-server.ts`

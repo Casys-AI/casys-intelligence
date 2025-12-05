@@ -4,7 +4,7 @@
  * Executes user code in isolated Deno worker with MCP tools access.
  */
 
-import { searchTools, callTool, log } from "./agentcards-bridge.ts";
+import { callTool, log, searchTools } from "./agentcards-bridge.ts";
 
 // Listen for code execution requests from host
 self.addEventListener("message", async (event: MessageEvent) => {

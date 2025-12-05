@@ -301,9 +301,7 @@ async function runValidation(): Promise<ValidationResults> {
       }%)`,
     );
     console.log(
-      `P95 Latency <= 5000ms:        ${latencyPass ? "✅ PASS" : "❌ FAIL"} (${
-        p95.toFixed(2)
-      }ms)`,
+      `P95 Latency <= 5000ms:        ${latencyPass ? "✅ PASS" : "❌ FAIL"} (${p95.toFixed(2)}ms)`,
     );
     console.log(
       `Zero Crashes:                 ${crashPass ? "✅ PASS" : "❌ FAIL"} (${crashes} crashes)`,

@@ -1,6 +1,7 @@
 # Party Mode - Multi-Agent Discussion Instructions
 
-<critical>The workflow execution engine is governed by: {project_root}/bmad/core/tasks/workflow.xml</critical>
+<critical>The workflow execution engine is governed by:
+{project_root}/bmad/core/tasks/workflow.xml</critical>
 <critical>This workflow orchestrates group discussions between all installed BMAD agents</critical>
 
 <workflow>
@@ -22,7 +23,10 @@
 <action>For each agent found in manifest:</action>
 <check>Look for config override at {{agent_overrides}}[module]-[agent-name].customize.yaml</check>
 <action if="agent override exists">Load the override configuration</action>
-<action>MERGE override data with manifest data (overrides take precedence):</action> - Override role replaces manifest role if present - Override identity replaces manifest identity if present - Override communicationStyle replaces manifest communicationStyle if present - Override principles replace manifest principles if present - Any additional persona elements from override are added
+<action>MERGE override data with manifest data (overrides take precedence):</action> - Override role
+replaces manifest role if present - Override identity replaces manifest identity if present -
+Override communicationStyle replaces manifest communicationStyle if present - Override principles
+replace manifest principles if present - Any additional persona elements from override are added
 
 <action>Build complete agent roster with merged personalities</action>
 <action>Store agent data for use in conversation orchestration</action>
@@ -43,14 +47,14 @@
 
     What would you like to discuss with the team?
 
-  </format>
+</format>
   <action>Wait for user to provide initial topic or question</action>
 </step>
 
 <step n="3" goal="Orchestrate Multi-Agent Discussion" repeat="until-exit">
   <action>For each user message or topic:</action>
 
-  <substep n="3a" goal="Determine Relevant Agents">
+<substep n="3a" goal="Determine Relevant Agents">
     <action>Analyze the user's message/question</action>
     <action>Identify which agents would naturally respond based on:</action>
       - Their role and capabilities (from merged data)
@@ -61,7 +65,7 @@
     <note>If user addresses specific agent by name, prioritize that agent</note>
   </substep>
 
-  <substep n="3b" goal="Generate In-Character Responses">
+<substep n="3b" goal="Generate In-Character Responses">
     <action>For each selected agent, generate authentic response:</action>
     <action>Use the agent's merged personality data:</action>
       - Apply their communicationStyle exactly
@@ -75,9 +79,9 @@
       - Agents can respectfully disagree or offer alternatives
       - Agents can ask follow-up questions to each other
 
-  </substep>
+</substep>
 
-  <substep n="3c" goal="Handle Questions and Interactions">
+<substep n="3c" goal="Handle Questions and Interactions">
     <check if="an agent asks the user a direct question">
       <action>Clearly highlight the question</action>
       <action>End that round of responses</action>
@@ -96,9 +100,9 @@
       <action>Redirect to new aspects or ask for user guidance</action>
     </check>
 
-  </substep>
+</substep>
 
-  <substep n="3d" goal="Format and Present Responses">
+<substep n="3d" goal="Format and Present Responses">
     <action>Present each agent's contribution clearly:</action>
     <format>
       [Agent Name]: [Their response in their voice/style]
@@ -111,9 +115,9 @@
     <action>Maintain spacing between agents for readability</action>
     <action>Preserve each agent's unique voice throughout</action>
 
-  </substep>
+</substep>
 
-  <substep n="3e" goal="Check for Exit Conditions">
+<substep n="3e" goal="Check for Exit Conditions">
     <check if="user message contains any {{exit_triggers}}">
       <action>Have agents provide brief farewells in character</action>
       <action>Thank user for the discussion</action>
@@ -127,7 +131,7 @@
       </check>
     </check>
 
-  </substep>
+</substep>
 </step>
 
 <step n="4" goal="Exit Party Mode">
@@ -139,7 +143,7 @@
 
     🎊 Party Mode ended. Thanks for the great discussion!
 
-  </format>
+</format>
   <action>Exit workflow</action>
 </step>
 
@@ -168,11 +172,11 @@
     - Wait for user response before any agent continues
   </direct-to-user>
 
-  <rhetorical>
+<rhetorical>
     Agents can ask rhetorical or thinking-aloud questions without pausing
   </rhetorical>
 
-  <inter-agent>
+<inter-agent>
     Agents can question each other and respond naturally within same round
   </inter-agent>
 </question-protocol>

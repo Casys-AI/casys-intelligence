@@ -1,13 +1,13 @@
 # Tech-Spec: Blog Fresh pour inelligence.casys.ai
 
-**Created:** 2025-12-05
-**Status:** Completed
+**Created:** 2025-12-05 **Status:** Completed
 
 ## Overview
 
 ### Problem Statement
 
-Le site inelligence.casys.ai (Fresh) n'a pas de blog. Les articles sont créés via le workflow `work-to-blog` mais restent en markdown sans être publiés sur le web.
+Le site inelligence.casys.ai (Fresh) n'a pas de blog. Les articles sont créés via le workflow
+`work-to-blog` mais restent en markdown sans être publiés sur le web.
 
 ### Solution
 
@@ -17,6 +17,7 @@ Le site inelligence.casys.ai (Fresh) n'a pas de blog. Les articles sont créés 
 ### Scope
 
 **In:**
+
 - Routes blog (liste + article individuel)
 - Parser markdown avec frontmatter YAML
 - Dossier `posts/` à la racine
@@ -24,6 +25,7 @@ Le site inelligence.casys.ai (Fresh) n'a pas de blog. Les articles sont créés 
 - Style basique (réutiliser le design existant)
 
 **Out:**
+
 - Commentaires
 - Newsletter/subscription
 - CMS admin
@@ -35,6 +37,7 @@ Le site inelligence.casys.ai (Fresh) n'a pas de blog. Les articles sont créés 
 ### Codebase Patterns
 
 **Fresh routes existantes:**
+
 ```
 src/web/routes/
 ├── index.tsx
@@ -42,6 +45,7 @@ src/web/routes/
 ```
 
 **Workflow work-to-blog:**
+
 ```
 bmad/custom/src/workflows/work-to-blog/
 ├── workflow.md
@@ -63,7 +67,8 @@ bmad/custom/src/workflows/work-to-blog/
 
 ### Technical Decisions
 
-1. **Dossier posts/** - Convention Fresh officielle, à la racine du projet web (`src/web/posts/` ou racine)
+1. **Dossier posts/** - Convention Fresh officielle, à la racine du projet web (`src/web/posts/` ou
+   racine)
 2. **gfm module** - Pour le rendu markdown (standard Deno)
 3. **Frontmatter unifié** - Format YAML compatible Fresh + enrichi
 
@@ -154,6 +159,7 @@ author: Erwan Lee Pesle
 ### Automation Make.com (Post-MVP)
 
 **Flow envisagé:**
+
 1. Nouvel article publié dans `posts/`
 2. RSS feed mis à jour automatiquement
 3. Make.com poll le RSS ou reçoit webhook
@@ -164,10 +170,12 @@ author: Erwan Lee Pesle
 ### Migration Articles Existants
 
 Les articles actuels dans `docs/blog/` ont un format différent (pas de frontmatter YAML). Options:
+
 1. Les migrer manuellement en ajoutant le frontmatter
 2. Les laisser dans l'ancien dossier (archive)
 3. Script de migration semi-automatique
 
 ---
 
-**Recommandation:** Commencer par Part A (blog Fresh), tester avec 1-2 articles migrés manuellement, puis Part B (workflow).
+**Recommandation:** Commencer par Part A (blog Fresh), tester avec 1-2 articles migrés manuellement,
+puis Part B (workflow).

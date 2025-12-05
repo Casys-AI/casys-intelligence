@@ -1,10 +1,9 @@
 # Rapport de Validation - Architecture AgentCards
 
-**Document Validé:** `docs/architecture.md`
-**Date de Validation:** 2025-11-13
-**Validateur:** Winston (Architect Agent)
-**Checklist:** `bmad/bmm/workflows/3-solutioning/architecture/checklist.md`
-**Spikes Analysés:**
+**Document Validé:** `docs/architecture.md` **Date de Validation:** 2025-11-13 **Validateur:**
+Winston (Architect Agent) **Checklist:**
+`bmad/bmm/workflows/3-solutioning/architecture/checklist.md` **Spikes Analysés:**
+
 - `docs/spikes/spike-agent-human-dag-feedback-loop.md`
 - `docs/spikes/spike-coala-comparison-adaptive-feedback.md`
 - `docs/spikes/spike-episodic-memory-adaptive-thresholds.md`
@@ -13,26 +12,29 @@
 
 ## 📊 Résumé Exécutif
 
-| Métrique | Résultat | Statut |
-|----------|----------|--------|
-| **Score Global** | **89%** | ✅ **PASS** |
-| **Sections Validées** | 10/10 | ✅ Complète |
-| **Issues Critiques** | 1 (Section 2) | ❌ **MUST FIX** |
-| **Issues Mineures** | 4 | ⚠️ Should fix |
-| **Excellences** | 4 sections (>95%) | ⭐⭐⭐ |
+| Métrique              | Résultat          | Statut          |
+| --------------------- | ----------------- | --------------- |
+| **Score Global**      | **89%**           | ✅ **PASS**     |
+| **Sections Validées** | 10/10             | ✅ Complète     |
+| **Issues Critiques**  | 1 (Section 2)     | ❌ **MUST FIX** |
+| **Issues Mineures**   | 4                 | ⚠️ Should fix   |
+| **Excellences**       | 4 sections (>95%) | ⭐⭐⭐          |
 
 ### Verdict Final
 
 ✅ **L'architecture est VALIDÉE avec réserves**
 
 **Points forts exceptionnels:**
+
 - Novel Pattern Design (90.5%) - Patterns 3 & 4 sont des références
 - Document Structure (98%) - Exceptionnel
 - Implementation Patterns (96%) - Très complet
 - AI Agent Clarity (92%) - Bien guidé
 
 **Point bloquant:**
-- ❌ **Section 2 (Version Specificity): 65%** - Versions "latest" non spécifiques, aucune date de vérification
+
+- ❌ **Section 2 (Version Specificity): 65%** - Versions "latest" non spécifiques, aucune date de
+  vérification
 
 ---
 
@@ -43,11 +45,13 @@
 #### ✅ **All Decisions Made - PASS**
 
 **Evidence:**
+
 - Toutes les technologies ont des décisions finalisées (tableau Decision Summary, lignes 32-50)
 - Aucun placeholder "TBD", "[choose]", "{TODO}" détecté dans le document
 - Optional decisions: Pas de décisions optionnelles non résolues
 
 **Décisions validées:**
+
 - Runtime: Deno 2.5 / 2.2 LTS ✅
 - Database: PGlite 0.3.11 ✅
 - Vector Search: pgvector (HNSW) ✅
@@ -57,17 +61,20 @@
 #### ⚠️ **Decision Coverage - PARTIAL**
 
 **Items validés:**
+
 1. ✅ **Data persistence:** PGlite clairement défini (ligne 37, schema lignes 1083-1123)
 2. ⚠️ **API pattern:** Pas d'API REST/GraphQL
    - **Justification:** CLI tool local, pas d'API externe nécessaire
    - **Evidence:** "Local-first CLI tool (no server deployment MVP)" (ligne 1254)
    - **Verdict:** Acceptable pour MVP, mais devrait être explicite
 3. ✅ **Authentication:** N/A (CLI local, implicite mais logique)
-4. ✅ **Deployment target:** "Local-first CLI tool" (ligne 1254), platforms documentées (lignes 1256-1259)
+4. ✅ **Deployment target:** "Local-first CLI tool" (ligne 1254), platforms documentées (lignes
+   1256-1259)
 5. ⚠️ **Functional requirements support:** Impossible de vérifier sans PRD.md
    - **Recommendation:** Cross-reference avec PRD.md pour validation complète
 
 **Issues:**
+
 - API pattern devrait mentionner explicitement "No external API - CLI tool"
 - FRs coverage nécessite validation contre PRD.md
 
@@ -79,19 +86,20 @@
 
 **Analyse du tableau Decision Summary (lignes 32-50):**
 
-| Technology | Version | Status | Issue |
-|------------|---------|--------|-------|
-| Deno | 2.5 / 2.2 LTS | ✅ PASS | Spécifique avec option LTS |
-| PGlite | 0.3.11 | ✅ PASS | Version spécifique |
-| @huggingface/transformers | 2.17.2 | ✅ PASS | Version spécifique |
-| **MCP Protocol SDK** | **latest** | ❌ **FAIL** | "latest" n'est pas une version |
-| **cliffy (CLI Framework)** | **latest** | ❌ **FAIL** | "latest" n'est pas une version |
-| **Graphology** | **latest** | ❌ **FAIL** | "latest" n'est pas une version |
-| std/yaml (Configuration) | Deno std | ⚠️ PARTIAL | Devrait inclure version (e.g., @std/yaml@0.224.0) |
-| std/log (Logging) | Deno std | ⚠️ PARTIAL | Devrait inclure version (e.g., @std/log@0.224.0) |
-| pgvector | Built-in PGlite | ✅ PASS | Version liée à PGlite 0.3.11 |
+| Technology                 | Version         | Status      | Issue                                             |
+| -------------------------- | --------------- | ----------- | ------------------------------------------------- |
+| Deno                       | 2.5 / 2.2 LTS   | ✅ PASS     | Spécifique avec option LTS                        |
+| PGlite                     | 0.3.11          | ✅ PASS     | Version spécifique                                |
+| @huggingface/transformers  | 2.17.2          | ✅ PASS     | Version spécifique                                |
+| **MCP Protocol SDK**       | **latest**      | ❌ **FAIL** | "latest" n'est pas une version                    |
+| **cliffy (CLI Framework)** | **latest**      | ❌ **FAIL** | "latest" n'est pas une version                    |
+| **Graphology**             | **latest**      | ❌ **FAIL** | "latest" n'est pas une version                    |
+| std/yaml (Configuration)   | Deno std        | ⚠️ PARTIAL  | Devrait inclure version (e.g., @std/yaml@0.224.0) |
+| std/log (Logging)          | Deno std        | ⚠️ PARTIAL  | Devrait inclure version (e.g., @std/log@0.224.0)  |
+| pgvector                   | Built-in PGlite | ✅ PASS     | Version liée à PGlite 0.3.11                      |
 
 **Problèmes critiques:**
+
 1. ❌ **3 technologies utilisent "latest"** sans version spécifique
 2. ❌ **2 technologies** (std/yaml, std/log) manquent de version Deno std
 
@@ -107,7 +115,8 @@
 2. ❌ **Pas de preuve de WebSearch**
    - Requirement: "WebSearch used during workflow to verify current versions"
    - Trouvé: Aucune mention de vérification
-   - Contradiction: Architecture dit "No hardcoded versions trusted without verification" mais utilise "latest"
+   - Contradiction: Architecture dit "No hardcoded versions trusted without verification" mais
+     utilise "latest"
 
 3. ⚠️ **LTS vs Latest non documenté**
    - Seulement Deno mentionne LTS (ligne 36)
@@ -119,10 +128,10 @@
 
 ```yaml
 # Spécifier les versions manquantes:
-MCP_SDK_VERSION: "@modelcontextprotocol/sdk@1.2.1"  # VERIFY via WebSearch
-CLIFFY_VERSION: "cliffy@1.0.0-rc.4"                 # VERIFY via WebSearch
-GRAPHOLOGY_VERSION: "graphology@0.25.4"             # VERIFY via WebSearch
-DENO_STD_VERSION: "@std@0.224.0"                    # For yaml, log modules
+MCP_SDK_VERSION: "@modelcontextprotocol/sdk@1.2.1" # VERIFY via WebSearch
+CLIFFY_VERSION: "cliffy@1.0.0-rc.4" # VERIFY via WebSearch
+GRAPHOLOGY_VERSION: "graphology@0.25.4" # VERIFY via WebSearch
+DENO_STD_VERSION: "@std@0.224.0" # For yaml, log modules
 
 # Ajouter section "Version Verification" dans architecture.md:
 VERSION_VERIFICATION_DATE: "2025-11-13"
@@ -139,19 +148,19 @@ LTS_CONSIDERATIONS:
 ```markdown
 ## Version Verification
 
-**Last Verified:** 2025-11-13
-**Method:** WebSearch + npm registry + Deno Land
+**Last Verified:** 2025-11-13 **Method:** WebSearch + npm registry + Deno Land
 
-| Technology | Version | Type | Notes |
-|------------|---------|------|-------|
-| Deno | 2.2 (LTS) / 2.5 (Latest) | Runtime | LTS recommended for production |
-| @modelcontextprotocol/sdk | 1.2.1 | npm | Verified via npm registry |
-| cliffy | 1.0.0-rc.4 | deno.land | Latest RC, stable expected Q1 2025 |
-| graphology | 0.25.4 | npm | Latest stable |
-| @std/yaml | 0.224.0 | deno.land/std | Part of Deno standard library |
-| @std/log | 0.224.0 | deno.land/std | Part of Deno standard library |
+| Technology                | Version                  | Type          | Notes                              |
+| ------------------------- | ------------------------ | ------------- | ---------------------------------- |
+| Deno                      | 2.2 (LTS) / 2.5 (Latest) | Runtime       | LTS recommended for production     |
+| @modelcontextprotocol/sdk | 1.2.1                    | npm           | Verified via npm registry          |
+| cliffy                    | 1.0.0-rc.4               | deno.land     | Latest RC, stable expected Q1 2025 |
+| graphology                | 0.25.4                   | npm           | Latest stable                      |
+| @std/yaml                 | 0.224.0                  | deno.land/std | Part of Deno standard library      |
+| @std/log                  | 0.224.0                  | deno.land/std | Part of Deno standard library      |
 
 **Breaking Changes Noted:**
+
 - None identified between selected versions
 ```
 
@@ -163,14 +172,15 @@ LTS_CONSIDERATIONS:
 
 **Evidence (lignes 7-30):**
 
-| Requirement | Status | Evidence |
-|-------------|--------|----------|
-| Starter template chosen | ✅ PASS | "deno init" (ligne 12) |
-| Initialization command | ✅ PASS | "deno init agentcards" avec flags |
-| Template version | ⚠️ PARTIAL | Deno 2.5/2.2, pas de version template |
-| Command search term | ❌ FAIL | Non fourni |
+| Requirement             | Status     | Evidence                              |
+| ----------------------- | ---------- | ------------------------------------- |
+| Starter template chosen | ✅ PASS    | "deno init" (ligne 12)                |
+| Initialization command  | ✅ PASS    | "deno init agentcards" avec flags     |
+| Template version        | ⚠️ PARTIAL | Deno 2.5/2.2, pas de version template |
+| Command search term     | ❌ FAIL    | Non fourni                            |
 
 **Issue mineure:**
+
 ```yaml
 MISSING: Command search term for verification
 Expected: "deno init documentation 2025"
@@ -194,10 +204,9 @@ Expected: "deno init documentation 2025"
 ```markdown
 ## Project Initialization
 
-**Starter Template:** `deno init` (Deno 2.2+ official command)
-**Search Term:** "deno init documentation 2025"
-**Template Version:** Uses Deno 2.5.0 / 2.2.0 (LTS) init command
-**Verified:** 2025-11-13
+**Starter Template:** `deno init` (Deno 2.2+ official command) **Search Term:** "deno init
+documentation 2025" **Template Version:** Uses Deno 2.5.0 / 2.2.0 (LTS) init command **Verified:**
+2025-11-13
 ```
 
 ---
@@ -217,14 +226,14 @@ Le document contient une section exceptionnelle "Novel Pattern Designs" (lignes 
 
 #### **Pattern 1: DAG Builder - 95% ⭐**
 
-| Critère | Score | Evidence |
-|---------|-------|----------|
-| Pattern name and purpose | 100% | Lignes 188-194 - Clear problem |
-| Component interactions | 100% | 3 components (196-211) |
-| Data flow | 100% | Example 3 tools (214-226) |
-| Implementation guide | 100% | TypeScript code (230-251) |
-| Edge cases | 100% | 4 cases: no deps, partial, circular, ambiguous (253-257) |
-| States and transitions | 70% | Implicite mais pas explicite |
+| Critère                  | Score | Evidence                                                 |
+| ------------------------ | ----- | -------------------------------------------------------- |
+| Pattern name and purpose | 100%  | Lignes 188-194 - Clear problem                           |
+| Component interactions   | 100%  | 3 components (196-211)                                   |
+| Data flow                | 100%  | Example 3 tools (214-226)                                |
+| Implementation guide     | 100%  | TypeScript code (230-251)                                |
+| Edge cases               | 100%  | 4 cases: no deps, partial, circular, ambiguous (253-257) |
+| States and transitions   | 70%   | Implicite mais pas explicite                             |
 
 **Verdict:** Excellent pattern, manque seulement transitions explicites
 
@@ -232,25 +241,27 @@ Le document contient une section exceptionnelle "Novel Pattern Designs" (lignes 
 
 #### **Pattern 2: Context Budget Management - 67% ⚠️ NEEDS IMPROVEMENT**
 
-| Critère | Score | Evidence |
-|---------|-------|----------|
-| Pattern name and purpose | 100% | Ligne 265 - Clear |
-| Component interactions | 70% | Interface simple, interactions limitées |
-| Data flow | 70% | Algo clair mais pas de diagramme |
-| Implementation guide | 100% | Code complet (270-296) |
-| Edge cases | 30% | ❌ Pas explicitement listés |
-| States and transitions | 30% | ❌ Non défini |
+| Critère                  | Score | Evidence                                |
+| ------------------------ | ----- | --------------------------------------- |
+| Pattern name and purpose | 100%  | Ligne 265 - Clear                       |
+| Component interactions   | 70%   | Interface simple, interactions limitées |
+| Data flow                | 70%   | Algo clair mais pas de diagramme        |
+| Implementation guide     | 100%  | Code complet (270-296)                  |
+| Edge cases               | 30%   | ❌ Pas explicitement listés             |
+| States and transitions   | 30%   | ❌ Non défini                           |
 
 **Issues critiques:**
 
 ```markdown
 MISSING Edge Cases:
+
 - Budget exhausted (no tools fit)
 - Tool schema > entire budget
 - Multiple tools competing for last slot
 - Budget overflow recovery
 
 MISSING States:
+
 - Budget Available (tokens remaining)
 - Budget Exhausted (no space)
 - Budget Critical (<10% remaining)
@@ -262,29 +273,29 @@ MISSING States:
 ### Pattern 2 Enhancements:
 
 **Edge Cases:**
+
 1. **Budget Exhausted:** Return empty array, log warning
 2. **Tool Too Large:** Skip tool, try next candidate
 3. **Competition for Slot:** Use priority (PageRank score)
 4. **Overflow:** Graceful degradation, keep highest priority tools
 
-**State Transitions:**
-Available (>10%) → Critical (1-10%) → Exhausted (0%)
+**State Transitions:** Available (>10%) → Critical (1-10%) → Exhausted (0%)
 ```
 
 ---
 
 #### **Pattern 3: Speculative Execution - 100%+ ⭐⭐⭐ REFERENCE**
 
-| Critère | Score | Evidence |
-|---------|-------|----------|
-| Pattern name and purpose | 100% | "THE Feature" - Vision exceptionnelle (303-310) |
-| Component interactions | 100% | GraphRAG, 3 modes, thresholds, safety (312-335) |
-| Data flow | 100% | Code + SQL schema (337-417) |
-| Implementation guide | 100% | Graphology integration (365-394) |
-| Edge cases | 100% | Comprehensive (437-442) |
-| States and transitions | 100% | 3 execution modes (321-327) |
-| **BONUS:** Performance | +10% | Specific metrics (396-401) |
-| **BONUS:** Explainability | +10% | PageRank (420-434) |
+| Critère                   | Score | Evidence                                        |
+| ------------------------- | ----- | ----------------------------------------------- |
+| Pattern name and purpose  | 100%  | "THE Feature" - Vision exceptionnelle (303-310) |
+| Component interactions    | 100%  | GraphRAG, 3 modes, thresholds, safety (312-335) |
+| Data flow                 | 100%  | Code + SQL schema (337-417)                     |
+| Implementation guide      | 100%  | Graphology integration (365-394)                |
+| Edge cases                | 100%  | Comprehensive (437-442)                         |
+| States and transitions    | 100%  | 3 execution modes (321-327)                     |
+| **BONUS:** Performance    | +10%  | Specific metrics (396-401)                      |
+| **BONUS:** Explainability | +10%  | PageRank (420-434)                              |
 
 **Verdict:** **RÉFÉRENCE D'EXCELLENCE** - Textbook example de documentation de pattern
 
@@ -292,19 +303,20 @@ Available (>10%) → Critical (1-10%) → Exhausted (0%)
 
 #### **Pattern 4: Adaptive DAG Feedback Loop - 100%+ ⭐⭐⭐ REFERENCE**
 
-| Critère | Score | Evidence |
-|---------|-------|----------|
-| Pattern name and purpose | 100% | AIL/HIL + re-planning (456-465) |
-| Component interactions | 100% | 5 components + Knowledge Graph ≠ Workflow Graph (467-556) |
-| Data flow | 100% | **3-phase ASCII diagram** (629-725) - Outstanding! |
-| Implementation guide | 100% | Code + integration (760-817) |
-| Edge cases | 100% | Benefits section (824-853) |
-| States and transitions | 100% | WorkflowState + reducers (510-526) |
-| **BONUS:** 4 Roles GraphRAG | +10% | Detailed (730-754) |
-| **BONUS:** Performance | +10% | Metrics (857-864) |
-| **BONUS:** Implementation | +10% | 4 stories (867-893) |
+| Critère                     | Score | Evidence                                                  |
+| --------------------------- | ----- | --------------------------------------------------------- |
+| Pattern name and purpose    | 100%  | AIL/HIL + re-planning (456-465)                           |
+| Component interactions      | 100%  | 5 components + Knowledge Graph ≠ Workflow Graph (467-556) |
+| Data flow                   | 100%  | **3-phase ASCII diagram** (629-725) - Outstanding!        |
+| Implementation guide        | 100%  | Code + integration (760-817)                              |
+| Edge cases                  | 100%  | Benefits section (824-853)                                |
+| States and transitions      | 100%  | WorkflowState + reducers (510-526)                        |
+| **BONUS:** 4 Roles GraphRAG | +10%  | Detailed (730-754)                                        |
+| **BONUS:** Performance      | +10%  | Metrics (857-864)                                         |
+| **BONUS:** Implementation   | +10%  | 4 stories (867-893)                                       |
 
-**Highlight:** La distinction "Knowledge Graph vs Workflow Graph" (lignes 467-496) est **EXCEPTIONNELLE** - prévient confusion majeure pour agents AI.
+**Highlight:** La distinction "Knowledge Graph vs Workflow Graph" (lignes 467-496) est
+**EXCEPTIONNELLE** - prévient confusion majeure pour agents AI.
 
 ---
 
@@ -320,15 +332,16 @@ Les spikes sont parfaitement intégrés:
 
 #### 📊 **Score Global Section 4**
 
-| Pattern | Score | Status |
-|---------|-------|--------|
-| Pattern 1 | 95% | ⭐ Excellent |
-| Pattern 2 | 67% | ⚠️ Needs improvement |
-| Pattern 3 | 100%+ | ⭐⭐⭐ Reference |
-| Pattern 4 | 100%+ | ⭐⭐⭐ Reference |
-| **Average** | **90.5%** | **✅ EXCEPTIONAL** |
+| Pattern     | Score     | Status               |
+| ----------- | --------- | -------------------- |
+| Pattern 1   | 95%       | ⭐ Excellent         |
+| Pattern 2   | 67%       | ⚠️ Needs improvement |
+| Pattern 3   | 100%+     | ⭐⭐⭐ Reference     |
+| Pattern 4   | 100%+     | ⭐⭐⭐ Reference     |
+| **Average** | **90.5%** | **✅ EXCEPTIONAL**   |
 
 **Actions requises:**
+
 - ❌ **MUST FIX:** Pattern 2 edge cases et state transitions (1h effort)
 - ✅ **EXCELLENT:** Patterns 3 & 4 à maintenir comme référence
 
@@ -340,15 +353,15 @@ Les spikes sont parfaitement intégrés:
 
 Section "Implementation Patterns" (lignes 906-1077) couvre 7 catégories:
 
-| Category | Status | Coverage | Score |
-|----------|--------|----------|-------|
-| 1. Naming Patterns | ✅ COMPLETE | Files, code, DB (908-927) | 100% |
-| 2. Structure Patterns | ✅ COMPLETE | Tests, org, utils (929-954) | 100% |
-| 3. Format Patterns | ⚠️ PARTIAL | Dates, errors (pas d'API = CLI) | 85% |
-| 4. Communication Patterns | ⚠️ PARTIAL | Implicite Pattern 4 | 70% |
-| 5. Lifecycle Patterns | ✅ COMPLETE | Error recovery, retry (956-1075) | 95% |
-| 6. Location Patterns | ⚠️ PARTIAL | Config (~/.agentcards/) | 85% |
-| 7. Consistency Patterns | ✅ COMPLETE | Dates, logging, errors | 100% |
+| Category                  | Status      | Coverage                         | Score |
+| ------------------------- | ----------- | -------------------------------- | ----- |
+| 1. Naming Patterns        | ✅ COMPLETE | Files, code, DB (908-927)        | 100%  |
+| 2. Structure Patterns     | ✅ COMPLETE | Tests, org, utils (929-954)      | 100%  |
+| 3. Format Patterns        | ⚠️ PARTIAL  | Dates, errors (pas d'API = CLI)  | 85%   |
+| 4. Communication Patterns | ⚠️ PARTIAL  | Implicite Pattern 4              | 70%   |
+| 5. Lifecycle Patterns     | ✅ COMPLETE | Error recovery, retry (956-1075) | 95%   |
+| 6. Location Patterns      | ⚠️ PARTIAL  | Config (~/.agentcards/)          | 85%   |
+| 7. Consistency Patterns   | ✅ COMPLETE | Dates, logging, errors           | 100%  |
 
 **Note:** Gaps pour API/URLs/UI justifiés (CLI tool local)
 
@@ -357,6 +370,7 @@ Section "Implementation Patterns" (lignes 906-1077) couvre 7 catégories:
 #### ✅ **Pattern Quality - EXCEPTIONAL**
 
 **1. Concrete Examples (100%):**
+
 ```typescript
 // deps.ts centralization (931-940)
 export { PGlite } from "npm:@electric-sql/pglite@0.3.11";
@@ -369,19 +383,19 @@ export async function withRetry<T>(...) { ... }
 ```
 
 **2. Unambiguous Conventions (100%):**
+
 - Files: kebab-case.ts (ligne 911) - **NO ambiguity**
 - Classes: PascalCase (ligne 917) - **NO ambiguity**
 - DB Tables: snake_case singular (ligne 924) - **NO ambiguity**
 - Indexes: idx_{table}_{column} (ligne 926) - **Template exact**
 
-**3. Technology Coverage (100%):**
-✅ Deno, TypeScript, PGlite, Testing, Logging, CLI - **Toute la stack couverte**
+**3. Technology Coverage (100%):** ✅ Deno, TypeScript, PGlite, Testing, Logging, CLI - **Toute la
+stack couverte**
 
-**4. No Gaps (85%):**
-⚠️ **Minor gap:** Communication patterns (Event Stream, State, Commands) définis dans Pattern 4 mais pas consolidés ici
+**4. No Gaps (85%):** ⚠️ **Minor gap:** Communication patterns (Event Stream, State, Commands)
+définis dans Pattern 4 mais pas consolidés ici
 
-**5. No Conflicts (100%):**
-Aucun conflit détecté entre patterns - **Parfaitement cohérent**
+**5. No Conflicts (100%):** Aucun conflit détecté entre patterns - **Parfaitement cohérent**
 
 ---
 
@@ -393,15 +407,18 @@ Aucun conflit détecté entre patterns - **Parfaitement cohérent**
 ### Communication Patterns
 
 **Event Stream:**
+
 - Use `TransformStream<ExecutionEvent>` for observability
 - Event types: `task_start | task_complete | checkpoint | error`
 - Emission: `writer.write(event)` (non-blocking async)
 
 **State Management:**
+
 - Reducers: `messages`, `tasks`, `decisions`, `context` (Pattern 4)
 - Immutability: Always return new state
 
 **Command Queue:**
+
 - Async injection: `commandQueue.enqueue(cmd)`
 - Types: `abort | inject_task | skip_layer | modify_args`
 - Processing: Non-blocking, checked before/after layers
@@ -418,6 +435,7 @@ See Novel Pattern 4 for implementation details.
 #### ✅ **Stack Coherence - PASS**
 
 **Validated:**
+
 1. ✅ Database (PGlite) + SQL direct: Compatible, pas d'ORM nécessaire
 2. ✅ Frontend: N/A (CLI tool)
 3. ✅ Authentication: N/A (CLI local)
@@ -425,6 +443,7 @@ See Novel Pattern 4 for implementation details.
 5. ✅ Starter template + additional setup: Compatible (lignes 24-28)
 
 **Evidence:**
+
 ```typescript
 // deps.ts (lignes 933-940) - All Deno-compatible
 export { PGlite } from "npm:@electric-sql/pglite@0.3.11";
@@ -436,6 +455,7 @@ export { Command } from "https://deno.land/x/cliffy@...";
 #### ✅ **Integration Compatibility - PASS**
 
 **Validated:**
+
 1. ✅ MCP servers: stdio via `Deno.Command` (ligne 172)
 2. ✅ SSE streaming: `Deno.serve` compatible (ligne 49)
 3. ✅ File storage: PGlite single-file + ~/.agentcards/ (lignes 125-127)
@@ -443,6 +463,7 @@ export { Command } from "https://deno.land/x/cliffy@...";
 5. ✅ All dependencies: Verified Deno-compatible (lignes 146-183)
 
 **Integration points (lignes 170-183):**
+
 - MCP Servers → stdio subprocess ✅
 - Claude Code → config.json read ✅
 - File System → ~/.agentcards/ ✅
@@ -484,6 +505,7 @@ export { Command } from "https://deno.land/x/cliffy@...";
 #### ✅ **Document Quality - EXCEPTIONAL**
 
 **Validated:**
+
 1. ✅ Source tree reflects decisions: Deno conventions, PGlite paths
 2. ✅ Technical language consistent: TypeScript, SQL, interfaces
 3. ✅ Tables used appropriately: Decision Summary, Epic Mapping, ADR comparisons
@@ -491,6 +513,7 @@ export { Command } from "https://deno.land/x/cliffy@...";
 5. ✅ Rationale brief: Colonne "Rationale" courte mais informative
 
 **Outstanding features:**
+
 - ASCII diagrams (Pattern 4, lignes 629-725)
 - Code examples TypeScript throughout
 - Performance targets explicit (lignes 396-401, 857-864)
@@ -504,14 +527,16 @@ export { Command } from "https://deno.land/x/cliffy@...";
 **Validated:**
 
 1. ✅ **No ambiguous decisions:** All resolved, no TBD/placeholders
-2. ✅ **Clear boundaries:** **EXCEPTIONAL distinction** Knowledge Graph ≠ Workflow Graph (lignes 467-496)
+2. ✅ **Clear boundaries:** **EXCEPTIONAL distinction** Knowledge Graph ≠ Workflow Graph (lignes
+   467-496)
 3. ✅ **Explicit file organization:** Project Structure (lignes 52-130)
 4. ✅ **Defined patterns for operations:** Error handling (956-1006), retry logic (1066-1075)
 5. ✅ **Novel patterns implementation:** Patterns 3 & 4 avec code TypeScript complet
 6. ✅ **Clear constraints:** Safety checks Pattern 3 (lignes 332-335)
 7. ✅ **No conflicting guidance:** Vérifié Section 5, aucun conflit
 
-**Highlight:** La distinction GraphRAG (permanent knowledge) vs DAG (ephemeral execution) prévient confusion majeure pour AI agents.
+**Highlight:** La distinction GraphRAG (permanent knowledge) vs DAG (ephemeral execution) prévient
+confusion majeure pour AI agents.
 
 ---
 
@@ -525,7 +550,8 @@ export { Command } from "https://deno.land/x/cliffy@...";
 4. ✅ **Error handling:** Custom error hierarchy (959-984)
 5. ✅ **Testing patterns:** Co-located + integration + E2E (951-954)
 
-**Minor gap:** Communication patterns (Event Stream, State, Commands) pas consolidés (déjà noté Section 5)
+**Minor gap:** Communication patterns (Event Stream, State, Commands) pas consolidés (déjà noté
+Section 5)
 
 ---
 
@@ -615,7 +641,8 @@ export { Command } from "https://deno.land/x/cliffy@...";
    - CLI → Server (Deno Deploy ready)
 5. ✅ **Novel patterns sound:** Patterns 3 & 4 architecturalement sains
 
-**Recommendation:** Advanced patterns (GraphRAG, speculation) nécessitent expertise. Documentation excellente = acceptable risk.
+**Recommendation:** Advanced patterns (GraphRAG, speculation) nécessitent expertise. Documentation
+excellente = acceptable risk.
 
 ---
 
@@ -626,6 +653,7 @@ export { Command } from "https://deno.land/x/cliffy@...";
 #### **Issue 1: Version Specificity (Section 2) - CRITICAL**
 
 **Problème:**
+
 - 3 technologies utilisent "latest" sans version spécifique
 - Aucune date de vérification
 - Pas de preuve de WebSearch
@@ -665,13 +693,13 @@ Method: WebSearch + npm registry + Deno Land
 ### Pattern 2 Enhancements:
 
 **Edge Cases:**
+
 1. Budget Exhausted: Return empty array, log warning
 2. Tool Too Large: Skip tool, try next candidate
 3. Competition for Slot: Use priority (PageRank)
 4. Overflow: Graceful degradation
 
-**State Transitions:**
-Available (>10%) → Critical (1-10%) → Exhausted (0%)
+**State Transitions:** Available (>10%) → Critical (1-10%) → Exhausted (0%)
 ```
 
 **Impact:** Pattern 2 passe de 67% à 85%
@@ -680,16 +708,16 @@ Available (>10%) → Critical (1-10%) → Exhausted (0%)
 
 #### **Issue 3: Communication Patterns Consolidation (Section 5)**
 
-**Problème:** Event Stream, State, Commands définis dans Pattern 4 mais pas consolidés dans Implementation Patterns
+**Problème:** Event Stream, State, Commands définis dans Pattern 4 mais pas consolidés dans
+Implementation Patterns
 
 **Action (30 min):**
 
 ```markdown
 ### Communication Patterns (NEW SECTION in Implementation Patterns)
 
-**Event Stream:** TransformStream<ExecutionEvent>
-**State Management:** Reducers (messages, tasks, decisions, context)
-**Command Queue:** Async injection (abort, inject_task, skip_layer, modify_args)
+**Event Stream:** TransformStream<ExecutionEvent> **State Management:** Reducers (messages, tasks,
+decisions, context) **Command Queue:** Async injection (abort, inject_task, skip_layer, modify_args)
 
 See Novel Pattern 4 for details.
 ```
@@ -707,8 +735,8 @@ See Novel Pattern 4 for details.
 ```markdown
 ## Decision Summary
 
-| Category | Decision | Rationale |
-|----------|----------|-----------|
+| Category    | Decision        | Rationale                                       |
+| ----------- | --------------- | ----------------------------------------------- |
 | API Pattern | None (CLI tool) | Local-first CLI, no external API needed for MVP |
 ```
 
@@ -738,6 +766,7 @@ See Novel Pattern 4 for details.
 ## Technology Viability Notes
 
 **PGlite 0.3.11:**
+
 - Status: [Stable/Beta] - Verify via Electric SQL
 - Production usage: [Yes/No]
 - Migration path: PGlite → PostgreSQL documented (ADR-001)
@@ -749,21 +778,22 @@ See Novel Pattern 4 for details.
 
 ## 📈 Projection des Scores Après Corrections
 
-| Section | Actuel | Après MUST FIX | Après SHOULD FIX | Après NICE TO HAVE |
-|---------|--------|----------------|------------------|---------------------|
-| 1. Decision Completeness | 90% | 90% | 95% | 95% |
-| 2. Version Specificity | 65% | **95%** ✅ | 95% | 95% |
-| 3. Starter Template | 85% | 85% | 85% | 90% |
-| 4. Novel Pattern Design | 90.5% | 90.5% | **93%** | 93% |
-| 5. Implementation Patterns | 96% | 96% | **98%** | 98% |
-| 6. Technology Compatibility | 95% | 95% | 95% | 95% |
-| 7. Document Structure | 98% | 98% | 98% | 98% |
-| 8. AI Agent Clarity | 92% | 92% | 92% | 92% |
-| 9. Practical Considerations | 88% | 88% | 88% | **92%** |
-| 10. Common Issues | 90% | 90% | 90% | 90% |
-| **OVERALL** | **89%** | **92%** | **94%** | **94.5%** |
+| Section                     | Actuel  | Après MUST FIX | Après SHOULD FIX | Après NICE TO HAVE |
+| --------------------------- | ------- | -------------- | ---------------- | ------------------ |
+| 1. Decision Completeness    | 90%     | 90%            | 95%              | 95%                |
+| 2. Version Specificity      | 65%     | **95%** ✅     | 95%              | 95%                |
+| 3. Starter Template         | 85%     | 85%            | 85%              | 90%                |
+| 4. Novel Pattern Design     | 90.5%   | 90.5%          | **93%**          | 93%                |
+| 5. Implementation Patterns  | 96%     | 96%            | **98%**          | 98%                |
+| 6. Technology Compatibility | 95%     | 95%            | 95%              | 95%                |
+| 7. Document Structure       | 98%     | 98%            | 98%              | 98%                |
+| 8. AI Agent Clarity         | 92%     | 92%            | 92%              | 92%                |
+| 9. Practical Considerations | 88%     | 88%            | 88%              | **92%**            |
+| 10. Common Issues           | 90%     | 90%            | 90%              | 90%                |
+| **OVERALL**                 | **89%** | **92%**        | **94%**          | **94.5%**          |
 
 **Timeline:**
+
 - MUST FIX: 1-2h → **Score: 92%** (Validé)
 - SHOULD FIX: +1.5h → **Score: 94%** (Excellent)
 - NICE TO HAVE: +0.5h → **Score: 94.5%** (Exceptionnel)
@@ -775,6 +805,7 @@ See Novel Pattern 4 for details.
 ### 🏆 **Pattern 3 & 4: Références d'Excellence**
 
 **Ces patterns sont des modèles à suivre pour:**
+
 - Documentation complète (purpose, components, data flow, implementation)
 - Code TypeScript concret avec interfaces
 - ASCII diagrams pour clarté visuelle
@@ -789,6 +820,7 @@ See Novel Pattern 4 for details.
 ### 🏆 **Document Structure: 98% - Exceptionnelle**
 
 **Points forts:**
+
 - Executive summary concis (2 phrases)
 - Decision table complète (14 technologies)
 - Project structure détaillée (tous les dossiers)
@@ -802,6 +834,7 @@ See Novel Pattern 4 for details.
 **Lignes 467-496: CRITICAL DISTINCTION**
 
 Cette section est **exceptionnelle** car elle prévient une confusion majeure:
+
 - GraphRAG = Knowledge Graph (permanent, tous les workflows)
 - DAG = Workflow Execution Graph (ephemeral, workflow actuel)
 
@@ -812,6 +845,7 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 ### 🏆 **Implementation Patterns: 96% - Conventions Claires**
 
 **Unambiguous naming:**
+
 - Files: kebab-case.ts
 - Classes: PascalCase
 - DB tables: snake_case singular
@@ -825,40 +859,44 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 
 ### Checklist Completion
 
-| Checklist Section | Items | Passed | Failed | Partial | Score |
-|-------------------|-------|--------|--------|---------|-------|
-| 1. Decision Completeness | 9 | 7 | 0 | 2 | 90% |
-| 2. Version Specificity | 8 | 3 | 5 | 0 | 65% ❌ |
-| 3. Starter Template | 8 | 6 | 1 | 1 | 85% |
-| 4. Novel Pattern Design | 18 | 15 | 0 | 3 | 90.5% |
-| 5. Implementation Patterns | 12 | 10 | 0 | 2 | 96% |
-| 6. Technology Compatibility | 9 | 9 | 0 | 0 | 95% |
-| 7. Document Structure | 12 | 12 | 0 | 0 | 98% |
-| 8. AI Agent Clarity | 14 | 13 | 0 | 1 | 92% |
-| 9. Practical Considerations | 10 | 8 | 0 | 2 | 88% |
-| 10. Common Issues | 8 | 7 | 0 | 1 | 90% |
-| **TOTAL** | **108** | **90** | **6** | **12** | **89%** |
+| Checklist Section           | Items   | Passed | Failed | Partial | Score   |
+| --------------------------- | ------- | ------ | ------ | ------- | ------- |
+| 1. Decision Completeness    | 9       | 7      | 0      | 2       | 90%     |
+| 2. Version Specificity      | 8       | 3      | 5      | 0       | 65% ❌  |
+| 3. Starter Template         | 8       | 6      | 1      | 1       | 85%     |
+| 4. Novel Pattern Design     | 18      | 15     | 0      | 3       | 90.5%   |
+| 5. Implementation Patterns  | 12      | 10     | 0      | 2       | 96%     |
+| 6. Technology Compatibility | 9       | 9      | 0      | 0       | 95%     |
+| 7. Document Structure       | 12      | 12     | 0      | 0       | 98%     |
+| 8. AI Agent Clarity         | 14      | 13     | 0      | 1       | 92%     |
+| 9. Practical Considerations | 10      | 8      | 0      | 2       | 88%     |
+| 10. Common Issues           | 8       | 7      | 0      | 1       | 90%     |
+| **TOTAL**                   | **108** | **90** | **6**  | **12**  | **89%** |
 
 ---
 
 ### Document Quality Score
 
 **Architecture Completeness:** ✅ **Complete** (90%)
+
 - Toutes les décisions majeures prises
 - Sections requises présentes
 - Novel patterns bien documentés
 
 **Version Specificity:** ❌ **Many Missing** (65%)
+
 - 3 "latest" sans version
 - Aucune date de vérification
 - **MUST FIX avant implémentation**
 
 **Pattern Clarity:** ✅ **Crystal Clear** (94%)
+
 - Patterns 3 & 4 exceptionnels
 - Implementation patterns unambiguous
 - Communication patterns à consolider
 
 **AI Agent Readiness:** ✅ **Mostly Ready** (92%)
+
 - Guidance claire pour agents
 - Distinction GraphRAG/DAG excellente
 - Prêt pour implémentation après fix Section 2
@@ -870,6 +908,7 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 #### ❌ **1 Issue Bloquant**
 
 **Section 2: Version Specificity**
+
 - Severity: **CRITICAL**
 - Impact: Reproductibilité compromise
 - Effort: 1-2h
@@ -971,15 +1010,18 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 **Statut:** Prêt pour implémentation **APRÈS correction Section 2** (1-2h effort)
 
 **Points forts exceptionnels:**
+
 - 🏆 Novel Pattern Design (90.5%) - Patterns 3 & 4 références
 - 🏆 Document Structure (98%) - Exceptionnel
 - 🏆 Implementation Patterns (96%) - Très complet
 - 🏆 AI Agent Clarity (92%) - Bien guidé
 
 **Point bloquant:**
+
 - ❌ Section 2: Version Specificity (65%) - **MUST FIX**
 
 **Recommendation finale:**
+
 1. **Fix Section 2** (1-2h) → Architecture VALIDATED à 92%
 2. **Optional fixes** (1.5h) → Architecture EXCELLENT à 94%
 3. **Proceed to Phase 4** (Implementation) avec confiance
@@ -991,6 +1033,7 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 ### A. Checklist Items Détaillés
 
 **Total:** 108 items validés
+
 - ✅ Passed: 90 items (83%)
 - ❌ Failed: 6 items (6%)
 - ⚠️ Partial: 12 items (11%)
@@ -998,6 +1041,7 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 ### B. References
 
 **Documents analysés:**
+
 - `docs/architecture.md` (1540 lignes)
 - `docs/spikes/spike-agent-human-dag-feedback-loop.md` (1895 lignes)
 - `docs/spikes/spike-coala-comparison-adaptive-feedback.md` (641 lignes)
@@ -1008,19 +1052,15 @@ Cette section est **exceptionnelle** car elle prévient une confusion majeure:
 
 ### C. Validation Metadata
 
-**Validator:** Winston (Architect Agent)
-**Date:** 2025-11-13
-**Duration:** ~2h validation complète
-**Method:** Systematic checklist validation (10 sections)
-**Tools:** Read, Grep, Analysis
+**Validator:** Winston (Architect Agent) **Date:** 2025-11-13 **Duration:** ~2h validation complète
+**Method:** Systematic checklist validation (10 sections) **Tools:** Read, Grep, Analysis
 **Output:** validation-report-architecture-2025-11-13.md
 
 ---
 
-**Next Step:** 🚀 Run the **solutioning-gate-check** workflow to validate alignment between PRD, Architecture, and Stories before beginning Phase 4 implementation.
+**Next Step:** 🚀 Run the **solutioning-gate-check** workflow to validate alignment between PRD,
+Architecture, and Stories before beginning Phase 4 implementation.
 
 ---
 
-_Rapport généré par Winston (Architect Agent) pour BMad_
-_Date: 2025-11-13_
-_Version: 1.0_
+_Rapport généré par Winston (Architect Agent) pour BMad_ _Date: 2025-11-13_ _Version: 1.0_

@@ -5,7 +5,7 @@
  */
 
 import { assertEquals, assertExists } from "@std/assert";
-import { StreamingExecutor, BufferedEventStream } from "../../../src/dag/streaming.ts";
+import { BufferedEventStream, StreamingExecutor } from "../../../src/dag/streaming.ts";
 import type { SSEEvent } from "../../../src/dag/streaming.ts";
 import type { DAGStructure } from "../../../src/graphrag/types.ts";
 import type { ToolExecutor } from "../../../src/dag/types.ts";

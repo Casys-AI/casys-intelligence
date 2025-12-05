@@ -90,14 +90,14 @@ burn-in:
     - npx playwright install --with-deps chromium
   script:
     - |
-      echo "🔥 Starting burn-in loop - detecting flaky tests"
-      for i in {1..10}; do
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🔥 Burn-in iteration $i/10"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        npm run test:e2e || exit 1
-      done
-      echo "✅ Burn-in complete - no flaky tests detected"
+        echo "🔥 Starting burn-in loop - detecting flaky tests"
+        for i in {1..10}; do
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔥 Burn-in iteration $i/10"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          npm run test:e2e || exit 1
+        done
+        echo "✅ Burn-in complete - no flaky tests detected"
   artifacts:
     when: on_failure
     paths:
@@ -119,10 +119,10 @@ report:
   when: always
   script:
     - |
-      echo "## Test Execution Summary"
-      echo ""
-      echo "- Pipeline: $CI_PIPELINE_ID"
-      echo "- Shards: 4"
-      echo "- Branch: $CI_COMMIT_REF_NAME"
-      echo ""
-      echo "View detailed results in job artifacts"
+        echo "## Test Execution Summary"
+        echo ""
+        echo "- Pipeline: $CI_PIPELINE_ID"
+        echo "- Shards: 4"
+        echo "- Branch: $CI_COMMIT_REF_NAME"
+        echo ""
+        echo "View detailed results in job artifacts"

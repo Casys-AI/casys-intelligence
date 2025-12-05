@@ -15,9 +15,9 @@ Self-contained agents with prompts, menus, and optional install-time customizati
 agent:
   metadata:
     id: .bmad/agents/{agent-name}/{agent-name}.md
-    name: 'Persona Name'
-    title: 'Agent Title'
-    icon: 'emoji'
+    name: "Persona Name"
+    title: "Agent Title"
+    icon: "emoji"
     type: simple
 
   persona:
@@ -64,40 +64,40 @@ agent:
 
   menu:
     - trigger: action1
-      action: '#main-action'
-      description: 'Execute the main action'
+      action: "#main-action"
+      description: "Execute the main action"
 
     - trigger: action2
-      action: '#another-action'
-      description: 'Execute another action'
+      action: "#another-action"
+      description: "Execute another action"
 
     - trigger: inline
-      action: 'Direct inline instruction text'
-      description: 'Execute inline action'
+      action: "Direct inline instruction text"
+      description: "Execute inline action"
 
   install_config:
     compile_time_only: true
-    description: 'Personalize your agent'
+    description: "Personalize your agent"
     questions:
       - var: style_choice
-        prompt: 'Preferred communication style?'
+        prompt: "Preferred communication style?"
         type: choice
         options:
-          - label: 'Professional'
-            value: 'professional'
-          - label: 'Casual'
-            value: 'casual'
-        default: 'professional'
+          - label: "Professional"
+            value: "professional"
+          - label: "Casual"
+            value: "casual"
+        default: "professional"
 
       - var: detailed_mode
-        prompt: 'Enable detailed explanations?'
+        prompt: "Enable detailed explanations?"
         type: boolean
         default: true
 
       - var: custom_variable
-        prompt: 'Your custom text'
+        prompt: "Your custom text"
         type: text
-        default: ''
+        default: ""
 ```
 
 ## Key Components
@@ -135,8 +135,8 @@ Menu items reference these:
 ```yaml
 menu:
   - trigger: analyze
-    action: '#analyze-code'
-    description: 'Analyze code patterns'
+    action: "#analyze-code"
+    description: "Analyze code patterns"
 ```
 
 ### Menu Actions
