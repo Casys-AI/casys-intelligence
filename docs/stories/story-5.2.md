@@ -16,7 +16,7 @@ common tool sequences and speculate effectively.
 2. `agentcards workflows sync` CLI command imports YAML → DB
 3. Entries marked with `source: 'user'` in `tool_dependency` table
 4. Auto-sync on startup if file changed (checksum comparison)
-5. Validation: unknown tools logged as warnings (not errors)
+5. Validation: unknown tools cause errors (strict validation - workflows must reference only existing tools in tool_schema)
 6. Bootstrap: if graph empty (0 edges), sync runs automatically
 7. Tests cover parsing, sync, and bootstrap scenarios
 

@@ -35,6 +35,24 @@ async function createTempYaml(content: string): Promise<string> {
   return tempFile;
 }
 
+/**
+ * Populate tool_schema with test tools (for strict validation)
+ */
+async function populateToolSchema(db: PGliteClient, toolIds: string[]): Promise<void> {
+  for (const toolId of toolIds) {
+    const [serverId, toolName] = toolId.includes(":")
+      ? toolId.split(":")
+      : ["test_server", toolId];
+
+    await db.query(
+      `INSERT INTO tool_schema (server_id, name, tool_id, description, input_schema)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (tool_id) DO NOTHING`,
+      [serverId, toolName, toolId, `Test tool ${toolId}`, JSON.stringify({ type: "object" })]
+    );
+  }
+}
+
 // ============================================
 // AC2: Sync creates DB entries with source='user'
 // ============================================
@@ -42,6 +60,9 @@ async function createTempYaml(content: string): Promise<string> {
 Deno.test("WorkflowSyncService - sync creates edges with source='user'", async () => {
   const db = await createTestDb();
   const syncService = new WorkflowSyncService(db);
+
+  // Populate tool_schema with test tools (strict validation requires this)
+  await populateToolSchema(db, ["tool_a", "tool_b", "tool_c"]);
 
   const yamlPath = await createTempYaml(`
 workflows:

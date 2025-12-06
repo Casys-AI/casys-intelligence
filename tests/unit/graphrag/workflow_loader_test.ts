@@ -126,10 +126,10 @@ Deno.test("WorkflowLoader - validate rejects workflow without steps or edges", (
 });
 
 // ============================================
-// AC5: Unknown tool warnings
+// AC5: Unknown tool errors (strict validation)
 // ============================================
 
-Deno.test("WorkflowLoader - validate logs warnings for unknown tools (AC5)", () => {
+Deno.test("WorkflowLoader - validate rejects workflows with unknown tools (AC5)", () => {
   const loader = new WorkflowLoader();
 
   // Set known tools
@@ -141,12 +141,12 @@ Deno.test("WorkflowLoader - validate logs warnings for unknown tools (AC5)", () 
 
   const results = loader.validate(workflows);
 
-  // Workflow should still be valid (warnings don't fail validation)
-  assertEquals(results[0].valid, true);
-  assertEquals(results[0].warnings.length, 1);
+  // Workflow should be invalid (strict validation - unknown tools cause errors)
+  assertEquals(results[0].valid, false);
+  assertEquals(results[0].errors.length, 1);
   assert(
-    results[0].warnings[0].includes("unknown_tool"),
-    "Warning should mention unknown tool",
+    results[0].errors[0].includes("unknown_tool"),
+    "Error should mention unknown tool",
   );
 });
 
@@ -390,7 +390,7 @@ Deno.test("WorkflowLoader - validate rejects edges with invalid format", () => {
   );
 });
 
-Deno.test("WorkflowLoader - validate warns for unknown tools in edges format", () => {
+Deno.test("WorkflowLoader - validate rejects workflows with unknown tools in edges format", () => {
   const loader = new WorkflowLoader();
   loader.setKnownTools(["known_a", "known_b"]);
 
@@ -406,11 +406,11 @@ Deno.test("WorkflowLoader - validate warns for unknown tools in edges format", (
 
   const results = loader.validate(workflows);
 
-  assertEquals(results[0].valid, true);
-  assertEquals(results[0].warnings.length, 2); // unknown_tool appears twice
+  assertEquals(results[0].valid, false);
+  assertEquals(results[0].errors.length, 2); // unknown_tool appears twice (as 'to' and 'from')
   assert(
-    results[0].warnings.some((w) => w.includes("unknown_tool")),
-    "Warning should mention unknown tool",
+    results[0].errors.some((e) => e.includes("unknown_tool")),
+    "Error should mention unknown tool",
   );
 });
 

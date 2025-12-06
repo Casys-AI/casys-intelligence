@@ -81,6 +81,7 @@ function createMockVectorSearch(): VectorSearch {
 function createMockGraphEngine(): GraphRAGEngine {
   return {
     getPageRank: () => 0.5,
+    updateFromExecution: async () => {}, // Required for workflow execution
   } as unknown as GraphRAGEngine;
 }
 
@@ -166,12 +167,13 @@ Deno.test("AgentCardsGatewayServer - list_tools without query", async () => {
 
   assertExists(result.tools);
   assert(Array.isArray(result.tools));
-  assert(result.tools.length >= 3); // Should include workflow tool + 2 DB tools
+  // ADR-013: Should return 7 meta-tools (execute_dag, search_tools, execute_code, continue, abort, replan, approval_response)
+  assertEquals(result.tools.length, 7);
 
-  // Verify workflow tool is included
-  const workflowTool = result.tools.find((t: MCPTool) => t.name === "agentcards:execute_workflow");
-  assertExists(workflowTool);
-  assertEquals(workflowTool.name, "agentcards:execute_workflow");
+  // Verify DAG execution tool is included (renamed from execute_workflow)
+  const dagTool = result.tools.find((t: MCPTool) => t.name === "agentcards:execute_dag");
+  assertExists(dagTool);
+  assertEquals(dagTool.name, "agentcards:execute_dag");
 });
 
 Deno.test("AgentCardsGatewayServer - list_tools with query", async () => {
@@ -197,9 +199,9 @@ Deno.test("AgentCardsGatewayServer - list_tools with query", async () => {
   assertExists(result.tools);
   assert(Array.isArray(result.tools));
 
-  // Should include workflow tool + semantic search results
-  const workflowTool = result.tools.find((t: MCPTool) => t.name === "agentcards:execute_workflow");
-  assertExists(workflowTool);
+  // Should include DAG execution tool + semantic search results (renamed from execute_workflow)
+  const dagTool = result.tools.find((t: MCPTool) => t.name === "agentcards:execute_dag");
+  assertExists(dagTool);
 });
 
 Deno.test("AgentCardsGatewayServer - call_tool single tool proxy", async () => {
@@ -254,7 +256,7 @@ Deno.test("AgentCardsGatewayServer - call_tool workflow execution", async () => 
   const handleCallTool = (gateway as any).handleCallTool.bind(gateway);
   const result = await handleCallTool({
     params: {
-      name: "agentcards:execute_workflow",
+      name: "agentcards:execute_dag",
       arguments: {
         workflow: {
           tasks: [

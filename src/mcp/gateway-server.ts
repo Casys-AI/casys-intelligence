@@ -661,7 +661,7 @@ export class AgentCardsGatewayServer {
             type: "text",
             text: JSON.stringify(
               {
-                status: "complete",
+                status: "completed",
                 results: result.results,
                 execution_time_ms: result.executionTimeMs,
                 parallelization_layers: result.parallelizationLayers,
